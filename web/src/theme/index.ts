@@ -7,16 +7,28 @@ const config: ThemeConfig = {
 
 const colors = {
   brand: {
-    50: '#eff6ff',
-    100: '#dbeafe',
-    200: '#bfdbfe',
-    300: '#93c5fd',
-    400: '#60a5fa',
-    500: '#2563eb',
-    600: '#1d4ed8',
-    700: '#1e40af',
-    800: '#1e3a8a',
-    900: '#1e3a5f',
+    50:  '#EAF3DE',
+    100: '#C0DD97',
+    200: '#97C459',
+    300: '#7AB83A',
+    400: '#639922',
+    500: '#3B6D11',
+    600: '#2E570D',
+    700: '#27500A',
+    800: '#1A3C2E',
+    900: '#122B20',
+  },
+  accent: {
+    50:  '#eef0fb',
+    100: '#d0d5f4',
+    200: '#b2baed',
+    300: '#8f9ae3',
+    400: '#6B7FD4',
+    500: '#5468c9',
+    600: '#4055b8',
+    700: '#3044a0',
+    800: '#223282',
+    900: '#162060',
   },
   stale: {
     50: '#fff7ed',
@@ -52,23 +64,23 @@ export const theme = extendTheme({
   styles: {
     global: {
       body: {
-        bg: 'gray.50',
+        bg: '#F5F5F3',
         color: 'gray.800',
       },
     },
   },
 });
 
-export const STATUS_COLORS: Record<string, string> = {
-  not_started: 'gray',
-  in_progress: 'blue',
-  offered: 'green',
-  rejected: 'red',
-  underqualified: 'orange',
-  missed_deadline: 'red',
-  applied: 'cyan',
-  archive: 'gray',
-  other: 'purple',
+export const STATUS_COLORS: Record<string, { bg: string; color: string; dot: string }> = {
+  not_started:      { bg: '#F1EFE8', color: '#444441', dot: '#888780' },
+  in_progress:      { bg: '#E6F1FB', color: '#0C447C', dot: '#378ADD' },
+  applied:          { bg: '#EAF3DE', color: '#27500A', dot: '#639922' },
+  offered:          { bg: '#E1F5EE', color: '#085041', dot: '#1D9E75' },
+  rejected:         { bg: '#FCEBEB', color: '#791F1F', dot: '#E24B4A' },
+  underqualified:   { bg: '#FAEEDA', color: '#633806', dot: '#BA7517' },
+  missed_deadline:  { bg: '#FCEBEB', color: '#791F1F', dot: '#E24B4A' },
+  other:            { bg: '#EEEDFE', color: '#3C3489', dot: '#7F77DD' },
+  archive:          { bg: '#F1EFE8', color: '#5F5E5A', dot: '#B4B2A9' },
 };
 
 export const STATUS_LABELS: Record<string, string> = {

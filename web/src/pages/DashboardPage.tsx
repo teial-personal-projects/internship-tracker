@@ -175,7 +175,7 @@ export function DashboardPage() {
   function openAdd() { setEditingJob(null); onOpen(); }
 
   return (
-    <Flex minH="100vh" flexDir="column" bg="blue.50">
+    <Flex minH="100vh" flexDir="column" bg="#F5F5F3">
 
       {/* ── Header ── */}
       <Box
@@ -184,7 +184,7 @@ export function DashboardPage() {
         top={0}
         zIndex={20}
         boxShadow="lg"
-        style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2c5282 45%, #1a3254 100%)' }}
+        bg="brand.800"
       >
         <Flex
           align="center"
@@ -196,8 +196,18 @@ export function DashboardPage() {
           gap={4}
         >
           {/* Logo */}
-          <HStack spacing={2}>
-            <Text fontSize={{ base: '2xl', sm: '3xl' }}>💼</Text>
+          <HStack spacing={3}>
+            <Box
+              w={8}
+              h={8}
+              borderRadius="lg"
+              bg="accent.400"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Text fontSize="md" lineHeight={1}>🚀</Text>
+            </Box>
             <Box>
               <Heading
                 as="h1"
@@ -205,12 +215,11 @@ export function DashboardPage() {
                 color="white"
                 letterSpacing="tight"
                 lineHeight="tight"
-                style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700 }}
               >
-                Internship Tracker
+                LaunchPad
               </Heading>
-              <Text fontSize="xs" color="whiteAlpha.700" display={{ base: 'none', sm: 'block' }} mt={0.5}>
-                Track every application, never miss a deadline
+              <Text fontSize="xs" color="whiteAlpha.600" display={{ base: 'none', sm: 'block' }} mt={0.5}>
+                your internship command center
               </Text>
             </Box>
           </HStack>
@@ -221,11 +230,11 @@ export function DashboardPage() {
               as={RouterLink}
               to="/profile"
               size="sm"
-              bg="whiteAlpha.200"
-              color="white"
-              border="1px solid"
-              borderColor="whiteAlpha.400"
-              _hover={{ bg: 'whiteAlpha.300' }}
+              bg="transparent"
+              color="accent.200"
+              border="1.5px solid"
+              borderColor="accent.400"
+              _hover={{ bg: 'whiteAlpha.100' }}
               leftIcon={<Text as="span" fontSize="md">👤</Text>}
             >
               Profile
