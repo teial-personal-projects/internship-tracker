@@ -105,14 +105,37 @@ export function ProfilePage() {
   }
 
   return (
-    <Box minH="100vh" bg="gray.50">
-      <Box bg="white" borderBottom="1px solid" borderColor="gray.200" px={6} py={4}>
+    <Box minH="100vh" bg="blue.50">
+      <Box
+        as="header"
+        boxShadow="lg"
+        style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2c5282 45%, #1a3254 100%)' }}
+        px={6}
+        py={4}
+      >
         <HStack justify="space-between" maxW="800px" mx="auto">
-          <Heading size="md" color="brand.700" fontStyle="italic">
-            Internship <Text as="span" fontWeight="normal">Tracker</Text>
-          </Heading>
-          <Button as={RouterLink} to="/" variant="ghost" size="sm" colorScheme="brand">
-            ← Back to Dashboard
+          <HStack spacing={2}>
+            <Text fontSize="2xl">💼</Text>
+            <Heading
+              size="md"
+              color="white"
+              style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700 }}
+            >
+              Internship Tracker
+            </Heading>
+          </HStack>
+          <Button
+            as={RouterLink}
+            to="/"
+            size="sm"
+            bg="whiteAlpha.200"
+            color="white"
+            border="1px solid"
+            borderColor="whiteAlpha.400"
+            _hover={{ bg: 'whiteAlpha.300' }}
+            leftIcon={<Text as="span" fontSize="sm">←</Text>}
+          >
+            Dashboard
           </Button>
         </HStack>
       </Box>
