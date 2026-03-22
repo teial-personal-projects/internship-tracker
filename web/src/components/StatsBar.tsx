@@ -10,14 +10,11 @@ export function StatsBar({ jobs }: Props) {
   const saved = jobs.filter((j) => j.status === 'not_started').length;
   const applied = jobs.filter((j) => j.status === 'applied').length;
   const interviewing = jobs.filter((j) => j.status === 'in_progress').length;
-  const confVisits = jobs.filter((j) => j.conference).length;
-
   const stats = [
     { label: 'TOTAL', value: total },
     { label: 'SAVED', value: saved },
     { label: 'APPLIED', value: applied },
     { label: 'INTERVIEWING', value: interviewing },
-    { label: 'CONF VISITS', value: confVisits },
   ];
 
   return (

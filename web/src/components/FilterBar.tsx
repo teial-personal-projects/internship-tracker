@@ -9,10 +9,10 @@ interface Props {
 const QUICK_FILTERS: { label: string; value: QuickFilter }[] = [
   { label: 'ACTIVE',     value: 'active' },
   { label: 'APPLIED',    value: 'applied' },
-  { label: 'CONFERENCE', value: 'conference' },
   { label: 'DUE SOON',   value: 'due_soon' },
   { label: 'STALE',      value: 'stale' },
   { label: 'ARCHIVED',   value: 'archived' },
+  { label: 'CONFERENCE', value: 'conference' },
   { label: 'ALL',        value: 'all' },
 ];
 
