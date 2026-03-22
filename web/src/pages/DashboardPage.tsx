@@ -18,7 +18,6 @@ import { Link as RouterLink } from 'react-router-dom';
 import type { Job, QuickFilter, CreateJobInput } from '@shared/types';
 import { useJobs, useCreateJob, useUpdateJob, useDeleteJob, useMarkApplied } from '@/hooks/useJobs';
 import { AlertBar } from '@/components/AlertBar';
-import { StatsBar } from '@/components/StatsBar';
 import { FilterBar } from '@/components/FilterBar';
 import { JobsTable } from '@/components/JobsTable';
 import { JobCardList } from '@/components/JobCardList';
@@ -129,6 +128,7 @@ export function DashboardPage() {
     const todayStr = today.toISOString().split('T')[0];
     const threeDaysStr = addDays(today, 3).toISOString().split('T')[0];
     if (qf === 'active') return jobs.filter((j) => ['not_started', 'in_progress', 'interviewing'].includes(j.status));
+    if (qf === 'not_started') return jobs.filter((j) => j.status === 'not_started');
     if (qf === 'applied') return jobs.filter((j) => !!j.applied_date);
     if (qf === 'conference') return jobs.filter((j) => !!j.conference);
     if (qf === 'due_soon') return jobs.filter(
@@ -208,12 +208,6 @@ export function DashboardPage() {
           {/* Alert bar */}
           {!isLoading && <AlertBar jobs={jobs} />}
 
-          {/* Stats bar */}
-          {isLoading
-            ? <Skeleton height="72px" borderRadius="lg" />
-            : <StatsBar jobs={jobs} />
-          }
-
           {/* Add button */}
           <Flex justify="flex-end">
             <Button colorScheme="brand" size="sm" onClick={openAdd} boxShadow="sm">
@@ -222,7 +216,7 @@ export function DashboardPage() {
           </Flex>
 
           {/* Filter bar */}
-          <FilterBar quickFilter={quickFilter} onQuickFilter={setQuickFilter} />
+          <FilterBar quickFilter={quickFilter} onQuickFilter={setQuickFilter} jobs={jobs} />
 
           {/* Error */}
           {error && (
