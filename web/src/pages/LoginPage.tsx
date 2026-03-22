@@ -364,12 +364,12 @@ export function LoginPage() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center px-4 py-10"
-      style={{ background: 'linear-gradient(160deg, #1e3a5f 0%, #2c5282 40%, #dbe6f5 70%, #f0f4f8 100%)' }}
+      style={{ background: 'linear-gradient(160deg, #3a7a5c 0%, #5a9e7e 40%, #d0e8dc 70%, #f0f7f3 100%)' }}
     >
       {/* Logo + tagline */}
       <div className="text-center mb-8">
         <div className="flex items-center justify-center gap-2 mb-2">
-          <span className="text-4xl">💼</span>
+          <span className="text-4xl">🚀</span>
           <span
             className="text-3xl font-bold text-white"
             style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
@@ -377,7 +377,7 @@ export function LoginPage() {
             Internship Tracker
           </span>
         </div>
-        <p className="text-sm text-blue-200">
+        <p className="text-sm text-green-200">
           Track every application, never miss a deadline
         </p>
       </div>
@@ -415,7 +415,7 @@ export function LoginPage() {
         <div className="flex items-center justify-center gap-4 px-8 pb-6 text-xs text-gray-400">
           <span>🔒 Secure</span>
           <span>· Free to use ·</span>
-          <span>💼 Career focused</span>
+          <span>🚀 Career focused</span>
         </div>
       </div>
     </div>
