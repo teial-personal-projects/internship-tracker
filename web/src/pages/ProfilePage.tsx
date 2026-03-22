@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -92,17 +92,15 @@ export function ProfilePage() {
   const [major, setMajor] = useState('');
   const [positions, setPositions] = useState<string[]>([]);
   const [locations, setLocations] = useState<string[]>([]);
-  const [initialized, setInitialized] = useState(false);
-
-  // Initialize form from loaded profile + auth metadata
-  if ((profile || user) && !initialized) {
+  // Initialize form once profile + user are available
+  useEffect(() => {
+    if (!profile && !user) return;
     setFirstName(user?.user_metadata?.first_name ?? '');
     setLastName(user?.user_metadata?.last_name ?? '');
     setMajor(profile?.major ?? '');
     setPositions(profile?.positions ?? []);
     setLocations(profile?.locations ?? []);
-    setInitialized(true);
-  }
+  }, [profile, user]);
 
   async function handleSave() {
     try {
