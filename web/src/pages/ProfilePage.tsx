@@ -8,8 +8,8 @@ import {
   HStack,
   Heading,
   Input,
+  SimpleGrid,
   Skeleton,
-  Spinner,
   Stack,
   Tag,
   TagCloseButton,
@@ -21,6 +21,10 @@ import {
 } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
+import { useAuth } from '@/hooks/useAuth';
+import { AppHeader } from '@/components/AppHeader';
+import { UserMenu } from '@/components/UserMenu';
+import { supabase } from '@/lib/supabaseClient';
 
 function TagInput({
   label,
@@ -79,25 +83,33 @@ function TagInput({
 
 export function ProfilePage() {
   const toast = useToast();
+  const { user } = useAuth();
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
 
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [major, setMajor] = useState('');
   const [positions, setPositions] = useState<string[]>([]);
   const [locations, setLocations] = useState<string[]>([]);
   const [initialized, setInitialized] = useState(false);
 
-  // Initialize form from loaded profile
-  if (profile && !initialized) {
-    setMajor(profile.major ?? '');
-    setPositions(profile.positions ?? []);
-    setLocations(profile.locations ?? []);
+  // Initialize form from loaded profile + auth metadata
+  if ((profile || user) && !initialized) {
+    setFirstName(user?.user_metadata?.first_name ?? '');
+    setLastName(user?.user_metadata?.last_name ?? '');
+    setMajor(profile?.major ?? '');
+    setPositions(profile?.positions ?? []);
+    setLocations(profile?.locations ?? []);
     setInitialized(true);
   }
 
   async function handleSave() {
     try {
-      await updateProfile.mutateAsync({ major: major || null, positions, locations });
+      await Promise.all([
+        updateProfile.mutateAsync({ major: major || null, positions, locations }),
+        supabase.auth.updateUser({ data: { first_name: firstName || null, last_name: lastName || null } }),
+      ]);
       toast({ title: 'Profile saved', status: 'success', duration: 2000 });
     } catch {
       toast({ title: 'Save failed', status: 'error', duration: 3000 });
@@ -105,40 +117,23 @@ export function ProfilePage() {
   }
 
   return (
-    <Box minH="100vh" bg="blue.50">
-      <Box
-        as="header"
-        boxShadow="lg"
-        style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2c5282 45%, #1a3254 100%)' }}
-        px={6}
-        py={4}
-      >
-        <HStack justify="space-between" maxW="800px" mx="auto">
-          <HStack spacing={2}>
-            <Text fontSize="2xl">💼</Text>
-            <Heading
-              size="md"
-              color="white"
-              style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700 }}
-            >
-              Internship Tracker
-            </Heading>
-          </HStack>
-          <Button
-            as={RouterLink}
-            to="/"
-            size="sm"
-            bg="whiteAlpha.200"
-            color="white"
-            border="1px solid"
-            borderColor="whiteAlpha.400"
-            _hover={{ bg: 'whiteAlpha.300' }}
-            leftIcon={<Text as="span" fontSize="sm">←</Text>}
-          >
-            Dashboard
-          </Button>
-        </HStack>
-      </Box>
+    <Box minH="100vh" bg="#F5F5F3">
+      <AppHeader>
+        <Button
+          as={RouterLink}
+          to="/"
+          size="sm"
+          bg="transparent"
+          color="accent.200"
+          border="1.5px solid"
+          borderColor="accent.400"
+          _hover={{ bg: 'whiteAlpha.100' }}
+          leftIcon={<Text as="span" fontSize="sm">←</Text>}
+        >
+          Dashboard
+        </Button>
+        <UserMenu />
+      </AppHeader>
 
       <Container maxW="800px" py={8}>
         <Box bg="white" borderRadius="xl" border="1px solid" borderColor="gray.200" p={8}>
@@ -154,6 +149,29 @@ export function ProfilePage() {
             </Stack>
           ) : (
             <Stack spacing={6}>
+              <SimpleGrid columns={2} spacing={4}>
+                <FormControl>
+                  <FormLabel fontSize="sm">First Name</FormLabel>
+                  <Input
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="Jane"
+                    focusBorderColor="brand.500"
+                    size="sm"
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel fontSize="sm">Last Name</FormLabel>
+                  <Input
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Smith"
+                    focusBorderColor="brand.500"
+                    size="sm"
+                  />
+                </FormControl>
+              </SimpleGrid>
+
               <FormControl>
                 <FormLabel fontSize="sm">Major</FormLabel>
                 <Input

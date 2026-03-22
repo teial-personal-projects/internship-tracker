@@ -3,8 +3,6 @@ import {
   Box,
   Button,
   Flex,
-  HStack,
-  Heading,
   Skeleton,
   Spinner,
   Text,
@@ -24,6 +22,7 @@ import { FilterBar } from '@/components/FilterBar';
 import { JobsTable } from '@/components/JobsTable';
 import { JobModal } from '@/components/JobModal';
 import { UserMenu } from '@/components/UserMenu';
+import { AppHeader } from '@/components/AppHeader';
 const TODAY = new Date().toISOString().split('T')[0];
 
 // ── Empty state placeholder ───────────────────────────────────────────────
@@ -178,71 +177,22 @@ export function DashboardPage() {
     <Flex minH="100vh" flexDir="column" bg="#F5F5F3">
 
       {/* ── Header ── */}
-      <Box
-        as="header"
-        position="sticky"
-        top={0}
-        zIndex={20}
-        boxShadow="lg"
-        bg="brand.800"
-      >
-        <Flex
-          align="center"
-          justify="space-between"
-          maxW="screen-2xl"
-          mx="auto"
-          px={{ base: 4, sm: 6 }}
-          py={{ base: 3, sm: 4 }}
-          gap={4}
+      <AppHeader>
+        <Button
+          as={RouterLink}
+          to="/profile"
+          size="sm"
+          bg="transparent"
+          color="accent.200"
+          border="1.5px solid"
+          borderColor="accent.400"
+          _hover={{ bg: 'whiteAlpha.100' }}
+          leftIcon={<Text as="span" fontSize="md">👤</Text>}
         >
-          {/* Logo */}
-          <HStack spacing={3}>
-            <Box
-              w={8}
-              h={8}
-              borderRadius="lg"
-              bg="accent.400"
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-            >
-              <Text fontSize="md" lineHeight={1}>🚀</Text>
-            </Box>
-            <Box>
-              <Heading
-                as="h1"
-                size="md"
-                color="white"
-                letterSpacing="tight"
-                lineHeight="tight"
-              >
-                LaunchPad
-              </Heading>
-              <Text fontSize="xs" color="whiteAlpha.600" display={{ base: 'none', sm: 'block' }} mt={0.5}>
-                your internship command center
-              </Text>
-            </Box>
-          </HStack>
-
-          {/* Right actions */}
-          <HStack spacing={3}>
-            <Button
-              as={RouterLink}
-              to="/profile"
-              size="sm"
-              bg="transparent"
-              color="accent.200"
-              border="1.5px solid"
-              borderColor="accent.400"
-              _hover={{ bg: 'whiteAlpha.100' }}
-              leftIcon={<Text as="span" fontSize="md">👤</Text>}
-            >
-              Profile
-            </Button>
-            <UserMenu />
-          </HStack>
-        </Flex>
-      </Box>
+          Profile
+        </Button>
+        <UserMenu />
+      </AppHeader>
 
       {/* ── Main content ── */}
       <Box as="main" flex={1} minW={0} p={{ base: 4, sm: 6 }} pb={24} display="flex" flexDir="column" gap={4}>

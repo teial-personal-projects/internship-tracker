@@ -188,6 +188,8 @@ function LoginForm({ onSwitch }: { onSwitch: () => void }) {
 
 function SignupForm({ onSwitch }: { onSwitch: () => void }) {
   const { signUp } = useAuth();
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -203,11 +205,12 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
     e.preventDefault();
     setError(null);
     const pwdErr = validatePassword(password);
+    if (!firstName.trim() || !lastName.trim()) { setError('First and last name are required'); return; }
     if (pwdErr) { setError(pwdErr); return; }
     if (password !== confirm) { setError('Passwords do not match'); return; }
     setLoading(true);
     try {
-      await signUp(email, password);
+      await signUp(email, password, firstName.trim(), lastName.trim());
       setMessage('Check your email to confirm your account.');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to create account');
@@ -245,6 +248,35 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
 
       <form onSubmit={handleSubmit}>
         <Stack spacing={4}>
+          <Flex gap={3}>
+            <FormControl isRequired>
+              <FormLabel fontSize="xs" fontWeight="semibold" color="gray.500" textTransform="uppercase" letterSpacing="wider" mb={1}>
+                First Name
+              </FormLabel>
+              <Input
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="Jane"
+                disabled={loading}
+                {...inputStyle}
+                pl={3}
+              />
+            </FormControl>
+            <FormControl isRequired>
+              <FormLabel fontSize="xs" fontWeight="semibold" color="gray.500" textTransform="uppercase" letterSpacing="wider" mb={1}>
+                Last Name
+              </FormLabel>
+              <Input
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Smith"
+                disabled={loading}
+                {...inputStyle}
+                pl={3}
+              />
+            </FormControl>
+          </Flex>
+
           <FormControl isRequired>
             <FormLabel fontSize="xs" fontWeight="semibold" color="gray.500" textTransform="uppercase" letterSpacing="wider" mb={1}>
               Email Address

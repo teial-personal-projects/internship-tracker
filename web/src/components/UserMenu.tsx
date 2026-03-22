@@ -33,14 +33,19 @@ export function UserMenu() {
 
   if (!user) return null;
 
-  const initial = user.email?.[0]?.toUpperCase() ?? 'U';
+  const firstName = user.user_metadata?.first_name as string | undefined;
+  const lastName = user.user_metadata?.last_name as string | undefined;
+  const displayName = firstName ? `${firstName}${lastName ? ` ${lastName}` : ''}` : user.email;
+  const initial = (firstName?.[0] ?? user.email?.[0] ?? 'U').toUpperCase();
 
   return (
     <Box position="relative" ref={ref}>
       {/* Trigger button */}
       <Button
         variant="outline"
-        size="sm"
+        size="md"
+        h="auto"
+        py={1.5}
         borderColor="gray.300"
         bg="white"
         color="gray.700"
@@ -66,7 +71,6 @@ export function UserMenu() {
           {initial}
         </Flex>
 
-        {/* Email — hidden on small screens */}
         <Text
           display={{ base: 'none', sm: 'block' }}
           maxW="150px"
@@ -75,7 +79,7 @@ export function UserMenu() {
           whiteSpace="nowrap"
           fontSize="sm"
         >
-          {user.email}
+          {displayName}
         </Text>
 
         {/* Chevron */}
