@@ -23,7 +23,7 @@ const FILTERS: FilterDef[] = [
   {
     label: 'Active',
     value: 'active',
-    getCount: (jobs) => jobs.filter((j) => j.status === 'not_started').length,
+    getCount: (jobs) => jobs.filter((j) => ['not_started', 'in_progress', 'interviewing'].includes(j.status)).length,
     badgeBg: 'whiteAlpha.300',
     badgeColor: 'white',
   },
@@ -92,7 +92,13 @@ const FILTERS: FilterDef[] = [
 
 export function FilterBar({ quickFilter, onQuickFilter, jobs }: Props) {
   return (
-    <Box mb={4} overflowX="auto" sx={{ '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none' }}>
+    <Box
+      mb={2}
+      mx={{ base: -3, sm: -4 }}
+      px={{ base: 3, sm: 4 }}
+      overflowX="auto"
+      sx={{ '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none' }}
+    >
       <HStack spacing={2} flexWrap="nowrap" minW="max-content" pb={1}>
         {FILTERS.map(({ label, value, getCount, badgeBg, badgeColor }) => {
           const isActive = quickFilter === value;
