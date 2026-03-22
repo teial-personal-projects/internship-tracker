@@ -12,6 +12,7 @@ const minYearValues = [
 const jobStatusValues = [
   'not_started',
   'in_progress',
+  'interviewing',
   'offered',
   'rejected',
   'underqualified',

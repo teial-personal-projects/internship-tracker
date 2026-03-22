@@ -3,7 +3,7 @@
   "private": true,
   "workspaces": ["shared", "api", "web"],
   "scripts": {
-    "dev": "concurrently \"npm run dev -w api\" \"npm run dev -w web\"",
+    "dev": "concurrently \"npm run dev -w shared\" \"npm run dev -w api\" \"npm run dev -w web\"",
     "build": "npm run build -w shared && npm run build -w api && npm run build -w web",
     "type-check": "npm run type-check -w shared && npm run type-check -w api && npm run type-check -w web"
   },

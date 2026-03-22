@@ -79,7 +79,8 @@ export const STATUS_COLORS: Record<string, { bg: string; color: string; dot: str
   rejected:         { bg: '#FCEBEB', color: '#791F1F', dot: '#E24B4A' },
   underqualified:   { bg: '#FAEEDA', color: '#633806', dot: '#BA7517' },
   missed_deadline:  { bg: '#FCEBEB', color: '#791F1F', dot: '#E24B4A' },
-  other:            { bg: '#EEEDFE', color: '#3C3489', dot: '#7F77DD' },
+  interviewing:     { bg: '#EEEDFE', color: '#3C3489', dot: '#7F77DD' },
+  other:            { bg: '#F2EBE3', color: '#5C3D1E', dot: '#9C6B3C' },
   archive:          { bg: '#F1EFE8', color: '#5F5E5A', dot: '#B4B2A9' },
 };
 
@@ -91,6 +92,7 @@ export const STATUS_LABELS: Record<string, string> = {
   underqualified: 'Underqualified',
   missed_deadline: 'Missed Deadline',
   applied: 'Applied',
+  interviewing: 'Interviewing',
   archive: 'Archive',
   other: 'Other',
 };

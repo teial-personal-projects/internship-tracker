@@ -13,6 +13,7 @@ export type MinYear =
 export type JobStatus =
   | 'not_started'
   | 'in_progress'
+  | 'interviewing'
   | 'offered'
   | 'rejected'
   | 'underqualified'
@@ -24,6 +25,7 @@ export type JobStatus =
 export const STATUS_CYCLE: JobStatus[] = [
   'not_started',
   'in_progress',
+  'interviewing',
   'applied',
   'offered',
   'rejected',

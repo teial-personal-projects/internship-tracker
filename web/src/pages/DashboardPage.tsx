@@ -126,7 +126,7 @@ export function DashboardPage() {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
     const threeDaysStr = addDays(today, 3).toISOString().split('T')[0];
-    if (qf === 'active') return jobs.filter((j) => j.status === 'not_started');
+    if (qf === 'active') return jobs.filter((j) => ['not_started', 'in_progress', 'interviewing'].includes(j.status));
     if (qf === 'applied') return jobs.filter((j) => !!j.applied_date);
     if (qf === 'conference') return jobs.filter((j) => !!j.conference);
     if (qf === 'due_soon') return jobs.filter(
