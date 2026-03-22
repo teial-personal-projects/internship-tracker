@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 
 export function AppHeader({ children }: { children?: ReactNode }) {
   return (
     <header className="sticky top-0 z-20 shadow-lg bg-brand-800">
       <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 gap-4">
         {/* Logo */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-accent-400 flex items-center justify-center flex-shrink-0">
+        <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
+          <div className="w-10 h-10 rounded-lg bg-accent-400 flex items-center justify-center shrink-0">
             <span className="text-xl leading-none">🚀</span>
           </div>
           <div>
@@ -17,7 +18,7 @@ export function AppHeader({ children }: { children?: ReactNode }) {
               your internship command center
             </p>
           </div>
-        </div>
+        </Link>
 
         {/* Right slot */}
         {children && (
