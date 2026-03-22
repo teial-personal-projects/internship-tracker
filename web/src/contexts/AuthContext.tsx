@@ -31,13 +31,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Error getting session:', error);
         setError(error.message);
       }
-      setUser(session?.user ?? null);
+      setUser(session?.user?.email_confirmed_at ? session.user : null);
       setLoading(false);
     });
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const confirmedUser = session?.user?.email_confirmed_at ? session.user : null;
+      setUser(confirmedUser);
       setLoading(false);
     });
 
