@@ -1,4 +1,9 @@
-import { Tr, Td, HStack, Button, IconButton, Link, Text, Tooltip } from '@chakra-ui/react';
+import { useRef } from 'react';
+import {
+  Tr, Td, HStack, Button, IconButton, Link, Text, Tooltip,
+  AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader,
+  AlertDialogContent, AlertDialogOverlay, useDisclosure,
+} from '@chakra-ui/react';
 import { addDays, isWithinInterval, parseISO, subDays } from 'date-fns';
 import type { Job } from '@shared/types';
 import { StatusBadge } from './StatusBadge';
@@ -52,6 +57,17 @@ function formatDate(d: string | null | undefined): string {
   return `${month}/${day}/${year?.slice(2)}`;
 }
 
+function TrashIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6M14 11v6" />
+      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+    </svg>
+  );
+}
+
 export function JobRow({
   job,
   colOrder,
@@ -62,6 +78,8 @@ export function JobRow({
   isDeleting,
 }: Props) {
   const bg = getRowBg(job);
+  const { isOpen: isConfirmOpen, onOpen: onConfirmOpen, onClose: onConfirmClose } = useDisclosure();
+  const cancelRef = useRef<HTMLButtonElement>(null);
 
   function renderCell(key: ColKey) {
     switch (key) {
@@ -153,12 +171,12 @@ export function JobRow({
               )}
               <IconButton
                 aria-label="Delete job"
-                icon={<span>×</span>}
+                icon={<TrashIcon />}
                 size="xs"
                 variant="ghost"
                 colorScheme="red"
                 isLoading={isDeleting}
-                onClick={() => onDelete(job.id)}
+                onClick={onConfirmOpen}
               />
             </HStack>
           </Td>
@@ -167,8 +185,32 @@ export function JobRow({
   }
 
   return (
-    <Tr bg={bg} _hover={{ bg: bg ?? 'gray.50' }} transition="background 0.15s">
-      {colOrder.map(key => renderCell(key))}
-    </Tr>
+    <>
+      <Tr bg={bg} _hover={{ bg: bg ?? 'gray.50' }} transition="background 0.15s">
+        {colOrder.map(key => renderCell(key))}
+      </Tr>
+
+      <AlertDialog isOpen={isConfirmOpen} leastDestructiveRef={cancelRef} onClose={onConfirmClose} isCentered>
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="md" fontWeight="bold">Delete Job</AlertDialogHeader>
+            <AlertDialogBody fontSize="sm">
+              Delete <strong>{job.company}</strong>{job.title !== 'N/A' ? ` — ${job.title}` : ''}? This cannot be undone.
+            </AlertDialogBody>
+            <AlertDialogFooter gap={2}>
+              <Button ref={cancelRef} size="sm" variant="ghost" onClick={onConfirmClose}>Cancel</Button>
+              <Button
+                size="sm"
+                colorScheme="red"
+                isLoading={isDeleting}
+                onClick={() => { onConfirmClose(); onDelete(job.id); }}
+              >
+                Delete
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
+    </>
   );
 }
