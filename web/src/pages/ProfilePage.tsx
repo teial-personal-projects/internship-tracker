@@ -51,7 +51,7 @@ function TagInput({
 
   return (
     <FormControl>
-      <FormLabel fontSize="sm">{label}</FormLabel>
+      <FormLabel fontSize="xs" fontWeight="semibold" color="brand.700" textTransform="uppercase" letterSpacing="wider">{label}</FormLabel>
       <Wrap mb={2}>
         {values.map((v) => (
           <WrapItem key={v}>
@@ -136,77 +136,86 @@ export function ProfilePage() {
       </AppHeader>
 
       <Container maxW="800px" py={8}>
-        <Box bg="white" borderRadius="xl" border="1px solid" borderColor="gray.200" p={8}>
-          <Heading size="md" color="brand.700" mb={6}>
-            User Profile
-          </Heading>
+        <Box bg="white" borderRadius="xl" border="1px solid" borderColor="brand.100" overflow="hidden">
+          {/* Card header */}
+          <Box bg="brand.50" borderBottom="2px solid" borderColor="brand.200" px={8} py={4}>
+            <Heading size="md" color="brand.800">
+              User Profile
+            </Heading>
+          </Box>
 
-          {isLoading ? (
-            <Stack spacing={4}>
-              <Skeleton height="40px" />
-              <Skeleton height="80px" />
-              <Skeleton height="80px" />
-            </Stack>
-          ) : (
-            <Stack spacing={6}>
-              <SimpleGrid columns={2} spacing={4}>
+          <Box px={8} py={6}>
+            {isLoading ? (
+              <Stack spacing={4}>
+                <Skeleton height="40px" />
+                <Skeleton height="80px" />
+                <Skeleton height="80px" />
+              </Stack>
+            ) : (
+              <Stack spacing={6}>
+                <SimpleGrid columns={2} spacing={4}>
+                  <FormControl>
+                    <FormLabel fontSize="xs" fontWeight="semibold" color="brand.700" textTransform="uppercase" letterSpacing="wider">First Name</FormLabel>
+                    <Input
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="Jane"
+                      focusBorderColor="brand.500"
+                      size="sm"
+                      borderRadius="md"
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel fontSize="xs" fontWeight="semibold" color="brand.700" textTransform="uppercase" letterSpacing="wider">Last Name</FormLabel>
+                    <Input
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Smith"
+                      focusBorderColor="brand.500"
+                      size="sm"
+                      borderRadius="md"
+                    />
+                  </FormControl>
+                </SimpleGrid>
+
                 <FormControl>
-                  <FormLabel fontSize="sm">First Name</FormLabel>
+                  <FormLabel fontSize="xs" fontWeight="semibold" color="brand.700" textTransform="uppercase" letterSpacing="wider">Major</FormLabel>
                   <Input
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Jane"
+                    value={major}
+                    onChange={(e) => setMajor(e.target.value)}
+                    placeholder="e.g. Computer Science"
                     focusBorderColor="brand.500"
                     size="sm"
+                    borderRadius="md"
                   />
                 </FormControl>
-                <FormControl>
-                  <FormLabel fontSize="sm">Last Name</FormLabel>
-                  <Input
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Smith"
-                    focusBorderColor="brand.500"
-                    size="sm"
-                  />
-                </FormControl>
-              </SimpleGrid>
 
-              <FormControl>
-                <FormLabel fontSize="sm">Major</FormLabel>
-                <Input
-                  value={major}
-                  onChange={(e) => setMajor(e.target.value)}
-                  placeholder="e.g. Computer Science"
-                  focusBorderColor="brand.500"
-                  size="sm"
+                <TagInput
+                  label="Positions Looking For"
+                  values={positions}
+                  onChange={setPositions}
                 />
-              </FormControl>
 
-              <TagInput
-                label="Positions Looking For"
-                values={positions}
-                onChange={setPositions}
-              />
+                <TagInput
+                  label="Preferred Locations"
+                  values={locations}
+                  onChange={setLocations}
+                />
 
-              <TagInput
-                label="Preferred Locations"
-                values={locations}
-                onChange={setLocations}
-              />
-
-              <HStack justify="flex-end">
-                <Button
-                  colorScheme="brand"
-                  onClick={handleSave}
-                  isLoading={updateProfile.isPending}
-                  size="sm"
-                >
-                  Save Profile
-                </Button>
-              </HStack>
-            </Stack>
-          )}
+                <HStack justify="flex-end" pt={2} borderTop="1px solid" borderColor="gray.100">
+                  <Button
+                    colorScheme="brand"
+                    onClick={handleSave}
+                    isLoading={updateProfile.isPending}
+                    size="sm"
+                    px={6}
+                  >
+                    Save Profile
+                  </Button>
+                </HStack>
+              </Stack>
+            )}
+          </Box>
         </Box>
       </Container>
     </Box>
