@@ -198,7 +198,7 @@ export function DashboardPage() {
       </AppHeader>
 
       {/* ── Main content ── */}
-      <Box as="main" flex={1} minW={0} p={{ base: 4, sm: 6 }} pb={24} display="flex" flexDir="column" gap={4}>
+      <Box as="main" flex={1} minW={0} p={{ base: 3, sm: 4 }} pb={24} display="flex" flexDir="column" gap={2}>
 
           {/* Today date */}
           <Text fontSize="xs" color="gray.500" fontWeight="medium">

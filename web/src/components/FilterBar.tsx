@@ -111,11 +111,11 @@ export function FilterBar({ quickFilter, onQuickFilter, jobs }: Props) {
               flexShrink={0}
               bg={isActive ? 'brand.800' : 'white'}
               color={isActive ? 'white' : 'gray.600'}
-              border="0.5px solid"
-              borderColor={isActive ? 'brand.800' : 'gray.200'}
+              border="1.5px solid"
+              borderColor={isActive ? 'brand.800' : 'gray.400'}
               _hover={{
                 bg: isActive ? 'brand.700' : 'gray.50',
-                borderColor: isActive ? 'brand.700' : 'gray.300',
+                borderColor: isActive ? 'brand.700' : 'gray.500',
               }}
               _active={{ transform: 'scale(0.97)' }}
               rightIcon={
@@ -125,8 +125,8 @@ export function FilterBar({ quickFilter, onQuickFilter, jobs }: Props) {
                     px={1.5}
                     py={0}
                     borderRadius="full"
-                    fontSize="10px"
-                    fontWeight="600"
+                    fontSize="12px"
+                    fontWeight="700"
                     bg={isActive ? 'whiteAlpha.300' : badgeBg}
                     color={isActive ? 'white' : badgeColor}
                     border="none"
