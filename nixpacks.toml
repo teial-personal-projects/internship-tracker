@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.build]
+cmds = ["npm run build -w shared && npm run build -w api"]
+
+[start]
+cmd = "npm start -w api"

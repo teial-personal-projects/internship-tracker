@@ -1,10 +1,6 @@
-import DOMPurify from 'isomorphic-dompurify';
-
-const TEXT_ONLY = { ALLOWED_TAGS: [] as string[], ALLOWED_ATTR: [] as string[] };
-
 function sanitizeText(input: string | null | undefined): string | null {
   if (input == null || input === '') return null;
-  const clean = DOMPurify.sanitize(input.trim(), TEXT_ONLY);
+  const clean = input.trim().replace(/<[^>]*>/g, '');
   return clean || null;
 }
 
