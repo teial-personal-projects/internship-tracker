@@ -68,16 +68,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       options: { data: { first_name: firstName, last_name: lastName } },
     });
     if (error) { setError(error.message); throw error; }
-
-    // Explicitly fetch and update session after successful sign-up
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (sessionData?.session?.user) {
-      setUser(sessionData.session.user);
-      setLoading(false);
-    } else if (data?.user) {
-      setUser(data.user);
-      setLoading(false);
-    }
   };
 
   const signOut = async () => {
