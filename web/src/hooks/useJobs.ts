@@ -1,17 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as jobsApi from '@/api/jobs.api';
-import type { FilterTab, UpdateJobInput, CreateJobInput, JobStatus } from '@shared/types';
+import type { UpdateJobInput, CreateJobInput, JobStatus } from '@shared/types';
 import { STATUS_CYCLE } from '@shared/types';
 
 export const jobKeys = {
   all: ['jobs'] as const,
-  list: (tab: FilterTab) => ['jobs', 'list', tab] as const,
+  list: () => ['jobs', 'list'] as const,
 };
 
-export function useJobs(tab: FilterTab) {
+export function useJobs() {
   return useQuery({
-    queryKey: jobKeys.list(tab),
-    queryFn: () => jobsApi.getJobs(tab),
+    queryKey: jobKeys.list(),
+    queryFn: () => jobsApi.getJobs(),
     staleTime: 30_000,
   });
 }

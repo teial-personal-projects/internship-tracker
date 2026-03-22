@@ -7,9 +7,6 @@ import {
   Heading,
   Skeleton,
   Spinner,
-  Tab,
-  TabList,
-  Tabs,
   Text,
   useDisclosure,
   useToast,
@@ -17,18 +14,16 @@ import {
   AlertIcon,
   Center,
 } from '@chakra-ui/react';
-import { addDays, isWithinInterval, parseISO, subDays } from 'date-fns';
+import { addDays, parseISO, subDays } from 'date-fns';
 import { Link as RouterLink } from 'react-router-dom';
-import type { FilterTab, Job, QuickFilter, CreateJobInput } from '@shared/types';
-import { useJobs, useCreateJob, useUpdateJob, useDeleteJob, useCycleStatus, useMarkApplied } from '@/hooks/useJobs';
+import type { Job, QuickFilter, CreateJobInput } from '@shared/types';
+import { useJobs, useCreateJob, useUpdateJob, useDeleteJob, useMarkApplied } from '@/hooks/useJobs';
 import { AlertBar } from '@/components/AlertBar';
 import { StatsBar } from '@/components/StatsBar';
 import { FilterBar } from '@/components/FilterBar';
 import { JobsTable } from '@/components/JobsTable';
 import { JobModal } from '@/components/JobModal';
 import { UserMenu } from '@/components/UserMenu';
-import type { JobStatus } from '@shared/types';
-
 const TODAY = new Date().toISOString().split('T')[0];
 
 // ── Empty state placeholder ───────────────────────────────────────────────
@@ -111,34 +106,32 @@ function TablePlaceholder({ onAdd }: { onAdd: () => void }) {
 export function DashboardPage() {
   const toast = useToast();
 
-  const [tabIndex, setTabIndex] = useState(0);
-  const tab: FilterTab = tabIndex === 0 ? 'active' : 'applied_archived';
-  const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>('active');
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [editingJob, setEditingJob] = useState<Job | null>(null);
 
-  const [cyclingId, setCyclingId] = useState<string | null>(null);
   const [applyingId, setApplyingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const { data: jobs = [], isLoading, error } = useJobs(tab);
+  const { data: jobs = [], isLoading, error } = useJobs();
   const createJob = useCreateJob();
   const updateJob = useUpdateJob();
   const deleteJob = useDeleteJob();
-  const cycleStatus = useCycleStatus();
   const markApplied = useMarkApplied();
 
   const filteredJobs = applyFilter(jobs, quickFilter);
 
   function applyFilter(jobs: Job[], qf: QuickFilter): Job[] {
     const today = new Date();
-    if (qf === 'saved') return jobs.filter((j) => j.status === 'not_started');
-    if (qf === 'interviewing') return jobs.filter((j) => j.status === 'in_progress');
+    const todayStr = today.toISOString().split('T')[0];
+    const threeDaysStr = addDays(today, 3).toISOString().split('T')[0];
+    if (qf === 'active') return jobs.filter((j) => j.status === 'not_started');
+    if (qf === 'applied') return jobs.filter((j) => j.status === 'applied');
     if (qf === 'conference') return jobs.filter((j) => !!j.conference);
     if (qf === 'due_soon') return jobs.filter(
       (j) => j.deadline && !['applied', 'archive'].includes(j.status) &&
-        isWithinInterval(parseISO(j.deadline), { start: today, end: addDays(today, 3) })
+        j.deadline >= todayStr && j.deadline <= threeDaysStr
     );
     if (qf === 'stale') return jobs.filter(
       (j) => ['not_started', 'in_progress'].includes(j.status) && parseISO(j.added) <= subDays(today, 7)
@@ -170,13 +163,6 @@ export function DashboardPage() {
     try { await deleteJob.mutateAsync(id); toast({ title: 'Job deleted', status: 'info', duration: 2000 }); }
     catch { toast({ title: 'Delete failed', status: 'error', duration: 3000 }); }
     finally { setDeletingId(null); }
-  }
-
-  async function handleCycleStatus(id: string, currentStatus: JobStatus) {
-    setCyclingId(id);
-    try { await cycleStatus.mutateAsync({ id, currentStatus }); }
-    catch { toast({ title: 'Status update failed', status: 'error', duration: 3000 }); }
-    finally { setCyclingId(null); }
   }
 
   async function handleMarkApplied(id: string) {
@@ -266,47 +252,8 @@ export function DashboardPage() {
             : <StatsBar jobs={jobs} />
           }
 
-          {/* Tabs + Add button row */}
-          <Flex align="center" justify="space-between" wrap="wrap" gap={3}>
-            <Tabs
-              index={tabIndex}
-              onChange={(i) => { setTabIndex(i); setQuickFilter('all'); }}
-              colorScheme="brand"
-              variant="soft-rounded"
-              size="sm"
-            >
-              <TabList bg="white" borderRadius="full" p={1} border="1px solid" borderColor="gray.200" boxShadow="sm">
-                <Tab
-                  borderRadius="full"
-                  fontWeight="semibold"
-                  fontSize="sm"
-                  px={5}
-                  _selected={{ bg: 'brand.500', color: 'white' }}
-                >
-                  Active
-                  {!isLoading && tabIndex === 0 && (
-                    <Box as="span" ml={2} bg="brand.100" color="brand.700" borderRadius="full" px={2} py={0.5} fontSize="10px" fontWeight="bold">
-                      {jobs.length}
-                    </Box>
-                  )}
-                </Tab>
-                <Tab
-                  borderRadius="full"
-                  fontWeight="semibold"
-                  fontSize="sm"
-                  px={5}
-                  _selected={{ bg: 'brand.500', color: 'white' }}
-                >
-                  Applied / Archived
-                  {!isLoading && tabIndex === 1 && (
-                    <Box as="span" ml={2} bg="brand.100" color="brand.700" borderRadius="full" px={2} py={0.5} fontSize="10px" fontWeight="bold">
-                      {jobs.length}
-                    </Box>
-                  )}
-                </Tab>
-              </TabList>
-            </Tabs>
-
+          {/* Add button */}
+          <Flex justify="flex-end">
             <Button colorScheme="brand" size="sm" onClick={openAdd} boxShadow="sm">
               + Add Job
             </Button>

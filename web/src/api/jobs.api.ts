@@ -1,10 +1,8 @@
 import { apiClient } from './client';
-import type { Job, CreateJobInput, UpdateJobInput, FilterTab } from '@shared/types';
+import type { Job, CreateJobInput, UpdateJobInput } from '@shared/types';
 
-export async function getJobs(tab: FilterTab): Promise<Job[]> {
-  const { data } = await apiClient.get<{ data: Job[] }>('/jobs', {
-    params: { tab },
-  });
+export async function getJobs(): Promise<Job[]> {
+  const { data } = await apiClient.get<{ data: Job[] }>('/jobs');
   return data.data;
 }
 

@@ -112,8 +112,8 @@ export type FilterTab = 'active' | 'applied_archived';
 
 export type QuickFilter =
   | 'all'
-  | 'saved'
-  | 'interviewing'
+  | 'active'
+  | 'applied'
   | 'conference'
   | 'due_soon'
   | 'stale'

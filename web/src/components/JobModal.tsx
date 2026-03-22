@@ -16,6 +16,7 @@ import {
   SimpleGrid,
   Stack,
 } from '@chakra-ui/react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import type { Job } from '@shared/types';
 import { MIN_YEAR_OPTIONS, STATUS_CYCLE } from '@shared/types';
@@ -47,6 +48,16 @@ export function JobModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, 
       ...defaultValues,
     } as Partial<FormValues>,
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      reset({
+        added: TODAY,
+        status: 'not_started',
+        ...defaultValues,
+      } as Partial<FormValues>);
+    }
+  }, [isOpen, defaultValues]);
 
   function handleClose() {
     reset();

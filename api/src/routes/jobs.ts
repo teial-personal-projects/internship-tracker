@@ -8,22 +8,14 @@ import type { Request } from 'express';
 
 const router = Router();
 
-// GET /api/jobs?tab=active|applied_archived
+// GET /api/jobs
 router.get('/', requireAuth, async (req: Request, res, next) => {
   try {
     const db = createUserClient(req);
-    const { tab } = req.query as { tab?: string };
-
-    let query = db.from('jobs').select('*');
-
-    if (tab === 'applied_archived') {
-      query = query.in('status', ['applied', 'archive']);
-    } else {
-      // Default: active tab
-      query = query.not('status', 'in', '("applied","archive")');
-    }
-
-    const { data, error } = await query.order('added', { ascending: false });
+    const { data, error } = await db
+      .from('jobs')
+      .select('*')
+      .order('added', { ascending: false });
     if (error) {
       res.status(500).json({ error: error.message });
       return;

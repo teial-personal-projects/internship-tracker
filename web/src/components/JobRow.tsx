@@ -36,6 +36,16 @@ function getRowBg(job: Job): string | undefined {
   return undefined;
 }
 
+function safeUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const { protocol } = new URL(url);
+    return protocol === 'http:' || protocol === 'https:' ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 function formatDate(d: string | null | undefined): string {
   if (!d) return '—';
   const [year, month, day] = d.split('-');
@@ -88,30 +98,30 @@ export function JobRow({
         );
       case 'conference':
         return <Td key={key} fontSize="sm" color="gray.600">{job.conference ?? '—'}</Td>;
-      case 'job_link':
+      case 'job_link': {
+        const url = safeUrl(job.job_link);
         return (
           <Td key={key} fontSize="sm">
-            {job.job_link
-              ? <Link href={job.job_link} isExternal color="brand.500" fontSize="xs">Job</Link>
-              : '—'}
+            {url ? <Link href={url} isExternal color="brand.500" fontSize="xs">Job</Link> : '—'}
           </Td>
         );
-      case 'app_link':
+      }
+      case 'app_link': {
+        const url = safeUrl(job.app_link);
         return (
           <Td key={key} fontSize="sm">
-            {job.app_link
-              ? <Link href={job.app_link} isExternal color="brand.500" fontSize="xs">Apply</Link>
-              : '—'}
+            {url ? <Link href={url} isExternal color="brand.500" fontSize="xs">Apply</Link> : '—'}
           </Td>
         );
-      case 'cover_letter':
+      }
+      case 'cover_letter': {
+        const url = safeUrl(job.cover_letter);
         return (
           <Td key={key} fontSize="sm">
-            {job.cover_letter
-              ? <Link href={job.cover_letter} isExternal color="brand.500" fontSize="xs">Cover Letter</Link>
-              : '—'}
+            {url ? <Link href={url} isExternal color="brand.500" fontSize="xs">Cover Letter</Link> : '—'}
           </Td>
         );
+      }
       case 'pay':
         return <Td key={key} fontSize="sm" color="gray.600">{job.pay ?? '—'}</Td>;
       case 'notes':
