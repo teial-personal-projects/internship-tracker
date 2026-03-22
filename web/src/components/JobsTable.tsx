@@ -162,15 +162,21 @@ export function JobsTable({
                   borderBottom="2px solid"
                   borderColor={isDropTarget ? 'brand.400' : 'brand.200'}
                   userSelect="none"
-                  draggable
-                  cursor={canSort ? 'pointer' : 'grab'}
-                  _hover={{ bg: 'brand.100' }}
+                  draggable={key !== 'actions'}
+                  cursor={canSort ? 'pointer' : key === 'actions' ? 'default' : 'grab'}
+                  _hover={{ bg: key === 'actions' ? 'brand.50' : 'brand.100' }}
                   transition="background 0.1s, border-color 0.1s"
                   onDragStart={() => handleDragStart(key)}
                   onDragOver={e => handleDragOver(e, key)}
                   onDrop={() => handleDrop(key)}
                   onDragEnd={handleDragEnd}
                   onClick={() => handleSort(key)}
+                  {...(key === 'actions' ? {
+                    position: 'sticky',
+                    right: 0,
+                    zIndex: 1,
+                    boxShadow: '-2px 0 6px rgba(0,0,0,0.06)',
+                  } : {})}
                 >
                   {col.label}
                   {isSorted && <Text as="span" ml={1}>{sortDir === 'asc' ? '▲' : '▼'}</Text>}

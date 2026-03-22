@@ -154,7 +154,7 @@ export function JobRow({
         );
       case 'actions':
         return (
-          <Td key={key}>
+          <Td key={key} position="sticky" right={0} bg={bg ?? 'white'} boxShadow="-2px 0 6px rgba(0,0,0,0.06)" zIndex={1}>
             <HStack spacing={1} justify="flex-end">
               <Button size="xs" variant="outline" colorScheme="brand" onClick={() => onEdit(job)}>
                 Edit
