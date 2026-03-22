@@ -76,7 +76,7 @@ export function JobModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, 
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size="2xl" scrollBehavior="inside">
+    <Modal isOpen={isOpen} onClose={handleClose} size={{ base: 'full', sm: '2xl' }} scrollBehavior="inside">
       <ModalOverlay backdropFilter="blur(2px)" />
       <ModalContent borderRadius="xl" overflow="hidden" border="1px solid" borderColor="brand.100">
         <ModalHeader
@@ -97,7 +97,7 @@ export function JobModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, 
             <Stack spacing={5} divider={<Divider borderColor="brand.100" my={-1} />}>
 
               {/* Row 1: Company + Title */}
-              <SimpleGrid columns={2} spacing={4}>
+              <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
                 <FormControl isRequired isInvalid={!!errors.company}>
                   <FormLabel {...labelProps}>Company</FormLabel>
                   <Input {...register('company', { required: 'Required' })} focusBorderColor="brand.500" size="sm" borderRadius="md" />
@@ -111,7 +111,7 @@ export function JobModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, 
               </SimpleGrid>
 
               {/* Row 2: Industry + Location + Pay */}
-              <SimpleGrid columns={3} spacing={4}>
+              <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={4}>
                 <FormControl>
                   <FormLabel {...labelProps}>Industry</FormLabel>
                   <Input {...register('industry')} focusBorderColor="brand.500" size="sm" borderRadius="md" />
@@ -127,7 +127,7 @@ export function JobModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, 
               </SimpleGrid>
 
               {/* Row 3: Status + Min Year */}
-              <SimpleGrid columns={2} spacing={4}>
+              <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
                 <FormControl>
                   <FormLabel {...labelProps}>Status</FormLabel>
                   <Select {...register('status')} focusBorderColor="brand.500" size="sm" borderRadius="md">
@@ -148,7 +148,7 @@ export function JobModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, 
               </SimpleGrid>
 
               {/* Row 4: Dates */}
-              <SimpleGrid columns={3} spacing={4}>
+              <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={4}>
                 <FormControl>
                   <FormLabel {...labelProps}>Added</FormLabel>
                   <Input type="date" {...register('added')} focusBorderColor="brand.500" size="sm" borderRadius="md" />
@@ -165,7 +165,7 @@ export function JobModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, 
 
               {/* Row 5: Links */}
               <Stack spacing={3}>
-                <SimpleGrid columns={2} spacing={4}>
+                <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
                   <FormControl>
                     <FormLabel {...labelProps}>Job Link</FormLabel>
                     <Input type="url" {...register('job_link')} focusBorderColor="brand.500" size="sm" borderRadius="md" placeholder="https://" />
