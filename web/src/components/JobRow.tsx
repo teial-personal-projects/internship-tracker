@@ -166,7 +166,7 @@ export function JobRow({
                   isLoading={isApplying}
                   onClick={() => onMarkApplied(job.id)}
                 >
-                  → Applied
+                  Mark Applied
                 </Button>
               )}
               <IconButton

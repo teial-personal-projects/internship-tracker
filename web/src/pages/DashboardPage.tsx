@@ -6,6 +6,7 @@ import {
   Skeleton,
   Spinner,
   Text,
+  useBreakpointValue,
   useDisclosure,
   useToast,
   Alert,
@@ -20,6 +21,7 @@ import { AlertBar } from '@/components/AlertBar';
 import { StatsBar } from '@/components/StatsBar';
 import { FilterBar } from '@/components/FilterBar';
 import { JobsTable } from '@/components/JobsTable';
+import { JobCardList } from '@/components/JobCardList';
 import { JobModal } from '@/components/JobModal';
 import { UserMenu } from '@/components/UserMenu';
 import { AppHeader } from '@/components/AppHeader';
@@ -104,6 +106,7 @@ function TablePlaceholder({ onAdd }: { onAdd: () => void }) {
 
 export function DashboardPage() {
   const toast = useToast();
+  const isMobile = useBreakpointValue({ base: true, md: false });
 
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('active');
 
@@ -229,13 +232,22 @@ export function DashboardPage() {
             </Alert>
           )}
 
-          {/* Table or spinner or placeholder */}
+          {/* Table or card list or spinner or placeholder */}
           {isLoading ? (
             <Center py={16}><Spinner color="brand.500" size="lg" /></Center>
           ) : jobs.length === 0 ? (
             <Box position="relative">
               <TablePlaceholder onAdd={openAdd} />
             </Box>
+          ) : isMobile ? (
+            <JobCardList
+              jobs={filteredJobs}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onMarkApplied={handleMarkApplied}
+              applyingId={applyingId}
+              deletingId={deletingId}
+            />
           ) : (
             <JobsTable
               jobs={filteredJobs}
