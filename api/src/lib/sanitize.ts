@@ -14,7 +14,6 @@ const TEXT_FIELDS = [
   'industry',
   'location',
   'conference',
-  'interview_location',
   'pay',
   'notes',
 ];

@@ -43,8 +43,6 @@ export const CreateJobSchema = z.object({
   app_link: urlOrEmpty,
   status: JobStatusSchema.default('not_started'),
   conference: z.string().max(200).nullable().optional(),
-  interview_date: z.string().nullable().optional(),
-  interview_location: z.string().max(200).nullable().optional(),
   cover_letter: urlOrEmpty, // URL to a cover letter document
   pay: z.string().max(100).nullable().optional(),
   notes: z.string().max(5000).nullable().optional(),

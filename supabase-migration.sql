@@ -28,8 +28,6 @@ CREATE TABLE jobs (
   app_link           TEXT,
   status             job_status_enum NOT NULL DEFAULT 'not_started',
   conference         TEXT,
-  interview_date     TIMESTAMPTZ,
-  interview_location TEXT,
   cover_letter       TEXT CHECK (cover_letter IS NULL OR cover_letter ~ '^https?://'),
   pay                TEXT,
   notes              TEXT,

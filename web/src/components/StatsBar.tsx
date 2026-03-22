@@ -9,7 +9,7 @@ export function StatsBar({ jobs }: Props) {
   const total = jobs.length;
   const saved = jobs.filter((j) => j.status === 'not_started').length;
   const applied = jobs.filter((j) => j.status === 'applied').length;
-  const interviewing = jobs.filter((j) => j.status === 'in_progress' && j.interview_date).length;
+  const interviewing = jobs.filter((j) => j.status === 'in_progress').length;
   const confVisits = jobs.filter((j) => j.conference).length;
 
   const stats = [

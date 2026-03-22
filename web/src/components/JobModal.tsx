@@ -143,17 +143,6 @@ export function JobModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, 
                 </FormControl>
               </SimpleGrid>
 
-              <SimpleGrid columns={2} spacing={4}>
-                <FormControl>
-                  <FormLabel fontSize="sm">Interview Date & Time</FormLabel>
-                  <Input type="datetime-local" {...register('interview_date')} focusBorderColor="brand.500" size="sm" />
-                </FormControl>
-                <FormControl>
-                  <FormLabel fontSize="sm">Interview Location</FormLabel>
-                  <Input {...register('interview_location')} focusBorderColor="brand.500" size="sm" />
-                </FormControl>
-              </SimpleGrid>
-
               <FormControl>
                 <FormLabel fontSize="sm">Cover Letter</FormLabel>
                 <Input type="url" {...register('cover_letter')} focusBorderColor="brand.500" size="sm" placeholder="https://" />

@@ -67,8 +67,6 @@ export interface Job {
   app_link?: string | null;
   status: JobStatus;
   conference?: string | null;
-  interview_date?: string | null; // ISO timestamptz string
-  interview_location?: string | null;
   cover_letter?: string | null;
   pay?: string | null;
   notes?: string | null;

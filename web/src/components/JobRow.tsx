@@ -2,15 +2,18 @@ import { Tr, Td, HStack, Button, IconButton, Link, Text, Tooltip } from '@chakra
 import { addDays, isWithinInterval, parseISO, subDays } from 'date-fns';
 import type { Job } from '@shared/types';
 import { StatusBadge } from './StatusBadge';
-import type { JobStatus } from '@shared/types';
+export type ColKey =
+  | 'company' | 'title' | 'industry' | 'location'
+  | 'added' | 'applied' | 'deadline' | 'status'
+  | 'conference'
+  | 'job_link' | 'app_link' | 'cover_letter' | 'pay' | 'notes' | 'actions';
 
 interface Props {
   job: Job;
+  colOrder: ColKey[];
   onEdit: (job: Job) => void;
   onDelete: (id: string) => void;
-  onCycleStatus: (id: string, status: JobStatus) => void;
   onMarkApplied: (id: string) => void;
-  isCycling: boolean;
   isApplying: boolean;
   isDeleting: boolean;
 }
@@ -35,93 +38,127 @@ function getRowBg(job: Job): string | undefined {
 
 function formatDate(d: string | null | undefined): string {
   if (!d) return '—';
-  // Avoid timezone shift — parse as local date
   const [year, month, day] = d.split('-');
   return `${month}/${day}/${year?.slice(2)}`;
 }
 
-function formatDateTime(d: string | null | undefined): string {
-  if (!d) return '—';
-  const date = new Date(d);
-  return date.toLocaleString('en-US', {
-    month: '2-digit',
-    day: '2-digit',
-    year: '2-digit',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
-}
-
-export function JobRow({ job, onEdit, onDelete, onCycleStatus, onMarkApplied, isCycling, isApplying, isDeleting }: Props) {
+export function JobRow({
+  job,
+  colOrder,
+  onEdit,
+  onDelete,
+  onMarkApplied,
+  isApplying,
+  isDeleting,
+}: Props) {
   const bg = getRowBg(job);
+
+  function renderCell(key: ColKey) {
+    switch (key) {
+      case 'company':
+        return (
+          <Td key={key} whiteSpace="nowrap" fontSize="sm" fontWeight="medium">
+            {job.company}
+            {job.min_year && (
+              <Text fontSize="xs" color="gray.400" textTransform="capitalize">{job.min_year}</Text>
+            )}
+          </Td>
+        );
+      case 'title':
+        return <Td key={key} fontSize="sm">{job.title}</Td>;
+      case 'industry':
+        return <Td key={key} fontSize="sm" color="gray.600">{job.industry ?? '—'}</Td>;
+      case 'location':
+        return <Td key={key} fontSize="sm" color="gray.600" whiteSpace="nowrap">{job.location ?? '—'}</Td>;
+      case 'added':
+        return <Td key={key} fontSize="sm" whiteSpace="nowrap">{formatDate(job.added)}</Td>;
+      case 'applied':
+        return <Td key={key} fontSize="sm" whiteSpace="nowrap">{formatDate(job.applied_date)}</Td>;
+      case 'deadline':
+        return (
+          <Td key={key} fontSize="sm" whiteSpace="nowrap" color={job.deadline ? 'inherit' : 'gray.400'}>
+            {formatDate(job.deadline)}
+          </Td>
+        );
+      case 'status':
+        return (
+          <Td key={key}>
+            <StatusBadge job={job} />
+          </Td>
+        );
+      case 'conference':
+        return <Td key={key} fontSize="sm" color="gray.600">{job.conference ?? '—'}</Td>;
+      case 'job_link':
+        return (
+          <Td key={key} fontSize="sm">
+            {job.job_link
+              ? <Link href={job.job_link} isExternal color="brand.500" fontSize="xs">Job</Link>
+              : '—'}
+          </Td>
+        );
+      case 'app_link':
+        return (
+          <Td key={key} fontSize="sm">
+            {job.app_link
+              ? <Link href={job.app_link} isExternal color="brand.500" fontSize="xs">Apply</Link>
+              : '—'}
+          </Td>
+        );
+      case 'cover_letter':
+        return (
+          <Td key={key} fontSize="sm">
+            {job.cover_letter
+              ? <Link href={job.cover_letter} isExternal color="brand.500" fontSize="xs">Cover Letter</Link>
+              : '—'}
+          </Td>
+        );
+      case 'pay':
+        return <Td key={key} fontSize="sm" color="gray.600">{job.pay ?? '—'}</Td>;
+      case 'notes':
+        return (
+          <Td key={key} fontSize="sm" maxW="150px">
+            {job.notes ? (
+              <Tooltip label={job.notes} placement="top">
+                <Text noOfLines={1} cursor="default">{job.notes}</Text>
+              </Tooltip>
+            ) : '—'}
+          </Td>
+        );
+      case 'actions':
+        return (
+          <Td key={key}>
+            <HStack spacing={1} justify="flex-end">
+              <Button size="xs" variant="outline" colorScheme="brand" onClick={() => onEdit(job)}>
+                Edit
+              </Button>
+              {!['applied', 'archive'].includes(job.status) && (
+                <Button
+                  size="xs"
+                  colorScheme="cyan"
+                  isLoading={isApplying}
+                  onClick={() => onMarkApplied(job.id)}
+                >
+                  → Applied
+                </Button>
+              )}
+              <IconButton
+                aria-label="Delete job"
+                icon={<span>×</span>}
+                size="xs"
+                variant="ghost"
+                colorScheme="red"
+                isLoading={isDeleting}
+                onClick={() => onDelete(job.id)}
+              />
+            </HStack>
+          </Td>
+        );
+    }
+  }
 
   return (
     <Tr bg={bg} _hover={{ bg: bg ?? 'gray.50' }} transition="background 0.15s">
-      <Td whiteSpace="nowrap" fontSize="sm" fontWeight="medium">
-        {job.company}
-        {job.min_year && (
-          <Text fontSize="xs" color="gray.400" textTransform="capitalize">{job.min_year}</Text>
-        )}
-      </Td>
-      <Td fontSize="sm">{job.title}</Td>
-      <Td fontSize="sm" color="gray.600">{job.industry ?? '—'}</Td>
-      <Td fontSize="sm" color="gray.600" whiteSpace="nowrap">{job.location ?? '—'}</Td>
-      <Td fontSize="sm" whiteSpace="nowrap">{formatDate(job.added)}</Td>
-      <Td fontSize="sm" whiteSpace="nowrap">{formatDate(job.applied_date)}</Td>
-      <Td fontSize="sm" whiteSpace="nowrap" color={job.deadline ? 'inherit' : 'gray.400'}>
-        {formatDate(job.deadline)}
-      </Td>
-      <Td>
-        <StatusBadge job={job} onCycle={onCycleStatus} isLoading={isCycling} />
-      </Td>
-      <Td fontSize="sm" color="gray.600">{job.conference ?? '—'}</Td>
-      <Td fontSize="sm" whiteSpace="nowrap">{formatDateTime(job.interview_date)}</Td>
-      <Td fontSize="sm" color="gray.600">{job.interview_location ?? '—'}</Td>
-      <Td fontSize="sm">
-        {job.job_link ? (
-          <Link href={job.job_link} isExternal color="brand.500" fontSize="xs">Job</Link>
-        ) : '—'}
-      </Td>
-      <Td fontSize="sm">
-        {job.app_link ? (
-          <Link href={job.app_link} isExternal color="brand.500" fontSize="xs">Apply</Link>
-        ) : '—'}
-      </Td>
-      <Td fontSize="sm" color="gray.600">{job.pay ?? '—'}</Td>
-      <Td fontSize="sm" maxW="150px">
-        {job.notes ? (
-          <Tooltip label={job.notes} placement="top">
-            <Text noOfLines={1} cursor="default">{job.notes}</Text>
-          </Tooltip>
-        ) : '—'}
-      </Td>
-      <Td>
-        <HStack spacing={1} justify="flex-end">
-          <Button size="xs" variant="outline" colorScheme="brand" onClick={() => onEdit(job)}>
-            Edit
-          </Button>
-          {!['applied', 'archive'].includes(job.status) && (
-            <Button
-              size="xs"
-              colorScheme="cyan"
-              isLoading={isApplying}
-              onClick={() => onMarkApplied(job.id)}
-            >
-              → Applied
-            </Button>
-          )}
-          <IconButton
-            aria-label="Delete job"
-            icon={<span>×</span>}
-            size="xs"
-            variant="ghost"
-            colorScheme="red"
-            isLoading={isDeleting}
-            onClick={() => onDelete(job.id)}
-          />
-        </HStack>
-      </Td>
+      {colOrder.map(key => renderCell(key))}
     </Tr>
   );
 }

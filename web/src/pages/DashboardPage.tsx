@@ -134,7 +134,7 @@ export function DashboardPage() {
   function applyFilter(jobs: Job[], qf: QuickFilter): Job[] {
     const today = new Date();
     if (qf === 'saved') return jobs.filter((j) => j.status === 'not_started');
-    if (qf === 'interviewing') return jobs.filter((j) => j.status === 'in_progress' && j.interview_date);
+    if (qf === 'interviewing') return jobs.filter((j) => j.status === 'in_progress');
     if (qf === 'conference') return jobs.filter((j) => !!j.conference);
     if (qf === 'due_soon') return jobs.filter(
       (j) => j.deadline && !['applied', 'archive'].includes(j.status) &&
@@ -335,9 +335,7 @@ export function DashboardPage() {
               jobs={filteredJobs}
               onEdit={handleEdit}
               onDelete={handleDelete}
-              onCycleStatus={handleCycleStatus}
               onMarkApplied={handleMarkApplied}
-              cyclingId={cyclingId}
               applyingId={applyingId}
               deletingId={deletingId}
             />
