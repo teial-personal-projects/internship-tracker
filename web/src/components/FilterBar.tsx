@@ -101,7 +101,7 @@ export function FilterBar({ quickFilter, onQuickFilter, jobs }: Props) {
 
           <Select.Portal>
             <Select.Content
-              className="z-50 w-[var(--radix-select-trigger-width)] bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden"
+              className="z-50 w-(--radix-select-trigger-width) bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden"
               position="popper"
               sideOffset={4}
             >
@@ -113,7 +113,7 @@ export function FilterBar({ quickFilter, onQuickFilter, jobs }: Props) {
                       key={value}
                       value={value}
                       className="flex items-center justify-between px-4 py-3.5 text-base text-gray-800 cursor-pointer select-none
-                                 data-[highlighted]:bg-brand-50 data-[highlighted]:outline-none
+                                 data-highlighted:bg-brand-50 data-highlighted:outline-none
                                  data-[state=checked]:font-semibold data-[state=checked]:text-brand-800"
                     >
                       <Select.ItemText>

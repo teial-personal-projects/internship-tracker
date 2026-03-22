@@ -24,10 +24,10 @@ const ALL_COLS: ColDef[] = [
   { key: 'deadline',     label: 'Deadline',      sortFn: (a, b) => STR(a.deadline).localeCompare(STR(b.deadline)) },
   { key: 'job_link',     label: 'Job Link' },
   { key: 'app_link',     label: 'App Link' },
-  { key: 'cover_letter', label: 'Cover Letter' },
+  { key: 'cover_letter', label: 'Cover' },
   { key: 'pay',          label: 'Pay',           sortFn: (a, b) => STR(a.pay).localeCompare(STR(b.pay)) },
   { key: 'notes',        label: 'Notes' },
-  { key: 'conference',   label: 'Conference',    sortFn: (a, b) => STR(a.conference).localeCompare(STR(b.conference)) },
+  { key: 'conference',   label: 'Conf',          sortFn: (a, b) => STR(a.conference).localeCompare(STR(b.conference)) },
   { key: 'actions',      label: 'Actions' },
 ];
 
