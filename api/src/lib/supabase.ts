@@ -11,7 +11,7 @@ function getEnv(key: string): string {
 // Service-role client — only used to verify JWTs in auth middleware
 export const supabaseAdmin = createClient(
   getEnv('SUPABASE_URL'),
-  getEnv('SUPABASE_SERVICE_KEY'),
+  getEnv('SUPABASE_SERVICE_ROLE_KEY'),
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
 
