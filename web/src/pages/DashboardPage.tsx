@@ -19,6 +19,7 @@ import {
 } from '@chakra-ui/react';
 import { addDays, isWithinInterval, parseISO, subDays } from 'date-fns';
 import { Link as RouterLink } from 'react-router-dom';
+import { UserMenu } from '@/components/UserMenu';
 import type { FilterTab, Job, QuickFilter, CreateJobInput } from '@shared/types';
 import { useJobs, useCreateJob, useUpdateJob, useDeleteJob, useCycleStatus, useMarkApplied } from '@/hooks/useJobs';
 import { AlertBar } from '@/components/AlertBar';
@@ -26,7 +27,6 @@ import { StatsBar } from '@/components/StatsBar';
 import { FilterBar } from '@/components/FilterBar';
 import { JobsTable } from '@/components/JobsTable';
 import { JobModal } from '@/components/JobModal';
-import { supabase } from '@/lib/supabaseClient';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -152,14 +152,7 @@ export function DashboardPage() {
             <Button as={RouterLink} to="/profile" variant="ghost" size="sm" colorScheme="brand">
               Profile
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              colorScheme="gray"
-              onClick={() => supabase.auth.signOut()}
-            >
-              Sign Out
-            </Button>
+            <UserMenu />
           </HStack>
         </Flex>
       </Box>
