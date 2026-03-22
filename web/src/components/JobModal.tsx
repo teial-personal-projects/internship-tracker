@@ -1,22 +1,4 @@
-import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalCloseButton,
-  ModalBody,
-  ModalFooter,
-  Button,
-  FormControl,
-  FormLabel,
-  FormErrorMessage,
-  Input,
-  Select,
-  Textarea,
-  SimpleGrid,
-  Stack,
-  Divider,
-} from '@chakra-ui/react';
+import * as Dialog from '@radix-ui/react-dialog';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import type { Job } from '@shared/types';
@@ -34,17 +16,9 @@ interface Props {
   title?: string;
 }
 
-const TODAY = new Date().toISOString().split('T')[0];
+import { todayStr } from '@/lib/dateUtils';
 
-
-const labelProps = {
-  fontSize: 'xs' as const,
-  fontWeight: 'semibold' as const,
-  color: 'brand.700',
-  textTransform: 'uppercase' as const,
-  letterSpacing: 'wider' as const,
-  mb: 1,
-};
+const TODAY = todayStr();
 
 export function JobModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, title = 'Add Job' }: Props) {
   const {
@@ -76,133 +50,175 @@ export function JobModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, 
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size={{ base: 'full', sm: '2xl' }} scrollBehavior="inside">
-      <ModalOverlay backdropFilter="blur(2px)" />
-      <ModalContent borderRadius="xl" overflow="hidden" border="1px solid" borderColor="brand.100">
-        <ModalHeader
-          bg="brand.50"
-          borderBottom="2px solid"
-          borderColor="brand.200"
-          color="brand.800"
-          fontSize="lg"
-          fontWeight="bold"
-          py={4}
-          px={6}
-        >
-          {title}
-        </ModalHeader>
-        <ModalCloseButton top={3} color="brand.600" />
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <ModalBody px={6} py={5} bg="white" overflowY="auto" maxH="70vh">
-            <Stack spacing={5} divider={<Divider borderColor="brand.100" my={-1} />}>
+    <Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" />
+        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[85vh] bg-white rounded-xl shadow-2xl z-50 flex flex-col overflow-hidden">
+          {/* Header */}
+          <div className="bg-brand-50 border-b-2 border-brand-200 px-6 py-4 flex items-center justify-between">
+            <Dialog.Title className="text-lg font-bold text-brand-800">
+              {title}
+            </Dialog.Title>
+            <Dialog.Close asChild>
+              <button
+                type="button"
+                className="text-brand-600 hover:text-brand-800 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 rounded"
+                aria-label="Close"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </Dialog.Close>
+          </div>
 
-              {/* Row 1: Company + Title */}
-              <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
-                <FormControl isRequired isInvalid={!!errors.company}>
-                  <FormLabel {...labelProps}>Company</FormLabel>
-                  <Input {...register('company', { required: 'Required' })} focusBorderColor="brand.500" size="sm" borderRadius="md" />
-                  <FormErrorMessage>{errors.company?.message}</FormErrorMessage>
-                </FormControl>
-                <FormControl isRequired isInvalid={!!errors.title}>
-                  <FormLabel {...labelProps}>Title</FormLabel>
-                  <Input {...register('title', { required: 'Required' })} focusBorderColor="brand.500" size="sm" borderRadius="md" />
-                  <FormErrorMessage>{errors.title?.message}</FormErrorMessage>
-                </FormControl>
-              </SimpleGrid>
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden">
+            {/* Body */}
+            <div className="overflow-y-auto flex-1 px-6 py-5">
+              <div className="flex flex-col gap-5">
 
-              {/* Row 2: Industry + Location + Pay */}
-              <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={4}>
-                <FormControl>
-                  <FormLabel {...labelProps}>Industry</FormLabel>
-                  <Input {...register('industry')} focusBorderColor="brand.500" size="sm" borderRadius="md" />
-                </FormControl>
-                <FormControl>
-                  <FormLabel {...labelProps}>Location</FormLabel>
-                  <Input {...register('location')} focusBorderColor="brand.500" size="sm" borderRadius="md" />
-                </FormControl>
-                <FormControl>
-                  <FormLabel {...labelProps}>Pay</FormLabel>
-                  <Input {...register('pay')} focusBorderColor="brand.500" size="sm" borderRadius="md" placeholder="e.g. $25/hr" />
-                </FormControl>
-              </SimpleGrid>
+                {/* Row 1: Company + Title */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="field-label">Company *</label>
+                    <input
+                      className="field-input"
+                      {...register('company', { required: 'Required' })}
+                    />
+                    {errors.company && <p className="mt-1 text-xs text-red-600">{errors.company.message}</p>}
+                  </div>
+                  <div>
+                    <label className="field-label">Title *</label>
+                    <input
+                      className="field-input"
+                      {...register('title', { required: 'Required' })}
+                    />
+                    {errors.title && <p className="mt-1 text-xs text-red-600">{errors.title.message}</p>}
+                  </div>
+                </div>
 
-              {/* Row 3: Status + Min Year */}
-              <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
-                <FormControl>
-                  <FormLabel {...labelProps}>Status</FormLabel>
-                  <Select {...register('status')} focusBorderColor="brand.500" size="sm" borderRadius="md">
-                    {STATUS_CYCLE.map((s) => (
-                      <option key={s} value={s}>{STATUS_LABELS[s]}</option>
-                    ))}
-                  </Select>
-                </FormControl>
-                <FormControl>
-                  <FormLabel {...labelProps}>Min Year</FormLabel>
-                  <Select {...register('min_year')} focusBorderColor="brand.500" size="sm" borderRadius="md">
-                    <option value="">Any</option>
-                    {MIN_YEAR_OPTIONS.map((y) => (
-                      <option key={y} value={y}>{y.charAt(0).toUpperCase() + y.slice(1)}</option>
-                    ))}
-                  </Select>
-                </FormControl>
-              </SimpleGrid>
+                <hr className="border-brand-100" />
 
-              {/* Row 4: Dates */}
-              <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={4}>
-                <FormControl>
-                  <FormLabel {...labelProps}>Added</FormLabel>
-                  <Input type="date" {...register('added')} focusBorderColor="brand.500" size="sm" borderRadius="md" />
-                </FormControl>
-                <FormControl>
-                  <FormLabel {...labelProps}>Deadline</FormLabel>
-                  <Input type="date" {...register('deadline')} focusBorderColor="brand.500" size="sm" borderRadius="md" />
-                </FormControl>
-                <FormControl>
-                  <FormLabel {...labelProps}>Applied Date</FormLabel>
-                  <Input type="date" {...register('applied_date')} focusBorderColor="brand.500" size="sm" borderRadius="md" />
-                </FormControl>
-              </SimpleGrid>
+                {/* Row 2: Industry + Location + Pay */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="field-label">Industry</label>
+                    <input className="field-input" {...register('industry')} />
+                  </div>
+                  <div>
+                    <label className="field-label">Location</label>
+                    <input className="field-input" {...register('location')} />
+                  </div>
+                  <div>
+                    <label className="field-label">Pay</label>
+                    <input className="field-input" {...register('pay')} placeholder="e.g. $25/hr" />
+                  </div>
+                </div>
 
-              {/* Row 5: Links */}
-              <Stack spacing={3}>
-                <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
-                  <FormControl>
-                    <FormLabel {...labelProps}>Job Link</FormLabel>
-                    <Input type="url" {...register('job_link')} focusBorderColor="brand.500" size="sm" borderRadius="md" placeholder="https://" />
-                  </FormControl>
-                  <FormControl>
-                    <FormLabel {...labelProps}>Application Link</FormLabel>
-                    <Input type="url" {...register('app_link')} focusBorderColor="brand.500" size="sm" borderRadius="md" placeholder="https://" />
-                  </FormControl>
-                </SimpleGrid>
-                <FormControl>
-                  <FormLabel {...labelProps}>Cover Letter</FormLabel>
-                  <Input type="url" {...register('cover_letter')} focusBorderColor="brand.500" size="sm" borderRadius="md" placeholder="https://" />
-                </FormControl>
-              </Stack>
+                <hr className="border-brand-100" />
 
-              {/* Row 6: Conference + Notes */}
-              <Stack spacing={3}>
-                <FormControl>
-                  <FormLabel {...labelProps}>Conference</FormLabel>
-                  <Input {...register('conference')} focusBorderColor="brand.500" size="sm" borderRadius="md" />
-                </FormControl>
-                <FormControl>
-                  <FormLabel {...labelProps}>Notes</FormLabel>
-                  <Textarea {...register('notes')} focusBorderColor="brand.500" size="sm" borderRadius="md" rows={3} />
-                </FormControl>
-              </Stack>
+                {/* Row 3: Status + Min Year */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="field-label">Status</label>
+                    <select className="field-select" {...register('status')}>
+                      {STATUS_CYCLE.map((s) => (
+                        <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="field-label">Min Year</label>
+                    <select className="field-select" {...register('min_year')}>
+                      <option value="">Any</option>
+                      {MIN_YEAR_OPTIONS.map((y) => (
+                        <option key={y} value={y}>{y.charAt(0).toUpperCase() + y.slice(1)}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
 
-            </Stack>
-          </ModalBody>
-          <ModalFooter bg="gray.50" borderTop="1px solid" borderColor="gray.200" gap={2} px={6} py={4}>
-            <Button variant="ghost" onClick={handleClose} size="sm" color="gray.600">Cancel</Button>
-            <Button type="submit" colorScheme="brand" isLoading={isLoading} size="sm" px={6}>
-              Save
-            </Button>
-          </ModalFooter>
-        </form>
-      </ModalContent>
-    </Modal>
+                <hr className="border-brand-100" />
+
+                {/* Row 4: Dates */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="field-label">Added</label>
+                    <input type="date" className="field-input" {...register('added')} />
+                  </div>
+                  <div>
+                    <label className="field-label">Deadline</label>
+                    <input type="date" className="field-input" {...register('deadline')} />
+                  </div>
+                  <div>
+                    <label className="field-label">Applied Date</label>
+                    <input type="date" className="field-input" {...register('applied_date')} />
+                  </div>
+                </div>
+
+                <hr className="border-brand-100" />
+
+                {/* Row 5: Links */}
+                <div className="flex flex-col gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="field-label">Job Link</label>
+                      <input type="url" className="field-input" {...register('job_link')} placeholder="https://" />
+                    </div>
+                    <div>
+                      <label className="field-label">Application Link</label>
+                      <input type="url" className="field-input" {...register('app_link')} placeholder="https://" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="field-label">Cover Letter</label>
+                    <input type="url" className="field-input" {...register('cover_letter')} placeholder="https://" />
+                  </div>
+                </div>
+
+                <hr className="border-brand-100" />
+
+                {/* Row 6: Conference + Notes */}
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <label className="field-label">Conference</label>
+                    <input className="field-input" {...register('conference')} />
+                  </div>
+                  <div>
+                    <label className="field-label">Notes</label>
+                    <textarea className="field-textarea" {...register('notes')} rows={3} />
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="btn-ghost text-gray-600 text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="btn-primary text-sm px-6"
+              >
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    Saving…
+                  </span>
+                ) : 'Save'}
+              </button>
+            </div>
+          </form>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }

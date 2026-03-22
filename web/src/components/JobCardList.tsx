@@ -1,14 +1,10 @@
-import { useRef } from 'react';
-import {
-  Box, Button, HStack, IconButton, Link, Stack, Text,
-  AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader,
-  AlertDialogContent, AlertDialogOverlay, useDisclosure,
-} from '@chakra-ui/react';
-import { addDays, isWithinInterval, parseISO, subDays } from 'date-fns';
+import { useRef, useState } from 'react';
+import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import type { Job } from '@shared/types';
 import { StatusBadge } from './StatusBadge';
 import { TrashIcon } from './icons/TrashIcon';
-import { safeUrl, formatDate } from '@/lib/jobUtils';
+import { safeUrl } from '@/lib/jobUtils';
+import { formatDate, isDeadlineSoon, isStaleJob } from '@/lib/dateUtils';
 
 interface ListProps {
   jobs: Job[];
@@ -19,18 +15,11 @@ interface ListProps {
   deletingId: string | null;
 }
 
-
 function getCardBorderColor(job: Job): string {
-  if (['applied', 'archive'].includes(job.status)) return 'gray.200';
-  const today = new Date();
-  const isDue = job.deadline != null && isWithinInterval(parseISO(job.deadline), {
-    start: today,
-    end: addDays(today, 3),
-  });
-  const isStale = ['not_started', 'in_progress'].includes(job.status) && parseISO(job.added) <= subDays(today, 7);
-  if (isDue) return 'orange.300';
-  if (isStale) return 'yellow.300';
-  return 'gray.200';
+  if (['applied', 'archive'].includes(job.status)) return '#e5e7eb'; // gray-200
+  if (isDeadlineSoon(job.deadline)) return '#fdba74'; // orange-300
+  if (isStaleJob(job.added, job.status)) return '#fde047'; // yellow-300
+  return '#e5e7eb'; // gray-200
 }
 
 function JobCard({ job, onEdit, onDelete, onMarkApplied, isApplying, isDeleting }: {
@@ -41,7 +30,7 @@ function JobCard({ job, onEdit, onDelete, onMarkApplied, isApplying, isDeleting 
   isApplying: boolean;
   isDeleting: boolean;
 }) {
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
   const borderColor = getCardBorderColor(job);
 
@@ -52,111 +41,127 @@ function JobCard({ job, onEdit, onDelete, onMarkApplied, isApplying, isDeleting 
 
   return (
     <>
-      <Box
-        bg="white"
-        borderRadius="xl"
-        border="1px solid"
-        borderColor={borderColor}
-        p={4}
-        boxShadow="sm"
+      <div
+        className="bg-white rounded-xl p-4 shadow-sm"
+        style={{ border: `1px solid ${borderColor}` }}
       >
         {/* Top row: company + status badge */}
-        <HStack justify="space-between" align="flex-start" mb={1}>
-          <Box>
-            <Text fontWeight="bold" fontSize="md" color="gray.800" lineHeight="tight">{job.company}</Text>
-            <Text fontSize="sm" color="gray.500">{job.title}</Text>
-          </Box>
+        <div className="flex items-start justify-between mb-1">
+          <div>
+            <p className="font-bold text-base text-gray-800 leading-tight">{job.company}</p>
+            <p className="text-sm text-gray-500">{job.title}</p>
+          </div>
           <StatusBadge job={job} />
-        </HStack>
+        </div>
 
         {/* Meta row: location, dates */}
-        <HStack spacing={3} wrap="wrap" mt={2} mb={3}>
+        <div className="flex flex-wrap gap-3 mt-2 mb-3">
           {job.location && (
-            <HStack spacing={1}>
-              <Text fontSize="xs">📍</Text>
-              <Text fontSize="xs" color="gray.600">{job.location}</Text>
-            </HStack>
+            <span className="flex items-center gap-1">
+              <span className="text-xs">📍</span>
+              <span className="text-xs text-gray-600">{job.location}</span>
+            </span>
           )}
           {job.added && (
-            <Text fontSize="xs" color="gray.500">Added {formatDate(job.added)}</Text>
+            <span className="text-xs text-gray-500">Added {formatDate(job.added)}</span>
           )}
           {job.deadline && (
-            <Text fontSize="xs" color="orange.500" fontWeight="medium">Due {formatDate(job.deadline)}</Text>
+            <span className="text-xs text-orange-500 font-medium">Due {formatDate(job.deadline)}</span>
           )}
           {job.applied_date && (
-            <Text fontSize="xs" color="brand.600" fontWeight="medium">Applied {formatDate(job.applied_date)}</Text>
+            <span className="text-xs text-brand-600 font-medium">Applied {formatDate(job.applied_date)}</span>
           )}
           {job.pay && (
-            <Text fontSize="xs" color="gray.500">{job.pay}</Text>
+            <span className="text-xs text-gray-500">{job.pay}</span>
           )}
-        </HStack>
+        </div>
 
         {/* Links row */}
         {(jobUrl || appUrl || clUrl) && (
-          <HStack spacing={3} mb={3}>
-            {jobUrl && <Link href={jobUrl} isExternal fontSize="xs" color="brand.600" fontWeight="medium">Job Posting ↗</Link>}
-            {appUrl && <Link href={appUrl} isExternal fontSize="xs" color="brand.600" fontWeight="medium">Apply ↗</Link>}
-            {clUrl && <Link href={clUrl} isExternal fontSize="xs" color="brand.600" fontWeight="medium">Cover Letter ↗</Link>}
-          </HStack>
+          <div className="flex gap-3 mb-3">
+            {jobUrl && <a href={jobUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-600 font-medium hover:underline">Job Posting ↗</a>}
+            {appUrl && <a href={appUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-600 font-medium hover:underline">Apply ↗</a>}
+            {clUrl && <a href={clUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-600 font-medium hover:underline">Cover Letter ↗</a>}
+          </div>
         )}
 
         {/* Notes */}
         {job.notes && (
-          <Text fontSize="xs" color="gray.500" noOfLines={2} mb={3}>{job.notes}</Text>
+          <p className="text-xs text-gray-500 line-clamp-2 mb-3">{job.notes}</p>
         )}
 
         {/* Action buttons */}
-        <HStack spacing={2} mt={1}>
+        <div className="flex items-center gap-2 mt-1">
           {canMarkApplied && (
-            <Button
-              size="sm"
-              colorScheme="brand"
-              variant="outline"
-              isLoading={isApplying}
+            <button
+              type="button"
+              disabled={isApplying}
               onClick={() => onMarkApplied(job.id)}
-              flex={1}
+              className="btn-outline flex-1 text-sm py-1.5"
             >
-              ✓ Mark Applied
-            </Button>
+              {isApplying ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                </span>
+              ) : '✓ Mark Applied'}
+            </button>
           )}
-          <Button
-            size="sm"
-            variant="outline"
-            colorScheme="gray"
+          <button
+            type="button"
             onClick={() => onEdit(job)}
-            flex={1}
+            className="btn-outline flex-1 text-sm py-1.5"
           >
             Edit
-          </Button>
-          <IconButton
+          </button>
+          <button
+            type="button"
+            disabled={isDeleting}
+            onClick={() => setIsOpen(true)}
+            className="btn-ghost text-red-600 hover:bg-red-50 px-2 py-1.5"
             aria-label="Delete job"
-            icon={<TrashIcon />}
-            size="sm"
-            variant="ghost"
-            colorScheme="red"
-            isLoading={isDeleting}
-            onClick={onOpen}
-          />
-        </HStack>
-      </Box>
+          >
+            {isDeleting ? (
+              <span className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+            ) : <TrashIcon size={16} />}
+          </button>
+        </div>
+      </div>
 
-      <AlertDialog isOpen={isOpen} leastDestructiveRef={cancelRef} onClose={onClose} isCentered>
-        <AlertDialogOverlay>
-          <AlertDialogContent mx={4}>
-            <AlertDialogHeader fontSize="md" fontWeight="bold">Delete Job</AlertDialogHeader>
-            <AlertDialogBody fontSize="sm">
+      <AlertDialog.Root open={isOpen} onOpenChange={setIsOpen}>
+        <AlertDialog.Portal>
+          <AlertDialog.Overlay className="fixed inset-0 bg-black/50 z-40" />
+          <AlertDialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl z-50 w-full max-w-sm mx-4 p-6">
+            <AlertDialog.Title className="text-base font-bold text-gray-900 mb-2">
+              Delete Job
+            </AlertDialog.Title>
+            <AlertDialog.Description className="text-sm text-gray-600 mb-5">
               Delete <strong>{job.company}</strong> — {job.title}? This cannot be undone.
-            </AlertDialogBody>
-            <AlertDialogFooter gap={2}>
-              <Button ref={cancelRef} size="sm" variant="ghost" onClick={onClose}>Cancel</Button>
-              <Button size="sm" colorScheme="red" isLoading={isDeleting}
-                onClick={() => { onClose(); onDelete(job.id); }}>
-                Delete
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialogOverlay>
-      </AlertDialog>
+            </AlertDialog.Description>
+            <div className="flex justify-end gap-2">
+              <AlertDialog.Cancel asChild>
+                <button ref={cancelRef} type="button" className="btn-ghost text-sm text-gray-600">
+                  Cancel
+                </button>
+              </AlertDialog.Cancel>
+              <AlertDialog.Action asChild>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => { setIsOpen(false); onDelete(job.id); }}
+                  className="btn-danger text-sm"
+                >
+                  {isDeleting ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                      Deleting…
+                    </span>
+                  ) : 'Delete'}
+                </button>
+              </AlertDialog.Action>
+            </div>
+          </AlertDialog.Content>
+        </AlertDialog.Portal>
+      </AlertDialog.Root>
     </>
   );
 }
@@ -164,14 +169,14 @@ function JobCard({ job, onEdit, onDelete, onMarkApplied, isApplying, isDeleting 
 export function JobCardList({ jobs, onEdit, onDelete, onMarkApplied, applyingId, deletingId }: ListProps) {
   if (jobs.length === 0) {
     return (
-      <Box textAlign="center" py={12} color="gray.400">
-        <Text>No jobs here.</Text>
-      </Box>
+      <div className="text-center py-12 text-gray-400">
+        <p>No jobs here.</p>
+      </div>
     );
   }
 
   return (
-    <Stack spacing={3}>
+    <div className="flex flex-col gap-3">
       {jobs.map(job => (
         <JobCard
           key={job.id}
@@ -183,6 +188,6 @@ export function JobCardList({ jobs, onEdit, onDelete, onMarkApplied, applyingId,
           isDeleting={deletingId === job.id}
         />
       ))}
-    </Stack>
+    </div>
   );
 }

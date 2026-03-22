@@ -1,14 +1,4 @@
 import { useState, useRef } from 'react';
-import {
-  Box,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Text,
-  Center,
-} from '@chakra-ui/react';
 import type { Job } from '@shared/types';
 import { JobRow } from './JobRow';
 import type { ColKey } from './JobRow';
@@ -85,9 +75,9 @@ export function JobsTable({
 
   if (jobs.length === 0) {
     return (
-      <Center py={16} color="gray.400">
-        <Text>No jobs here. Add one to get started!</Text>
-      </Center>
+      <div className="flex items-center justify-center py-16 text-gray-400">
+        <p>No jobs here. Add one to get started!</p>
+      </div>
     );
   }
 
@@ -140,10 +130,10 @@ export function JobsTable({
   }
 
   return (
-    <Box overflowX="auto" borderRadius="md" border="1px solid" borderColor="gray.200" bg="white">
-      <Table size="sm" variant="simple">
-        <Thead>
-          <Tr>
+    <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
+      <table className="w-full text-sm border-collapse">
+        <thead>
+          <tr>
             {colOrder.map(key => {
               const col = COL_MAP[key];
               const isSorted = sortKey === key;
@@ -151,41 +141,34 @@ export function JobsTable({
               const isDropTarget = dragOver === key;
 
               return (
-                <Th
+                <th
                   key={key}
-                  bg={isDropTarget ? 'brand.100' : 'brand.50'}
-                  color="brand.700"
-                  fontSize="xs"
-                  letterSpacing="wide"
-                  py={3}
-                  whiteSpace="nowrap"
-                  borderBottom="2px solid"
-                  borderColor={isDropTarget ? 'brand.400' : 'brand.200'}
-                  userSelect="none"
+                  className={[
+                    'text-xs font-semibold uppercase tracking-wide py-3 px-4 whitespace-nowrap border-b-2 text-left select-none transition-colors',
+                    isDropTarget
+                      ? 'bg-brand-100 border-brand-400'
+                      : 'bg-brand-50 border-brand-200 hover:bg-brand-100',
+                    'text-brand-700',
+                    canSort ? 'cursor-pointer' : key === 'actions' ? 'cursor-default' : 'cursor-grab',
+                  ].join(' ')}
                   draggable={key !== 'actions'}
-                  cursor={canSort ? 'pointer' : key === 'actions' ? 'default' : 'grab'}
-                  _hover={{ bg: key === 'actions' ? 'brand.50' : 'brand.100' }}
-                  transition="background 0.1s, border-color 0.1s"
                   onDragStart={() => handleDragStart(key)}
                   onDragOver={e => handleDragOver(e, key)}
                   onDrop={() => handleDrop(key)}
                   onDragEnd={handleDragEnd}
                   onClick={() => handleSort(key)}
                   {...(key === 'actions' ? {
-                    position: 'sticky',
-                    right: 0,
-                    zIndex: 1,
-                    boxShadow: '-2px 0 6px rgba(0,0,0,0.06)',
+                    style: { position: 'sticky', right: 0, zIndex: 1, boxShadow: '-2px 0 6px rgba(0,0,0,0.06)' },
                   } : {})}
                 >
                   {col.label}
-                  {isSorted && <Text as="span" ml={1}>{sortDir === 'asc' ? '▲' : '▼'}</Text>}
-                </Th>
+                  {isSorted && <span className="ml-1">{sortDir === 'asc' ? '▲' : '▼'}</span>}
+                </th>
               );
             })}
-          </Tr>
-        </Thead>
-        <Tbody>
+          </tr>
+        </thead>
+        <tbody>
           {sortedJobs.map(job => (
             <JobRow
               key={job.id}
@@ -198,8 +181,8 @@ export function JobsTable({
               isDeleting={deletingId === job.id}
             />
           ))}
-        </Tbody>
-      </Table>
-    </Box>
+        </tbody>
+      </table>
+    </div>
   );
 }

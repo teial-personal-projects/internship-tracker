@@ -1,14 +1,12 @@
-import { useRef } from 'react';
-import {
-  Tr, Td, HStack, Button, IconButton, Link, Text, Tooltip,
-  AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader,
-  AlertDialogContent, AlertDialogOverlay, useDisclosure,
-} from '@chakra-ui/react';
-import { addDays, isWithinInterval, parseISO, subDays } from 'date-fns';
+import { useState, useRef } from 'react';
+import * as AlertDialog from '@radix-ui/react-alert-dialog';
+import * as Tooltip from '@radix-ui/react-tooltip';
 import type { Job } from '@shared/types';
 import { StatusBadge } from './StatusBadge';
 import { TrashIcon } from './icons/TrashIcon';
-import { safeUrl, formatDate } from '@/lib/jobUtils';
+import { safeUrl } from '@/lib/jobUtils';
+import { formatDate, isDeadlineSoon, isStaleJob } from '@/lib/dateUtils';
+
 export type ColKey =
   | 'company' | 'title' | 'industry' | 'location'
   | 'added' | 'applied' | 'deadline' | 'status'
@@ -25,24 +23,12 @@ interface Props {
   isDeleting: boolean;
 }
 
-function getRowBg(job: Job): string | undefined {
+function getRowBg(job: Job): React.CSSProperties | undefined {
   if (['applied', 'archive'].includes(job.status)) return undefined;
-  const today = new Date();
-  const isDue =
-    job.deadline != null &&
-    isWithinInterval(parseISO(job.deadline), {
-      start: today,
-      end: addDays(today, 3),
-    });
-  const isStale =
-    ['not_started', 'in_progress'].includes(job.status) &&
-    parseISO(job.added) <= subDays(today, 7);
-
-  if (isDue) return 'dueSoon.50';
-  if (isStale) return 'stale.50';
+  if (isDeadlineSoon(job.deadline)) return { background: '#fef2f2' };
+  if (isStaleJob(job.added, job.status)) return { background: '#fff7ed' };
   return undefined;
 }
-
 
 export function JobRow({
   job,
@@ -53,140 +39,184 @@ export function JobRow({
   isApplying,
   isDeleting,
 }: Props) {
-  const bg = getRowBg(job);
-  const { isOpen: isConfirmOpen, onOpen: onConfirmOpen, onClose: onConfirmClose } = useDisclosure();
+  const bgStyle = getRowBg(job);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
 
   function renderCell(key: ColKey) {
     switch (key) {
       case 'company':
         return (
-          <Td key={key} whiteSpace="nowrap" fontSize="sm" fontWeight="medium">
+          <td key={key} className="whitespace-nowrap text-sm font-medium px-4 py-2" style={bgStyle}>
             {job.company}
             {job.min_year && (
-              <Text fontSize="xs" color="gray.400" textTransform="capitalize">{job.min_year}</Text>
+              <div className="text-xs text-gray-400 capitalize">{job.min_year}</div>
             )}
-          </Td>
+          </td>
         );
       case 'title':
-        return <Td key={key} fontSize="sm">{job.title}</Td>;
+        return <td key={key} className="text-sm px-4 py-2" style={bgStyle}>{job.title}</td>;
       case 'industry':
-        return <Td key={key} fontSize="sm" color="gray.600">{job.industry ?? '—'}</Td>;
+        return <td key={key} className="text-sm text-gray-600 px-4 py-2" style={bgStyle}>{job.industry ?? '—'}</td>;
       case 'location':
-        return <Td key={key} fontSize="sm" color="gray.600" whiteSpace="nowrap">{job.location ?? '—'}</Td>;
+        return <td key={key} className="text-sm text-gray-600 whitespace-nowrap px-4 py-2" style={bgStyle}>{job.location ?? '—'}</td>;
       case 'added':
-        return <Td key={key} fontSize="sm" whiteSpace="nowrap">{formatDate(job.added)}</Td>;
+        return <td key={key} className="text-sm whitespace-nowrap px-4 py-2" style={bgStyle}>{formatDate(job.added)}</td>;
       case 'applied':
-        return <Td key={key} fontSize="sm" whiteSpace="nowrap">{formatDate(job.applied_date)}</Td>;
+        return <td key={key} className="text-sm whitespace-nowrap px-4 py-2" style={bgStyle}>{formatDate(job.applied_date)}</td>;
       case 'deadline':
         return (
-          <Td key={key} fontSize="sm" whiteSpace="nowrap" color={job.deadline ? 'inherit' : 'gray.400'}>
+          <td key={key} className={`text-sm whitespace-nowrap px-4 py-2 ${job.deadline ? '' : 'text-gray-400'}`} style={bgStyle}>
             {formatDate(job.deadline)}
-          </Td>
+          </td>
         );
       case 'status':
         return (
-          <Td key={key}>
+          <td key={key} className="px-4 py-2" style={bgStyle}>
             <StatusBadge job={job} />
-          </Td>
+          </td>
         );
       case 'conference':
-        return <Td key={key} fontSize="sm" color="gray.600">{job.conference ?? '—'}</Td>;
+        return <td key={key} className="text-sm text-gray-600 px-4 py-2" style={bgStyle}>{job.conference ?? '—'}</td>;
       case 'job_link': {
         const url = safeUrl(job.job_link);
         return (
-          <Td key={key} fontSize="sm">
-            {url ? <Link href={url} isExternal color="brand.500" fontSize="xs">Job</Link> : '—'}
-          </Td>
+          <td key={key} className="text-sm px-4 py-2" style={bgStyle}>
+            {url ? <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-500 hover:underline">Job</a> : '—'}
+          </td>
         );
       }
       case 'app_link': {
         const url = safeUrl(job.app_link);
         return (
-          <Td key={key} fontSize="sm">
-            {url ? <Link href={url} isExternal color="brand.500" fontSize="xs">Apply</Link> : '—'}
-          </Td>
+          <td key={key} className="text-sm px-4 py-2" style={bgStyle}>
+            {url ? <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-500 hover:underline">Apply</a> : '—'}
+          </td>
         );
       }
       case 'cover_letter': {
         const url = safeUrl(job.cover_letter);
         return (
-          <Td key={key} fontSize="sm">
-            {url ? <Link href={url} isExternal color="brand.500" fontSize="xs">Cover Letter</Link> : '—'}
-          </Td>
+          <td key={key} className="text-sm px-4 py-2" style={bgStyle}>
+            {url ? <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-500 hover:underline">Cover Letter</a> : '—'}
+          </td>
         );
       }
       case 'pay':
-        return <Td key={key} fontSize="sm" color="gray.600">{job.pay ?? '—'}</Td>;
+        return <td key={key} className="text-sm text-gray-600 px-4 py-2" style={bgStyle}>{job.pay ?? '—'}</td>;
       case 'notes':
         return (
-          <Td key={key} fontSize="sm" maxW="150px">
+          <td key={key} className="text-sm max-w-[150px] px-4 py-2" style={bgStyle}>
             {job.notes ? (
-              <Tooltip label={job.notes} placement="top">
-                <Text noOfLines={1} cursor="default">{job.notes}</Text>
-              </Tooltip>
+              <Tooltip.Provider>
+                <Tooltip.Root>
+                  <Tooltip.Trigger asChild>
+                    <span className="block overflow-hidden text-ellipsis whitespace-nowrap cursor-default">
+                      {job.notes}
+                    </span>
+                  </Tooltip.Trigger>
+                  <Tooltip.Portal>
+                    <Tooltip.Content
+                      className="max-w-xs bg-gray-900 text-white text-xs rounded px-2 py-1 shadow-lg z-50"
+                      sideOffset={4}
+                    >
+                      {job.notes}
+                      <Tooltip.Arrow className="fill-gray-900" />
+                    </Tooltip.Content>
+                  </Tooltip.Portal>
+                </Tooltip.Root>
+              </Tooltip.Provider>
             ) : '—'}
-          </Td>
+          </td>
         );
       case 'actions':
         return (
-          <Td key={key} position="sticky" right={0} bg={bg ?? 'white'} boxShadow="-2px 0 6px rgba(0,0,0,0.06)" zIndex={1}>
-            <HStack spacing={1} justify="flex-end">
-              <Button size="xs" variant="outline" colorScheme="brand" onClick={() => onEdit(job)}>
+          <td
+            key={key}
+            className="px-4 py-2 z-[1]"
+            style={{ position: 'sticky', right: 0, boxShadow: '-2px 0 6px rgba(0,0,0,0.06)', background: bgStyle?.background ?? 'white' }}
+          >
+            <div className="flex items-center justify-end gap-1">
+              <button
+                type="button"
+                onClick={() => onEdit(job)}
+                className="btn-outline text-xs px-2 py-1 text-brand-700 border-brand-400 hover:bg-brand-50"
+              >
                 Edit
-              </Button>
+              </button>
               {!['applied', 'archive'].includes(job.status) && (
-                <Button
-                  size="xs"
-                  colorScheme="cyan"
-                  isLoading={isApplying}
+                <button
+                  type="button"
+                  disabled={isApplying}
                   onClick={() => onMarkApplied(job.id)}
+                  className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-brand-400 text-brand-700 bg-white hover:bg-brand-50 transition-colors disabled:opacity-50"
                 >
-                  Mark Applied
-                </Button>
+                  {isApplying ? (
+                    <span className="w-3 h-3 border border-brand-500 border-t-transparent rounded-full animate-spin" />
+                  ) : 'Mark Applied'}
+                </button>
               )}
-              <IconButton
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setIsConfirmOpen(true)}
+                className="btn-ghost text-red-600 hover:bg-red-50 px-2 py-1 text-xs"
                 aria-label="Delete job"
-                icon={<TrashIcon />}
-                size="xs"
-                variant="ghost"
-                colorScheme="red"
-                isLoading={isDeleting}
-                onClick={onConfirmOpen}
-              />
-            </HStack>
-          </Td>
+              >
+                {isDeleting ? (
+                  <span className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
+                ) : <TrashIcon />}
+              </button>
+            </div>
+          </td>
         );
     }
   }
 
   return (
     <>
-      <Tr bg={bg} _hover={{ bg: bg ?? 'gray.50' }} transition="background 0.15s">
+      <tr
+        className="hover:bg-gray-50 transition-colors"
+        style={bgStyle}
+      >
         {colOrder.map(key => renderCell(key))}
-      </Tr>
+      </tr>
 
-      <AlertDialog isOpen={isConfirmOpen} leastDestructiveRef={cancelRef} onClose={onConfirmClose} isCentered>
-        <AlertDialogOverlay>
-          <AlertDialogContent>
-            <AlertDialogHeader fontSize="md" fontWeight="bold">Delete Job</AlertDialogHeader>
-            <AlertDialogBody fontSize="sm">
+      <AlertDialog.Root open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <AlertDialog.Portal>
+          <AlertDialog.Overlay className="fixed inset-0 bg-black/50 z-40" />
+          <AlertDialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl z-50 w-full max-w-sm p-6">
+            <AlertDialog.Title className="text-base font-bold text-gray-900 mb-2">
+              Delete Job
+            </AlertDialog.Title>
+            <AlertDialog.Description className="text-sm text-gray-600 mb-5">
               Delete <strong>{job.company}</strong>{job.title !== 'N/A' ? ` — ${job.title}` : ''}? This cannot be undone.
-            </AlertDialogBody>
-            <AlertDialogFooter gap={2}>
-              <Button ref={cancelRef} size="sm" variant="ghost" onClick={onConfirmClose}>Cancel</Button>
-              <Button
-                size="sm"
-                colorScheme="red"
-                isLoading={isDeleting}
-                onClick={() => { onConfirmClose(); onDelete(job.id); }}
-              >
-                Delete
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialogOverlay>
-      </AlertDialog>
+            </AlertDialog.Description>
+            <div className="flex justify-end gap-2">
+              <AlertDialog.Cancel asChild>
+                <button ref={cancelRef} type="button" className="btn-ghost text-sm text-gray-600">
+                  Cancel
+                </button>
+              </AlertDialog.Cancel>
+              <AlertDialog.Action asChild>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => { setIsConfirmOpen(false); onDelete(job.id); }}
+                  className="btn-danger text-sm"
+                >
+                  {isDeleting ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                      Deleting…
+                    </span>
+                  ) : 'Delete'}
+                </button>
+              </AlertDialog.Action>
+            </div>
+          </AlertDialog.Content>
+        </AlertDialog.Portal>
+      </AlertDialog.Root>
     </>
   );
 }

@@ -1,22 +1,10 @@
 import { useState } from 'react';
-import {
-  Box,
-  Button,
-  Flex,
-  Skeleton,
-  Spinner,
-  Text,
-  useBreakpointValue,
-  useDisclosure,
-  useToast,
-  Alert,
-  AlertIcon,
-  Center,
-} from '@chakra-ui/react';
-import { addDays, parseISO, subDays } from 'date-fns';
+import { toast } from 'sonner';
+import { todayStr, isDeadlineSoon, isStaleJob } from '@/lib/dateUtils';
 import { Link as RouterLink } from 'react-router-dom';
 import type { Job, QuickFilter, CreateJobInput } from '@shared/types';
 import { useJobs, useCreateJob, useUpdateJob, useDeleteJob, useMarkApplied } from '@/hooks/useJobs';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { AlertBar } from '@/components/AlertBar';
 import { FilterBar } from '@/components/FilterBar';
 import { JobsTable } from '@/components/JobsTable';
@@ -24,92 +12,73 @@ import { JobCardList } from '@/components/JobCardList';
 import { JobModal } from '@/components/JobModal';
 import { UserMenu } from '@/components/UserMenu';
 import { AppHeader } from '@/components/AppHeader';
-const TODAY = new Date().toISOString().split('T')[0];
+
+const TODAY = todayStr();
 
 // ── Empty state placeholder ───────────────────────────────────────────────
 
 function TablePlaceholder({ onAdd }: { onAdd: () => void }) {
   const cols = ['Company', 'Title', 'Location', 'Added', 'Deadline', 'Status', 'Actions'];
   return (
-    <Box bg="white" borderRadius="xl" border="1px solid" borderColor="gray.200" overflow="hidden">
+    <div className="relative bg-white rounded-xl border border-gray-200 overflow-hidden">
       {/* fake header row */}
-      <Box overflowX="auto">
-        <Box as="table" w="full" style={{ borderCollapse: 'collapse' }}>
-          <Box as="thead">
-            <Box as="tr" bg="brand.50">
+      <div className="overflow-x-auto">
+        <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+          <thead>
+            <tr className="bg-brand-50">
               {cols.map((c) => (
-                <Box
-                  as="th"
+                <th
                   key={c}
-                  px={4}
-                  py={3}
-                  textAlign="left"
-                  fontSize="xs"
-                  fontWeight="semibold"
-                  color="brand.700"
-                  letterSpacing="wider"
-                  textTransform="uppercase"
-                  borderBottom="2px solid"
-                  borderColor="brand.200"
-                  whiteSpace="nowrap"
+                  className="px-4 py-3 text-left text-xs font-semibold text-brand-700 tracking-wider uppercase border-b-2 border-brand-200 whitespace-nowrap"
                 >
                   {c}
-                </Box>
+                </th>
               ))}
-            </Box>
-          </Box>
-          <Box as="tbody">
+            </tr>
+          </thead>
+          <tbody>
             {[...Array(5)].map((_, i) => (
-              <Box as="tr" key={i} borderBottom="1px solid" borderColor="gray.100">
+              <tr key={i} className="border-b border-gray-100">
                 {cols.map((c) => (
-                  <Box as="td" key={c} px={4} py={3}>
-                    <Skeleton
-                      height="14px"
-                      borderRadius="md"
-                      startColor="gray.100"
-                      endColor="gray.200"
-                      w={c === 'Actions' ? '80px' : c === 'Status' ? '70px' : `${60 + Math.random() * 40}%`}
+                  <td key={c} className="px-4 py-3">
+                    <div
+                      className="animate-pulse bg-gray-200 rounded h-3.5"
+                      style={{ width: c === 'Actions' ? '80px' : c === 'Status' ? '70px' : `${60 + Math.random() * 40}%` }}
                     />
-                  </Box>
+                  </td>
                 ))}
-              </Box>
+              </tr>
             ))}
-          </Box>
-        </Box>
-      </Box>
+          </tbody>
+        </table>
+      </div>
 
       {/* overlay CTA */}
-      <Center
-        position="absolute"
-        inset={0}
-        bg="whiteAlpha.800"
-        backdropFilter="blur(2px)"
-        flexDir="column"
-        gap={3}
-        borderRadius="xl"
-      >
-        <Text fontSize="3xl">💼</Text>
-        <Text fontWeight="semibold" color="gray.700">No jobs yet</Text>
-        <Text fontSize="sm" color="gray.500" textAlign="center" maxW="260px">
+      <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 rounded-xl">
+        <span className="text-3xl">💼</span>
+        <p className="font-semibold text-gray-700">No jobs yet</p>
+        <p className="text-sm text-gray-500 text-center max-w-65">
           Add your first job to start tracking applications and deadlines.
-        </Text>
-        <Button colorScheme="brand" size="sm" onClick={onAdd}>
+        </p>
+        <button
+          type="button"
+          onClick={onAdd}
+          className="btn-primary text-sm"
+        >
           + Add your first job
-        </Button>
-      </Center>
-    </Box>
+        </button>
+      </div>
+    </div>
   );
 }
 
 // ── Dashboard page ────────────────────────────────────────────────────────
 
 export function DashboardPage() {
-  const toast = useToast();
-  const isMobile = useBreakpointValue({ base: true, md: false });
+  const isMobile = useMediaQuery('(max-width: 767px)');
 
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('active');
-
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
 
   const [applyingId, setApplyingId] = useState<string | null>(null);
@@ -124,20 +93,14 @@ export function DashboardPage() {
   const filteredJobs = applyFilter(jobs, quickFilter);
 
   function applyFilter(jobs: Job[], qf: QuickFilter): Job[] {
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
-    const threeDaysStr = addDays(today, 3).toISOString().split('T')[0];
     if (qf === 'active') return jobs.filter((j) => ['not_started', 'in_progress', 'interviewing'].includes(j.status));
     if (qf === 'not_started') return jobs.filter((j) => j.status === 'not_started');
     if (qf === 'applied') return jobs.filter((j) => !!j.applied_date);
     if (qf === 'conference') return jobs.filter((j) => !!j.conference);
     if (qf === 'due_soon') return jobs.filter(
-      (j) => j.deadline && !['applied', 'archive'].includes(j.status) &&
-        j.deadline >= todayStr && j.deadline <= threeDaysStr
+      (j) => !['applied', 'archive'].includes(j.status) && isDeadlineSoon(j.deadline)
     );
-    if (qf === 'stale') return jobs.filter(
-      (j) => ['not_started', 'in_progress'].includes(j.status) && parseISO(j.added) <= subDays(today, 7)
-    );
+    if (qf === 'stale') return jobs.filter((j) => isStaleJob(j.added, j.status));
     if (qf === 'archived') return jobs.filter((j) => j.status === 'archive');
     return jobs;
   }
@@ -146,123 +109,123 @@ export function DashboardPage() {
     try {
       if (editingJob) {
         await updateJob.mutateAsync({ id: editingJob.id, data: formData });
-        toast({ title: 'Job updated', status: 'success', duration: 2000 });
+        toast.success('Job updated');
       } else {
         await createJob.mutateAsync(formData as CreateJobInput);
-        toast({ title: 'Job added', status: 'success', duration: 2000 });
+        toast.success('Job added');
       }
       setEditingJob(null);
-      onClose();
+      setIsOpen(false);
     } catch {
-      toast({ title: 'Something went wrong', status: 'error', duration: 3000 });
+      toast.error('Something went wrong');
     }
   }
 
-  function handleEdit(job: Job) { setEditingJob(job); onOpen(); }
+  function handleEdit(job: Job) { setEditingJob(job); setIsOpen(true); }
 
   async function handleDelete(id: string) {
     setDeletingId(id);
-    try { await deleteJob.mutateAsync(id); toast({ title: 'Job deleted', status: 'info', duration: 2000 }); }
-    catch { toast({ title: 'Delete failed', status: 'error', duration: 3000 }); }
+    try { await deleteJob.mutateAsync(id); toast.success('Job deleted'); }
+    catch { toast.error('Delete failed'); }
     finally { setDeletingId(null); }
   }
 
   async function handleMarkApplied(id: string) {
     setApplyingId(id);
-    try { await markApplied.mutateAsync(id); toast({ title: 'Marked as applied', status: 'success', duration: 2000 }); }
-    catch { toast({ title: 'Update failed', status: 'error', duration: 3000 }); }
+    try { await markApplied.mutateAsync(id); toast.success('Marked as applied'); }
+    catch { toast.error('Update failed'); }
     finally { setApplyingId(null); }
   }
 
-  function openAdd() { setEditingJob(null); onOpen(); }
+  function openAdd() { setEditingJob(null); setIsOpen(true); }
 
   return (
-    <Flex minH="100vh" flexDir="column" bg="#F5F5F3">
+    <div className="flex min-h-screen flex-col bg-[#F5F5F3]">
 
-      {/* ── Header ── */}
+      {/* Header */}
       <AppHeader>
-        <Button
-          as={RouterLink}
+        <RouterLink
           to="/profile"
-          size="sm"
-          bg="transparent"
-          color="accent.200"
-          border="1.5px solid"
-          borderColor="accent.400"
-          _hover={{ bg: 'whiteAlpha.100' }}
-          leftIcon={<Text as="span" fontSize="md">👤</Text>}
+          className="text-accent-200 border border-accent-400 rounded-md px-3 py-1.5 text-sm hover:bg-white/10 transition-colors flex items-center gap-1.5"
         >
+          <span className="text-base">👤</span>
           Profile
-        </Button>
+        </RouterLink>
         <UserMenu />
       </AppHeader>
 
-      {/* ── Main content ── */}
-      <Box as="main" flex={1} minW={0} p={{ base: 3, sm: 4 }} pb={24} display="flex" flexDir="column" gap={2}>
+      {/* Main content */}
+      <main className="flex-1 flex flex-col gap-2 p-3 sm:p-4 pb-24">
 
-          {/* Today date */}
-          <Text fontSize="xs" color="gray.500" fontWeight="medium">
-            Today: {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-          </Text>
+        {/* Today date */}
+        <p className="text-xs text-gray-500 font-medium">
+          Today: {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+        </p>
 
-          {/* Alert bar */}
-          {!isLoading && <AlertBar jobs={jobs} />}
+        {/* Alert bar */}
+        {!isLoading && <AlertBar jobs={jobs} />}
 
-          {/* Add button */}
-          <Flex justify="flex-end">
-            <Button colorScheme="brand" size="sm" onClick={openAdd} boxShadow="sm">
-              + Add Job
-            </Button>
-          </Flex>
+        {/* Add button */}
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={openAdd}
+            className="btn-primary text-sm px-3 py-1.5"
+          >
+            + Add Job
+          </button>
+        </div>
 
-          {/* Filter bar */}
-          <FilterBar quickFilter={quickFilter} onQuickFilter={setQuickFilter} jobs={jobs} />
+        {/* Filter bar */}
+        <FilterBar quickFilter={quickFilter} onQuickFilter={setQuickFilter} jobs={jobs} />
 
-          {/* Error */}
-          {error && (
-            <Alert status="error" borderRadius="lg">
-              <AlertIcon />
-              Failed to load jobs. Please refresh.
-            </Alert>
-          )}
+        {/* Error */}
+        {error && (
+          <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+            <span>⚠️</span>
+            Failed to load jobs. Please refresh.
+          </div>
+        )}
 
-          {/* Table or card list or spinner or placeholder */}
-          {isLoading ? (
-            <Center py={16}><Spinner color="brand.500" size="lg" /></Center>
-          ) : jobs.length === 0 ? (
-            <Box position="relative">
-              <TablePlaceholder onAdd={openAdd} />
-            </Box>
-          ) : isMobile ? (
-            <JobCardList
-              jobs={filteredJobs}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onMarkApplied={handleMarkApplied}
-              applyingId={applyingId}
-              deletingId={deletingId}
-            />
-          ) : (
-            <JobsTable
-              jobs={filteredJobs}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onMarkApplied={handleMarkApplied}
-              applyingId={applyingId}
-              deletingId={deletingId}
-            />
-          )}
-      </Box>
+        {/* Table or card list or spinner or placeholder */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500" />
+          </div>
+        ) : jobs.length === 0 ? (
+          <div className="relative">
+            <TablePlaceholder onAdd={openAdd} />
+          </div>
+        ) : isMobile ? (
+          <JobCardList
+            jobs={filteredJobs}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onMarkApplied={handleMarkApplied}
+            applyingId={applyingId}
+            deletingId={deletingId}
+          />
+        ) : (
+          <JobsTable
+            jobs={filteredJobs}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onMarkApplied={handleMarkApplied}
+            applyingId={applyingId}
+            deletingId={deletingId}
+          />
+        )}
+      </main>
 
       {/* Add/Edit Modal */}
       <JobModal
         isOpen={isOpen}
-        onClose={() => { setEditingJob(null); onClose(); }}
+        onClose={() => { setEditingJob(null); setIsOpen(false); }}
         onSubmit={handleSubmit}
         isLoading={createJob.isPending || updateJob.isPending}
         defaultValues={editingJob ?? { added: TODAY }}
         title={editingJob ? 'Edit Job' : 'Add Job'}
       />
-    </Flex>
+    </div>
   );
 }

@@ -1,5 +1,6 @@
-import { Box, HStack, Button, Badge } from '@chakra-ui/react';
+import * as Select from '@radix-ui/react-select';
 import type { Job, QuickFilter } from '@shared/types';
+import { isDeadlineSoon, isStaleJob } from '@/lib/dateUtils';
 
 interface Props {
   quickFilter: QuickFilter;
@@ -14,10 +15,6 @@ interface FilterDef {
   badgeBg?: string;
   badgeColor?: string;
 }
-
-const today = new Date();
-const todayStr = today.toISOString().split('T')[0];
-const threeDaysStr = new Date(today.getTime() + 3 * 86400000).toISOString().split('T')[0];
 
 const FILTERS: FilterDef[] = [
   {
@@ -46,11 +43,7 @@ const FILTERS: FilterDef[] = [
     value: 'due_soon',
     getCount: (jobs) =>
       jobs.filter(
-        (j) =>
-          j.deadline &&
-          !['applied', 'archive'].includes(j.status) &&
-          j.deadline >= todayStr &&
-          j.deadline <= threeDaysStr
+        (j) => !['applied', 'archive'].includes(j.status) && isDeadlineSoon(j.deadline)
       ).length,
     badgeBg: '#FCEBEB',
     badgeColor: '#791F1F',
@@ -58,12 +51,7 @@ const FILTERS: FilterDef[] = [
   {
     label: 'Stale',
     value: 'stale',
-    getCount: (jobs) =>
-      jobs.filter(
-        (j) =>
-          ['not_started', 'in_progress'].includes(j.status) &&
-          new Date(j.added) <= new Date(today.getTime() - 7 * 86400000)
-      ).length,
+    getCount: (jobs) => jobs.filter((j) => isStaleJob(j.added, j.status)).length,
     badgeBg: '#FAEEDA',
     badgeColor: '#633806',
   },
@@ -91,62 +79,100 @@ const FILTERS: FilterDef[] = [
 ];
 
 export function FilterBar({ quickFilter, onQuickFilter, jobs }: Props) {
-  return (
-    <Box
-      mb={2}
-      mx={{ base: -3, sm: -4 }}
-      px={{ base: 3, sm: 4 }}
-      overflowX="auto"
-      sx={{ '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none' }}
-    >
-      <HStack spacing={2} flexWrap="nowrap" minW="max-content" pb={1}>
-        {FILTERS.map(({ label, value, getCount, badgeBg, badgeColor }) => {
-          const isActive = quickFilter === value;
-          const count = getCount(jobs);
-          const showCount = count !== null && count > 0;
+  const active = FILTERS.find((f) => f.value === quickFilter)!;
+  const activeCount = active.getCount(jobs);
 
-          return (
-            <Button
-              key={value}
-              size="sm"
-              onClick={() => onQuickFilter(value)}
-              borderRadius="full"
-              px={4}
-              fontWeight="500"
-              fontSize="sm"
-              flexShrink={0}
-              bg={isActive ? 'brand.800' : 'white'}
-              color={isActive ? 'white' : 'gray.600'}
-              border="1.5px solid"
-              borderColor={isActive ? 'brand.800' : 'gray.400'}
-              _hover={{
-                bg: isActive ? 'brand.700' : 'gray.50',
-                borderColor: isActive ? 'brand.700' : 'gray.500',
-              }}
-              _active={{ transform: 'scale(0.97)' }}
-              rightIcon={
-                showCount ? (
-                  <Badge
-                    ml={1}
-                    px={1.5}
-                    py={0}
-                    borderRadius="full"
-                    fontSize="12px"
-                    fontWeight="700"
-                    bg={isActive ? 'whiteAlpha.300' : badgeBg}
-                    color={isActive ? 'white' : badgeColor}
-                    border="none"
+  return (
+    <>
+      {/* Mobile: custom Radix dropdown */}
+      <div className="sm:hidden">
+        <Select.Root value={quickFilter} onValueChange={(v) => onQuickFilter(v as QuickFilter)}>
+          <Select.Trigger className="w-full flex items-center justify-between gap-2 border border-gray-300 rounded-md px-4 py-3 bg-white text-base font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+            <span>
+              {active.label}
+              {activeCount !== null && activeCount > 0 ? ` (${activeCount})` : ''}
+            </span>
+            <Select.Icon>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </Select.Icon>
+          </Select.Trigger>
+
+          <Select.Portal>
+            <Select.Content
+              className="z-50 w-[var(--radix-select-trigger-width)] bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden"
+              position="popper"
+              sideOffset={4}
+            >
+              <Select.Viewport>
+                {FILTERS.map(({ label, value, getCount }) => {
+                  const count = getCount(jobs);
+                  return (
+                    <Select.Item
+                      key={value}
+                      value={value}
+                      className="flex items-center justify-between px-4 py-3.5 text-base text-gray-800 cursor-pointer select-none
+                                 data-[highlighted]:bg-brand-50 data-[highlighted]:outline-none
+                                 data-[state=checked]:font-semibold data-[state=checked]:text-brand-800"
+                    >
+                      <Select.ItemText>
+                        {label}{count !== null && count > 0 ? ` (${count})` : ''}
+                      </Select.ItemText>
+                      <Select.ItemIndicator>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      </Select.ItemIndicator>
+                    </Select.Item>
+                  );
+                })}
+              </Select.Viewport>
+            </Select.Content>
+          </Select.Portal>
+        </Select.Root>
+      </div>
+
+      {/* Desktop: pill buttons */}
+      <div
+        className="hidden sm:block mb-2 -mx-4 px-4 overflow-x-auto"
+        style={{ scrollbarWidth: 'none' } as React.CSSProperties}
+      >
+        <div className="flex gap-2 flex-nowrap min-w-max pb-1">
+          {FILTERS.map(({ label, value, getCount, badgeBg, badgeColor }) => {
+            const isActive = quickFilter === value;
+            const count = getCount(jobs);
+            const showCount = count !== null && count > 0;
+
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => onQuickFilter(value)}
+                className={[
+                  'inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium shrink-0 border-[1.5px] transition-colors',
+                  isActive
+                    ? 'bg-brand-800 text-white border-brand-800 hover:bg-brand-700 hover:border-brand-700'
+                    : 'bg-white text-gray-600 border-gray-400 hover:bg-gray-50 hover:border-gray-500',
+                ].join(' ')}
+              >
+                {label}
+                {showCount && (
+                  <span
+                    className="text-[12px] font-bold px-1.5 py-0 rounded-full leading-none"
+                    style={{
+                      background: isActive ? 'rgba(255,255,255,0.25)' : badgeBg,
+                      color: isActive ? 'white' : badgeColor,
+                    }}
                   >
                     {count}
-                  </Badge>
-                ) : undefined
-              }
-            >
-              {label}
-            </Button>
-          );
-        })}
-      </HStack>
-    </Box>
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </>
   );
 }

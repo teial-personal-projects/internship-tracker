@@ -1,63 +1,44 @@
-import { Alert, AlertIcon, Box, HStack, Text } from '@chakra-ui/react';
-import { addDays, isWithinInterval, parseISO, subDays } from 'date-fns';
 import type { Job } from '@shared/types';
+import { isDeadlineSoon, isStaleJob } from '@/lib/dateUtils';
 
 interface Props {
   jobs: Job[];
 }
 
 export function AlertBar({ jobs }: Props) {
-  const today = new Date();
-  const threeDaysOut = addDays(today, 3);
-  const sevenDaysAgo = subDays(today, 7);
-
   const dueSoon = jobs.filter(
-    (j) =>
-      j.deadline &&
-      !['applied', 'archive'].includes(j.status) &&
-      isWithinInterval(parseISO(j.deadline), { start: today, end: threeDaysOut })
+    (j) => !['applied', 'archive'].includes(j.status) && isDeadlineSoon(j.deadline)
   );
 
-  const stale = jobs.filter(
-    (j) =>
-      ['not_started', 'in_progress'].includes(j.status) &&
-      parseISO(j.added) <= sevenDaysAgo
-  );
+  const stale = jobs.filter((j) => isStaleJob(j.added, j.status));
 
   if (!dueSoon.length && !stale.length) return null;
 
   return (
-    <Alert
-      status="warning"
-      borderRadius="md"
-      mb={4}
-      bg="orange.50"
-      borderLeft="4px solid"
-      borderLeftColor="orange.400"
-    >
-      <AlertIcon color="orange.400" />
-      <HStack spacing={6} wrap="wrap">
+    <div className="flex items-start gap-3 p-3 mb-4 bg-orange-50 border border-orange-200 border-l-4 border-l-orange-400 rounded-md">
+      <span className="text-orange-400 text-base mt-0.5 flex-shrink-0">⚠️</span>
+      <div className="flex flex-wrap gap-x-6 gap-y-1">
         {dueSoon.length > 0 && (
-          <Box>
-            <Text as="span" fontWeight="semibold" fontSize="sm" color="orange.700">
+          <div>
+            <span className="font-semibold text-sm text-orange-700">
               {dueSoon.length === 1 ? '1 application' : `${dueSoon.length} applications`} due within 3 days:{' '}
-            </Text>
-            <Text as="span" fontSize="sm" color="orange.800">
+            </span>
+            <span className="text-sm text-orange-800">
               {dueSoon.map((j) => j.company).join(', ')}
-            </Text>
-          </Box>
+            </span>
+          </div>
         )}
         {stale.length > 0 && (
-          <Box>
-            <Text as="span" fontWeight="semibold" fontSize="sm" color="orange.700">
+          <div>
+            <span className="font-semibold text-sm text-orange-700">
               {stale.length === 1 ? '1 job' : `${stale.length} jobs`} saved 7+ days without applying:{' '}
-            </Text>
-            <Text as="span" fontSize="sm" color="orange.800">
+            </span>
+            <span className="text-sm text-orange-800">
               {stale.map((j) => j.company).join(', ')}
-            </Text>
-          </Box>
+            </span>
+          </div>
         )}
-      </HStack>
-    </Alert>
+      </div>
+    </div>
   );
 }

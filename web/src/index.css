@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50:  #EAF3DE;
+  --color-brand-100: #C0DD97;
+  --color-brand-200: #97C459;
+  --color-brand-300: #7AB83A;
+  --color-brand-400: #639922;
+  --color-brand-500: #3B6D11;
+  --color-brand-600: #2E570D;
+  --color-brand-700: #27500A;
+  --color-brand-800: #1A3C2E;
+  --color-brand-900: #122B20;
+
+  --color-accent-50:  #eef0fb;
+  --color-accent-100: #d0d5f4;
+  --color-accent-200: #b2baed;
+  --color-accent-300: #8f9ae3;
+  --color-accent-400: #6B7FD4;
+  --color-accent-500: #5468c9;
+  --color-accent-600: #4055b8;
+  --color-accent-700: #3044a0;
+  --color-accent-800: #223282;
+  --color-accent-900: #162060;
+
+  --font-family-sans: "Inter", "-apple-system", "sans-serif";
+}
+
+@layer base {
+  body {
+    @apply bg-[#F5F5F3] text-gray-800 font-sans;
+  }
+}
+
+@layer components {
+  .field-label {
+    @apply block text-[10px] font-semibold text-brand-700 uppercase tracking-wider mb-1;
+  }
+  .field-input {
+    @apply w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm text-gray-800
+           placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500
+           disabled:bg-gray-100 disabled:cursor-not-allowed;
+  }
+  .field-select {
+    @apply w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm text-gray-800
+           focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500
+           disabled:bg-gray-100 disabled:cursor-not-allowed bg-white;
+  }
+  .field-textarea {
+    @apply w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm text-gray-800
+           placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500
+           disabled:bg-gray-100 disabled:cursor-not-allowed resize-none;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors
+           focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1
+           disabled:opacity-50 disabled:cursor-not-allowed
+           bg-brand-800 text-white px-4 py-1.5 hover:bg-brand-700;
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors
+           focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1
+           disabled:opacity-50 disabled:cursor-not-allowed
+           border border-gray-400 bg-white text-gray-700 px-4 py-1.5 hover:bg-gray-50;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors
+           focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1
+           disabled:opacity-50 disabled:cursor-not-allowed
+           bg-transparent text-gray-600 px-3 py-1.5 hover:bg-gray-100;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors
+           focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1
+           disabled:opacity-50 disabled:cursor-not-allowed
+           bg-red-600 text-white px-4 py-1.5 hover:bg-red-700;
+  }
+}

@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import { Box, Button, Flex, Text } from '@chakra-ui/react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export function UserMenu() {
@@ -39,48 +38,21 @@ export function UserMenu() {
   const initial = (firstName?.[0] ?? user.email?.[0] ?? 'U').toUpperCase();
 
   return (
-    <Box position="relative" ref={ref}>
+    <div className="relative" ref={ref}>
       {/* Trigger button */}
-      <Button
-        variant="outline"
-        size="md"
-        h="auto"
-        py={1.5}
-        borderColor="gray.300"
-        bg="white"
-        color="gray.700"
-        fontWeight="medium"
+      <button
+        type="button"
         onClick={() => setIsOpen((v) => !v)}
-        _hover={{ bg: 'gray.50' }}
-        px={2}
-        gap={2}
+        className="inline-flex items-center gap-2 px-2 py-1.5 bg-white border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500"
       >
         {/* Avatar circle */}
-        <Flex
-          align="center"
-          justify="center"
-          w={8}
-          h={8}
-          bg="blue.600"
-          color="white"
-          borderRadius="full"
-          fontSize="xs"
-          fontWeight="semibold"
-          flexShrink={0}
-        >
+        <span className="w-8 h-8 rounded-full bg-blue-600 text-white text-xs font-semibold flex items-center justify-center flex-shrink-0">
           {initial}
-        </Flex>
+        </span>
 
-        <Text
-          display={{ base: 'none', sm: 'block' }}
-          maxW="150px"
-          overflow="hidden"
-          textOverflow="ellipsis"
-          whiteSpace="nowrap"
-          fontSize="sm"
-        >
+        <span className="hidden sm:block max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap text-sm">
           {displayName}
-        </Text>
+        </span>
 
         {/* Chevron */}
         <svg
@@ -97,65 +69,52 @@ export function UserMenu() {
         >
           <path d="M19 9l-7 7-7-7" />
         </svg>
-      </Button>
+      </button>
 
       {/* Dropdown */}
       {isOpen && (
-        <Box
-          position="absolute"
-          right={0}
-          zIndex={20}
-          mt={2}
-          w="56"
-          minW="224px"
-          bg="white"
-          border="1px solid"
-          borderColor="gray.200"
-          borderRadius="md"
-          boxShadow="lg"
-        >
+        <div className="absolute right-0 z-20 mt-2 w-56 min-w-[224px] bg-white border border-gray-200 rounded-md shadow-lg">
           {/* Signed in as */}
-          <Box px={4} py={3} borderBottom="1px solid" borderColor="gray.200">
-            <Text fontSize="sm" fontWeight="medium" color="gray.900">Signed in as</Text>
-            <Text fontSize="sm" color="gray.600" mt={1} noOfLines={1}>{user.email}</Text>
-          </Box>
+          <div className="px-4 py-3 border-b border-gray-200">
+            <p className="text-sm font-medium text-gray-900">Signed in as</p>
+            <p className="text-sm text-gray-600 mt-1 truncate">{user.email}</p>
+          </div>
 
           {/* Sign out */}
-          <Box p={2}>
-            <Button
-              variant="ghost"
-              w="full"
-              justifyContent="flex-start"
-              fontSize="sm"
-              color="red.600"
-              gap={2}
-              px={3}
-              py={2}
-              borderRadius="md"
-              isLoading={loading}
-              loadingText="Signing out…"
+          <div className="p-2">
+            <button
+              type="button"
               onClick={handleSignOut}
-              _hover={{ bg: 'red.50' }}
-              _focus={{ ring: 2, ringColor: 'red.600', ringInset: 'inset' }}
+              disabled={loading}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 rounded-md hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-red-600 disabled:opacity-60"
             >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              Sign Out
-            </Button>
-          </Box>
-        </Box>
+              {loading ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                  Signing out…
+                </>
+              ) : (
+                <>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  Sign Out
+                </>
+              )}
+            </button>
+          </div>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }

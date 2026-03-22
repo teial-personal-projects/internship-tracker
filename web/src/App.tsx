@@ -1,5 +1,4 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Center, Spinner } from '@chakra-ui/react';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoginPage } from '@/pages/LoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
@@ -10,9 +9,9 @@ function AppRoutes() {
 
   if (loading) {
     return (
-      <Center minH="100vh">
-        <Spinner color="brand.500" size="xl" />
-      </Center>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-500" />
+      </div>
     );
   }
 

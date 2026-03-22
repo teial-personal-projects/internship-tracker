@@ -1,18 +1,4 @@
 import { useState } from 'react';
-import {
-  Box,
-  Button,
-  FormControl,
-  FormLabel,
-  Input,
-  InputGroup,
-  InputLeftElement,
-  InputRightElement,
-  Stack,
-  Text,
-  Flex,
-  Progress,
-} from '@chakra-ui/react';
 import { useAuth } from '@/contexts/AuthContext';
 
 // ── Password strength ──────────────────────────────────────────────────────
@@ -32,22 +18,19 @@ function getStrength(pwd: string): 'weak' | 'medium' | 'strong' | null {
   return 'medium';
 }
 
-const STRENGTH_COLOR = { weak: 'red.400', medium: 'orange.400', strong: 'green.500' } as const;
+const STRENGTH_COLOR = {
+  weak: 'text-red-400',
+  medium: 'text-orange-400',
+  strong: 'text-green-500',
+} as const;
+
+const STRENGTH_BAR_COLOR = {
+  weak: 'bg-red-400',
+  medium: 'bg-orange-400',
+  strong: 'bg-green-500',
+} as const;
+
 const STRENGTH_VALUE = { weak: 33, medium: 66, strong: 100 } as const;
-
-// ── Shared input style ─────────────────────────────────────────────────────
-
-const inputStyle = {
-  border: '1px solid',
-  borderColor: 'slate.200',
-  borderRadius: 'lg',
-  fontSize: 'sm',
-  py: 6,
-  pl: 10,
-  _focus: { ring: 2, ringColor: 'blue.500', borderColor: 'transparent' },
-  _placeholder: { color: 'gray.400' },
-  _disabled: { opacity: 0.6 },
-};
 
 // ── Login form ─────────────────────────────────────────────────────────────
 
@@ -74,112 +57,94 @@ function LoginForm({ onSwitch }: { onSwitch: () => void }) {
 
   return (
     <>
-      <Box mb={6}>
-        <Text
-          fontSize="2xl"
-          fontWeight="bold"
-          color="#1e3a5f"
+      <div className="mb-6">
+        <h2
+          className="text-2xl font-bold text-[#1e3a5f]"
           style={{ fontFamily: "'Fraunces', serif" }}
         >
           Welcome back
-        </Text>
-        <Text fontSize="sm" color="gray.500" mt={1}>
+        </h2>
+        <p className="text-sm text-gray-500 mt-1">
           Sign in to continue tracking internships
-        </Text>
-      </Box>
+        </p>
+      </div>
 
       {error && (
-        <Box mb={4} p={3} bg="red.50" border="1px solid" borderColor="red.200" borderRadius="lg">
-          <Text fontSize="sm" color="red.600">{error}</Text>
-        </Box>
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-600">{error}</p>
+        </div>
       )}
 
       <form onSubmit={handleSubmit}>
-        <Stack spacing={4}>
-          <FormControl isRequired>
-            <FormLabel fontSize="xs" fontWeight="semibold" color="gray.500" textTransform="uppercase" letterSpacing="wider" mb={1}>
+        <div className="flex flex-col gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
               Email Address
-            </FormLabel>
-            <InputGroup>
-              <InputLeftElement pointerEvents="none" h="full" pl={1}>
-                <Text fontSize="md">✉️</Text>
-              </InputLeftElement>
-              <Input
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base pointer-events-none">✉️</span>
+              <input
                 type="email"
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 disabled={loading}
-                {...inputStyle}
+                className="field-input pl-10"
               />
-            </InputGroup>
-          </FormControl>
+            </div>
+          </div>
 
-          <FormControl isRequired>
-            <Flex justify="space-between" align="center" mb={1}>
-              <FormLabel fontSize="xs" fontWeight="semibold" color="gray.500" textTransform="uppercase" letterSpacing="wider" mb={0}>
-                Password
-              </FormLabel>
-            </Flex>
-            <InputGroup>
-              <InputLeftElement pointerEvents="none" h="full" pl={1}>
-                <Text fontSize="md">🔒</Text>
-              </InputLeftElement>
-              <Input
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+              Password
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base pointer-events-none">🔒</span>
+              <input
                 type={showPwd ? 'text' : 'password'}
+                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••"
                 disabled={loading}
-                {...inputStyle}
-                pr={16}
+                className="field-input pl-10 pr-16"
               />
-              <InputRightElement width="4rem" h="full">
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  color="blue.600"
-                  fontWeight="medium"
-                  onClick={() => setShowPwd((v) => !v)}
-                  tabIndex={-1}
-                >
-                  {showPwd ? 'Hide' : 'Show'}
-                </Button>
-              </InputRightElement>
-            </InputGroup>
-          </FormControl>
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => setShowPwd((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-600 font-medium hover:text-blue-700"
+              >
+                {showPwd ? 'Hide' : 'Show'}
+              </button>
+            </div>
+          </div>
 
-          <Box pt={1}>
-            <Button
+          <div className="pt-1">
+            <button
               type="submit"
-              w="full"
-              bg="gray.800"
-              color="white"
-              fontWeight="semibold"
-              fontSize="sm"
-              borderRadius="lg"
-              py={6}
-              isLoading={loading}
-              loadingText="Signing in…"
-              _hover={{ bg: 'gray.900' }}
-              _active={{ bg: 'gray.900' }}
-              _focus={{ ring: 2, ringColor: 'gray.700', ringOffset: 2 }}
+              disabled={loading}
+              className="w-full bg-gray-800 text-white font-semibold text-sm rounded-lg py-3 hover:bg-gray-900 disabled:opacity-60 transition-colors"
             >
-              Sign In →
-            </Button>
-          </Box>
-        </Stack>
+              {loading ? 'Signing in…' : 'Sign In →'}
+            </button>
+          </div>
+        </div>
       </form>
 
-      <Box mt={6} pt={5} borderTop="1px solid" borderColor="gray.100" textAlign="center">
-        <Text fontSize="sm" color="gray.500">
+      <div className="mt-6 pt-5 border-t border-gray-100 text-center">
+        <p className="text-sm text-gray-500">
           Don't have an account?{' '}
-          <Button variant="link" color="blue.600" fontWeight="semibold" fontSize="sm" onClick={onSwitch}
-            _hover={{ color: 'blue.700' }}>
+          <button
+            type="button"
+            onClick={onSwitch}
+            className="text-blue-600 font-semibold hover:text-blue-700 transition-colors"
+          >
             Sign up free
-          </Button>
-        </Text>
-      </Box>
+          </button>
+        </p>
+      </div>
     </>
   );
 }
@@ -221,196 +186,172 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
 
   return (
     <>
-      <Box mb={6}>
-        <Text
-          fontSize="2xl"
-          fontWeight="bold"
-          color="gray.900"
+      <div className="mb-6">
+        <h2
+          className="text-2xl font-bold text-gray-900"
           style={{ fontFamily: "'Fraunces', serif" }}
         >
           Create account
-        </Text>
-        <Text fontSize="sm" color="gray.500" mt={1}>
+        </h2>
+        <p className="text-sm text-gray-500 mt-1">
           Start tracking your internship applications
-        </Text>
-      </Box>
+        </p>
+      </div>
 
       {error && (
-        <Box mb={4} p={3} bg="red.50" border="1px solid" borderColor="red.200" borderRadius="lg">
-          <Text fontSize="sm" color="red.600">{error}</Text>
-        </Box>
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-600">{error}</p>
+        </div>
       )}
       {message && (
-        <Box mb={4} p={3} bg="green.50" border="1px solid" borderColor="green.200" borderRadius="lg">
-          <Text fontSize="sm" color="green.700">{message}</Text>
-        </Box>
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-sm text-green-700">{message}</p>
+        </div>
       )}
 
       <form onSubmit={handleSubmit}>
-        <Stack spacing={4}>
-          <Flex gap={3}>
-            <FormControl isRequired>
-              <FormLabel fontSize="xs" fontWeight="semibold" color="gray.500" textTransform="uppercase" letterSpacing="wider" mb={1}>
+        <div className="flex flex-col gap-4">
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
                 First Name
-              </FormLabel>
-              <Input
+              </label>
+              <input
+                required
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="Jane"
                 disabled={loading}
-                {...inputStyle}
-                pl={3}
+                className="field-input"
               />
-            </FormControl>
-            <FormControl isRequired>
-              <FormLabel fontSize="xs" fontWeight="semibold" color="gray.500" textTransform="uppercase" letterSpacing="wider" mb={1}>
+            </div>
+            <div className="flex-1">
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
                 Last Name
-              </FormLabel>
-              <Input
+              </label>
+              <input
+                required
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Smith"
                 disabled={loading}
-                {...inputStyle}
-                pl={3}
+                className="field-input"
               />
-            </FormControl>
-          </Flex>
+            </div>
+          </div>
 
-          <FormControl isRequired>
-            <FormLabel fontSize="xs" fontWeight="semibold" color="gray.500" textTransform="uppercase" letterSpacing="wider" mb={1}>
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
               Email Address
-            </FormLabel>
-            <InputGroup>
-              <InputLeftElement pointerEvents="none" h="full" pl={1}>
-                <Text fontSize="md">✉️</Text>
-              </InputLeftElement>
-              <Input
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base pointer-events-none">✉️</span>
+              <input
                 type="email"
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 disabled={loading}
-                {...inputStyle}
+                className="field-input pl-10"
               />
-            </InputGroup>
-          </FormControl>
+            </div>
+          </div>
 
-          <FormControl isRequired>
-            <FormLabel fontSize="xs" fontWeight="semibold" color="gray.500" textTransform="uppercase" letterSpacing="wider" mb={1}>
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
               Password
-            </FormLabel>
-            <InputGroup>
-              <InputLeftElement pointerEvents="none" h="full" pl={1}>
-                <Text fontSize="md">🔒</Text>
-              </InputLeftElement>
-              <Input
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base pointer-events-none">🔒</span>
+              <input
                 type={showPwd ? 'text' : 'password'}
+                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••"
                 disabled={loading}
-                {...inputStyle}
-                pr={16}
+                className="field-input pl-10 pr-16"
               />
-              <InputRightElement width="4rem" h="full">
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  color="blue.600"
-                  fontWeight="medium"
-                  onClick={() => setShowPwd((v) => !v)}
-                  tabIndex={-1}
-                >
-                  {showPwd ? 'Hide' : 'Show'}
-                </Button>
-              </InputRightElement>
-            </InputGroup>
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => setShowPwd((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-600 font-medium hover:text-blue-700"
+              >
+                {showPwd ? 'Hide' : 'Show'}
+              </button>
+            </div>
             {strength && (
-              <Box mt={2}>
-                <Flex align="center" gap={2}>
-                  <Progress
-                    value={STRENGTH_VALUE[strength]}
-                    size="xs"
-                    flex={1}
-                    borderRadius="full"
-                    colorScheme={strength === 'weak' ? 'red' : strength === 'medium' ? 'orange' : 'green'}
-                    bg="gray.200"
-                  />
-                  <Text fontSize="xs" fontWeight="medium" color={STRENGTH_COLOR[strength]}>
+              <div className="mt-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${STRENGTH_BAR_COLOR[strength]}`}
+                      style={{ width: `${STRENGTH_VALUE[strength]}%` }}
+                    />
+                  </div>
+                  <span className={`text-xs font-medium ${STRENGTH_COLOR[strength]}`}>
                     {strength.charAt(0).toUpperCase() + strength.slice(1)}
-                  </Text>
-                </Flex>
-              </Box>
+                  </span>
+                </div>
+              </div>
             )}
-            <Text fontSize="xs" color="gray.400" mt={1}>
+            <p className="text-xs text-gray-400 mt-1">
               8+ characters with uppercase, lowercase, and numbers
-            </Text>
-          </FormControl>
+            </p>
+          </div>
 
-          <FormControl isRequired>
-            <FormLabel fontSize="xs" fontWeight="semibold" color="gray.500" textTransform="uppercase" letterSpacing="wider" mb={1}>
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
               Confirm Password
-            </FormLabel>
-            <InputGroup>
-              <InputLeftElement pointerEvents="none" h="full" pl={1}>
-                <Text fontSize="md">🔒</Text>
-              </InputLeftElement>
-              <Input
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base pointer-events-none">🔒</span>
+              <input
                 type={showConfirm ? 'text' : 'password'}
+                required
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 placeholder="••••••••••"
                 disabled={loading}
-                {...inputStyle}
-                pr={16}
+                className="field-input pl-10 pr-16"
               />
-              <InputRightElement width="4rem" h="full">
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  color="blue.600"
-                  fontWeight="medium"
-                  onClick={() => setShowConfirm((v) => !v)}
-                  tabIndex={-1}
-                >
-                  {showConfirm ? 'Hide' : 'Show'}
-                </Button>
-              </InputRightElement>
-            </InputGroup>
-          </FormControl>
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => setShowConfirm((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-600 font-medium hover:text-blue-700"
+              >
+                {showConfirm ? 'Hide' : 'Show'}
+              </button>
+            </div>
+          </div>
 
-          <Box pt={1}>
-            <Button
+          <div className="pt-1">
+            <button
               type="submit"
-              w="full"
-              bg="gray.800"
-              color="white"
-              fontWeight="semibold"
-              fontSize="sm"
-              borderRadius="lg"
-              py={6}
-              isLoading={loading}
-              loadingText="Creating account…"
-              _hover={{ bg: 'gray.900' }}
-              _active={{ bg: 'gray.900' }}
-              _focus={{ ring: 2, ringColor: 'gray.700', ringOffset: 2 }}
+              disabled={loading}
+              className="w-full bg-gray-800 text-white font-semibold text-sm rounded-lg py-3 hover:bg-gray-900 disabled:opacity-60 transition-colors"
             >
-              Create Account →
-            </Button>
-          </Box>
-        </Stack>
+              {loading ? 'Creating account…' : 'Create Account →'}
+            </button>
+          </div>
+        </div>
       </form>
 
-      <Box mt={6} pt={5} borderTop="1px solid" borderColor="gray.100" textAlign="center">
-        <Text fontSize="sm" color="gray.500">
+      <div className="mt-6 pt-5 border-t border-gray-100 text-center">
+        <p className="text-sm text-gray-500">
           Already have an account?{' '}
-          <Button variant="link" color="blue.600" fontWeight="semibold" fontSize="sm" onClick={onSwitch}
-            _hover={{ color: 'blue.700' }}>
+          <button
+            type="button"
+            onClick={onSwitch}
+            className="text-blue-600 font-semibold hover:text-blue-700 transition-colors"
+          >
             Sign in
-          </Button>
-        </Text>
-      </Box>
+          </button>
+        </p>
+      </div>
     </>
   );
 }
@@ -421,75 +362,62 @@ export function LoginPage() {
   const [tab, setTab] = useState<'login' | 'signup'>('login');
 
   return (
-    <Flex
-      minH="100vh"
-      flexDir="column"
-      align="center"
-      justify="center"
-      px={4}
-      py={10}
-      style={{
-        background: 'linear-gradient(160deg, #1e3a5f 0%, #2c5282 40%, #dbe6f5 70%, #f0f4f8 100%)',
-      }}
+    <div
+      className="min-h-screen flex flex-col items-center justify-center px-4 py-10"
+      style={{ background: 'linear-gradient(160deg, #1e3a5f 0%, #2c5282 40%, #dbe6f5 70%, #f0f4f8 100%)' }}
     >
       {/* Logo + tagline */}
-      <Box textAlign="center" mb={8}>
-        <Flex align="center" justify="center" gap={2} mb={2}>
-          <Text fontSize="4xl">💼</Text>
-          <Text
-            fontSize="3xl"
-            fontWeight="bold"
-            color="white"
+      <div className="text-center mb-8">
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <span className="text-4xl">💼</span>
+          <span
+            className="text-3xl font-bold text-white"
             style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
           >
             Internship Tracker
-          </Text>
-        </Flex>
-        <Text fontSize="sm" color="blue.200">
+          </span>
+        </div>
+        <p className="text-sm text-blue-200">
           Track every application, never miss a deadline
-        </Text>
-      </Box>
+        </p>
+      </div>
 
       {/* Card */}
-      <Box w="full" maxW="md" bg="white" borderRadius="2xl" boxShadow="2xl" overflow="hidden">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
         {/* Tabs */}
-        <Flex borderBottom="1px solid" borderColor="gray.200">
+        <div className="flex border-b border-gray-200">
           {(['login', 'signup'] as const).map((t) => (
-            <Button
+            <button
               key={t}
-              flex={1}
-              variant="unstyled"
-              py={4}
-              fontSize="sm"
-              fontWeight="semibold"
-              borderRadius={0}
-              color={tab === t ? 'gray.900' : 'gray.400'}
-              borderBottom={tab === t ? '2px solid' : 'none'}
-              borderBottomColor="gray.800"
+              type="button"
               onClick={() => setTab(t)}
-              _hover={{ color: tab === t ? 'gray.900' : 'gray.600' }}
-              transition="color 0.15s"
+              className={[
+                'flex-1 py-4 text-sm font-semibold transition-colors',
+                tab === t
+                  ? 'text-gray-900 border-b-2 border-gray-800'
+                  : 'text-gray-400 hover:text-gray-600',
+              ].join(' ')}
             >
               {t === 'login' ? 'Sign In' : 'Sign Up'}
-            </Button>
+            </button>
           ))}
-        </Flex>
+        </div>
 
         {/* Form body */}
-        <Box p={8}>
+        <div className="p-8">
           {tab === 'login'
             ? <LoginForm onSwitch={() => setTab('signup')} />
             : <SignupForm onSwitch={() => setTab('login')} />
           }
-        </Box>
+        </div>
 
         {/* Trust footer */}
-        <Flex px={8} pb={6} justify="center" align="center" gap={4} fontSize="xs" color="gray.400">
-          <Text>🔒 Secure</Text>
-          <Text>· Free to use ·</Text>
-          <Text>💼 Career focused</Text>
-        </Flex>
-      </Box>
-    </Flex>
+        <div className="flex items-center justify-center gap-4 px-8 pb-6 text-xs text-gray-400">
+          <span>🔒 Secure</span>
+          <span>· Free to use ·</span>
+          <span>💼 Career focused</span>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -7,9 +7,3 @@ export function safeUrl(url: string | null | undefined): string | null {
     return null;
   }
 }
-
-export function formatDate(d: string | null | undefined, empty = '—'): string {
-  if (!d) return empty;
-  const [year, month, day] = d.split('-');
-  return `${month}/${day}/${year?.slice(2)}`;
-}
