@@ -33,7 +33,7 @@ export function AlertBar({ jobs }: Props) {
             <span className="font-semibold text-sm text-orange-700">
               {stale.length === 1 ? '1 job' : `${stale.length} jobs`} saved 7+ days without applying:{' '}
             </span>
-            <span className="text-sm text-orange-800">
+            <span className="text-sm font-semibold text-gray-900">
               {stale.map((j) => j.company).join(', ')}
             </span>
           </div>
