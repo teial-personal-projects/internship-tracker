@@ -31,13 +31,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Error getting session:', error);
         setError(error.message);
       }
-      setUser(session?.user ?? null);
+      setUser(session?.user?.email_confirmed_at ? session.user : null);
       setLoading(false);
     });
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const confirmedUser = session?.user?.email_confirmed_at ? session.user : null;
+      setUser(confirmedUser);
       setLoading(false);
     });
 
@@ -68,16 +69,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       options: { data: { first_name: firstName, last_name: lastName } },
     });
     if (error) { setError(error.message); throw error; }
-
-    // Explicitly fetch and update session after successful sign-up
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (sessionData?.session?.user) {
-      setUser(sessionData.session.user);
-      setLoading(false);
-    } else if (data?.user) {
-      setUser(data.user);
-      setLoading(false);
-    }
   };
 
   const signOut = async () => {
