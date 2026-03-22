@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Link as RouterLink } from 'react-router-dom';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
 import { AppHeader } from '@/components/AppHeader';
@@ -111,13 +110,6 @@ export function ProfilePage() {
   return (
     <div className="min-h-screen bg-[#F5F5F3]">
       <AppHeader>
-        <RouterLink
-          to="/"
-          className="text-accent-200 border border-accent-400 rounded-md px-3 py-1.5 text-sm hover:bg-white/10 transition-colors flex items-center gap-1.5"
-        >
-          <span className="text-sm">←</span>
-          Dashboard
-        </RouterLink>
         <UserMenu />
       </AppHeader>
 

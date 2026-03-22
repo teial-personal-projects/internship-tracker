@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LoginPage } from '@/pages/LoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { ProfilePage } from '@/pages/ProfilePage';
+import { JobBoardsPage } from '@/pages/JobBoardsPage';
 
 function AppRoutes() {
   const { user, loading } = useAuth();
@@ -23,6 +24,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<DashboardPage />} />
       <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/job-boards" element={<JobBoardsPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

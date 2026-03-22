@@ -91,6 +91,15 @@ export interface UserProfile {
 
 export type UpdateProfileInput = Omit<UserProfile, 'user_id'>;
 
+export interface JobBoard {
+  id: string;
+  label: string;
+  url: string;
+  description: string;
+  category: string;
+  sort_order: number;
+}
+
 // ============================================================
 // API Response Shapes
 // ============================================================

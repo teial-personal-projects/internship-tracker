@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import jobsRouter from './routes/jobs';
 import profileRouter from './routes/profile';
+import jobBoardsRouter from './routes/jobBoards';
 import { errorHandler } from './middleware/errorHandler';
 
 export function createApp() {
@@ -16,6 +17,7 @@ export function createApp() {
 
   app.use('/api/jobs', jobsRouter);
   app.use('/api/profile', profileRouter);
+  app.use('/api/job-boards', jobBoardsRouter);
 
   app.use(errorHandler);
 

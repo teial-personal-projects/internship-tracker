@@ -30,7 +30,7 @@ function AlertPill({
       style={{ background: bgColor, border: `0.5px solid ${borderColor}` }}
     >
       <span
-        className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[9px] font-bold flex-shrink-0"
+        className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[9px] font-bold shrink-0"
         style={{ background: dotColor, color: boldColor }}
       >
         !

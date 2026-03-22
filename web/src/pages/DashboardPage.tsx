@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { todayStr, isDeadlineSoon, isStaleJob } from '@/lib/dateUtils';
-import { Link as RouterLink } from 'react-router-dom';
 import type { Job, QuickFilter, CreateJobInput } from '@shared/types';
 import { useJobs, useCreateJob, useUpdateJob, useDeleteJob, useMarkApplied } from '@/hooks/useJobs';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
@@ -144,13 +143,6 @@ export function DashboardPage() {
 
       {/* Header */}
       <AppHeader>
-        <RouterLink
-          to="/profile"
-          className="text-accent-200 border border-accent-400 rounded-md px-3 py-1.5 text-sm hover:bg-white/10 transition-colors flex items-center gap-1.5"
-        >
-          <span className="text-base">👤</span>
-          Profile
-        </RouterLink>
         <UserMenu />
       </AppHeader>
 
