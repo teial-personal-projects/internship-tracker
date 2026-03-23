@@ -132,9 +132,9 @@ export function JobsTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
+    <div className="flex-1 overflow-x-auto overflow-y-auto rounded-md border border-gray-200 bg-white">
       <table className="w-full text-sm border-collapse">
-        <thead>
+        <thead className="sticky top-0 z-10">
           <tr>
             {colOrder.map(key => {
               const col = COL_MAP[key];

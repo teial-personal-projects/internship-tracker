@@ -139,7 +139,7 @@ export function DashboardPage() {
   function openAdd() { setEditingJob(null); setIsOpen(true); }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F5F5F3]">
+    <div className="flex h-screen flex-col bg-[#F5F5F3] overflow-hidden">
 
       {/* Header */}
       <AppHeader>
@@ -147,7 +147,7 @@ export function DashboardPage() {
       </AppHeader>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col gap-2 p-3 sm:p-4 pb-24">
+      <main className="flex-1 flex flex-col gap-2 p-3 sm:p-4 pb-6 overflow-hidden">
 
         {/* Today date */}
         <p className="text-xs text-gray-500 font-medium">
@@ -189,14 +189,16 @@ export function DashboardPage() {
             <TablePlaceholder onAdd={openAdd} />
           </div>
         ) : isMobile ? (
-          <JobCardList
-            jobs={filteredJobs}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onMarkApplied={handleMarkApplied}
-            applyingId={applyingId}
-            deletingId={deletingId}
-          />
+          <div className="flex-1 overflow-y-auto">
+            <JobCardList
+              jobs={filteredJobs}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onMarkApplied={handleMarkApplied}
+              applyingId={applyingId}
+              deletingId={deletingId}
+            />
+          </div>
         ) : (
           <JobsTable
             jobs={filteredJobs}
