@@ -180,12 +180,12 @@ export function DashboardPage() {
         </div>
 
         {/* Filter bar + year selector */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <FilterBar quickFilter={quickFilter} onQuickFilter={handleQuickFilter} jobs={jobs} />
           <select
             value={year}
             onChange={(e) => handleYear(Number(e.target.value))}
-            className="ml-auto text-sm border border-gray-300 rounded-md px-2 py-1.5 bg-white text-gray-700 shrink-0"
+            className="text-sm border border-gray-300 rounded-md px-2 py-1.5 bg-white text-gray-700 shrink-0"
           >
             {[CURRENT_ACAD_YEAR, CURRENT_ACAD_YEAR - 1, CURRENT_ACAD_YEAR - 2].map((y) => (
               <option key={y} value={y}>{y}–{y + 1}</option>

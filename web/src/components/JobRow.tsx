@@ -107,7 +107,7 @@ export function JobRow({
         const url = safeUrl(job.cover_letter);
         return (
           <td key={key} className="text-sm px-2 py-2" style={bgStyle}>
-            {url ? <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-500 hover:underline">Cover Letter</a> : '—'}
+            {url ? <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-500 hover:underline">Cover</a> : '—'}
           </td>
         );
       }
