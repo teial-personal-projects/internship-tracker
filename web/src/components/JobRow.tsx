@@ -47,66 +47,70 @@ export function JobRow({
     switch (key) {
       case 'company':
         return (
-          <td key={key} className="whitespace-nowrap text-sm font-medium px-4 py-2" style={bgStyle}>
-            {job.company}
+          <td key={key} className="text-sm font-medium px-2 py-2" style={bgStyle}>
+            <div className="font-medium">{job.company}</div>
+            <div className="text-xs text-gray-500">{job.title}{job.pay ? ` - ${job.pay}` : ''}</div>
             {job.min_year && (
-              <div className="text-xs text-gray-400 capitalize">{job.min_year}</div>
+              <div className="text-xs text-gray-400 capitalize">MinYear: {job.min_year}</div>
             )}
           </td>
         );
       case 'title':
-        return <td key={key} className="text-sm px-4 py-2" style={bgStyle}>{job.title}</td>;
+        return null;
       case 'industry':
-        return <td key={key} className="text-sm text-gray-600 px-4 py-2" style={bgStyle}>{job.industry ?? '—'}</td>;
+        return null;
       case 'location':
-        return <td key={key} className="text-sm text-gray-600 whitespace-nowrap px-4 py-2" style={bgStyle}>{job.location ?? '—'}</td>;
+        return (
+          <td key={key} className="text-sm text-gray-600 whitespace-nowrap px-2 py-2" style={bgStyle}>
+            <div>{job.location ?? '—'}</div>
+            {job.industry && <div className="text-xs text-gray-400">{job.industry}</div>}
+          </td>
+        );
       case 'added':
-        return <td key={key} className="text-sm whitespace-nowrap px-4 py-2" style={bgStyle}>{formatDate(job.added)}</td>;
+        return <td key={key} className="text-sm whitespace-nowrap px-2 py-2" style={bgStyle}>{formatDate(job.added)}</td>;
       case 'applied':
-        return <td key={key} className="text-sm whitespace-nowrap px-4 py-2" style={bgStyle}>{formatDate(job.applied_date)}</td>;
+        return <td key={key} className="text-sm whitespace-nowrap px-2 py-2" style={bgStyle}>{formatDate(job.applied_date)}</td>;
       case 'deadline':
         return (
-          <td key={key} className={`text-sm whitespace-nowrap px-4 py-2 ${job.deadline ? '' : 'text-gray-400'}`} style={bgStyle}>
+          <td key={key} className={`text-sm whitespace-nowrap px-2 py-2 ${job.deadline ? '' : 'text-gray-400'}`} style={bgStyle}>
             {formatDate(job.deadline)}
           </td>
         );
       case 'status':
         return (
-          <td key={key} className="px-4 py-2" style={bgStyle}>
+          <td key={key} className="px-2 py-2" style={bgStyle}>
             <StatusBadge job={job} />
           </td>
         );
       case 'conference':
-        return <td key={key} className="text-sm text-gray-600 px-4 py-2" style={bgStyle}>{job.conference ?? '—'}</td>;
+        return <td key={key} className="text-sm text-gray-600 px-2 py-2" style={bgStyle}>{job.conference ?? '—'}</td>;
       case 'job_link': {
-        const url = safeUrl(job.job_link);
+        const jobUrl = safeUrl(job.job_link);
+        const appUrl = safeUrl(job.app_link);
         return (
-          <td key={key} className="text-sm px-4 py-2" style={bgStyle}>
-            {url ? <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-500 hover:underline">Job</a> : '—'}
+          <td key={key} className="text-sm px-2 py-2" style={bgStyle}>
+            <div className="flex flex-col gap-0.5">
+              {jobUrl ? <a href={jobUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-500 hover:underline">Job</a> : '—'}
+              {appUrl && <a href={appUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-500 hover:underline">Apply</a>}
+            </div>
           </td>
         );
       }
-      case 'app_link': {
-        const url = safeUrl(job.app_link);
-        return (
-          <td key={key} className="text-sm px-4 py-2" style={bgStyle}>
-            {url ? <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-500 hover:underline">Apply</a> : '—'}
-          </td>
-        );
-      }
+      case 'app_link':
+        return null;
       case 'cover_letter': {
         const url = safeUrl(job.cover_letter);
         return (
-          <td key={key} className="text-sm px-4 py-2" style={bgStyle}>
+          <td key={key} className="text-sm px-2 py-2" style={bgStyle}>
             {url ? <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-500 hover:underline">Cover Letter</a> : '—'}
           </td>
         );
       }
       case 'pay':
-        return <td key={key} className="text-sm text-gray-600 px-4 py-2" style={bgStyle}>{job.pay ?? '—'}</td>;
+        return null;
       case 'notes':
         return (
-          <td key={key} className="text-sm max-w-[150px] px-4 py-2" style={bgStyle}>
+          <td key={key} className="text-sm max-w-[150px] px-2 py-2" style={bgStyle}>
             {job.notes ? (
               <Tooltip.Provider>
                 <Tooltip.Root>
@@ -133,7 +137,7 @@ export function JobRow({
         return (
           <td
             key={key}
-            className="px-4 py-2 z-[1]"
+            className="px-2 py-2 z-[1]"
             style={{ position: 'sticky', right: 0, boxShadow: '-2px 0 6px rgba(0,0,0,0.06)', background: bgStyle?.background ?? 'white' }}
           >
             <div className="flex items-center justify-end gap-1">

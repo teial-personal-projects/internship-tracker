@@ -17,15 +17,11 @@ const ALL_COLS: ColDef[] = [
   { key: 'added',        label: 'Added',         sortFn: (a, b) => STR(a.added).localeCompare(STR(b.added)) },
   { key: 'status',       label: 'Status',        sortFn: (a, b) => a.status.localeCompare(b.status) },
   { key: 'company',      label: 'Company',       sortFn: (a, b) => STR(a.company).localeCompare(STR(b.company)) },
-  { key: 'title',        label: 'Title',         sortFn: (a, b) => STR(a.title).localeCompare(STR(b.title)) },
-  { key: 'industry',     label: 'Industry',      sortFn: (a, b) => STR(a.industry).localeCompare(STR(b.industry)) },
   { key: 'location',     label: 'Location',      sortFn: (a, b) => STR(a.location).localeCompare(STR(b.location)) },
   { key: 'applied',      label: 'Applied',       sortFn: (a, b) => STR(a.applied_date).localeCompare(STR(b.applied_date)) },
   { key: 'deadline',     label: 'Deadline',      sortFn: (a, b) => STR(a.deadline).localeCompare(STR(b.deadline)) },
-  { key: 'job_link',     label: 'Job Link' },
-  { key: 'app_link',     label: 'App Link' },
+  { key: 'job_link',     label: 'Links' },
   { key: 'cover_letter', label: 'Cover' },
-  { key: 'pay',          label: 'Pay',           sortFn: (a, b) => STR(a.pay).localeCompare(STR(b.pay)) },
   { key: 'notes',        label: 'Notes' },
   { key: 'conference',   label: 'Conf',          sortFn: (a, b) => STR(a.conference).localeCompare(STR(b.conference)) },
   { key: 'actions',      label: 'Actions' },
@@ -33,15 +29,21 @@ const ALL_COLS: ColDef[] = [
 
 const COL_MAP = Object.fromEntries(ALL_COLS.map(c => [c.key, c])) as Record<ColKey, ColDef>;
 const DEFAULT_ORDER: ColKey[] = ALL_COLS.map(c => c.key);
+const CURRENT_VERSION = 4; // bump when columns change to reset saved order
 const LS_KEY = 'jobs-col-order';
 
 function loadOrder(): ColKey[] {
   try {
+    const version = Number(localStorage.getItem(LS_KEY + '-v'));
+    if (version !== CURRENT_VERSION) {
+      localStorage.removeItem(LS_KEY);
+      localStorage.setItem(LS_KEY + '-v', String(CURRENT_VERSION));
+      return DEFAULT_ORDER;
+    }
     const saved = localStorage.getItem(LS_KEY);
     if (saved) {
       const parsed = JSON.parse(saved) as ColKey[];
       if (Array.isArray(parsed) && parsed.every(k => COL_MAP[k as ColKey])) {
-        // ensure any new columns added since save are appended
         const missing = DEFAULT_ORDER.filter(k => !parsed.includes(k));
         return [...parsed, ...missing];
       }
@@ -144,7 +146,7 @@ export function JobsTable({
                 <th
                   key={key}
                   className={[
-                    'text-xs font-semibold uppercase tracking-wide py-3 px-4 whitespace-nowrap border-b-2 text-left select-none transition-colors',
+                    'text-xs font-semibold uppercase tracking-wide py-3 px-2 whitespace-nowrap border-b-2 text-left select-none transition-colors',
                     isDropTarget
                       ? 'bg-brand-100 border-brand-400'
                       : 'bg-brand-50 border-brand-200 hover:bg-brand-100',
