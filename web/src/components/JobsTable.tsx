@@ -23,13 +23,12 @@ const ALL_COLS: ColDef[] = [
   { key: 'job_link',     label: 'Links' },
   { key: 'cover_letter', label: 'Cover' },
   { key: 'notes',        label: 'Notes' },
-  { key: 'conference',   label: 'Conf',          sortFn: (a, b) => STR(a.conference).localeCompare(STR(b.conference)) },
   { key: 'actions',      label: 'Actions' },
 ];
 
 const COL_MAP = Object.fromEntries(ALL_COLS.map(c => [c.key, c])) as Record<ColKey, ColDef>;
 const DEFAULT_ORDER: ColKey[] = ALL_COLS.map(c => c.key);
-const CURRENT_VERSION = 4; // bump when columns change to reset saved order
+const CURRENT_VERSION = 5; // bump when columns change to reset saved order
 const LS_KEY = 'jobs-col-order';
 
 function loadOrder(): ColKey[] {

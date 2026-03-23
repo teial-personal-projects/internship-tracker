@@ -48,7 +48,12 @@ export function JobRow({
       case 'company':
         return (
           <td key={key} className="text-sm font-medium px-2 py-2" style={bgStyle}>
-            <div className="font-medium">{job.company}</div>
+            <div className="flex items-center gap-1.5">
+              <span className="font-medium">{job.company}</span>
+              {job.conference && (
+                <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-semibold shrink-0">conf: {job.conference}</span>
+              )}
+            </div>
             <div className="text-xs text-gray-500">{job.title}{job.pay ? ` - ${job.pay}` : ''}</div>
             {job.min_year && (
               <div className="text-xs text-gray-400 capitalize">MinYear: {job.min_year}</div>
@@ -83,7 +88,7 @@ export function JobRow({
           </td>
         );
       case 'conference':
-        return <td key={key} className="text-sm text-gray-600 px-2 py-2" style={bgStyle}>{job.conference ?? '—'}</td>;
+        return null;
       case 'job_link': {
         const jobUrl = safeUrl(job.job_link);
         const appUrl = safeUrl(job.app_link);
