@@ -1,0 +1,441 @@
+Internship Tracker — System Design Document
+===========================================
+
+Version: 1.0
+Date: March 2026
+
+---
+
+TABLE OF CONTENTS
+-----------------
+1. Overview
+2. Architecture
+3. Technology Stack
+4. Database Design
+5. Backend API
+6. Frontend Application
+7. Authentication & Security
+8. Dashboard & Job Grid
+   8.1 Quick Filters
+   8.2 Academic Year Filter
+   8.3 Pagination
+   8.4 Grid Columns
+   8.5 Column Sorting
+   8.6 Column Reordering
+   8.7 Inline Cell Layout
+9. Alert System
+10. Job Boards Page
+11. Profile Page
+12. Mobile Experience
+13. Deployment
+
+---
+
+1. OVERVIEW
+-----------
+Internship Tracker is a personal productivity tool for students to manage internship
+applications. Users can track each application's status, deadlines, pay, links, and
+notes. The application provides smart alerts for approaching deadlines and stale
+applications, as well as curated links to popular job boards.
+
+---
+
+2. ARCHITECTURE
+---------------
+The application is a monorepo with three workspaces:
+
+  shared/   Shared TypeScript type definitions used by both api and web
+  api/      Express.js REST API — handles all business logic and DB access
+  web/      React SPA — user interface
+
+Deployment topology:
+
+  [Browser] --> [Cloudflare Pages] (React SPA)
+                       |
+                       | HTTPS (VITE_API_URL)
+                       v
+               [Railway] (Express API)
+                       |
+                       | Supabase JS client
+                       v
+               [Supabase] (PostgreSQL + Auth)
+
+The frontend never connects directly to Supabase for data operations. All data flows
+through the Express API, which uses the user's JWT to enforce row-level security.
+The frontend uses Supabase only for authentication (sign in, sign up, session management).
+
+---
+
+3. TECHNOLOGY STACK
+-------------------
+
+Frontend
+  - React 18 with TypeScript
+  - Vite (build tool, dev server, module bundler)
+  - Tailwind CSS v4 via @tailwindcss/vite plugin (no PostCSS config)
+  - Custom theme colors defined in @theme block in index.css
+  - TanStack Query (React Query) for server state and caching
+  - Axios for HTTP requests
+  - Radix UI for accessible components (Select, AlertDialog, Tooltip)
+  - React Router v6 for client-side routing
+  - Sonner for toast notifications
+
+Backend
+  - Node.js 20+
+  - Express.js with TypeScript
+  - Supabase JS client (server-side, uses user JWT for RLS)
+  - Zod for request body validation
+  - Helmet for HTTP security headers
+  - CORS configured via ALLOWED_ORIGINS environment variable
+
+Database
+  - Supabase (hosted PostgreSQL)
+  - Row-Level Security (RLS) on all user tables
+  - Supabase Auth for user management and JWT issuance
+
+Shared
+  - TypeScript interfaces for Job, UserProfile, JobBoard, and enums
+  - Zod schemas (CreateJobSchema, UpdateJobSchema) for validation
+
+---
+
+4. DATABASE DESIGN
+------------------
+
+4.1 Tables
+
+  jobs
+  ----
+  id              UUID        Primary key (gen_random_uuid())
+  user_id         UUID        FK → auth.users(id) ON DELETE CASCADE
+  company         TEXT        Company name (required)
+  title           TEXT        Position title (required)
+  industry        TEXT        Industry category
+  location        TEXT        Job location
+  min_year        ENUM        Minimum year: freshman/sophomore/junior/senior/graduate/other
+  job_link        TEXT        URL to the job posting
+  app_link        TEXT        URL to the application portal
+  status          ENUM        Job status (see 4.2)
+  conference      TEXT        Career fair or conference name
+  cover_letter    TEXT        URL to cover letter (must be http/https)
+  pay             TEXT        Compensation (free text, e.g. "$25/hr")
+  notes           TEXT        Free-form notes
+  added           DATE        Date added (default: today)
+  applied_date    DATE        Date application was submitted
+  deadline        DATE        Application deadline
+  created_at      TIMESTAMPTZ Auto-set on insert
+  updated_at      TIMESTAMPTZ Auto-updated via trigger
+
+  user_profiles
+  -------------
+  user_id         UUID        PK + FK → auth.users(id)
+  major           TEXT        User's academic major
+  positions       TEXT[]      Preferred position types
+  locations       TEXT[]      Preferred work locations
+
+  job_boards
+  ----------
+  id              UUID        Primary key
+  name            TEXT        Display name
+  url             TEXT        Board URL
+  category        TEXT        Grouping category
+  description     TEXT        Short description
+  sort_order      INTEGER     Display order within category
+
+4.2 Job Status Enum
+
+  not_started      Added but not yet worked on
+  in_progress      Application in progress
+  applied          Submitted
+  offered          Offer received
+  rejected         Rejected
+  underqualified   Did not meet requirements
+  missed_deadline  Deadline passed without applying
+  archive          Manually archived
+  other            Catch-all
+
+4.3 Triggers
+
+  jobs_updated_at       Auto-sets updated_at = NOW() on every UPDATE
+  jobs_applied_date     Auto-sets applied_date = today when status changes TO 'applied'
+                        and applied_date is not already set
+  on_auth_user_created  Creates a user_profiles row when a new auth.users row is inserted
+
+4.4 Row-Level Security
+
+  All RLS policies use auth.uid() = user_id, ensuring users can only read and
+  write their own data. job_boards has public read access (no user restriction).
+
+4.5 Indexes
+
+  idx_jobs_user_id      Speeds up all per-user queries
+  idx_jobs_user_status  Speeds up filtered queries by status
+  idx_jobs_deadline     Speeds up deadline-based sorting/filtering
+  idx_jobs_added        Speeds up date-based sorting
+
+---
+
+5. BACKEND API
+--------------
+
+All routes (except /health) require a valid Supabase JWT in the Authorization header.
+The API creates a per-request Supabase client using the user's JWT, so all DB queries
+automatically respect RLS policies.
+
+Base URL: https://internship-tracker-dev.up.railway.app
+
+Endpoints:
+
+  GET    /health                   Health check — returns { ok: true }
+
+  GET    /api/jobs?year=2025       Fetch jobs for an academic year
+                                   year param = start year of academic year
+                                   Academic year: Aug 1 of year → Jul 31 of year+1
+                                   Defaults to current academic year
+
+  POST   /api/jobs                 Create a job (body validated by CreateJobSchema)
+  PATCH  /api/jobs/:id             Update a job (body validated by UpdateJobSchema)
+  DELETE /api/jobs/:id             Delete a job
+
+  GET    /api/profile              Get the current user's profile
+  PATCH  /api/profile              Update the current user's profile
+
+  GET    /api/job-boards           Fetch all job boards ordered by sort_order
+
+Input Sanitization:
+  All text fields on job create/update pass through sanitizeJobInput(), which strips
+  HTML tags using a regex replace (/<[^>]*>/g). This prevents stored XSS without
+  requiring a DOM environment on the server.
+
+---
+
+6. FRONTEND APPLICATION
+-----------------------
+
+6.1 Routing
+
+  /           DashboardPage   Main job tracking grid
+  /job-boards JobBoardsPage   Curated job board links
+  /profile    ProfilePage     User profile editor
+
+  Protected routes redirect to /login when no authenticated session exists.
+
+6.2 API Client
+
+  web/src/api/client.ts exports an Axios instance with:
+  - baseURL: import.meta.env.VITE_API_URL ?? '/api'
+  - Request interceptor: attaches the current user's JWT as Bearer token
+
+6.3 State Management
+
+  Server state is managed by TanStack Query:
+  - useJobs(year)         Fetches jobs for the given academic year (staleTime: 30s)
+  - useJobBoards()        Fetches job boards (staleTime: 5 min)
+  - useCreateJob()        POST mutation with cache invalidation
+  - useUpdateJob()        PATCH mutation with cache invalidation
+  - useDeleteJob()        DELETE mutation with cache invalidation
+  - useMarkApplied()      PATCH shortcut to set status = 'applied'
+
+  Authentication state is managed by AuthContext, which wraps the Supabase auth client
+  and only sets the user when email_confirmed_at is present (preventing unconfirmed
+  users from accessing the app).
+
+---
+
+7. AUTHENTICATION & SECURITY
+-----------------------------
+
+- Supabase Auth handles user registration, login, and JWT issuance
+- Email confirmation is required before a user can log in
+- JWTs are short-lived and automatically refreshed by the Supabase client
+- The API validates JWTs on every request via the requireAuth middleware
+- CORS is restricted to origins listed in ALLOWED_ORIGINS (comma-separated env var)
+- HTTP security headers are set by Helmet
+- Request bodies are validated by Zod schemas before processing
+- All text inputs are HTML-stripped before DB insert/update
+- The service role key is never exposed to the frontend
+
+---
+
+8. DASHBOARD & JOB GRID
+------------------------
+
+The dashboard is the primary screen. It shows a filterable, paginated list of jobs
+for the selected academic year. On desktop, jobs display as a table. On mobile,
+jobs display as stacked cards.
+
+8.1 Quick Filters
+-----------------
+Filter pills displayed above the grid. Selecting one resets the page to 1.
+All filtering is client-side on the currently fetched year's data.
+
+  Active        Jobs with status: not_started, in_progress, interviewing
+  Not Started   Jobs with status: not_started
+  Applied       Jobs where applied_date is set
+  Due Soon      Jobs where deadline is within DEADLINE_WINDOW days (5 days)
+                and status is not applied or archive
+  Stale         Jobs added more than MAX_STALE_DAYS ago (7 days) with no
+                status progression (not applied, not archive)
+  Conference    Jobs where conference field is set
+  Archived      Jobs with status: archive
+  All           No filter applied — shows all jobs for the selected year
+
+  Each filter pill displays a count badge showing how many jobs match.
+
+8.2 Academic Year Filter
+------------------------
+A dropdown selector to the right of the filter bar. Options show as "2025–2026"
+style labels. The academic year runs August 1 of the start year through July 31
+of the following year.
+
+  Default: current academic year
+    - If today is August or later: current calendar year is the start year
+    - If today is before August: previous calendar year is the start year
+
+  The year is sent to the API as a query param (?year=2025) and the API filters
+  the jobs table by the added date falling within the academic year range.
+  This reduces payload size by only returning relevant data.
+
+8.3 Pagination
+--------------
+  PAGE_SIZE = 15 jobs per page (constant in DashboardPage)
+  Pagination is client-side, applied after quick filtering.
+  A pagination control bar is displayed above the grid showing:
+  - Total job count and current page / total pages
+  - Prev and Next buttons (disabled at boundaries)
+  Pagination resets to page 1 when the quick filter or year changes.
+  The control only appears when filtered results exceed PAGE_SIZE.
+
+8.4 Grid Columns
+----------------
+The desktop table displays the following columns by default (left to right):
+
+  Added         Date the job was added (formatted as Mon DD, YYYY)
+  Status        Color-coded status badge
+  Company       Multi-line cell (see 8.7 Inline Cell Layout)
+  Location      Location with industry shown below in smaller text
+  Applied       Date application was submitted
+  Deadline      Application deadline (highlighted red when due soon)
+  Links         Job posting link and apply link stacked vertically
+  Cover         Link to cover letter document
+  Notes         Truncated with full text shown on hover via tooltip
+  Actions       Edit, Mark Applied, and Delete buttons (sticky right column)
+
+8.5 Column Sorting
+------------------
+Clicking a column header sorts the grid by that column. Clicking again reverses
+the sort direction. A ▲ or ▼ indicator appears next to the sorted column header.
+Sortable columns: Added, Status, Company, Location, Applied, Deadline, Pay, Conf.
+Non-sortable columns: Links, Cover, Notes, Actions.
+
+8.6 Column Reordering
+---------------------
+Column headers (except Actions) can be dragged and dropped to reorder them.
+The new order is persisted to localStorage under the key 'jobs-col-order'.
+A version key ('jobs-col-order-v') is stored alongside the order. When
+CURRENT_VERSION is bumped (on column schema changes), the saved order is cleared
+and reset to the default to prevent stale column configurations.
+
+8.7 Inline Cell Layout
+-----------------------
+To reduce column count, several fields are combined into single cells:
+
+  Company cell (stacked vertically):
+    Line 1: Company name + conference badge (if set)
+             Conference badge styled as purple pill with "conf: <name>" prefix
+    Line 2: Job title — Pay (pay shown only if set)
+    Line 3: MinYear: <value> (shown only if min_year is set)
+
+  Location cell (stacked vertically):
+    Line 1: Location (or — if not set)
+    Line 2: Industry in smaller gray text (shown only if set)
+
+  Links cell (stacked vertically):
+    Line 1: "Job" link (job_link)
+    Line 2: "Apply" link (app_link, shown only if set)
+
+---
+
+9. ALERT SYSTEM
+---------------
+The AlertBar component appears below the header when there are actionable alerts.
+It displays two types of pills:
+
+  Due Soon pills (red)
+    Shown for jobs where the deadline is within DEADLINE_WINDOW days (5).
+    Excludes jobs with status applied or archive.
+    Format: "Company — X days left" or "Company — due today"
+
+  Stale pills (amber)
+    Shown for jobs added more than MAX_STALE_DAYS ago (7) with no progression.
+    Excludes jobs with status applied or archive.
+    Company name is displayed in bold.
+
+Constants defined in web/src/lib/dateUtils.ts:
+  DEADLINE_WINDOW = 5   Days before deadline to trigger due-soon alert
+  MAX_STALE_DAYS  = 7   Days since added to consider a job stale
+
+---
+
+10. JOB BOARDS PAGE
+-------------------
+A curated list of internship search sites stored in the job_boards database table.
+Data is fetched via GET /api/job-boards and cached for 5 minutes.
+Boards are grouped by category and displayed as cards with name, description, and
+a link that opens in a new tab. Categories and boards are seeded via job-boards.sql
+and are read-only (users cannot add or modify boards).
+
+Categories (as seeded):
+  General Job Boards
+  Tech & Engineering
+  Finance & Business
+  Research & Academia
+
+---
+
+11. PROFILE PAGE
+----------------
+Users can set:
+  - Major (free text)
+  - Preferred positions (multi-value text input, stored as TEXT[])
+  - Preferred locations (multi-value text input, stored as TEXT[])
+
+Changes are saved via PATCH /api/profile. A profile row is auto-created when
+the user first signs up via the on_auth_user_created trigger.
+
+---
+
+12. MOBILE EXPERIENCE
+---------------------
+A useMediaQuery hook detects screens narrower than 768px. On mobile:
+  - The job table is replaced by a stacked card list (JobCardList component)
+  - Navigation links are hidden from the header and moved into the UserMenu dropdown
+  - The quick filter bar uses a Radix UI Select dropdown instead of pill buttons
+  - The card list scrolls independently within a flex container
+
+---
+
+13. DEPLOYMENT
+--------------
+See docs/Deployment_Plan.md for full instructions.
+
+  Backend (Railway)
+    - Deployed from GitHub via Nixpacks
+    - nixpacks.toml controls build: only builds shared and api workspaces
+    - Node.js 20 specified in nixpacks.toml
+    - Health check endpoint: GET /health
+    - Environment variables set in Railway dashboard per environment
+    - PORT is set automatically by Railway
+
+  Frontend (Cloudflare Pages)
+    - Deployed from GitHub, auto-deploys on push to configured branch
+    - Build command: cd web && npm install && npm run build
+    - Output directory: web/dist
+    - Environment variables set in Cloudflare Pages dashboard
+    - VITE_API_URL must include full URL with /api suffix
+
+  Database (Supabase)
+    - Schema applied manually via SQL Editor
+    - RLS enforces data isolation between users
+    - Email confirmation required (set in Authentication settings)
+    - Site URL must be set to production frontend URL for confirmation emails
