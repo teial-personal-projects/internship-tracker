@@ -110,7 +110,7 @@ export function JobRow({
         return null;
       case 'notes':
         return (
-          <td key={key} className="text-sm max-w-[150px] px-2 py-2" style={bgStyle}>
+          <td key={key} className="text-sm max-w-37.5 px-2 py-2" style={bgStyle}>
             {job.notes ? (
               <Tooltip.Provider>
                 <Tooltip.Root>
@@ -137,7 +137,7 @@ export function JobRow({
         return (
           <td
             key={key}
-            className="px-2 py-2 z-[1]"
+            className="px-2 py-2 z-1"
             style={{ position: 'sticky', right: 0, boxShadow: '-2px 0 6px rgba(0,0,0,0.06)', background: bgStyle?.background ?? 'white' }}
           >
             <div className="flex items-center justify-end gap-1">

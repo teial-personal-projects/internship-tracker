@@ -5,13 +5,13 @@ import { STATUS_CYCLE } from '@shared/types';
 
 export const jobKeys = {
   all: ['jobs'] as const,
-  list: () => ['jobs', 'list'] as const,
+  list: (year: number) => ['jobs', 'list', year] as const,
 };
 
-export function useJobs() {
+export function useJobs(year: number) {
   return useQuery({
-    queryKey: jobKeys.list(),
-    queryFn: () => jobsApi.getJobs(),
+    queryKey: jobKeys.list(year),
+    queryFn: () => jobsApi.getJobs(year),
     staleTime: 30_000,
   });
 }

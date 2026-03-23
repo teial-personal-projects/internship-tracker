@@ -13,6 +13,10 @@ import { UserMenu } from '@/components/UserMenu';
 import { AppHeader } from '@/components/AppHeader';
 
 const TODAY = todayStr();
+const now = new Date();
+// Academic year starts August 1 — if before August, we're still in last year's cycle
+const CURRENT_ACAD_YEAR = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
+const PAGE_SIZE = 15;
 
 // ── Empty state placeholder ───────────────────────────────────────────────
 
@@ -79,17 +83,24 @@ export function DashboardPage() {
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('active');
   const [isOpen, setIsOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
+  const [year, setYear] = useState(CURRENT_ACAD_YEAR);
+  const [page, setPage] = useState(1);
 
   const [applyingId, setApplyingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const { data: jobs = [], isLoading, error } = useJobs();
+  const { data: jobs = [], isLoading, error } = useJobs(year);
   const createJob = useCreateJob();
   const updateJob = useUpdateJob();
   const deleteJob = useDeleteJob();
   const markApplied = useMarkApplied();
 
   const filteredJobs = applyFilter(jobs, quickFilter);
+  const totalPages = Math.max(1, Math.ceil(filteredJobs.length / PAGE_SIZE));
+  const pagedJobs = filteredJobs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  function handleQuickFilter(qf: QuickFilter) { setQuickFilter(qf); setPage(1); }
+  function handleYear(y: number) { setYear(y); setPage(1); }
 
   function applyFilter(jobs: Job[], qf: QuickFilter): Job[] {
     if (qf === 'active') return jobs.filter((j) => ['not_started', 'in_progress', 'interviewing'].includes(j.status));
@@ -168,14 +179,52 @@ export function DashboardPage() {
           </button>
         </div>
 
-        {/* Filter bar */}
-        <FilterBar quickFilter={quickFilter} onQuickFilter={setQuickFilter} jobs={jobs} />
+        {/* Filter bar + year selector */}
+        <div className="flex items-center gap-2">
+          <FilterBar quickFilter={quickFilter} onQuickFilter={handleQuickFilter} jobs={jobs} />
+          <select
+            value={year}
+            onChange={(e) => handleYear(Number(e.target.value))}
+            className="ml-auto text-sm border border-gray-300 rounded-md px-2 py-1.5 bg-white text-gray-700 shrink-0"
+          >
+            {[CURRENT_ACAD_YEAR, CURRENT_ACAD_YEAR - 1, CURRENT_ACAD_YEAR - 2].map((y) => (
+              <option key={y} value={y}>{y}–{y + 1}</option>
+            ))}
+          </select>
+        </div>
 
         {/* Error */}
         {error && (
           <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
             <span>⚠️</span>
             Failed to load jobs. Please refresh.
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!isLoading && filteredJobs.length > PAGE_SIZE && (
+          <div className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-4 py-2 shrink-0">
+            <span className="text-sm font-medium text-gray-600">
+              {filteredJobs.length} jobs · Page <span className="text-brand-700 font-semibold">{page}</span> of {totalPages}
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setPage(p => p - 1)}
+                disabled={page === 1}
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md border border-brand-300 text-brand-700 bg-white hover:bg-brand-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                ← Prev
+              </button>
+              <button
+                type="button"
+                onClick={() => setPage(p => p + 1)}
+                disabled={page === totalPages}
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md border border-brand-300 text-brand-700 bg-white hover:bg-brand-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Next →
+              </button>
+            </div>
           </div>
         )}
 
@@ -191,7 +240,7 @@ export function DashboardPage() {
         ) : isMobile ? (
           <div className="flex-1 overflow-y-auto">
             <JobCardList
-              jobs={filteredJobs}
+              jobs={pagedJobs}
               onEdit={handleEdit}
               onDelete={handleDelete}
               onMarkApplied={handleMarkApplied}
@@ -201,7 +250,7 @@ export function DashboardPage() {
           </div>
         ) : (
           <JobsTable
-            jobs={filteredJobs}
+            jobs={pagedJobs}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onMarkApplied={handleMarkApplied}
