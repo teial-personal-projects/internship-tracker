@@ -85,6 +85,7 @@ export type UpdateJobInput = Partial<CreateJobInput>;
 export interface UserProfile {
   user_id: string;
   major?: string | null;
+  current_class?: MinYear | null;
   positions: string[];
   locations: string[];
 }

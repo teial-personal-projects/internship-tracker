@@ -63,6 +63,7 @@ export const UpdateJobSchema = CreateJobSchema.partial();
 
 export const UpdateProfileSchema = z.object({
   major: z.string().max(200).nullable().optional(),
+  current_class: z.preprocess(v => (v === '' ? null : v), MinYearSchema.nullable().optional()),
   positions: z.array(z.string().max(100)).max(20).default([]),
   locations: z.array(z.string().max(100)).max(20).default([]),
 });

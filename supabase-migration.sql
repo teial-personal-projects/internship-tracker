@@ -39,10 +39,11 @@ CREATE TABLE jobs (
 );
 
 CREATE TABLE user_profiles (
-  user_id   UUID    PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  major     TEXT,
-  positions TEXT[]  NOT NULL DEFAULT '{}',
-  locations TEXT[]  NOT NULL DEFAULT '{}'
+  user_id       UUID          PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  major         TEXT,
+  current_class min_year_enum,
+  positions     TEXT[]        NOT NULL DEFAULT '{}',
+  locations     TEXT[]        NOT NULL DEFAULT '{}'
 );
 
 -- ============================================================

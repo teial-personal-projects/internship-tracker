@@ -26,7 +26,7 @@ router.get('/', requireAuth, async (req: Request, res, next) => {
 
     // If no profile yet, return empty defaults
     res.json({
-      data: data ?? { user_id: user.id, major: null, positions: [], locations: [] },
+      data: data ?? { user_id: user.id, major: null, current_class: null, positions: [], locations: [] },
     });
   } catch (err) {
     next(err);

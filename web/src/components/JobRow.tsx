@@ -56,7 +56,7 @@ export function JobRow({
             </div>
             <div className="text-xs text-gray-500">{job.title}{job.pay ? ` - ${job.pay}` : ''}</div>
             {job.min_year && (
-              <div className="text-xs text-gray-400 capitalize">MinYear: {job.min_year}</div>
+              <div className="text-xs text-gray-400 capitalize">MinClass: {job.min_year}</div>
             )}
           </td>
         );

@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { todayStr, isDeadlineSoon, isStaleJob } from '@/lib/dateUtils';
 import type { Job, QuickFilter, CreateJobInput } from '@shared/types';
+import { MIN_YEAR_RANK } from '@shared/types';
 import { useJobs, useCreateJob, useUpdateJob, useDeleteJob, useMarkApplied } from '@/hooks/useJobs';
+import { useProfile } from '@/hooks/useProfile';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { AlertBar } from '@/components/AlertBar';
 import { FilterBar } from '@/components/FilterBar';
@@ -91,8 +93,10 @@ export function DashboardPage() {
 
   const [applyingId, setApplyingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [hideAboveClass, setHideAboveClass] = useState(false);
 
   const { data: jobs = [], isLoading, error } = useJobs(year);
+  const { data: profile } = useProfile();
 
   useEffect(() => {
     if (!isLoading && jobs.length > 0) {
@@ -107,6 +111,10 @@ export function DashboardPage() {
 
   const filteredJobs = (() => {
     let result = applyFilter(jobs, quickFilter);
+    if (hideAboveClass && profile?.current_class) {
+      const myRank = MIN_YEAR_RANK[profile.current_class];
+      result = result.filter((j) => !j.min_year || MIN_YEAR_RANK[j.min_year] <= myRank);
+    }
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter((j) => j.company.toLowerCase().includes(q));
@@ -253,7 +261,7 @@ export function DashboardPage() {
           </button>
         </div>
 
-        {/* Filter bar + year selector */}
+        {/* Filter bar + year selector + class filter toggle */}
         <div className="flex flex-wrap items-center gap-2">
           <FilterBar quickFilter={quickFilter} onQuickFilter={handleQuickFilter} jobs={jobs} />
           <select
@@ -261,10 +269,21 @@ export function DashboardPage() {
             onChange={(e) => handleYear(Number(e.target.value))}
             className="text-sm border border-gray-300 rounded-md px-2 py-1.5 bg-white text-gray-700 shrink-0"
           >
-            {[CURRENT_ACAD_YEAR, CURRENT_ACAD_YEAR - 1, CURRENT_ACAD_YEAR - 2].map((y) => (
-              <option key={y} value={y}>{y}–{y + 1}</option>
+            {[CURRENT_ACAD_YEAR + 1, CURRENT_ACAD_YEAR, CURRENT_ACAD_YEAR - 1, CURRENT_ACAD_YEAR - 2].map((y, i) => (
+              <option key={y} value={y}>{i === 0 ? `Future (${y}–${y + 1})` : `${y}–${y + 1}`}</option>
             ))}
           </select>
+          {profile?.current_class && (
+            <label className="inline-flex items-center gap-1.5 text-sm text-gray-600 cursor-pointer shrink-0">
+              <input
+                type="checkbox"
+                checked={hideAboveClass}
+                onChange={(e) => setHideAboveClass(e.target.checked)}
+                className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+              />
+              Hide above my class
+            </label>
+          )}
         </div>
 
         {/* Error */}
