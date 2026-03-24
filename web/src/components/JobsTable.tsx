@@ -3,6 +3,7 @@ import type { Job } from '@shared/types';
 import { JobRow } from './JobRow';
 import type { ColKey } from './JobRow';
 
+export type SortKey = ColKey;
 type SortDir = 'asc' | 'desc';
 
 interface ColDef {
@@ -13,13 +14,22 @@ interface ColDef {
 
 const STR = (v: string | null | undefined) => v ?? '';
 
+export const SORT_FNS: Partial<Record<ColKey, (a: Job, b: Job) => number>> = {
+  added:    (a, b) => STR(a.added).localeCompare(STR(b.added)),
+  status:   (a, b) => a.status.localeCompare(b.status),
+  company:  (a, b) => STR(a.company).localeCompare(STR(b.company)),
+  location: (a, b) => STR(a.location).localeCompare(STR(b.location)),
+  applied:  (a, b) => STR(a.applied_date).localeCompare(STR(b.applied_date)),
+  deadline: (a, b) => STR(a.deadline).localeCompare(STR(b.deadline)),
+};
+
 const ALL_COLS: ColDef[] = [
-  { key: 'added',        label: 'Added',         sortFn: (a, b) => STR(a.added).localeCompare(STR(b.added)) },
-  { key: 'status',       label: 'Status',        sortFn: (a, b) => a.status.localeCompare(b.status) },
-  { key: 'company',      label: 'Company',       sortFn: (a, b) => STR(a.company).localeCompare(STR(b.company)) },
-  { key: 'location',     label: 'Location',      sortFn: (a, b) => STR(a.location).localeCompare(STR(b.location)) },
-  { key: 'applied',      label: 'Applied',       sortFn: (a, b) => STR(a.applied_date).localeCompare(STR(b.applied_date)) },
-  { key: 'deadline',     label: 'Deadline',      sortFn: (a, b) => STR(a.deadline).localeCompare(STR(b.deadline)) },
+  { key: 'added',        label: 'Added',        sortFn: SORT_FNS.added },
+  { key: 'status',       label: 'Status',       sortFn: SORT_FNS.status },
+  { key: 'company',      label: 'Company',      sortFn: SORT_FNS.company },
+  { key: 'location',     label: 'Location',     sortFn: SORT_FNS.location },
+  { key: 'applied',      label: 'Applied',      sortFn: SORT_FNS.applied },
+  { key: 'deadline',     label: 'Deadline',     sortFn: SORT_FNS.deadline },
   { key: 'job_link',     label: 'Links' },
   { key: 'cover_letter', label: 'Cover/Review' },
   { key: 'notes',        label: 'Notes' },
@@ -58,6 +68,9 @@ interface Props {
   onMarkApplied: (id: string) => void;
   applyingId?: string | null;
   deletingId?: string | null;
+  sortKey: SortKey | null;
+  sortDir: SortDir;
+  onSort: (key: SortKey) => void;
 }
 
 export function JobsTable({
@@ -67,10 +80,11 @@ export function JobsTable({
   onMarkApplied,
   applyingId,
   deletingId,
+  sortKey,
+  sortDir,
+  onSort,
 }: Props) {
   const [colOrder, setColOrder] = useState<ColKey[]>(loadOrder);
-  const [sortKey, setSortKey] = useState<ColKey | null>(null);
-  const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [dragOver, setDragOver] = useState<ColKey | null>(null);
   const dragSrc = useRef<ColKey | null>(null);
 
@@ -81,24 +95,6 @@ export function JobsTable({
       </div>
     );
   }
-
-  function handleSort(key: ColKey) {
-    if (!COL_MAP[key].sortFn) return;
-    if (sortKey === key) {
-      setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortKey(key);
-      setSortDir('asc');
-    }
-  }
-
-  const sortedJobs =
-    sortKey && COL_MAP[sortKey].sortFn
-      ? [...jobs].sort((a, b) => {
-          const cmp = COL_MAP[sortKey].sortFn!(a, b);
-          return sortDir === 'asc' ? cmp : -cmp;
-        })
-      : jobs;
 
   function handleDragStart(key: ColKey) {
     dragSrc.current = key;
@@ -157,7 +153,7 @@ export function JobsTable({
                   onDragOver={e => handleDragOver(e, key)}
                   onDrop={() => handleDrop(key)}
                   onDragEnd={handleDragEnd}
-                  onClick={() => handleSort(key)}
+                  onClick={() => COL_MAP[key].sortFn && onSort(key)}
                   {...(key === 'actions' ? {
                     style: { position: 'sticky', right: 0, zIndex: 1, boxShadow: '-2px 0 6px rgba(0,0,0,0.06)' },
                   } : {})}
@@ -176,7 +172,7 @@ export function JobsTable({
           </tr>
         </thead>
         <tbody>
-          {sortedJobs.map(job => (
+          {jobs.map(job => (
             <JobRow
               key={job.id}
               job={job}
