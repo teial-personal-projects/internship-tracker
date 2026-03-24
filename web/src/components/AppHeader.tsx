@@ -24,8 +24,11 @@ export function AppHeader({ children }: { children?: ReactNode }) {
             </svg>
           </div>
           <div>
-            <h1 className="text-lg font-bold text-white tracking-tight leading-tight">
+            <h1 className="text-lg font-bold text-white tracking-tight leading-tight flex items-center gap-2">
               Internship Application Tracker
+              <span className="text-xs font-semibold bg-white/20 text-white px-1.5 py-0.5 rounded">
+                v{import.meta.env.VITE_APP_VERSION}
+              </span>
             </h1>
             <p className="hidden sm:block text-sm text-white/80 font-medium mt-0.5">
               Manage your college internship applications
