@@ -16,7 +16,12 @@ export function AppHeader({ children }: { children?: ReactNode }) {
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity shrink-0">
           <div className="w-10 h-10 rounded-lg bg-accent-400 flex items-center justify-center shrink-0">
-            <span className="text-xl leading-none">🚀</span>
+            <svg width="28" height="28" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="18" y="40" width="60" height="38" rx="7" fill="#EAF3DE"/>
+              <path d="M36 40 L36 33 Q36 26 43 26 L53 26 Q60 26 60 33 L60 40" stroke="#EAF3DE" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+              <rect x="18" y="53" width="60" height="5" fill="#1A3C2E" opacity="0.15"/>
+              <rect x="43" y="50" width="10" height="8" rx="2.5" fill="#6B7FD4"/>
+            </svg>
           </div>
           <div>
             <h1 className="text-lg font-bold text-white tracking-tight leading-tight">

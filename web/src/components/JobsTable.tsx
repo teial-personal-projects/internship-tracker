@@ -162,8 +162,14 @@ export function JobsTable({
                     style: { position: 'sticky', right: 0, zIndex: 1, boxShadow: '-2px 0 6px rgba(0,0,0,0.06)' },
                   } : {})}
                 >
-                  {col.label}
-                  {isSorted && <span className="ml-1">{sortDir === 'asc' ? '▲' : '▼'}</span>}
+                  <span className="inline-flex items-center gap-1">
+                    {col.label}
+                    {canSort && (
+                      <span className={isSorted ? 'text-brand-600' : 'text-brand-300'}>
+                        {isSorted ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}
+                      </span>
+                    )}
+                  </span>
                 </th>
               );
             })}
