@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import { todayStr, isDeadlineSoon, isStaleJob } from '@/lib/dateUtils';
 import type { Job, QuickFilter, CreateJobInput } from '@shared/types';
@@ -90,6 +90,10 @@ export function DashboardPage() {
   const [dateField, setDateField] = useState<'applied_date' | 'added' | 'deadline'>('added');
   const [isOpen, setIsOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
+  const modalDefaultValues = useMemo(
+    () => editingJob ?? { added: TODAY },
+    [editingJob],
+  );
   const [year, setYear] = useState(CURRENT_ACAD_YEAR);
   const [page, setPage] = useState(1);
 
@@ -370,7 +374,7 @@ export function DashboardPage() {
         onClose={() => { setEditingJob(null); setIsOpen(false); }}
         onSubmit={handleSubmit}
         isLoading={createJob.isPending || updateJob.isPending}
-        defaultValues={editingJob ?? { added: TODAY }}
+        defaultValues={modalDefaultValues}
         title={editingJob ? 'Edit Job' : 'Add Job'}
       />
     </div>
