@@ -9,7 +9,8 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { Spinner } from '@/components/Spinner';
 import { AlertBar } from '@/components/AlertBar';
 import { FilterBar } from '@/components/FilterBar';
-import { JobsTable } from '@/components/JobsTable';
+import { JobsTable, SORT_FNS } from '@/components/JobsTable';
+import type { SortKey } from '@/components/JobsTable';
 import { JobCardList } from '@/components/JobCardList';
 import { JobModal } from '@/components/JobModal';
 import { UserMenu } from '@/components/UserMenu';
@@ -118,6 +119,8 @@ export function DashboardPage() {
   );
   const [year, setYear] = useState(CURRENT_ACAD_YEAR);
   const [page, setPage] = useState(1);
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   const [applyingId, setApplyingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -155,10 +158,28 @@ export function DashboardPage() {
     }
     return result;
   }, [jobs, quickFilter, hideAboveClass, profile, search, dateFrom, dateTo, dateField]);
-  const totalPages = Math.max(1, Math.ceil(filteredJobs.length / PAGE_SIZE));
-  const pagedJobs = filteredJobs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const sortedJobs = useMemo(() => {
+    if (!sortKey) return filteredJobs;
+    const fn = SORT_FNS[sortKey];
+    if (!fn) return filteredJobs;
+    return [...filteredJobs].sort((a, b) => {
+      const cmp = fn(a, b);
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [filteredJobs, sortKey, sortDir]);
+  const totalPages = Math.max(1, Math.ceil(sortedJobs.length / PAGE_SIZE));
+  const pagedJobs = sortedJobs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const hasDateFilter = dateFrom || dateTo;
 
+  function handleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+      setPage(1);
+    }
+  }
   function handleQuickFilter(qf: QuickFilter) { setQuickFilter(qf); setPage(1); }
   function handleYear(y: number) { setYear(y); setPage(1); }
   function handleSearch(q: string) { setSearch(q); setPage(1); }
@@ -364,6 +385,9 @@ export function DashboardPage() {
             onMarkApplied={handleMarkApplied}
             applyingId={applyingId}
             deletingId={deletingId}
+            sortKey={sortKey}
+            sortDir={sortDir}
+            onSort={handleSort}
           />
         )}
       </main>
