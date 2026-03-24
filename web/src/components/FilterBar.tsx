@@ -170,12 +170,14 @@ export function FilterBar({ quickFilter, onQuickFilter, jobs }: Props) {
       </div>
 
       {/* Desktop: primary pills + "More ▾" dropdown */}
-      <div
-        className="hidden sm:flex items-center gap-2 mb-2 -mx-4 px-4 overflow-x-auto"
-        style={{ scrollbarWidth: 'none' } as React.CSSProperties}
-      >
+      <div className="hidden sm:flex items-center gap-2 mb-2">
         <span className="text-[10px] font-bold tracking-widest text-gray-400 uppercase shrink-0">Filter</span>
-        <div className="flex gap-2 flex-nowrap min-w-max pb-1">
+
+        {/* Scrollable primary pills */}
+        <div
+          className="flex gap-2 flex-nowrap overflow-x-auto min-w-0 pb-1"
+          style={{ scrollbarWidth: 'none' } as React.CSSProperties}
+        >
           {PRIMARY_FILTERS.map(({ label, value, getCount, dot, badgeBg, badgeColor }) => {
             const isActive = quickFilter === value;
             const count = getCount(jobs);
@@ -210,73 +212,73 @@ export function FilterBar({ quickFilter, onQuickFilter, jobs }: Props) {
               </button>
             );
           })}
+        </div>
 
-          {/* More ▾ dropdown */}
-          <div className="relative shrink-0" ref={moreRef}>
-            <button
-              type="button"
-              onClick={() => setMoreOpen((o) => !o)}
-              className={[
-                'inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium border-[1.5px] transition-colors',
-                activeIsMore
-                  ? 'bg-brand-800 text-white border-brand-800 hover:bg-brand-700 hover:border-brand-700'
-                  : 'bg-white text-gray-600 border-gray-400 hover:bg-gray-50 hover:border-gray-500',
-              ].join(' ')}
-            >
-              {activeIsMore ? (
-                <>
-                  {activeFilter.dot && (
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: 'white' }} />
-                  )}
-                  {activeFilter.label}
-                  <span
-                    className="text-[12px] font-bold px-1.5 py-0 rounded-full leading-none"
-                    style={{ background: 'rgba(255,255,255,0.25)', color: 'white' }}
-                  >
-                    {activeFilter.getCount(jobs)}
-                  </span>
-                </>
-              ) : (
-                'More'
-              )}
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </button>
-
-            {moreOpen && (
-              <div className="absolute top-full left-0 mt-1 z-50 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden min-w-44">
-                {MORE_FILTERS.map(({ label, value, getCount, dot, badgeBg, badgeColor }) => {
-                  const isActive = quickFilter === value;
-                  const count = getCount(jobs);
-                  return (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => { onQuickFilter(value); setMoreOpen(false); }}
-                      className={[
-                        'w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left transition-colors',
-                        isActive ? 'bg-brand-50 text-brand-800 font-semibold' : 'text-gray-700 hover:bg-gray-50',
-                      ].join(' ')}
-                    >
-                      {dot && (
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: dot }} />
-                      )}
-                      <span className="flex-1">{label}</span>
-                      {count !== null && (
-                        <span
-                          className="text-[11px] font-bold px-1.5 py-0.5 rounded-full leading-none"
-                          style={{ background: badgeBg, color: badgeColor }}
-                        >
-                          {count}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+        {/* More ▾ dropdown — outside overflow container so it isn't clipped */}
+        <div className="relative shrink-0" ref={moreRef}>
+          <button
+            type="button"
+            onClick={() => setMoreOpen((o) => !o)}
+            className={[
+              'inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium border-[1.5px] transition-colors',
+              activeIsMore
+                ? 'bg-brand-800 text-white border-brand-800 hover:bg-brand-700 hover:border-brand-700'
+                : 'bg-white text-gray-600 border-gray-400 hover:bg-gray-50 hover:border-gray-500',
+            ].join(' ')}
+          >
+            {activeIsMore ? (
+              <>
+                {activeFilter.dot && (
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ background: 'white' }} />
+                )}
+                {activeFilter.label}
+                <span
+                  className="text-[12px] font-bold px-1.5 py-0 rounded-full leading-none"
+                  style={{ background: 'rgba(255,255,255,0.25)', color: 'white' }}
+                >
+                  {activeFilter.getCount(jobs)}
+                </span>
+              </>
+            ) : (
+              'More'
             )}
-          </div>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+
+          {moreOpen && (
+            <div className="absolute top-full left-0 mt-1 z-50 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden min-w-44">
+              {MORE_FILTERS.map(({ label, value, getCount, dot, badgeBg, badgeColor }) => {
+                const isActive = quickFilter === value;
+                const count = getCount(jobs);
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => { onQuickFilter(value); setMoreOpen(false); }}
+                    className={[
+                      'w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left transition-colors',
+                      isActive ? 'bg-brand-50 text-brand-800 font-semibold' : 'text-gray-700 hover:bg-gray-50',
+                    ].join(' ')}
+                  >
+                    {dot && (
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: dot }} />
+                    )}
+                    <span className="flex-1">{label}</span>
+                    {count !== null && (
+                      <span
+                        className="text-[11px] font-bold px-1.5 py-0.5 rounded-full leading-none"
+                        style={{ background: badgeBg, color: badgeColor }}
+                      >
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </>

@@ -11,7 +11,8 @@ export type ColKey =
   | 'company' | 'title' | 'industry' | 'location'
   | 'added' | 'applied' | 'deadline' | 'status'
   | 'conference'
-  | 'job_link' | 'app_link' | 'cover_letter' | 'pay' | 'notes' | 'actions';
+  | 'job_link' | 'app_link' | 'cover_letter' | 'pay' | 'notes'
+  | 'review' | 'actions';
 
 interface Props {
   job: Job;
@@ -107,7 +108,10 @@ export function JobRow({
         const url = safeUrl(job.cover_letter);
         return (
           <td key={key} className="text-sm px-2 py-2" style={bgStyle}>
-            {url ? <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-500 hover:underline">Cover</a> : '—'}
+            <div className="flex items-center gap-2">
+              {url ? <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-500 hover:underline">Cover</a> : <span className="text-xs text-gray-400">—</span>}
+              {job.review && <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-semibold shrink-0">Review</span>}
+            </div>
           </td>
         );
       }
@@ -138,6 +142,8 @@ export function JobRow({
             ) : '—'}
           </td>
         );
+      case 'review':
+        return null;
       case 'actions':
         return (
           <td

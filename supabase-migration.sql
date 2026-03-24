@@ -31,6 +31,7 @@ CREATE TABLE jobs (
   cover_letter       TEXT CHECK (cover_letter IS NULL OR cover_letter ~ '^https?://'),
   pay                TEXT,
   notes              TEXT,
+  review             BOOLEAN         NOT NULL DEFAULT FALSE,
   added              DATE            NOT NULL DEFAULT CURRENT_DATE,
   applied_date       DATE,
   deadline           DATE,

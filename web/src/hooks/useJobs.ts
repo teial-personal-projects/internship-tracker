@@ -61,6 +61,17 @@ export function useCycleStatus() {
   });
 }
 
+export function useToggleReview() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, review }: { id: string; review: boolean }) =>
+      jobsApi.updateJob(id, { review }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: jobKeys.all });
+    },
+  });
+}
+
 export function useMarkApplied() {
   const qc = useQueryClient();
   return useMutation({

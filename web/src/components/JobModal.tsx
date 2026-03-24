@@ -174,6 +174,14 @@ export function JobModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, 
                   <div>
                     <label className="field-label">Cover Letter</label>
                     <input type="url" className="field-input" {...register('cover_letter')} placeholder="https://" />
+                    <label className="flex items-center gap-2 mt-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                        {...register('review')}
+                      />
+                      <span className="text-sm text-gray-600">Ready for Review</span>
+                    </label>
                   </div>
                 </div>
 

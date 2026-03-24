@@ -21,14 +21,14 @@ const ALL_COLS: ColDef[] = [
   { key: 'applied',      label: 'Applied',       sortFn: (a, b) => STR(a.applied_date).localeCompare(STR(b.applied_date)) },
   { key: 'deadline',     label: 'Deadline',      sortFn: (a, b) => STR(a.deadline).localeCompare(STR(b.deadline)) },
   { key: 'job_link',     label: 'Links' },
-  { key: 'cover_letter', label: 'Cover' },
+  { key: 'cover_letter', label: 'Cover/Review' },
   { key: 'notes',        label: 'Notes' },
   { key: 'actions',      label: 'Actions' },
 ];
 
 const COL_MAP = Object.fromEntries(ALL_COLS.map(c => [c.key, c])) as Record<ColKey, ColDef>;
 const DEFAULT_ORDER: ColKey[] = ALL_COLS.map(c => c.key);
-const CURRENT_VERSION = 5; // bump when columns change to reset saved order
+const CURRENT_VERSION = 7; // bump when columns change to reset saved order
 const LS_KEY = 'jobs-col-order';
 
 function loadOrder(): ColKey[] {

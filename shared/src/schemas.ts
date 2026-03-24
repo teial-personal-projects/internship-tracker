@@ -51,6 +51,7 @@ export const CreateJobSchema = z.object({
   cover_letter: urlOrEmpty, // URL to a cover letter document
   pay: z.string().max(100).nullable().optional(),
   notes: z.string().max(5000).nullable().optional(),
+  review: z.boolean().default(false),
   added: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD')

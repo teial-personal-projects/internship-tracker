@@ -72,6 +72,7 @@ export interface Job {
   cover_letter?: string | null;
   pay?: string | null;
   notes?: string | null;
+  review: boolean;
   added: string; // ISO date string YYYY-MM-DD
   applied_date?: string | null; // ISO date string YYYY-MM-DD
   deadline?: string | null; // ISO date string YYYY-MM-DD
