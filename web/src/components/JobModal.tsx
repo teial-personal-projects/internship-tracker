@@ -1,9 +1,21 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { useEffect } from 'react';
+import { Spinner } from './Spinner';
 import { useForm } from 'react-hook-form';
 import type { Job } from '@shared/types';
 import { MIN_YEAR_OPTIONS, STATUS_CYCLE } from '@shared/types';
+import {
+  MAX_COMPANY_LENGTH, MAX_TITLE_LENGTH, MAX_INDUSTRY_LENGTH,
+  MAX_LOCATION_LENGTH, MAX_CONFERENCE_LENGTH, MAX_PAY_LENGTH,
+  MAX_NOTES_LENGTH,
+} from '@shared/constants';
 import { STATUS_LABELS } from '@/theme';
+import { safeUrl } from '@/lib/jobUtils';
+
+function validateUrl(value: string | null | undefined): true | string {
+  if (!value) return true; // optional field
+  return safeUrl(value) !== null || 'Must be a valid https:// URL';
+}
 
 type FormValues = Omit<Job, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
 
@@ -84,7 +96,7 @@ export function JobModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, 
                     <label className="field-label">Company *</label>
                     <input
                       className="field-input"
-                      {...register('company', { required: 'Required' })}
+                      {...register('company', { required: 'Required', maxLength: { value: MAX_COMPANY_LENGTH, message: `Max ${MAX_COMPANY_LENGTH} characters` } })}
                     />
                     {errors.company && <p className="mt-1 text-xs text-red-600">{errors.company.message}</p>}
                   </div>
@@ -92,7 +104,7 @@ export function JobModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, 
                     <label className="field-label">Title *</label>
                     <input
                       className="field-input"
-                      {...register('title', { required: 'Required' })}
+                      {...register('title', { required: 'Required', maxLength: { value: MAX_TITLE_LENGTH, message: `Max ${MAX_TITLE_LENGTH} characters` } })}
                     />
                     {errors.title && <p className="mt-1 text-xs text-red-600">{errors.title.message}</p>}
                   </div>
@@ -104,15 +116,18 @@ export function JobModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="field-label">Industry</label>
-                    <input className="field-input" {...register('industry')} />
+                    <input className="field-input" {...register('industry', { maxLength: { value: MAX_INDUSTRY_LENGTH, message: `Max ${MAX_INDUSTRY_LENGTH} characters` } })} />
+                    {errors.industry && <p className="mt-1 text-xs text-red-600">{errors.industry.message}</p>}
                   </div>
                   <div>
                     <label className="field-label">Location</label>
-                    <input className="field-input" {...register('location')} />
+                    <input className="field-input" {...register('location', { maxLength: { value: MAX_LOCATION_LENGTH, message: `Max ${MAX_LOCATION_LENGTH} characters` } })} />
+                    {errors.location && <p className="mt-1 text-xs text-red-600">{errors.location.message}</p>}
                   </div>
                   <div>
                     <label className="field-label">Pay</label>
-                    <input className="field-input" {...register('pay')} placeholder="e.g. $25/hr" />
+                    <input className="field-input" {...register('pay', { maxLength: { value: MAX_PAY_LENGTH, message: `Max ${MAX_PAY_LENGTH} characters` } })} placeholder="e.g. $25/hr" />
+                    {errors.pay && <p className="mt-1 text-xs text-red-600">{errors.pay.message}</p>}
                   </div>
                 </div>
 
@@ -164,16 +179,19 @@ export function JobModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="field-label">Job Link</label>
-                      <input type="url" className="field-input" {...register('job_link')} placeholder="https://" />
+                      <input type="url" className="field-input" {...register('job_link', { validate: validateUrl })} placeholder="https://" />
+                      {errors.job_link && <p className="mt-1 text-xs text-red-600">{errors.job_link.message}</p>}
                     </div>
                     <div>
                       <label className="field-label">Application Link</label>
-                      <input type="url" className="field-input" {...register('app_link')} placeholder="https://" />
+                      <input type="url" className="field-input" {...register('app_link', { validate: validateUrl })} placeholder="https://" />
+                      {errors.app_link && <p className="mt-1 text-xs text-red-600">{errors.app_link.message}</p>}
                     </div>
                   </div>
                   <div>
                     <label className="field-label">Cover Letter</label>
-                    <input type="url" className="field-input" {...register('cover_letter')} placeholder="https://" />
+                    <input type="url" className="field-input" {...register('cover_letter', { validate: validateUrl })} placeholder="https://" />
+                    {errors.cover_letter && <p className="mt-1 text-xs text-red-600">{errors.cover_letter.message}</p>}
                     <label className="flex items-center gap-2 mt-2 cursor-pointer">
                       <input
                         type="checkbox"
@@ -191,11 +209,13 @@ export function JobModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, 
                 <div className="flex flex-col gap-3">
                   <div>
                     <label className="field-label">Conference</label>
-                    <input className="field-input" {...register('conference')} />
+                    <input className="field-input" {...register('conference', { maxLength: { value: MAX_CONFERENCE_LENGTH, message: `Max ${MAX_CONFERENCE_LENGTH} characters` } })} />
+                    {errors.conference && <p className="mt-1 text-xs text-red-600">{errors.conference.message}</p>}
                   </div>
                   <div>
                     <label className="field-label">Notes</label>
-                    <textarea className="field-textarea" {...register('notes')} rows={3} />
+                    <textarea className="field-textarea" {...register('notes', { maxLength: { value: MAX_NOTES_LENGTH, message: `Max ${MAX_NOTES_LENGTH} characters` } })} rows={3} />
+                    {errors.notes && <p className="mt-1 text-xs text-red-600">{errors.notes.message}</p>}
                   </div>
                 </div>
 
@@ -218,7 +238,7 @@ export function JobModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, 
               >
                 {isLoading ? (
                   <span className="flex items-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    <Spinner color="white" />
                     Saving…
                   </span>
                 ) : 'Save'}

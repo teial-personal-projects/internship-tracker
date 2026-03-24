@@ -1,10 +1,11 @@
-import { useRef, useState } from 'react';
-import * as AlertDialog from '@radix-ui/react-alert-dialog';
+import { useState } from 'react';
 import type { Job } from '@shared/types';
 import { StatusBadge } from './StatusBadge';
 import { TrashIcon } from './icons/TrashIcon';
-import { safeUrl } from '@/lib/jobUtils';
-import { formatDate, isDeadlineSoon, isStaleJob } from '@/lib/dateUtils';
+import { DeleteJobDialog } from './DeleteJobDialog';
+import { Spinner } from './Spinner';
+import { safeUrl, getJobUrgency } from '@/lib/jobUtils';
+import { formatDate } from '@/lib/dateUtils';
 
 interface ListProps {
   jobs: Job[];
@@ -15,11 +16,14 @@ interface ListProps {
   deletingId: string | null;
 }
 
+const URGENCY_BORDER: Record<string, string> = {
+  urgent: '#fdba74', // orange-300
+  stale:  '#fde047', // yellow-300
+  normal: '#e5e7eb', // gray-200
+};
+
 function getCardBorderColor(job: Job): string {
-  if (['applied', 'archive'].includes(job.status)) return '#e5e7eb'; // gray-200
-  if (isDeadlineSoon(job.deadline)) return '#fdba74'; // orange-300
-  if (isStaleJob(job.added, job.status)) return '#fde047'; // yellow-300
-  return '#e5e7eb'; // gray-200
+  return URGENCY_BORDER[getJobUrgency(job)];
 }
 
 function JobCard({ job, onEdit, onDelete, onMarkApplied, isApplying, isDeleting }: {
@@ -31,7 +35,6 @@ function JobCard({ job, onEdit, onDelete, onMarkApplied, isApplying, isDeleting 
   isDeleting: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const cancelRef = useRef<HTMLButtonElement>(null);
   const borderColor = getCardBorderColor(job);
 
   const jobUrl = safeUrl(job.job_link);
@@ -99,11 +102,7 @@ function JobCard({ job, onEdit, onDelete, onMarkApplied, isApplying, isDeleting 
               onClick={() => onMarkApplied(job.id)}
               className="btn-outline flex-1 text-sm py-1.5"
             >
-              {isApplying ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                </span>
-              ) : '✓ Mark Applied'}
+              {isApplying ? <Spinner size="sm" color="gray" /> : '✓ Mark Applied'}
             </button>
           )}
           <button
@@ -120,48 +119,18 @@ function JobCard({ job, onEdit, onDelete, onMarkApplied, isApplying, isDeleting 
             className="btn-ghost text-red-600 hover:bg-red-50 px-2 py-1.5"
             aria-label="Delete job"
           >
-            {isDeleting ? (
-              <span className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
-            ) : <TrashIcon size={16} />}
+            {isDeleting ? <Spinner color="red" /> : <TrashIcon size={16} />}
           </button>
         </div>
       </div>
 
-      <AlertDialog.Root open={isOpen} onOpenChange={setIsOpen}>
-        <AlertDialog.Portal>
-          <AlertDialog.Overlay className="fixed inset-0 bg-black/50 z-40" />
-          <AlertDialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl z-50 w-full max-w-sm mx-4 p-6">
-            <AlertDialog.Title className="text-base font-bold text-gray-900 mb-2">
-              Delete Job
-            </AlertDialog.Title>
-            <AlertDialog.Description className="text-sm text-gray-600 mb-5">
-              Delete <strong>{job.company}</strong> — {job.title}? This cannot be undone.
-            </AlertDialog.Description>
-            <div className="flex justify-end gap-2">
-              <AlertDialog.Cancel asChild>
-                <button ref={cancelRef} type="button" className="btn-ghost text-sm text-gray-600">
-                  Cancel
-                </button>
-              </AlertDialog.Cancel>
-              <AlertDialog.Action asChild>
-                <button
-                  type="button"
-                  disabled={isDeleting}
-                  onClick={() => { setIsOpen(false); onDelete(job.id); }}
-                  className="btn-danger text-sm"
-                >
-                  {isDeleting ? (
-                    <span className="flex items-center gap-2">
-                      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                      Deleting…
-                    </span>
-                  ) : 'Delete'}
-                </button>
-              </AlertDialog.Action>
-            </div>
-          </AlertDialog.Content>
-        </AlertDialog.Portal>
-      </AlertDialog.Root>
+      <DeleteJobDialog
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        job={job}
+        isDeleting={isDeleting}
+        onConfirm={() => onDelete(job.id)}
+      />
     </>
   );
 }

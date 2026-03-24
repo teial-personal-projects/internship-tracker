@@ -4,6 +4,7 @@ import { LoginPage } from '@/pages/LoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { JobBoardsPage } from '@/pages/JobBoardsPage';
+import { Spinner } from '@/components/Spinner';
 
 function AppRoutes() {
   const { user, loading } = useAuth();
@@ -11,7 +12,7 @@ function AppRoutes() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-500" />
+        <Spinner size="xl" />
       </div>
     );
   }

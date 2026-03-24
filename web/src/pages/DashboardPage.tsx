@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import { todayStr, isDeadlineSoon, isStaleJob } from '@/lib/dateUtils';
 import type { Job, QuickFilter, CreateJobInput } from '@shared/types';
@@ -6,6 +6,7 @@ import { MIN_YEAR_RANK } from '@shared/types';
 import { useJobs, useCreateJob, useUpdateJob, useDeleteJob, useMarkApplied } from '@/hooks/useJobs';
 import { useProfile } from '@/hooks/useProfile';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { Spinner } from '@/components/Spinner';
 import { AlertBar } from '@/components/AlertBar';
 import { FilterBar } from '@/components/FilterBar';
 import { JobsTable } from '@/components/JobsTable';
@@ -19,6 +20,28 @@ const now = new Date();
 // Academic year starts August 1 — if before August, we're still in last year's cycle
 const CURRENT_ACAD_YEAR = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
 const PAGE_SIZE = 15;
+
+function sortWithInProgressFirst(jobs: Job[]): Job[] {
+  return [...jobs].sort((a, b) => {
+    const aip = a.status === 'in_progress' ? 0 : 1;
+    const bip = b.status === 'in_progress' ? 0 : 1;
+    return aip - bip;
+  });
+}
+
+function applyFilter(jobs: Job[], qf: QuickFilter): Job[] {
+  if (qf === 'in_progress') return jobs.filter((j) => j.status === 'in_progress');
+  if (qf === 'not_started') return jobs.filter((j) => j.status === 'not_started');
+  if (qf === 'applied') return jobs.filter((j) => !!j.applied_date);
+  if (qf === 'rejected') return jobs.filter((j) => j.status === 'rejected');
+  if (qf === 'conference') return jobs.filter((j) => !!j.conference);
+  if (qf === 'due_soon') return jobs.filter(
+    (j) => !['applied', 'archive'].includes(j.status) && isDeadlineSoon(j.deadline)
+  );
+  if (qf === 'stale') return jobs.filter((j) => isStaleJob(j.added, j.status));
+  if (qf === 'archived') return jobs.filter((j) => j.status === 'archive');
+  return sortWithInProgressFirst(jobs); // 'all' — in_progress floats to top
+}
 
 // ── Empty state placeholder ───────────────────────────────────────────────
 
@@ -89,6 +112,10 @@ export function DashboardPage() {
   const [dateField, setDateField] = useState<'applied_date' | 'added' | 'deadline'>('added');
   const [isOpen, setIsOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
+  const modalDefaultValues = useMemo(
+    () => editingJob ?? { added: TODAY },
+    [editingJob],
+  );
   const [year, setYear] = useState(CURRENT_ACAD_YEAR);
   const [page, setPage] = useState(1);
 
@@ -110,7 +137,7 @@ export function DashboardPage() {
   const deleteJob = useDeleteJob();
   const markApplied = useMarkApplied();
 
-  const filteredJobs = (() => {
+  const filteredJobs = useMemo(() => {
     let result = applyFilter(jobs, quickFilter);
     if (hideAboveClass && profile?.current_class) {
       const myRank = MIN_YEAR_RANK[profile.current_class];
@@ -127,7 +154,7 @@ export function DashboardPage() {
       result = result.filter((j) => !!j[dateField] && (j[dateField] as string) <= dateTo);
     }
     return result;
-  })();
+  }, [jobs, quickFilter, hideAboveClass, profile, search, dateFrom, dateTo, dateField]);
   const totalPages = Math.max(1, Math.ceil(filteredJobs.length / PAGE_SIZE));
   const pagedJobs = filteredJobs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const hasDateFilter = dateFrom || dateTo;
@@ -137,28 +164,6 @@ export function DashboardPage() {
   function handleSearch(q: string) { setSearch(q); setPage(1); }
   function clearDates() { setDateFrom(''); setDateTo(''); setPage(1); }
   function handleDateField(f: typeof dateField) { setDateField(f); setDateFrom(''); setDateTo(''); setPage(1); }
-
-  function sortWithInProgressFirst(jobs: Job[]): Job[] {
-    return [...jobs].sort((a, b) => {
-      const aip = a.status === 'in_progress' ? 0 : 1;
-      const bip = b.status === 'in_progress' ? 0 : 1;
-      return aip - bip;
-    });
-  }
-
-  function applyFilter(jobs: Job[], qf: QuickFilter): Job[] {
-    if (qf === 'in_progress') return jobs.filter((j) => j.status === 'in_progress');
-    if (qf === 'not_started') return jobs.filter((j) => j.status === 'not_started');
-    if (qf === 'applied') return jobs.filter((j) => !!j.applied_date);
-    if (qf === 'rejected') return jobs.filter((j) => j.status === 'rejected');
-    if (qf === 'conference') return jobs.filter((j) => !!j.conference);
-    if (qf === 'due_soon') return jobs.filter(
-      (j) => !['applied', 'archive'].includes(j.status) && isDeadlineSoon(j.deadline)
-    );
-    if (qf === 'stale') return jobs.filter((j) => isStaleJob(j.added, j.status));
-    if (qf === 'archived') return jobs.filter((j) => j.status === 'archive');
-    return sortWithInProgressFirst(jobs); // 'all' — in_progress floats to top
-  }
 
   async function handleSubmit(formData: Omit<Job, 'id' | 'user_id' | 'created_at' | 'updated_at'>) {
     try {
@@ -334,7 +339,7 @@ export function DashboardPage() {
         {/* Table or card list or spinner or placeholder */}
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500" />
+            <Spinner size="lg" />
           </div>
         ) : jobs.length === 0 ? (
           <div className="relative">
@@ -369,7 +374,7 @@ export function DashboardPage() {
         onClose={() => { setEditingJob(null); setIsOpen(false); }}
         onSubmit={handleSubmit}
         isLoading={createJob.isPending || updateJob.isPending}
-        defaultValues={editingJob ?? { added: TODAY }}
+        defaultValues={modalDefaultValues}
         title={editingJob ? 'Edit Job' : 'Add Job'}
       />
     </div>

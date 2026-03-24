@@ -1,6 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { Spinner } from './Spinner';
+import { useClickOutside } from '@/hooks/useClickOutside';
 
 export function UserMenu() {
   const { user, signOut } = useAuth();
@@ -8,16 +10,8 @@ export function UserMenu() {
   const [loading, setLoading] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Close on outside click
-  useEffect(() => {
-    function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
+  const closeMenu = useCallback(() => setIsOpen(false), []);
+  useClickOutside(ref, closeMenu);
 
   async function handleSignOut() {
     setLoading(true);
@@ -130,7 +124,7 @@ export function UserMenu() {
             >
               {loading ? (
                 <>
-                  <span className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                  <Spinner color="red" />
                   Signing out…
                 </>
               ) : (

@@ -16,21 +16,22 @@ CREATE TYPE job_status_enum AS ENUM (
 -- TABLES
 -- ============================================================
 
+-- Field length limits are defined in shared/src/constants.ts — keep in sync if changed.
 CREATE TABLE jobs (
   id                 UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id            UUID            NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  company            TEXT            NOT NULL,
-  title              TEXT            NOT NULL,
-  industry           TEXT,
-  location           TEXT,
+  company            TEXT            NOT NULL CHECK (char_length(company) <= 200),
+  title              TEXT            NOT NULL CHECK (char_length(title) <= 200),
+  industry           TEXT                     CHECK (industry IS NULL OR char_length(industry) <= 100),
+  location           TEXT                     CHECK (location IS NULL OR char_length(location) <= 200),
   min_year           min_year_enum,
-  job_link           TEXT,
-  app_link           TEXT,
+  job_link           TEXT                     CHECK (job_link IS NULL OR (job_link ~ '^https?://' AND char_length(job_link) <= 2048)),
+  app_link           TEXT                     CHECK (app_link IS NULL OR (app_link ~ '^https?://' AND char_length(app_link) <= 2048)),
   status             job_status_enum NOT NULL DEFAULT 'not_started',
-  conference         TEXT,
-  cover_letter       TEXT CHECK (cover_letter IS NULL OR cover_letter ~ '^https?://'),
-  pay                TEXT,
-  notes              TEXT,
+  conference         TEXT                     CHECK (conference IS NULL OR char_length(conference) <= 200),
+  cover_letter       TEXT                     CHECK (cover_letter IS NULL OR (cover_letter ~ '^https?://' AND char_length(cover_letter) <= 2048)),
+  pay                TEXT                     CHECK (pay IS NULL OR char_length(pay) <= 100),
+  notes              TEXT                     CHECK (notes IS NULL OR char_length(notes) <= 5000),
   review             BOOLEAN         NOT NULL DEFAULT FALSE,
   added              DATE            NOT NULL DEFAULT CURRENT_DATE,
   applied_date       DATE,
@@ -41,7 +42,7 @@ CREATE TABLE jobs (
 
 CREATE TABLE user_profiles (
   user_id       UUID          PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  major         TEXT,
+  major         TEXT                   CHECK (major IS NULL OR char_length(major) <= 200),
   current_class min_year_enum,
   positions     TEXT[]        NOT NULL DEFAULT '{}',
   locations     TEXT[]        NOT NULL DEFAULT '{}'

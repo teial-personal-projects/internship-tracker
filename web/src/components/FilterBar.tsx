@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import * as Select from '@radix-ui/react-select';
 import type { Job, QuickFilter } from '@shared/types';
 import { isDeadlineSoon, isStaleJob } from '@/lib/dateUtils';
+import { useClickOutside } from '@/hooks/useClickOutside';
 
 interface Props {
   quickFilter: QuickFilter;
@@ -102,17 +103,8 @@ const MORE_FILTERS = ALL_FILTERS.filter((f) => !PRIMARY_VALUES.includes(f.value)
 export function FilterBar({ quickFilter, onQuickFilter, jobs }: Props) {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handler(e: MouseEvent) {
-      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
-        setMoreOpen(false);
-      }
-    }
-    if (moreOpen) document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [moreOpen]);
+  const closeMore = useCallback(() => setMoreOpen(false), []);
+  useClickOutside(moreRef, closeMore);
 
   const activeFilter = ALL_FILTERS.find((f) => f.value === quickFilter)!;
   const activeCount = activeFilter.getCount(jobs);

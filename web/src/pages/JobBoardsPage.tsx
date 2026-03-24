@@ -2,6 +2,7 @@ import type { JobBoard } from '@shared/types';
 import { useJobBoards } from '@/hooks/useJobBoards';
 import { AppHeader } from '@/components/AppHeader';
 import { UserMenu } from '@/components/UserMenu';
+import { Spinner } from '@/components/Spinner';
 
 function BoardCard({ board }: { board: JobBoard }) {
   return (
@@ -44,7 +45,7 @@ export function JobBoardsPage() {
         </div>
         {isLoading && (
           <div className="flex justify-center py-16">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500" />
+            <Spinner size="lg" />
           </div>
         )}
 
