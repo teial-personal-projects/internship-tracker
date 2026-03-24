@@ -21,6 +21,28 @@ const now = new Date();
 const CURRENT_ACAD_YEAR = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
 const PAGE_SIZE = 15;
 
+function sortWithInProgressFirst(jobs: Job[]): Job[] {
+  return [...jobs].sort((a, b) => {
+    const aip = a.status === 'in_progress' ? 0 : 1;
+    const bip = b.status === 'in_progress' ? 0 : 1;
+    return aip - bip;
+  });
+}
+
+function applyFilter(jobs: Job[], qf: QuickFilter): Job[] {
+  if (qf === 'in_progress') return jobs.filter((j) => j.status === 'in_progress');
+  if (qf === 'not_started') return jobs.filter((j) => j.status === 'not_started');
+  if (qf === 'applied') return jobs.filter((j) => !!j.applied_date);
+  if (qf === 'rejected') return jobs.filter((j) => j.status === 'rejected');
+  if (qf === 'conference') return jobs.filter((j) => !!j.conference);
+  if (qf === 'due_soon') return jobs.filter(
+    (j) => !['applied', 'archive'].includes(j.status) && isDeadlineSoon(j.deadline)
+  );
+  if (qf === 'stale') return jobs.filter((j) => isStaleJob(j.added, j.status));
+  if (qf === 'archived') return jobs.filter((j) => j.status === 'archive');
+  return sortWithInProgressFirst(jobs); // 'all' — in_progress floats to top
+}
+
 // ── Empty state placeholder ───────────────────────────────────────────────
 
 function TablePlaceholder({ onAdd }: { onAdd: () => void }) {
@@ -115,7 +137,7 @@ export function DashboardPage() {
   const deleteJob = useDeleteJob();
   const markApplied = useMarkApplied();
 
-  const filteredJobs = (() => {
+  const filteredJobs = useMemo(() => {
     let result = applyFilter(jobs, quickFilter);
     if (hideAboveClass && profile?.current_class) {
       const myRank = MIN_YEAR_RANK[profile.current_class];
@@ -132,7 +154,7 @@ export function DashboardPage() {
       result = result.filter((j) => !!j[dateField] && (j[dateField] as string) <= dateTo);
     }
     return result;
-  })();
+  }, [jobs, quickFilter, hideAboveClass, profile, search, dateFrom, dateTo, dateField]);
   const totalPages = Math.max(1, Math.ceil(filteredJobs.length / PAGE_SIZE));
   const pagedJobs = filteredJobs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const hasDateFilter = dateFrom || dateTo;
@@ -142,28 +164,6 @@ export function DashboardPage() {
   function handleSearch(q: string) { setSearch(q); setPage(1); }
   function clearDates() { setDateFrom(''); setDateTo(''); setPage(1); }
   function handleDateField(f: typeof dateField) { setDateField(f); setDateFrom(''); setDateTo(''); setPage(1); }
-
-  function sortWithInProgressFirst(jobs: Job[]): Job[] {
-    return [...jobs].sort((a, b) => {
-      const aip = a.status === 'in_progress' ? 0 : 1;
-      const bip = b.status === 'in_progress' ? 0 : 1;
-      return aip - bip;
-    });
-  }
-
-  function applyFilter(jobs: Job[], qf: QuickFilter): Job[] {
-    if (qf === 'in_progress') return jobs.filter((j) => j.status === 'in_progress');
-    if (qf === 'not_started') return jobs.filter((j) => j.status === 'not_started');
-    if (qf === 'applied') return jobs.filter((j) => !!j.applied_date);
-    if (qf === 'rejected') return jobs.filter((j) => j.status === 'rejected');
-    if (qf === 'conference') return jobs.filter((j) => !!j.conference);
-    if (qf === 'due_soon') return jobs.filter(
-      (j) => !['applied', 'archive'].includes(j.status) && isDeadlineSoon(j.deadline)
-    );
-    if (qf === 'stale') return jobs.filter((j) => isStaleJob(j.added, j.status));
-    if (qf === 'archived') return jobs.filter((j) => j.status === 'archive');
-    return sortWithInProgressFirst(jobs); // 'all' — in_progress floats to top
-  }
 
   async function handleSubmit(formData: Omit<Job, 'id' | 'user_id' | 'created_at' | 'updated_at'>) {
     try {
