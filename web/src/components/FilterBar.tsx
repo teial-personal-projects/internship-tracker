@@ -12,21 +12,31 @@ interface FilterDef {
   label: string;
   value: QuickFilter;
   getCount: (jobs: Job[]) => number | null;
+  dot?: string;
   badgeBg?: string;
   badgeColor?: string;
 }
 
 const FILTERS: FilterDef[] = [
   {
-    label: 'Active',
-    value: 'active',
-    getCount: (jobs) => jobs.filter((j) => ['not_started', 'in_progress', 'interviewing'].includes(j.status)).length,
-    badgeBg: 'whiteAlpha.300',
-    badgeColor: 'white',
+    label: 'All',
+    value: 'all',
+    getCount: (jobs) => jobs.length,
+    badgeBg: '#F1EFE8',
+    badgeColor: '#444441',
+  },
+  {
+    label: 'In Progress',
+    value: 'in_progress',
+    dot: '#185FA5',
+    getCount: (jobs) => jobs.filter((j) => j.status === 'in_progress').length,
+    badgeBg: '#E6F1FB',
+    badgeColor: '#185FA5',
   },
   {
     label: 'Not Started',
     value: 'not_started',
+    dot: '#9ca3af',
     getCount: (jobs) => jobs.filter((j) => j.status === 'not_started').length,
     badgeBg: '#F1EFE8',
     badgeColor: '#444441',
@@ -34,13 +44,23 @@ const FILTERS: FilterDef[] = [
   {
     label: 'Applied',
     value: 'applied',
+    dot: '#16a34a',
     getCount: (jobs) => jobs.filter((j) => !!j.applied_date).length,
     badgeBg: '#E6F1FB',
     badgeColor: '#185FA5',
   },
   {
+    label: 'Rejected',
+    value: 'rejected',
+    dot: '#dc2626',
+    getCount: (jobs) => jobs.filter((j) => j.status === 'rejected').length,
+    badgeBg: '#FCEBEB',
+    badgeColor: '#791F1F',
+  },
+  {
     label: 'Due Soon',
     value: 'due_soon',
+    dot: '#ea580c',
     getCount: (jobs) =>
       jobs.filter(
         (j) => !['applied', 'archive'].includes(j.status) && isDeadlineSoon(j.deadline)
@@ -51,6 +71,7 @@ const FILTERS: FilterDef[] = [
   {
     label: 'Stale',
     value: 'stale',
+    dot: '#d97706',
     getCount: (jobs) => jobs.filter((j) => isStaleJob(j.added, j.status)).length,
     badgeBg: '#FAEEDA',
     badgeColor: '#633806',
@@ -58,6 +79,7 @@ const FILTERS: FilterDef[] = [
   {
     label: 'Archived',
     value: 'archived',
+    dot: '#6b7280',
     getCount: (jobs) => jobs.filter((j) => j.status === 'archive').length,
     badgeBg: '#F1EFE8',
     badgeColor: '#5F5E5A',
@@ -65,16 +87,10 @@ const FILTERS: FilterDef[] = [
   {
     label: 'Conference',
     value: 'conference',
+    dot: '#7c3aed',
     getCount: (jobs) => jobs.filter((j) => !!j.conference).length,
     badgeBg: '#EEEDFE',
     badgeColor: '#534AB7',
-  },
-  {
-    label: 'All',
-    value: 'all',
-    getCount: (jobs) => jobs.length,
-    badgeBg: '#F1EFE8',
-    badgeColor: '#444441',
   },
 ];
 
@@ -90,7 +106,7 @@ export function FilterBar({ quickFilter, onQuickFilter, jobs }: Props) {
           <Select.Trigger className="w-full flex items-center justify-between gap-2 border border-gray-300 rounded-md px-4 py-3 bg-white text-base font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
             <span>
               {active.label}
-              {activeCount !== null && activeCount > 0 ? ` (${activeCount})` : ''}
+              {activeCount !== null ? ` (${activeCount})` : ''}
             </span>
             <Select.Icon>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -117,7 +133,7 @@ export function FilterBar({ quickFilter, onQuickFilter, jobs }: Props) {
                                  data-[state=checked]:font-semibold data-[state=checked]:text-brand-800"
                     >
                       <Select.ItemText>
-                        {label}{count !== null && count > 0 ? ` (${count})` : ''}
+                        {label}{count !== null ? ` (${count})` : ''}
                       </Select.ItemText>
                       <Select.ItemIndicator>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -135,14 +151,15 @@ export function FilterBar({ quickFilter, onQuickFilter, jobs }: Props) {
 
       {/* Desktop: pill buttons */}
       <div
-        className="hidden sm:block mb-2 -mx-4 px-4 overflow-x-auto"
+        className="hidden sm:flex items-center gap-2 mb-2 -mx-4 px-4 overflow-x-auto"
         style={{ scrollbarWidth: 'none' } as React.CSSProperties}
       >
+        <span className="text-[10px] font-bold tracking-widest text-gray-400 uppercase shrink-0">Filter</span>
         <div className="flex gap-2 flex-nowrap min-w-max pb-1">
-          {FILTERS.map(({ label, value, getCount, badgeBg, badgeColor }) => {
+          {FILTERS.map(({ label, value, getCount, dot, badgeBg, badgeColor }) => {
             const isActive = quickFilter === value;
             const count = getCount(jobs);
-            const showCount = count !== null && count > 0;
+            const showCount = count !== null;
 
             return (
               <button
@@ -156,6 +173,9 @@ export function FilterBar({ quickFilter, onQuickFilter, jobs }: Props) {
                     : 'bg-white text-gray-600 border-gray-400 hover:bg-gray-50 hover:border-gray-500',
                 ].join(' ')}
               >
+                {dot && (
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ background: isActive ? 'white' : dot }} />
+                )}
                 {label}
                 {showCount && (
                   <span

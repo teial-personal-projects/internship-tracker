@@ -123,9 +123,10 @@ export type FilterTab = 'active' | 'applied_archived';
 
 export type QuickFilter =
   | 'all'
-  | 'active'
+  | 'in_progress'
   | 'not_started'
   | 'applied'
+  | 'rejected'
   | 'conference'
   | 'due_soon'
   | 'stale'
