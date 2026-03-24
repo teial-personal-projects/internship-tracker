@@ -86,6 +86,7 @@ export function DashboardPage() {
   const [search, setSearch] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [dateField, setDateField] = useState<'applied_date' | 'added' | 'deadline'>('added');
   const [isOpen, setIsOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [year, setYear] = useState(CURRENT_ACAD_YEAR);
@@ -120,10 +121,10 @@ export function DashboardPage() {
       result = result.filter((j) => j.company.toLowerCase().includes(q));
     }
     if (dateFrom) {
-      result = result.filter((j) => !!j.applied_date && j.applied_date >= dateFrom);
+      result = result.filter((j) => !!j[dateField] && (j[dateField] as string) >= dateFrom);
     }
     if (dateTo) {
-      result = result.filter((j) => !!j.applied_date && j.applied_date <= dateTo);
+      result = result.filter((j) => !!j[dateField] && (j[dateField] as string) <= dateTo);
     }
     return result;
   })();
@@ -135,6 +136,7 @@ export function DashboardPage() {
   function handleYear(y: number) { setYear(y); setPage(1); }
   function handleSearch(q: string) { setSearch(q); setPage(1); }
   function clearDates() { setDateFrom(''); setDateTo(''); setPage(1); }
+  function handleDateField(f: typeof dateField) { setDateField(f); setDateFrom(''); setDateTo(''); setPage(1); }
 
   function sortWithInProgressFirst(jobs: Job[]): Job[] {
     return [...jobs].sort((a, b) => {
@@ -233,7 +235,15 @@ export function DashboardPage() {
 
           {/* Date range — single pill */}
           <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl shadow-sm px-3 py-2 shrink-0">
-            <span className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Applied</span>
+            <select
+              value={dateField}
+              onChange={(e) => handleDateField(e.target.value as typeof dateField)}
+              className="text-[10px] font-bold tracking-widest text-gray-400 uppercase bg-transparent border-none outline-none cursor-pointer"
+            >
+              <option value="added">Added</option>
+              <option value="deadline">Deadline</option>
+              <option value="applied_date">Applied</option>
+            </select>
             <input
               type="date"
               value={dateFrom}
