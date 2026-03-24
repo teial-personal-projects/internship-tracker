@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { Spinner } from './Spinner';
 
 export function UserMenu() {
   const { user, signOut } = useAuth();
@@ -130,7 +131,7 @@ export function UserMenu() {
             >
               {loading ? (
                 <>
-                  <span className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                  <Spinner color="red" />
                   Signing out…
                 </>
               ) : (

@@ -1,5 +1,6 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { useEffect } from 'react';
+import { Spinner } from './Spinner';
 import { useForm } from 'react-hook-form';
 import type { Job } from '@shared/types';
 import { MIN_YEAR_OPTIONS, STATUS_CYCLE } from '@shared/types';
@@ -218,7 +219,7 @@ export function JobModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, 
               >
                 {isLoading ? (
                   <span className="flex items-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    <Spinner color="white" />
                     Saving…
                   </span>
                 ) : 'Save'}

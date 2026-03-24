@@ -4,6 +4,7 @@ import type { Job } from '@shared/types';
 import { StatusBadge } from './StatusBadge';
 import { TrashIcon } from './icons/TrashIcon';
 import { DeleteJobDialog } from './DeleteJobDialog';
+import { Spinner } from './Spinner';
 import { safeUrl } from '@/lib/jobUtils';
 import { formatDate, isDeadlineSoon, isStaleJob, isNewJob } from '@/lib/dateUtils';
 
@@ -168,9 +169,7 @@ export function JobRow({
                   onClick={() => onMarkApplied(job.id)}
                   className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-brand-400 text-brand-700 bg-white hover:bg-brand-50 transition-colors disabled:opacity-50"
                 >
-                  {isApplying ? (
-                    <span className="w-3 h-3 border border-brand-500 border-t-transparent rounded-full animate-spin" />
-                  ) : 'Mark Applied'}
+                  {isApplying ? <Spinner size="sm" /> : 'Mark Applied'}
                 </button>
               )}
               <button
@@ -180,9 +179,7 @@ export function JobRow({
                 className="btn-ghost text-red-600 hover:bg-red-50 px-2 py-1 text-xs"
                 aria-label="Delete job"
               >
-                {isDeleting ? (
-                  <span className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
-                ) : <TrashIcon />}
+                {isDeleting ? <Spinner size="sm" color="red" /> : <TrashIcon />}
               </button>
             </div>
           </td>

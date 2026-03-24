@@ -3,6 +3,7 @@ import type { Job } from '@shared/types';
 import { StatusBadge } from './StatusBadge';
 import { TrashIcon } from './icons/TrashIcon';
 import { DeleteJobDialog } from './DeleteJobDialog';
+import { Spinner } from './Spinner';
 import { safeUrl } from '@/lib/jobUtils';
 import { formatDate, isDeadlineSoon, isStaleJob } from '@/lib/dateUtils';
 
@@ -98,11 +99,7 @@ function JobCard({ job, onEdit, onDelete, onMarkApplied, isApplying, isDeleting 
               onClick={() => onMarkApplied(job.id)}
               className="btn-outline flex-1 text-sm py-1.5"
             >
-              {isApplying ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                </span>
-              ) : '✓ Mark Applied'}
+              {isApplying ? <Spinner size="sm" color="gray" /> : '✓ Mark Applied'}
             </button>
           )}
           <button
@@ -119,9 +116,7 @@ function JobCard({ job, onEdit, onDelete, onMarkApplied, isApplying, isDeleting 
             className="btn-ghost text-red-600 hover:bg-red-50 px-2 py-1.5"
             aria-label="Delete job"
           >
-            {isDeleting ? (
-              <span className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
-            ) : <TrashIcon size={16} />}
+            {isDeleting ? <Spinner color="red" /> : <TrashIcon size={16} />}
           </button>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { MIN_YEAR_RANK } from '@shared/types';
 import { useJobs, useCreateJob, useUpdateJob, useDeleteJob, useMarkApplied } from '@/hooks/useJobs';
 import { useProfile } from '@/hooks/useProfile';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { Spinner } from '@/components/Spinner';
 import { AlertBar } from '@/components/AlertBar';
 import { FilterBar } from '@/components/FilterBar';
 import { JobsTable } from '@/components/JobsTable';
@@ -334,7 +335,7 @@ export function DashboardPage() {
         {/* Table or card list or spinner or placeholder */}
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500" />
+            <Spinner size="lg" />
           </div>
         ) : jobs.length === 0 ? (
           <div className="relative">

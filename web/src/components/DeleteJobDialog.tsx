@@ -1,5 +1,6 @@
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import type { Job } from '@shared/types';
+import { Spinner } from './Spinner';
 
 interface Props {
   open: boolean;
@@ -36,7 +37,7 @@ export function DeleteJobDialog({ open, onOpenChange, job, isDeleting, onConfirm
               >
                 {isDeleting ? (
                   <span className="flex items-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    <Spinner color="white" />
                     Deleting…
                   </span>
                 ) : 'Delete'}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
+import { Spinner } from '@/components/Spinner';
 import { AppHeader } from '@/components/AppHeader';
 import { UserMenu } from '@/components/UserMenu';
 import { supabase } from '@/lib/supabaseClient';
@@ -200,7 +201,7 @@ export function ProfilePage() {
                   >
                     {updateProfile.isPending ? (
                       <span className="flex items-center gap-2">
-                        <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                        <Spinner color="white" />
                         Saving…
                       </span>
                     ) : 'Save Profile'}
