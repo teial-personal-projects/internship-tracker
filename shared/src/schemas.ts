@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import {
+  MAX_COMPANY_LENGTH, MAX_TITLE_LENGTH, MAX_INDUSTRY_LENGTH,
+  MAX_LOCATION_LENGTH, MAX_CONFERENCE_LENGTH, MAX_PAY_LENGTH,
+  MAX_NOTES_LENGTH, MAX_URL_LENGTH, MAX_MAJOR_LENGTH,
+} from './constants';
 
 const minYearValues = [
   'freshman',
@@ -32,25 +37,25 @@ const dateOrEmpty = z.preprocess(
 
 const urlOrEmpty = z.preprocess(
   v => (v === '' ? null : v),
-  z.string().max(2048).refine(
+  z.string().max(MAX_URL_LENGTH).refine(
     (v) => v === null || /^https?:\/\/.+/.test(v),
     { message: 'Must be a valid URL or empty' }
   ).nullable().optional()
 );
 
 export const CreateJobSchema = z.object({
-  company: z.string().min(1, 'Company is required').max(200),
-  title: z.string().min(1, 'Title is required').max(200),
-  industry: z.string().max(100).nullable().optional(),
-  location: z.string().max(200).nullable().optional(),
+  company: z.string().min(1, 'Company is required').max(MAX_COMPANY_LENGTH),
+  title: z.string().min(1, 'Title is required').max(MAX_TITLE_LENGTH),
+  industry: z.string().max(MAX_INDUSTRY_LENGTH).nullable().optional(),
+  location: z.string().max(MAX_LOCATION_LENGTH).nullable().optional(),
   min_year: z.preprocess(v => (v === '' ? null : v), MinYearSchema.nullable().optional()),
   job_link: urlOrEmpty,
   app_link: urlOrEmpty,
   status: JobStatusSchema.default('not_started'),
-  conference: z.string().max(200).nullable().optional(),
+  conference: z.string().max(MAX_CONFERENCE_LENGTH).nullable().optional(),
   cover_letter: urlOrEmpty, // URL to a cover letter document
-  pay: z.string().max(100).nullable().optional(),
-  notes: z.string().max(5000).nullable().optional(),
+  pay: z.string().max(MAX_PAY_LENGTH).nullable().optional(),
+  notes: z.string().max(MAX_NOTES_LENGTH).nullable().optional(),
   review: z.boolean().default(false),
   added: z
     .string()
@@ -63,7 +68,7 @@ export const CreateJobSchema = z.object({
 export const UpdateJobSchema = CreateJobSchema.partial();
 
 export const UpdateProfileSchema = z.object({
-  major: z.string().max(200).nullable().optional(),
+  major: z.string().max(MAX_MAJOR_LENGTH).nullable().optional(),
   current_class: z.preprocess(v => (v === '' ? null : v), MinYearSchema.nullable().optional()),
   positions: z.array(z.string().max(100)).max(20).default([]),
   locations: z.array(z.string().max(100)).max(20).default([]),
