@@ -5,8 +5,8 @@ import { StatusBadge } from './StatusBadge';
 import { TrashIcon } from './icons/TrashIcon';
 import { DeleteJobDialog } from './DeleteJobDialog';
 import { Spinner } from './Spinner';
-import { safeUrl } from '@/lib/jobUtils';
-import { formatDate, isDeadlineSoon, isStaleJob, isNewJob } from '@/lib/dateUtils';
+import { safeUrl, getJobUrgency } from '@/lib/jobUtils';
+import { formatDate, isNewJob } from '@/lib/dateUtils';
 
 export type ColKey =
   | 'company' | 'title' | 'industry' | 'location'
@@ -25,11 +25,14 @@ interface Props {
   isDeleting: boolean;
 }
 
+const URGENCY_BG: Record<string, string> = {
+  urgent: '#fef2f2',
+  stale:  '#fff7ed',
+};
+
 function getRowBg(job: Job): React.CSSProperties | undefined {
-  if (['applied', 'archive'].includes(job.status)) return undefined;
-  if (isDeadlineSoon(job.deadline)) return { background: '#fef2f2' };
-  if (isStaleJob(job.added, job.status)) return { background: '#fff7ed' };
-  return undefined;
+  const bg = URGENCY_BG[getJobUrgency(job)];
+  return bg ? { background: bg } : undefined;
 }
 
 export function JobRow({

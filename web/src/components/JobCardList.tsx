@@ -4,8 +4,8 @@ import { StatusBadge } from './StatusBadge';
 import { TrashIcon } from './icons/TrashIcon';
 import { DeleteJobDialog } from './DeleteJobDialog';
 import { Spinner } from './Spinner';
-import { safeUrl } from '@/lib/jobUtils';
-import { formatDate, isDeadlineSoon, isStaleJob } from '@/lib/dateUtils';
+import { safeUrl, getJobUrgency } from '@/lib/jobUtils';
+import { formatDate } from '@/lib/dateUtils';
 
 interface ListProps {
   jobs: Job[];
@@ -16,11 +16,14 @@ interface ListProps {
   deletingId: string | null;
 }
 
+const URGENCY_BORDER: Record<string, string> = {
+  urgent: '#fdba74', // orange-300
+  stale:  '#fde047', // yellow-300
+  normal: '#e5e7eb', // gray-200
+};
+
 function getCardBorderColor(job: Job): string {
-  if (['applied', 'archive'].includes(job.status)) return '#e5e7eb'; // gray-200
-  if (isDeadlineSoon(job.deadline)) return '#fdba74'; // orange-300
-  if (isStaleJob(job.added, job.status)) return '#fde047'; // yellow-300
-  return '#e5e7eb'; // gray-200
+  return URGENCY_BORDER[getJobUrgency(job)];
 }
 
 function JobCard({ job, onEdit, onDelete, onMarkApplied, isApplying, isDeleting }: {
