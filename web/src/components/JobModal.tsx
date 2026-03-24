@@ -5,6 +5,12 @@ import { useForm } from 'react-hook-form';
 import type { Job } from '@shared/types';
 import { MIN_YEAR_OPTIONS, STATUS_CYCLE } from '@shared/types';
 import { STATUS_LABELS } from '@/theme';
+import { safeUrl } from '@/lib/jobUtils';
+
+function validateUrl(value: string | null | undefined): true | string {
+  if (!value) return true; // optional field
+  return safeUrl(value) !== null || 'Must be a valid https:// URL';
+}
 
 type FormValues = Omit<Job, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
 
@@ -165,16 +171,19 @@ export function JobModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="field-label">Job Link</label>
-                      <input type="url" className="field-input" {...register('job_link')} placeholder="https://" />
+                      <input type="url" className="field-input" {...register('job_link', { validate: validateUrl })} placeholder="https://" />
+                      {errors.job_link && <p className="mt-1 text-xs text-red-600">{errors.job_link.message}</p>}
                     </div>
                     <div>
                       <label className="field-label">Application Link</label>
-                      <input type="url" className="field-input" {...register('app_link')} placeholder="https://" />
+                      <input type="url" className="field-input" {...register('app_link', { validate: validateUrl })} placeholder="https://" />
+                      {errors.app_link && <p className="mt-1 text-xs text-red-600">{errors.app_link.message}</p>}
                     </div>
                   </div>
                   <div>
                     <label className="field-label">Cover Letter</label>
-                    <input type="url" className="field-input" {...register('cover_letter')} placeholder="https://" />
+                    <input type="url" className="field-input" {...register('cover_letter', { validate: validateUrl })} placeholder="https://" />
+                    {errors.cover_letter && <p className="mt-1 text-xs text-red-600">{errors.cover_letter.message}</p>}
                     <label className="flex items-center gap-2 mt-2 cursor-pointer">
                       <input
                         type="checkbox"
