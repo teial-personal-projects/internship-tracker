@@ -6,7 +6,7 @@ import profileRouter from './routes/profile';
 import jobBoardsRouter from './routes/jobBoards';
 import { errorHandler } from './middleware/errorHandler';
 
-export function createApp() {
+export function createApp(version: string) {
   const app = express();
 
   app.use(helmet());
@@ -18,7 +18,7 @@ export function createApp() {
   }));
   app.use(express.json({ limit: '1mb' }));
 
-  app.get('/health', (_req, res) => res.json({ ok: true }));
+  app.get('/health', (_req, res) => res.json({ ok: true, version }));
 
   app.use('/api/jobs', jobsRouter);
   app.use('/api/profile', profileRouter);
