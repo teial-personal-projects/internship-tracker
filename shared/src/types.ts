@@ -72,6 +72,7 @@ export interface Job {
   cover_letter?: string | null;
   pay?: string | null;
   notes?: string | null;
+  review: boolean;
   added: string; // ISO date string YYYY-MM-DD
   applied_date?: string | null; // ISO date string YYYY-MM-DD
   deadline?: string | null; // ISO date string YYYY-MM-DD
@@ -85,6 +86,7 @@ export type UpdateJobInput = Partial<CreateJobInput>;
 export interface UserProfile {
   user_id: string;
   major?: string | null;
+  current_class?: MinYear | null;
   positions: string[];
   locations: string[];
 }
@@ -123,9 +125,10 @@ export type FilterTab = 'active' | 'applied_archived';
 
 export type QuickFilter =
   | 'all'
-  | 'active'
+  | 'in_progress'
   | 'not_started'
   | 'applied'
+  | 'rejected'
   | 'conference'
   | 'due_soon'
   | 'stale'

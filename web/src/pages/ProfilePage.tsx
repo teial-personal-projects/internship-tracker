@@ -5,6 +5,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { AppHeader } from '@/components/AppHeader';
 import { UserMenu } from '@/components/UserMenu';
 import { supabase } from '@/lib/supabaseClient';
+import { MIN_YEAR_OPTIONS } from '@shared/types';
+import type { MinYear } from '@shared/types';
 
 function TagInput({
   label,
@@ -82,6 +84,7 @@ export function ProfilePage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [major, setMajor] = useState('');
+  const [currentClass, setCurrentClass] = useState<MinYear | ''>('');
   const [positions, setPositions] = useState<string[]>([]);
   const [locations, setLocations] = useState<string[]>([]);
 
@@ -91,6 +94,7 @@ export function ProfilePage() {
     setFirstName(user?.user_metadata?.first_name ?? '');
     setLastName(user?.user_metadata?.last_name ?? '');
     setMajor(profile?.major ?? '');
+    setCurrentClass((profile?.current_class ?? user?.user_metadata?.current_class ?? '') as MinYear | '');
     setPositions(profile?.positions ?? []);
     setLocations(profile?.locations ?? []);
   }, [profile, user]);
@@ -98,7 +102,7 @@ export function ProfilePage() {
   async function handleSave() {
     try {
       await Promise.all([
-        updateProfile.mutateAsync({ major: major || null, positions, locations }),
+        updateProfile.mutateAsync({ major: major || null, current_class: currentClass || null, positions, locations }),
         supabase.auth.updateUser({ data: { first_name: firstName || null, last_name: lastName || null } }),
       ]);
       toast.success('Profile saved');
@@ -150,14 +154,29 @@ export function ProfilePage() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="field-label">Major</label>
-                  <input
-                    className="field-input"
-                    value={major}
-                    onChange={(e) => setMajor(e.target.value)}
-                    placeholder="e.g. Computer Science"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="field-label">Major</label>
+                    <input
+                      className="field-input"
+                      value={major}
+                      onChange={(e) => setMajor(e.target.value)}
+                      placeholder="e.g. Computer Science"
+                    />
+                  </div>
+                  <div>
+                    <label className="field-label">Current Class</label>
+                    <select
+                      className="field-input"
+                      value={currentClass}
+                      onChange={(e) => setCurrentClass(e.target.value as MinYear | '')}
+                    >
+                      <option value="">— Select —</option>
+                      {MIN_YEAR_OPTIONS.map((opt) => (
+                        <option key={opt} value={opt} className="capitalize">{opt.charAt(0).toUpperCase() + opt.slice(1)}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <TagInput

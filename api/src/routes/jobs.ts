@@ -8,13 +8,22 @@ import type { Request } from 'express';
 
 const router = Router();
 
-// GET /api/jobs
+// GET /api/jobs?year=2026
 router.get('/', requireAuth, async (req: Request, res, next) => {
   try {
     const db = createUserClient(req);
+    // Academic year: Aug 1 of startYear → Jul 31 of startYear+1
+    const now = new Date();
+    const defaultYear = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
+    const startYear = req.query.year ? Number(req.query.year) : defaultYear;
+    const start = `${startYear}-08-01`;
+    const end = `${startYear + 1}-07-31`;
+
     const { data, error } = await db
       .from('jobs')
       .select('*')
+      .gte('added', start)
+      .lte('added', end)
       .order('added', { ascending: false });
     if (error) {
       res.status(500).json({ error: error.message });

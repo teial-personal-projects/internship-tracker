@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { MIN_YEAR_OPTIONS } from '@shared/types';
+import type { MinYear } from '@shared/types';
 
 // ── Password strength ──────────────────────────────────────────────────────
 
@@ -155,6 +157,7 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
   const { signUp } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [currentClass, setCurrentClass] = useState<MinYear | ''>('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -175,7 +178,7 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
     if (password !== confirm) { setError('Passwords do not match'); return; }
     setLoading(true);
     try {
-      await signUp(email, password, firstName.trim(), lastName.trim());
+      await signUp(email, password, firstName.trim(), lastName.trim(), currentClass || undefined);
       setMessage('Check your email to confirm your account.');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to create account');
@@ -238,6 +241,23 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
                 className="field-input"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+              Current Class
+            </label>
+            <select
+              value={currentClass}
+              onChange={(e) => setCurrentClass(e.target.value as MinYear | '')}
+              disabled={loading}
+              className="field-input"
+            >
+              <option value="">— Select your year —</option>
+              {MIN_YEAR_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</option>
+              ))}
+            </select>
           </div>
 
           <div>

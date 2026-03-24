@@ -5,13 +5,13 @@ import { STATUS_CYCLE } from '@shared/types';
 
 export const jobKeys = {
   all: ['jobs'] as const,
-  list: () => ['jobs', 'list'] as const,
+  list: (year: number) => ['jobs', 'list', year] as const,
 };
 
-export function useJobs() {
+export function useJobs(year: number) {
   return useQuery({
-    queryKey: jobKeys.list(),
-    queryFn: () => jobsApi.getJobs(),
+    queryKey: jobKeys.list(year),
+    queryFn: () => jobsApi.getJobs(year),
     staleTime: 30_000,
   });
 }
@@ -55,6 +55,17 @@ export function useCycleStatus() {
       const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
       return jobsApi.updateJob(id, { status: next });
     },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: jobKeys.all });
+    },
+  });
+}
+
+export function useToggleReview() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, review }: { id: string; review: boolean }) =>
+      jobsApi.updateJob(id, { review }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: jobKeys.all });
     },

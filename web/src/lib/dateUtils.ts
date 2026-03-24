@@ -8,11 +8,11 @@ export function todayStr(): string {
   return new Date().toISOString().split('T')[0];
 }
 
-/** Formats a YYYY-MM-DD string to MM/DD/YY for display. */
+/** Formats a YYYY-MM-DD string to MM/DD/YYYY for display. */
 export function formatDate(d: string | null | undefined, empty = '—'): string {
   if (!d) return empty;
   const [year, month, day] = d.split('-');
-  return `${month}/${day}/${year?.slice(2)}`;
+  return `${month}/${day}/${year}`;
 }
 
 /** Returns true if the deadline falls within the next DEADLINE_WINDOW days (inclusive of today). */
@@ -26,4 +26,9 @@ export function isDeadlineSoon(deadline: string | null | undefined): boolean {
 export function isStaleJob(added: string, status: string): boolean {
   return ['not_started', 'in_progress'].includes(status) &&
     parseISO(added) <= subDays(new Date(), MAX_STALE_DAYS);
+}
+
+/** Returns true if the job was added within the last 7 days. */
+export function isNewJob(added: string): boolean {
+  return parseISO(added) >= subDays(new Date(), 7);
 }
