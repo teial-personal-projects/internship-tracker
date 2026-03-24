@@ -5,7 +5,7 @@ import type { Job } from '@shared/types';
 import { StatusBadge } from './StatusBadge';
 import { TrashIcon } from './icons/TrashIcon';
 import { safeUrl } from '@/lib/jobUtils';
-import { formatDate, isDeadlineSoon, isStaleJob } from '@/lib/dateUtils';
+import { formatDate, isDeadlineSoon, isStaleJob, isNewJob } from '@/lib/dateUtils';
 
 export type ColKey =
   | 'company' | 'title' | 'industry' | 'location'
@@ -51,11 +51,14 @@ export function JobRow({
           <td key={key} className="text-sm font-medium px-2 py-2" style={bgStyle}>
             <div className="flex items-center gap-1.5">
               <span className="font-medium">{job.company}</span>
+              {isNewJob(job.added) && (
+                <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-semibold shrink-0">New</span>
+              )}
               {job.conference && (
                 <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-semibold shrink-0">conf: {job.conference}</span>
               )}
             </div>
-            <div className="text-xs text-gray-500">{job.title}{job.pay ? ` - ${job.pay}` : ''}</div>
+            <div className="text-xs text-gray-500">{job.title}{job.pay ? ` | ${job.pay}` : ''}</div>
             {job.min_year && (
               <div className="text-xs text-gray-400 capitalize">MinClass: {job.min_year}</div>
             )}

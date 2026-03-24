@@ -27,3 +27,8 @@ export function isStaleJob(added: string, status: string): boolean {
   return ['not_started', 'in_progress'].includes(status) &&
     parseISO(added) <= subDays(new Date(), MAX_STALE_DAYS);
 }
+
+/** Returns true if the job was added within the last 7 days. */
+export function isNewJob(added: string): boolean {
+  return parseISO(added) >= subDays(new Date(), 7);
+}
