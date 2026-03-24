@@ -20,10 +20,10 @@ export function AppHeader({ children }: { children?: ReactNode }) {
           </div>
           <div>
             <h1 className="text-lg font-bold text-white tracking-tight leading-tight">
-              LaunchPad
+              Internship Application Tracker
             </h1>
             <p className="hidden sm:block text-sm text-white/80 font-medium mt-0.5">
-              your internship command center
+              Manage your college internship applications
             </p>
           </div>
         </Link>
