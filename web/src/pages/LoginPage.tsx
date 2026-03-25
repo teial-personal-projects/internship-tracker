@@ -389,7 +389,14 @@ export function LoginPage() {
       {/* Logo + tagline */}
       <div className="text-center mb-8">
         <div className="flex items-center justify-center gap-2 mb-2">
-          <span className="text-4xl">🚀</span>
+          <div className="w-12 h-12 rounded-xl bg-accent-400 flex items-center justify-center">
+            <svg width="32" height="32" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="18" y="40" width="60" height="38" rx="7" fill="#EAF3DE"/>
+              <path d="M36 40 L36 33 Q36 26 43 26 L53 26 Q60 26 60 33 L60 40" stroke="#EAF3DE" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+              <rect x="18" y="53" width="60" height="5" fill="#1A3C2E" opacity="0.15"/>
+              <rect x="43" y="50" width="10" height="8" rx="2.5" fill="#6B7FD4"/>
+            </svg>
+          </div>
           <span
             className="text-3xl font-bold text-white"
             style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
@@ -435,7 +442,7 @@ export function LoginPage() {
         <div className="flex items-center justify-center gap-4 px-8 pb-6 text-xs text-gray-400">
           <span>🔒 Secure</span>
           <span>· Free to use ·</span>
-          <span>🚀 Career focused</span>
+          <span>💼 Career focused</span>
         </div>
       </div>
     </div>
