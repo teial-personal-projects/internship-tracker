@@ -25,7 +25,7 @@ export function AppHeader({ children }: { children?: ReactNode }) {
           </div>
           <div>
             <h1 className="text-lg font-bold text-white tracking-tight leading-tight flex items-center gap-2">
-              Internship Application Tracker
+              Track My Application
               <span className="text-xs font-semibold bg-white/20 text-white px-1.5 py-0.5 rounded">
                 v{import.meta.env.VITE_APP_VERSION}
               </span>

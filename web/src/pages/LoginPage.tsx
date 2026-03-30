@@ -401,7 +401,7 @@ export function LoginPage() {
             className="text-3xl font-bold text-white"
             style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
           >
-            Internship Tracker
+            Track My App
           </span>
         </div>
         <p className="text-sm text-green-200">
