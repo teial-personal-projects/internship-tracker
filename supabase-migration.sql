@@ -8,7 +8,7 @@ CREATE TYPE min_year_enum AS ENUM (
 );
 
 CREATE TYPE job_status_enum AS ENUM (
-  'not_started', 'in_progress', 'offered', 'rejected',
+  'not_started', 'in_progress', 'interviewing', 'offered', 'rejected',
   'underqualified', 'missed_deadline', 'applied', 'archive', 'other'
 );
 
