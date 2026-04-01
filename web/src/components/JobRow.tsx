@@ -5,8 +5,9 @@ import { StatusBadge } from './StatusBadge';
 import { TrashIcon } from './icons/TrashIcon';
 import { DeleteJobDialog } from './DeleteJobDialog';
 import { Spinner } from './Spinner';
-import { safeUrl, getJobUrgency } from '@/lib/jobUtils';
+import { safeUrl, getJobUrgency, meetsMinYear } from '@/lib/jobUtils';
 import { formatDate, isNewJob } from '@/lib/dateUtils';
+import { useProfile } from '@/hooks/useProfile';
 
 export type ColKey =
   | 'company' | 'title' | 'industry' | 'location'
@@ -30,11 +31,6 @@ const URGENCY_BG: Record<string, string> = {
   stale:  '#fff7ed',
 };
 
-function getRowBg(job: Job): React.CSSProperties | undefined {
-  const bg = URGENCY_BG[getJobUrgency(job)];
-  return bg ? { background: bg } : undefined;
-}
-
 export function JobRow({
   job,
   colOrder,
@@ -44,7 +40,10 @@ export function JobRow({
   isApplying,
   isDeleting,
 }: Props) {
-  const bgStyle = getRowBg(job);
+  const { data: profile } = useProfile();
+  const urgencyBg = URGENCY_BG[getJobUrgency(job, profile?.current_class)];
+  const classNotMet = !!job.min_year && !meetsMinYear(job, profile?.current_class);
+  const bgStyle: React.CSSProperties | undefined = urgencyBg ? { background: urgencyBg } : undefined;
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   function renderCell(key: ColKey) {
@@ -63,7 +62,10 @@ export function JobRow({
             </div>
             <div className="text-xs text-gray-500">{job.title}{job.pay ? ` | ${job.pay}` : ''}</div>
             {job.min_year && (
-              <div className="text-xs text-gray-400 capitalize">MinClass: {job.min_year}</div>
+              <div className={`text-xs capitalize flex items-center gap-1 ${classNotMet ? 'text-purple-600 font-medium' : 'text-gray-400'}`}>
+                {classNotMet && <span className="text-[10px]">⚠</span>}
+                MinClass: {job.min_year}
+              </div>
             )}
           </td>
         );

@@ -1,19 +1,22 @@
 import { useState, useRef, useCallback } from 'react';
 import * as Select from '@radix-ui/react-select';
-import type { Job, QuickFilter } from '@shared/types';
-import { isDeadlineSoon, isStaleJob } from '@/lib/dateUtils';
+import type { Job, QuickFilter, MinYear } from '@shared/types';
+import { MIN_YEAR_RANK } from '@shared/types';
+import { isDeadlineSoon } from '@/lib/dateUtils';
+import { isJobStaleForStudent } from '@/lib/jobUtils';
 import { useClickOutside } from '@/hooks/useClickOutside';
 
 interface Props {
   quickFilter: QuickFilter;
   onQuickFilter: (f: QuickFilter) => void;
   jobs: Job[];
+  currentClass?: MinYear | null;
 }
 
 interface FilterDef {
   label: string;
   value: QuickFilter;
-  getCount: (jobs: Job[]) => number | null;
+  getCount: (jobs: Job[], currentClass?: MinYear | null) => number | null;
   dot?: string;
   badgeBg?: string;
   badgeColor?: string;
@@ -66,7 +69,7 @@ const ALL_FILTERS: FilterDef[] = [
     label: 'Stale',
     value: 'stale',
     dot: '#d97706',
-    getCount: (jobs) => jobs.filter((j) => isStaleJob(j.added, j.status)).length,
+    getCount: (jobs, currentClass) => jobs.filter((j) => isJobStaleForStudent(j, currentClass)).length,
     badgeBg: '#FAEEDA',
     badgeColor: '#633806',
   },
@@ -87,6 +90,17 @@ const ALL_FILTERS: FilterDef[] = [
     badgeColor: '#5F5E5A',
   },
   {
+    label: 'Above My Class',
+    value: 'min_class_not_met',
+    dot: '#9333ea',
+    getCount: (jobs, currentClass) =>
+      currentClass
+        ? jobs.filter((j) => j.min_year && MIN_YEAR_RANK[currentClass] < MIN_YEAR_RANK[j.min_year]).length
+        : 0,
+    badgeBg: '#F3E8FF',
+    badgeColor: '#6B21A8',
+  },
+  {
     label: 'Conference',
     value: 'conference',
     dot: '#7c3aed',
@@ -100,14 +114,14 @@ const PRIMARY_VALUES: QuickFilter[] = ['all', 'in_progress', 'not_started', 'app
 const PRIMARY_FILTERS = ALL_FILTERS.filter((f) => PRIMARY_VALUES.includes(f.value));
 const MORE_FILTERS = ALL_FILTERS.filter((f) => !PRIMARY_VALUES.includes(f.value));
 
-export function FilterBar({ quickFilter, onQuickFilter, jobs }: Props) {
+export function FilterBar({ quickFilter, onQuickFilter, jobs, currentClass }: Props) {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
   const closeMore = useCallback(() => setMoreOpen(false), []);
   useClickOutside(moreRef, closeMore);
 
   const activeFilter = ALL_FILTERS.find((f) => f.value === quickFilter)!;
-  const activeCount = activeFilter.getCount(jobs);
+  const activeCount = activeFilter.getCount(jobs, currentClass);
   const activeIsMore = MORE_FILTERS.some((f) => f.value === quickFilter);
 
   return (
@@ -135,7 +149,7 @@ export function FilterBar({ quickFilter, onQuickFilter, jobs }: Props) {
             >
               <Select.Viewport>
                 {ALL_FILTERS.map(({ label, value, getCount }) => {
-                  const count = getCount(jobs);
+                  const count = getCount(jobs, currentClass);
                   return (
                     <Select.Item
                       key={value}
@@ -172,7 +186,7 @@ export function FilterBar({ quickFilter, onQuickFilter, jobs }: Props) {
         >
           {PRIMARY_FILTERS.map(({ label, value, getCount, dot, badgeBg, badgeColor }) => {
             const isActive = quickFilter === value;
-            const count = getCount(jobs);
+            const count = getCount(jobs, currentClass);
 
             return (
               <button
@@ -228,7 +242,7 @@ export function FilterBar({ quickFilter, onQuickFilter, jobs }: Props) {
                   className="text-[12px] font-bold px-1.5 py-0 rounded-full leading-none"
                   style={{ background: 'rgba(255,255,255,0.25)', color: 'white' }}
                 >
-                  {activeFilter.getCount(jobs)}
+                  {activeFilter.getCount(jobs, currentClass)}
                 </span>
               </>
             ) : (
@@ -243,7 +257,7 @@ export function FilterBar({ quickFilter, onQuickFilter, jobs }: Props) {
             <div className="absolute top-full left-0 mt-1 z-50 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden min-w-44">
               {MORE_FILTERS.map(({ label, value, getCount, dot, badgeBg, badgeColor }) => {
                 const isActive = quickFilter === value;
-                const count = getCount(jobs);
+                const count = getCount(jobs, currentClass);
                 return (
                   <button
                     key={value}

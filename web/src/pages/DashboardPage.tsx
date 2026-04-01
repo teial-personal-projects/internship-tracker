@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
-import { todayStr, isDeadlineSoon, isStaleJob } from '@/lib/dateUtils';
-import type { Job, QuickFilter, CreateJobInput } from '@shared/types';
+import { todayStr, isDeadlineSoon } from '@/lib/dateUtils';
+import { isJobStaleForStudent } from '@/lib/jobUtils';
+import type { Job, QuickFilter, CreateJobInput, MinYear } from '@shared/types';
 import { MIN_YEAR_RANK } from '@shared/types';
 import { useJobs, useCreateJob, useUpdateJob, useDeleteJob, useMarkApplied } from '@/hooks/useJobs';
 import { useProfile } from '@/hooks/useProfile';
@@ -30,7 +31,7 @@ function sortWithInProgressFirst(jobs: Job[]): Job[] {
   });
 }
 
-function applyFilter(jobs: Job[], qf: QuickFilter): Job[] {
+function applyFilter(jobs: Job[], qf: QuickFilter, currentClass?: MinYear | null): Job[] {
   if (qf === 'in_progress') return jobs.filter((j) => j.status === 'in_progress');
   if (qf === 'not_started') return jobs.filter((j) => j.status === 'not_started');
   if (qf === 'applied') return jobs.filter((j) => !!j.applied_date);
@@ -39,8 +40,11 @@ function applyFilter(jobs: Job[], qf: QuickFilter): Job[] {
   if (qf === 'due_soon') return jobs.filter(
     (j) => !['applied', 'archive'].includes(j.status) && isDeadlineSoon(j.deadline)
   );
-  if (qf === 'stale') return jobs.filter((j) => isStaleJob(j.added, j.status));
+  if (qf === 'stale') return jobs.filter((j) => isJobStaleForStudent(j, currentClass));
   if (qf === 'archived') return jobs.filter((j) => j.status === 'archive');
+  if (qf === 'min_class_not_met') return jobs.filter(
+    (j) => j.min_year && currentClass && MIN_YEAR_RANK[currentClass] < MIN_YEAR_RANK[j.min_year]
+  );
   return sortWithInProgressFirst(jobs); // 'all' — in_progress floats to top
 }
 
@@ -141,7 +145,7 @@ export function DashboardPage() {
   const markApplied = useMarkApplied();
 
   const filteredJobs = useMemo(() => {
-    let result = applyFilter(jobs, quickFilter);
+    let result = applyFilter(jobs, quickFilter, profile?.current_class);
     if (hideAboveClass && profile?.current_class) {
       const myRank = MIN_YEAR_RANK[profile.current_class];
       result = result.filter((j) => !j.min_year || MIN_YEAR_RANK[j.min_year] <= myRank);
@@ -237,7 +241,7 @@ export function DashboardPage() {
         </p>
 
         {/* Alert bar */}
-        {!isLoading && <AlertBar jobs={jobs} />}
+        {!isLoading && <AlertBar jobs={jobs} currentClass={profile?.current_class} />}
 
         {/* Search + date range + add button */}
         <div className="flex gap-2 items-center">
@@ -299,7 +303,7 @@ export function DashboardPage() {
 
         {/* Filter bar + year selector + class filter toggle */}
         <div className="flex flex-wrap items-center gap-2">
-          <FilterBar quickFilter={quickFilter} onQuickFilter={handleQuickFilter} jobs={jobs} />
+          <FilterBar quickFilter={quickFilter} onQuickFilter={handleQuickFilter} jobs={jobs} currentClass={profile?.current_class} />
           <select
             value={year}
             onChange={(e) => handleYear(Number(e.target.value))}

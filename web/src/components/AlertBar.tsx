@@ -1,8 +1,10 @@
-import type { Job } from '@shared/types';
-import { isDeadlineSoon, isStaleJob, DEADLINE_WINDOW, MAX_STALE_DAYS } from '@/lib/dateUtils';
+import type { Job, MinYear } from '@shared/types';
+import { isDeadlineSoon, DEADLINE_WINDOW, MAX_STALE_DAYS } from '@/lib/dateUtils';
+import { isJobStaleForStudent } from '@/lib/jobUtils';
 
 interface Props {
   jobs: Job[];
+  currentClass?: MinYear | null;
 }
 
 function AlertPill({
@@ -36,21 +38,23 @@ function AlertPill({
         !
       </span>
       <span className="text-xs font-medium whitespace-nowrap" style={{ color: textColor }}>
-        {count === 1 ? `1 ${label}` : `${count} ${label}s`}:
+        {count === 1 ? `1 ${label}` : `${count} ${label}s`}{companies ? ':' : ''}
       </span>
-      <span className="text-xs font-semibold whitespace-nowrap" style={{ color: boldColor }}>
-        {companies}
-      </span>
+      {companies && (
+        <span className="text-xs font-semibold whitespace-nowrap" style={{ color: boldColor }}>
+          {companies}
+        </span>
+      )}
     </div>
   );
 }
 
-export function AlertBar({ jobs }: Props) {
+export function AlertBar({ jobs, currentClass }: Props) {
   const dueSoon = jobs.filter(
     (j) => !['applied', 'archive'].includes(j.status) && isDeadlineSoon(j.deadline)
   );
 
-  const stale = jobs.filter((j) => isStaleJob(j.added, j.status));
+  const stale = jobs.filter((j) => isJobStaleForStudent(j, currentClass));
 
   if (!dueSoon.length && !stale.length) return null;
 
@@ -72,7 +76,7 @@ export function AlertBar({ jobs }: Props) {
         <AlertPill
           count={stale.length}
           label={`saved ${MAX_STALE_DAYS}+ days without applying`}
-          companies={stale.map((j) => j.company).join(', ')}
+          companies=""
           bgColor="#FEF0E6"
           borderColor="#F5A962"
           dotColor="#F5A962"
