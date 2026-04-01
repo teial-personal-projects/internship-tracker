@@ -132,7 +132,8 @@ export type QuickFilter =
   | 'conference'
   | 'due_soon'
   | 'stale'
-  | 'archived';
+  | 'archived'
+  | 'min_class_not_met';
 
 export interface JobFilters {
   tab: FilterTab;
