@@ -67,7 +67,7 @@ function LoginForm({ onSwitch }: { onSwitch: () => void }) {
           Welcome back
         </h2>
         <p className="text-sm text-gray-500 mt-1">
-          Sign in to continue tracking internships
+          Sign in to continue tracking job applications
         </p>
       </div>
 
@@ -197,7 +197,7 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
           Create account
         </h2>
         <p className="text-sm text-gray-500 mt-1">
-          Start tracking your internship applications
+          Start tracking your job applications
         </p>
       </div>
 

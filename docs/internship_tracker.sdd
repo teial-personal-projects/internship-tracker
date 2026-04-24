@@ -33,7 +33,7 @@ TABLE OF CONTENTS
 
 1. OVERVIEW
 -----------
-Internship Tracker is a personal productivity tool for students to manage internship
+Track my app is a personal productivity tool for students to manage job
 applications. Users can track each application's status, deadlines, pay, links, and
 notes. The application provides smart alerts for approaching deadlines and stale
 applications, as well as curated links to popular job boards.
@@ -379,7 +379,7 @@ Constants defined in web/src/lib/dateUtils.ts:
 
 10. JOB BOARDS PAGE
 -------------------
-A curated list of internship search sites stored in the job_boards database table.
+A curated list of job application search sites stored in the job_boards database table.
 Data is fetched via GET /api/job-boards and cached for 5 minutes.
 Boards are grouped by category and displayed as cards with name, description, and
 a link that opens in a new tab. Categories and boards are seeded via job-boards.sql
