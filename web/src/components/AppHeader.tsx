@@ -31,7 +31,7 @@ export function AppHeader({ children }: { children?: ReactNode }) {
               </span>
             </h1>
             <p className="hidden sm:block text-sm text-white/80 font-medium mt-0.5">
-              Manage your college internship applications
+              Manage your job applications
             </p>
           </div>
         </Link>

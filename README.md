@@ -1,6 +1,6 @@
 # Internship Tracker
 
-A full-stack web application for tracking internship applications, deadlines, and job boards. Built as a monorepo with a React frontend, Express API backend, and Supabase PostgreSQL database.  
+A full-stack web application for tracking job applications, deadlines, and job boards. Built as a monorepo with a React frontend, Express API backend, and Supabase PostgreSQL database.  
 
 ---
 
