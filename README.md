@@ -1,22 +1,22 @@
 # Internship Tracker
 
-A full-stack web application for tracking job applications, deadlines, and job boards. Built as a monorepo with a React frontend, Express API backend, and Supabase PostgreSQL database.  
+A full-stack web application for tracking job applications, deadlines, and job boards. Built as a monorepo with a React frontend, Express API backend, and Supabase PostgreSQL database.
 
 ---
 
 ## Architecture
 
-| Layer     | Technology                        | Host              |
-|-----------|-----------------------------------|-------------------|
-| Frontend  | React + Vite + Tailwind CSS v4    | Cloudflare Pages  |
-| Backend   | Express.js + TypeScript           | Railway           |
-| Database  | Supabase (PostgreSQL + Auth + RLS)| Supabase          |
+| Layer | Technology | Host |
+| --- | --- | --- |
+| Frontend | React + Vite + Tailwind CSS v4 | Cloudflare Pages |
+| Backend | Express.js + TypeScript | Railway |
+| Database | Supabase (PostgreSQL + Auth + RLS) | Supabase |
 
 ---
 
 ## Monorepo Structure
 
-```
+```text
 internship-tracker/
 ├── api/          # Express.js REST API
 ├── web/          # React + Vite frontend
@@ -49,8 +49,9 @@ npm install
 
 ### Environment Variables
 
-**`api/.env.dev`**
-```
+#### `api/.env.dev`
+
+```env
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=eyJ...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
@@ -58,8 +59,9 @@ NODE_ENV=development
 ALLOWED_ORIGINS=http://localhost:5174
 ```
 
-**`web/.env.dev`**
-```
+#### `web/.env.dev`
+
+```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
 VITE_API_URL=http://localhost:8080/api
@@ -114,4 +116,3 @@ See [docs/Deployment_Plan.md](docs/Deployment_Plan.md) for full step-by-step ins
 - Responsive design — table on desktop, card view on mobile
 - Job Boards page with curated links to internship search sites
 - User profile with major, preferred positions, and preferred locations
-
