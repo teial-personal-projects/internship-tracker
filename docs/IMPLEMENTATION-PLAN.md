@@ -138,10 +138,10 @@ File: `migrations/v2_004_contact_interactions.sql`
 
 File: `migrations/v2_005_contact_templates.sql`
 
-- [ ] 0.6.1 Create `contact_templates` table
-- [ ] 0.6.2 Add `updated_at` trigger
-- [ ] 0.6.3 Create indexes
-- [ ] 0.6.4 Write DOWN block
+- [x] 0.6.1 Create `contact_templates` table
+- [x] 0.6.2 Add `updated_at` trigger
+- [x] 0.6.3 Create indexes
+- [x] 0.6.4 Write DOWN block
 
 ### 0.7 Migration v2_006 — `application_contacts` join table
 
