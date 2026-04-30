@@ -86,9 +86,9 @@
 
 ### 0.1 Migration files setup
 
-- [ ] 0.1.1 Create `migrations/` directory at project root
-- [ ] 0.1.2 Create `migrations/README.md` documenting UP/DOWN convention and how to run migrations via Supabase SQL Editor
-- [ ] 0.1.3 Add `migrations/v2_000_verify_baseline.sql` to confirm `jobs` and `job_boards` tables exist before running v2 migrations
+- [x] 0.1.1 Create `migrations/` directory at project root
+- [x] 0.1.2 Create `migrations/README.md` documenting UP/DOWN convention and how to run migrations via Supabase SQL Editor
+- [x] 0.1.3 Add `migrations/v2_000_verify_baseline.sql` to confirm `jobs` and `job_boards` tables exist before running v2 migrations
 
 ### 0.2 Migration v2_001 — Enums
 
