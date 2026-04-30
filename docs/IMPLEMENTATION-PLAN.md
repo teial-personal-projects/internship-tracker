@@ -94,18 +94,18 @@
 
 File: `migrations/v2_001_enums.sql`
 
-- [ ] 0.2.1 Create `application_status_enum` (new enum; does not modify existing `job_status_enum`)
-- [ ] 0.2.2 Create `application_type_enum` (`cold_strategic`, `recruiter_assisted`, `referral`)
-- [ ] 0.2.3 Create `contact_type_enum` (`company_contact`, `recruiter`)
-- [ ] 0.2.4 Create `outreach_status_enum`
-- [ ] 0.2.5 Create `recruiter_status_enum`
-- [ ] 0.2.6 Create `interview_type_enum`, `interview_status_enum`, `interview_outcome_enum`
-- [ ] 0.2.7 Create `task_category_enum`, `task_priority_enum`, `task_status_enum`
-- [ ] 0.2.8 Create `contact_interaction_type_enum`
-- [ ] 0.2.9 Create `contact_template_type_enum`
-- [ ] 0.2.10 Create `preferred_contact_method_enum`, `how_found_enum`
-- [ ] 0.2.11 Create `notification_type_enum` (`overdue_task`, `upcoming_interview`, `follow_up_due`, `recruiter_no_response`)
-- [ ] 0.2.12 Write DOWN block: `DROP TYPE IF EXISTS` for each enum in reverse order
+- [x] 0.2.1 Create `application_status_enum` (new enum; does not modify existing `job_status_enum`)
+- [x] 0.2.2 Create `application_type_enum` (`cold_strategic`, `recruiter_assisted`, `referral`, `other`)
+- [x] 0.2.3 Create `contact_type_enum` (`company_contact`, `recruiter`, `other`)
+- [x] 0.2.4 Create `outreach_status_enum`
+- [x] 0.2.5 Create `recruiter_status_enum`
+- [x] 0.2.6 Create `interview_type_enum`, `interview_status_enum`, `interview_outcome_enum`
+- [x] 0.2.7 Create `task_category_enum`, `task_priority_enum`, `task_status_enum`
+- [x] 0.2.8 Create `contact_interaction_type_enum`
+- [x] 0.2.9 Create `contact_template_type_enum`
+- [x] 0.2.10 Create `preferred_contact_method_enum`, `how_found_enum`
+- [x] 0.2.11 Create `notification_type_enum` (`overdue_task`, `upcoming_interview`, `follow_up_due`, `recruiter_no_response`)
+- [x] 0.2.12 Write DOWN block: `DROP TYPE IF EXISTS` for each enum in reverse order
 
 ### 0.3 Migration v2_002 — `applications` table
 
