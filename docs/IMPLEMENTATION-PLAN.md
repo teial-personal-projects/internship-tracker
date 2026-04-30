@@ -61,7 +61,7 @@
 
 ### DR.7 Avatar component
 
-- [ ] DR.7.1 Create `web/src/components/Avatar.tsx` — displays 2-letter initials, radius 12, cycles through `[sage-soft, accent-soft, sun-soft, violet-soft, soft]` based on name hash for consistent color per name
+- [x] DR.7.1 Create `web/src/components/Avatar.tsx` — displays 2-letter initials, radius 12, cycles through `[sage-soft, accent-soft, sun-soft, violet-soft, soft]` based on name hash for consistent color per name
 
 ### DR.8 Kicker section labels
 
