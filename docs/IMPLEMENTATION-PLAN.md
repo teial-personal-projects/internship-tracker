@@ -53,11 +53,11 @@
 
 ### DR.6 AppHeader visual update
 
-- [ ] DR.6.1 Change header background from `bg-brand-800` to white (`--card`) with bottom border `1px solid var(--line)`
-- [ ] DR.6.2 Active `NavLink`: 2px terracotta bottom border (`--accent`), `--ink` text — remove `bg-white/20` style
-- [ ] DR.6.3 Inactive `NavLink`: `--ink-2` text, no background
-- [ ] DR.6.4 Version badge: `--soft` bg, `--ink-2` text (replace white-on-dark)
-- [ ] DR.6.5 Update brand mark to 40×40 rounded-square (radius 11), `--accent` bg, cream "A" — per DS §5 brand mark spec
+- [x] DR.6.1 Change header background from `bg-brand-800` to white (`--card`) with bottom border `1px solid var(--line)`
+- [x] DR.6.2 Active `NavLink`: 2px terracotta bottom border (`--accent`), `--ink` text — remove `bg-white/20` style
+- [x] DR.6.3 Inactive `NavLink`: `--ink-2` text, no background
+- [x] DR.6.4 Version badge: `--soft` bg, `--ink-2` text (replace white-on-dark)
+- [x] DR.6.5 Update brand mark to 40×40 rounded-square (radius 11), `--accent` bg, cream "A" — per DS §5 brand mark spec
 
 ### DR.7 Avatar component
 
