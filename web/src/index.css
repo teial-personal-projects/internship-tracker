@@ -54,7 +54,41 @@
 
 @layer base {
   body {
-    @apply bg-[#F5F5F3] text-gray-800 font-sans;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-family-sans);
+  }
+}
+
+@layer utilities {
+  .text-kicker {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    line-height: 1.20;
+    text-transform: uppercase;
+  }
+
+  .text-hero {
+    font-size: 44px;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+  }
+
+  .text-section {
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+  }
+
+  .text-drawer {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.10;
   }
 }
 

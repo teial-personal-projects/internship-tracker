@@ -29,8 +29,8 @@
 
 ### DR.3 Global base styles
 
-- [ ] DR.3.1 Update `body` base style: `background: var(--bg)` (`#FBF5EC`), `color: var(--ink)` (`#1B2540`)
-- [ ] DR.3.2 Add type scale utility classes per `DESIGN_SYSTEM.md §1`: `.text-kicker` (10px / 600 / mono / 0.14em UPPER), `.text-hero`, `.text-section`, `.text-drawer`
+- [x] DR.3.1 Update `body` base style: `background: var(--bg)` (`#FBF5EC`), `color: var(--ink)` (`#1B2540`)
+- [x] DR.3.2 Add type scale utility classes per `DESIGN_SYSTEM.md §1`: `.text-kicker` (10px / 600 / mono / 0.14em UPPER), `.text-hero`, `.text-section`, `.text-drawer`
 
 ### DR.4 Component class updates (`index.css`)
 
