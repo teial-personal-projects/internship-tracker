@@ -43,13 +43,13 @@
 
 ### DR.5 Status and priority color mapping
 
-- [ ] DR.5.1 Update `web/src/theme/index.ts` `STATUS_COLORS` to match `DESIGN_SYSTEM.md §3`:
+- [x] DR.5.1 Update `web/src/theme/index.ts` `STATUS_COLORS` to match `DESIGN_SYSTEM.md §3`:
   - `applied` → ink-2 / soft
   - `phone_screen` → accent-dark / accent-soft
   - `technical` → violet / violet-soft
   - `final_round` / `offered` → sage / sage-soft
   - `rejected` → rose / rose-soft
-- [ ] DR.5.2 Add priority color map (export from `theme/index.ts`): HIGH → `--accent` / `--accent-soft`; MED → `#A36410` / `--sun-soft`; LOW → `--ink-3` / `--soft`
+- [x] DR.5.2 Add priority color map (export from `theme/index.ts`): HIGH → `--accent` / `--accent-soft`; MED → `#A36410` / `--sun-soft`; LOW → `--ink-3` / `--soft`
 
 ### DR.6 AppHeader visual update
 
