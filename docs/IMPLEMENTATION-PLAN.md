@@ -23,9 +23,9 @@
 
 ### DR.2 CSS design tokens
 
-- [ ] DR.2.1 Replace the `@theme` block in `web/src/index.css` with the full token set from `DESIGN_SYSTEM.md §2`: surface tokens (`--bg`, `--card`, `--soft`, `--line`, etc.), ink scale (`--ink` through `--ink-4`), terracotta scale (`--accent`, `--accent-dark`, `--accent-soft`, `--accent-tint`), sage, sun, violet, rose
-- [ ] DR.2.2 Remove the old green `brand-*` palette and blue `accent-*` palette from `@theme`
-- [ ] DR.2.3 Add shadow tokens: `--shadow-sm`, `--shadow-md`, `--shadow-lg` per `DESIGN_SYSTEM.md §4`
+- [x] DR.2.1 Replace the `@theme` block in `web/src/index.css` with the full token set from `DESIGN_SYSTEM.md §2`: surface tokens (`--bg`, `--card`, `--soft`, `--line`, etc.), ink scale (`--ink` through `--ink-4`), terracotta scale (`--accent`, `--accent-dark`, `--accent-soft`, `--accent-tint`), sage, sun, violet, rose
+- [x] DR.2.2 Remove the old green `brand-*` palette and blue `accent-*` palette from `@theme`
+- [x] DR.2.3 Add shadow tokens: `--shadow-sm`, `--shadow-md`, `--shadow-lg` per `DESIGN_SYSTEM.md §4`
 
 ### DR.3 Global base styles
 
