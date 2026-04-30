@@ -305,7 +305,7 @@ Every contact has a chronological interaction log. Entries are created manually 
 | Field | Type | Notes |
 | --- | --- | --- |
 | contact_id | FK | Parent contact |
-| entry_type | Enum | `application_message`, `double_down`, `follow_up`, `reply_received`, `phone_screen_confirmed`, `initial_contact`, `role_discussion`, `resume_submitted`, `role_update`, `feedback_received`, `note` |
+| purpose | Enum | `application_message`, `double_down`, `follow_up`, `reply_received`, `phone_screen_confirmed`, `initial_contact`, `role_discussion`, `resume_submitted`, `role_update`, `feedback_received`, `note` |
 | body | Text | Free-text notes or message summaries |
 | occurred_at | Timestamp | Auto-set to now; editable |
 

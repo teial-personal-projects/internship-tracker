@@ -130,9 +130,9 @@ File: `migrations/v2_003_contacts.sql`
 
 File: `migrations/v2_004_contact_interactions.sql`
 
-- [ ] 0.5.1 Create `contact_interactions` table
-- [ ] 0.5.2 Create indexes
-- [ ] 0.5.3 Write DOWN block
+- [x] 0.5.1 Create `contact_interactions` table
+- [x] 0.5.2 Create indexes
+- [x] 0.5.3 Write DOWN block
 
 ### 0.6 Migration v2_005 — `contact_templates` table
 
@@ -330,7 +330,7 @@ File: `migrations/v2_010_company_watchlist.sql`
 - [ ] 3.4.1 Clicking a contact row expands an inline detail panel (or modal on mobile)
 - [ ] 3.4.2 Panel shows all fields, interaction log (reverse chronological), templates list
 - [ ] 3.4.3 Quick-action: update outreach status from the panel
-- [ ] 3.4.4 Interaction log entry form: entry_type dropdown + body text field + occurred_at (defaults to now)
+- [ ] 3.4.4 Interaction log entry form: purpose dropdown + body text field + occurred_at (defaults to now)
 - [ ] 3.4.5 Templates section: list existing templates; Add Template button opens inline form
 - [ ] 3.4.6 Template form: name, template_type dropdown, body rich text
 
