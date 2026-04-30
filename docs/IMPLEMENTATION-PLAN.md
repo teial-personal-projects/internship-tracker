@@ -69,8 +69,8 @@
 
 ### DR.9 Unit tests
 
-- [ ] DR.9.1 Add `vitest` to `api/package.json` and `web/package.json`; create `vitest.config.ts` in each workspace
-- [ ] DR.9.2 Unit test: `Avatar` color hash — same name always produces the same color slot; every slot in the 5-color cycle is reachable
+- [x] DR.9.1 Add `vitest` to `api/package.json` and `web/package.json`; create `vitest.config.ts` in each workspace
+- [x] DR.9.2 Unit test: `Avatar` color hash — same name always produces the same color slot; every slot in the 5-color cycle is reachable
 
 ### DR.10 QA
 
