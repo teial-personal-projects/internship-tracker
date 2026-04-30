@@ -147,9 +147,9 @@ File: `migrations/v2_005_contact_templates.sql`
 
 File: `migrations/v2_006_application_contacts.sql`
 
-- [ ] 0.7.1 Create `application_contacts` table with UNIQUE constraint on `(application_id, contact_id)`
-- [ ] 0.7.2 Create indexes
-- [ ] 0.7.3 Write DOWN block
+- [x] 0.7.1 Create `application_contacts` table with UNIQUE constraint on `(application_id, contact_id)`
+- [x] 0.7.2 Create indexes
+- [x] 0.7.3 Write DOWN block
 
 ### 0.8 Migration v2_007 — `tasks` table
 
