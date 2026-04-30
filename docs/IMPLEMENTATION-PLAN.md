@@ -17,9 +17,9 @@
 
 ### DR.1 Font setup
 
-- [ ] DR.1.1 Add to `web/index.html`: Google Fonts preconnect + Mona Sans (wght 400–800) + JetBrains Mono (wght 400–600)
-- [ ] DR.1.2 Update `--font-family-sans` in `web/src/index.css` to `"Mona Sans", "Inter", -apple-system, sans-serif`
-- [ ] DR.1.3 Update `--font-family-mono` to `"JetBrains Mono", ui-monospace, monospace`
+- [x] DR.1.1 Add to `web/index.html`: Google Fonts preconnect + Mona Sans (wght 400–800) + JetBrains Mono (wght 400–600)
+- [x] DR.1.2 Update `--font-family-sans` in `web/src/index.css` to `"Mona Sans", "Inter", -apple-system, sans-serif`
+- [x] DR.1.3 Update `--font-family-mono` to `"JetBrains Mono", ui-monospace, monospace`
 
 ### DR.2 CSS design tokens
 

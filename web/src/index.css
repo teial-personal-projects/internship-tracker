@@ -23,7 +23,8 @@
   --color-accent-800: #223282;
   --color-accent-900: #162060;
 
-  --font-family-sans: "Inter", "-apple-system", "sans-serif";
+  --font-family-sans: "Mona Sans", "Inter", -apple-system, sans-serif;
+  --font-family-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
 @layer base {
