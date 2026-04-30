@@ -111,11 +111,11 @@ File: `migrations/v2_001_enums.sql`
 
 File: `migrations/v2_002_applications.sql`
 
-- [ ] 0.3.1 Create `applications` table with all columns from PRD §6.1
-- [ ] 0.3.2 Add `updated_at` trigger (reuse `update_updated_at()` function)
-- [ ] 0.3.3 Add `auto_applied_date` trigger (same logic as on `jobs`)
-- [ ] 0.3.4 Create all indexes for `applications` (see PRD §6.2)
-- [ ] 0.3.5 Write DOWN block: `DROP TABLE IF EXISTS applications CASCADE`
+- [x] 0.3.1 Create `applications` table with all columns from PRD §6.1
+- [x] 0.3.2 Add `updated_at` trigger (reuse `update_updated_at()` function)
+- [x] 0.3.3 Add `auto_applied_date` trigger (same logic as on `jobs`)
+- [x] 0.3.4 Create all indexes for `applications` (see PRD §6.2)
+- [x] 0.3.5 Write DOWN block: `DROP TABLE IF EXISTS applications CASCADE`
 
 ### 0.4 Migration v2_003 — `contacts` table
 
