@@ -34,12 +34,12 @@
 
 ### DR.4 Component class updates (`index.css`)
 
-- [ ] DR.4.1 `.btn-primary` — terracotta bg (`--accent`), white text, radius 8, inner box-shadow per DS §5
-- [ ] DR.4.2 `.btn-outline` — white bg, 1px `--line` border, `--ink` text, radius 8
-- [ ] DR.4.3 `.btn-ghost` — transparent, `--ink-2` text, hover `--softer` bg
-- [ ] DR.4.4 `.field-input`, `.field-select`, `.field-textarea` — update focus ring and border to `--line` / `--accent`
-- [ ] DR.4.5 Add `.pill` utility: `padding: 4px 10px; border-radius: 999px; font-weight: 600; font-size: 11px`
-- [ ] DR.4.6 Add `.card` utility: white bg, 1px `--line` border, radius 16, `--shadow-sm`; hover lifts `translateY(-2px)` + `--shadow-md`
+- [x] DR.4.1 `.btn-primary` — terracotta bg (`--accent`), white text, radius 8, inner box-shadow per DS §5
+- [x] DR.4.2 `.btn-outline` — white bg, 1px `--line` border, `--ink` text, radius 8
+- [x] DR.4.3 `.btn-ghost` — transparent, `--ink-2` text, hover `--softer` bg
+- [x] DR.4.4 `.field-input`, `.field-select`, `.field-textarea` — update focus ring and border to `--line` / `--accent`
+- [x] DR.4.5 Add `.pill` utility: `padding: 4px 10px; border-radius: 999px; font-weight: 600; font-size: 11px`
+- [x] DR.4.6 Add `.card` utility: white bg, 1px `--line` border, radius 16, `--shadow-sm`; hover lifts `translateY(-2px)` + `--shadow-md`
 
 ### DR.5 Status and priority color mapping
 
