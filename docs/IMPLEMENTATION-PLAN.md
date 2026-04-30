@@ -121,10 +121,10 @@ File: `migrations/v2_002_applications.sql`
 
 File: `migrations/v2_003_contacts.sql`
 
-- [ ] 0.4.1 Create `contacts` table with all columns from PRD §6.1 — use `first_name` and `last_name` (separate columns, both NOT NULL max 100) instead of a single `full_name` column
-- [ ] 0.4.2 Add `updated_at` trigger
-- [ ] 0.4.3 Create all indexes for `contacts`
-- [ ] 0.4.4 Write DOWN block
+- [x] 0.4.1 Create `contacts` table with all columns from PRD §6.1 — use `first_name` and `last_name` (separate columns, both NOT NULL max 100) instead of a single `full_name` column
+- [x] 0.4.2 Add `updated_at` trigger
+- [x] 0.4.3 Create all indexes for `contacts`
+- [x] 0.4.4 Write DOWN block
 
 ### 0.5 Migration v2_004 — `contact_interactions` table
 
