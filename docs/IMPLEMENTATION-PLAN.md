@@ -65,7 +65,7 @@
 
 ### DR.8 Kicker section labels
 
-- [ ] DR.8.1 Add breadcrumb kicker pattern to `DashboardPage.tsx` and `JobBoardsPage.tsx`: small mono label above the page title (e.g. `01 / PIPELINE`)
+- [x] DR.8.1 Add breadcrumb kicker pattern to `DashboardPage.tsx` and `JobBoardsPage.tsx`: small mono label above the page title (e.g. `01 / PIPELINE`)
 
 ### DR.9 Unit tests
 

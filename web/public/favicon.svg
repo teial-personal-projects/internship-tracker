@@ -1,7 +1,10 @@
 <svg width="256" height="256" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="96" height="96" rx="20" fill="#1A3C2E"/>
-  <rect x="18" y="40" width="60" height="38" rx="7" fill="#EAF3DE"/>
-  <path d="M36 40 L36 33 Q36 26 43 26 L53 26 Q60 26 60 33 L60 40" stroke="#EAF3DE" stroke-width="4.5" fill="none" stroke-linecap="round"/>
-  <rect x="18" y="53" width="60" height="5" fill="#1A3C2E" opacity="0.15"/>
-  <rect x="43" y="50" width="10" height="8" rx="2.5" fill="#6B7FD4"/>
+  <!-- Terracotta rounded-square background -->
+  <rect width="96" height="96" rx="26" fill="#C85A3A"/>
+  <!-- A peak strokes — cream -->
+  <path d="M48 15 L11 74 M48 15 L85 74" stroke="#FBF5EC" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Crossbar -->
+  <line x1="26" y1="55" x2="70" y2="55" stroke="#FBF5EC" stroke-width="10" stroke-linecap="round"/>
+  <!-- Sun-yellow dot at base -->
+  <circle cx="48" cy="79" r="7" fill="#D9A441"/>
 </svg>

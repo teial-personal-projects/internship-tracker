@@ -235,10 +235,13 @@ export function DashboardPage() {
       {/* Main content */}
       <main className="flex-1 flex flex-col gap-2 p-3 sm:p-4 pb-6 overflow-hidden">
 
-        {/* Today date */}
-        <p className="text-xs text-gray-500 font-medium">
-          Today: {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-        </p>
+        {/* Page kicker + date */}
+        <div>
+          <p className="text-kicker mb-1" style={{ color: 'var(--accent)' }}>01 / PIPELINE</p>
+          <p className="text-xs font-medium" style={{ color: 'var(--ink-3)' }}>
+            Today: {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+          </p>
+        </div>
 
         {/* Alert bar */}
         {!isLoading && <AlertBar jobs={jobs} currentClass={profile?.current_class} />}

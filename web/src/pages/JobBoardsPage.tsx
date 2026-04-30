@@ -40,8 +40,9 @@ export function JobBoardsPage() {
 
       <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 flex flex-col gap-8 overflow-hidden">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Job Boards</h1>
-          <p className="text-sm text-gray-500 mt-1">Browse popular job boards to find your next internship.</p>
+          <p className="text-kicker mb-2" style={{ color: 'var(--accent)' }}>02 / RESOURCES</p>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--ink)' }}>Job Boards</h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--ink-3)' }}>Browse popular job boards to find your next internship.</p>
         </div>
         {isLoading && (
           <div className="flex justify-center py-16">
