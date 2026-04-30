@@ -1,6 +1,6 @@
 # Track My Application v2.0 — Implementation Plan
 
-**Last updated:** April 27, 2026
+**Last updated:** April 28, 2026
 **Branch strategy:** Feature branches off `dev`, merged to `dev`, promoted to `main` per phase.
 **Migration strategy:** Numbered versioned SQL files in `migrations/`. Each file has an `-- UP` block and a `-- DOWN` block. Run UP sequentially; run DOWN in reverse to rollback.
 
@@ -8,6 +8,75 @@
 >
 > - `[ ]` — not started
 > - `[x]` — complete
+
+---
+
+## Phase DR — Design System & Visual Refresh
+
+*Targets the current v1 codebase. No schema, API, or data model changes. Ship as a standalone PR before starting any v2 feature phases. Reference: `docs/DESIGN_SYSTEM.md` — Terracotta Daylight direction.*
+
+### DR.1 Font setup
+
+- [ ] DR.1.1 Add to `web/index.html`: Google Fonts preconnect + Mona Sans (wght 400–800) + JetBrains Mono (wght 400–600)
+- [ ] DR.1.2 Update `--font-family-sans` in `web/src/index.css` to `"Mona Sans", "Inter", -apple-system, sans-serif`
+- [ ] DR.1.3 Update `--font-family-mono` to `"JetBrains Mono", ui-monospace, monospace`
+
+### DR.2 CSS design tokens
+
+- [ ] DR.2.1 Replace the `@theme` block in `web/src/index.css` with the full token set from `DESIGN_SYSTEM.md §2`: surface tokens (`--bg`, `--card`, `--soft`, `--line`, etc.), ink scale (`--ink` through `--ink-4`), terracotta scale (`--accent`, `--accent-dark`, `--accent-soft`, `--accent-tint`), sage, sun, violet, rose
+- [ ] DR.2.2 Remove the old green `brand-*` palette and blue `accent-*` palette from `@theme`
+- [ ] DR.2.3 Add shadow tokens: `--shadow-sm`, `--shadow-md`, `--shadow-lg` per `DESIGN_SYSTEM.md §4`
+
+### DR.3 Global base styles
+
+- [ ] DR.3.1 Update `body` base style: `background: var(--bg)` (`#FBF5EC`), `color: var(--ink)` (`#1B2540`)
+- [ ] DR.3.2 Add type scale utility classes per `DESIGN_SYSTEM.md §1`: `.text-kicker` (10px / 600 / mono / 0.14em UPPER), `.text-hero`, `.text-section`, `.text-drawer`
+
+### DR.4 Component class updates (`index.css`)
+
+- [ ] DR.4.1 `.btn-primary` — terracotta bg (`--accent`), white text, radius 8, inner box-shadow per DS §5
+- [ ] DR.4.2 `.btn-outline` — white bg, 1px `--line` border, `--ink` text, radius 8
+- [ ] DR.4.3 `.btn-ghost` — transparent, `--ink-2` text, hover `--softer` bg
+- [ ] DR.4.4 `.field-input`, `.field-select`, `.field-textarea` — update focus ring and border to `--line` / `--accent`
+- [ ] DR.4.5 Add `.pill` utility: `padding: 4px 10px; border-radius: 999px; font-weight: 600; font-size: 11px`
+- [ ] DR.4.6 Add `.card` utility: white bg, 1px `--line` border, radius 16, `--shadow-sm`; hover lifts `translateY(-2px)` + `--shadow-md`
+
+### DR.5 Status and priority color mapping
+
+- [ ] DR.5.1 Update `web/src/theme/index.ts` `STATUS_COLORS` to match `DESIGN_SYSTEM.md §3`:
+  - `applied` → ink-2 / soft
+  - `phone_screen` → accent-dark / accent-soft
+  - `technical` → violet / violet-soft
+  - `final_round` / `offered` → sage / sage-soft
+  - `rejected` → rose / rose-soft
+- [ ] DR.5.2 Add priority color map (export from `theme/index.ts`): HIGH → `--accent` / `--accent-soft`; MED → `#A36410` / `--sun-soft`; LOW → `--ink-3` / `--soft`
+
+### DR.6 AppHeader visual update
+
+- [ ] DR.6.1 Change header background from `bg-brand-800` to white (`--card`) with bottom border `1px solid var(--line)`
+- [ ] DR.6.2 Active `NavLink`: 2px terracotta bottom border (`--accent`), `--ink` text — remove `bg-white/20` style
+- [ ] DR.6.3 Inactive `NavLink`: `--ink-2` text, no background
+- [ ] DR.6.4 Version badge: `--soft` bg, `--ink-2` text (replace white-on-dark)
+- [ ] DR.6.5 Update brand mark to 40×40 rounded-square (radius 11), `--accent` bg, cream "A" — per DS §5 brand mark spec
+
+### DR.7 Avatar component
+
+- [ ] DR.7.1 Create `web/src/components/Avatar.tsx` — displays 2-letter initials, radius 12, cycles through `[sage-soft, accent-soft, sun-soft, violet-soft, soft]` based on name hash for consistent color per name
+
+### DR.8 Kicker section labels
+
+- [ ] DR.8.1 Add breadcrumb kicker pattern to `DashboardPage.tsx` and `JobBoardsPage.tsx`: small mono label above the page title (e.g. `01 / PIPELINE`)
+
+### DR.9 Unit tests
+
+- [ ] DR.9.1 Add `vitest` to `api/package.json` and `web/package.json`; create `vitest.config.ts` in each workspace
+- [ ] DR.9.2 Unit test: `Avatar` color hash — same name always produces the same color slot; every slot in the 5-color cycle is reachable
+
+### DR.10 QA
+
+- [ ] DR.10.1 Smoke-test Dashboard, Login, Profile pages in Chrome and Safari
+- [ ] DR.10.2 Confirm no green `brand-*` color remains in any rendered UI
+- [ ] DR.10.3 Verify no horizontal overflow at 320px viewport
 
 ---
 
@@ -207,6 +276,12 @@ File: `migrations/v2_010_company_watchlist.sql`
 - [ ] 2.4.4 Steps 9–12 rendered as N/A when `application_type = referral`
 - [ ] 2.4.5 Each checkbox change PATCHes `checklist_state` on the application record
 
+### 2.5 Unit tests
+
+- [ ] 2.5.1 Unit test: pagination — 26 records with `limit=25` returns `page=1` with 25 items and `totalPages=2`
+- [ ] 2.5.2 Unit test: date range filter — records outside `date_from`/`date_to` are excluded; both bounds are inclusive
+- [ ] 2.5.3 Unit test: no year constraint — records from multiple calendar years are all returned when no date filter is applied
+
 ---
 
 ## Phase 3 — Unified Contacts System
@@ -234,7 +309,9 @@ File: `migrations/v2_010_company_watchlist.sql`
 - [ ] 3.2.2 `createDoubleDownFollowUpTask(contactId, userId, applicationId)` — creates follow-up task with `due_date = today + 4 business days`
 - [ ] 3.2.3 `createApplicationDoubleDownTask(applicationId, userId)` — task for cold_strategic on applied status
 - [ ] 3.2.4 Helper: `addBusinessDays(date, days)` — skips Sat/Sun
-- [ ] 3.2.5 Unit tests for `addBusinessDays` covering weekends and multi-week spans
+- [ ] 3.2.5 Unit tests for `addBusinessDays` — weekends skipped, multi-week spans, spans that start on a Friday
+- [ ] 3.2.6 Unit test: `createDoubleDownFollowUpTask` sets `due_date` to exactly today + 4 business days
+- [ ] 3.2.7 Unit test: `createApplicationDoubleDownTask` does not fire when `application_type` is not `cold_strategic`
 
 ### 3.3 Contacts tab UI
 
@@ -286,6 +363,8 @@ File: `migrations/v2_010_company_watchlist.sql`
 - [ ] 4.2.3 Set `priority = high` and append `(Overdue)` to title if not already present
 - [ ] 4.2.4 Schedule via cron (daily at 00:05 UTC) — use `node-cron` or equivalent
 - [ ] 4.2.5 Register job startup in `api/src/index.ts`
+- [ ] 4.2.6 Unit test: tasks past `due_date` have `priority` set to `high` and `(Overdue)` appended to title
+- [ ] 4.2.7 Unit test: `(Overdue)` is not appended a second time if already present in the title
 
 ### 4.3 Action Items tab UI
 
@@ -326,6 +405,9 @@ File: `migrations/v2_010_company_watchlist.sql`
 - [ ] 5.2.3 Checklist advance: update `checklist_state` on the linked application per PRD §5.6 rules
 - [ ] 5.2.4 Task creation: create prep and reminder tasks per PRD §5.6 table
 - [ ] 5.2.5 Call this service from the POST /api/interviews handler after successful insert
+- [ ] 5.2.6 Unit test: `onInterviewCreated` with `phone_screen` creates a prep task (due 1 day before) and a thank-you task (due same day as interview)
+- [ ] 5.2.7 Unit test: `onInterviewCreated` with `technical` creates a review-topics task (due 2 days before) and no thank-you task
+- [ ] 5.2.8 Unit test: `onInterviewCreated` with any type advances `checklist_state` step 15 on the linked application
 
 ### 5.3 Global Interviews tab UI
 
@@ -366,6 +448,9 @@ File: `migrations/v2_010_company_watchlist.sql`
 - [ ] 6.2.2 Before inserting, check `notification_preferences.enabled` and the relevant type toggle; skip if off
 - [ ] 6.2.3 Deduplicate: skip insert if an unread notification for the same `(user_id, notification_type, entity_id)` already exists
 - [ ] 6.2.4 Call `createNotification` from existing trigger points: task auto-generation service, overdue escalation job, interview trigger service
+- [ ] 6.2.5 Unit test: `createNotification` skips insert when an unread notification for the same `(user_id, notification_type, entity_id)` already exists
+- [ ] 6.2.6 Unit test: `createNotification` skips insert when `notification_preferences.enabled = false`
+- [ ] 6.2.7 Unit test: `createNotification` skips insert when the relevant type toggle (e.g. `notify_overdue_tasks`) is false even if the master toggle is on
 
 ### 6.3 Notification bell UI (header)
 
@@ -420,6 +505,8 @@ File: `migrations/v2_010_company_watchlist.sql`
 - [ ] 8.1.6 `DELETE /api/watchlist/:id` — ownership check
 - [ ] 8.1.7 `POST /api/watchlist/:id/promote` — create an `applications` record from `company_name` and `industry`; delete the watchlist entry; return the new application ID
 - [ ] 8.1.8 Register in `app.ts`
+- [ ] 8.1.9 Unit test: `promote` returns the new application ID and the watchlist entry no longer exists after the call
+- [ ] 8.1.10 Unit test: `promote` on a non-existent entry returns 404; on another user's entry returns 403
 
 ### 8.2 Companies To Watch UI
 

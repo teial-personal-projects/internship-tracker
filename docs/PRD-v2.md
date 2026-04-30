@@ -95,80 +95,112 @@ On viewports below 768px:
 - Clicking any application row in the Jobs tab opens the Contacts tab pre-filtered to that application's detail view
 - Empty states on every tab show instructional content with a primary CTA
 - The word "Dashboard" is removed from all user-facing UI
-- The topbar shows the app name, version badge, and user avatar only
+- The topbar has a white (`--card`) background with a `1px var(--line)` bottom border; it shows the app brand mark, app name, version badge, and user avatar
+- The active tab indicator is a 2px terracotta (`--accent`) bottom border on the tab text — no background fill on active tabs
 
 ### 4.4 Visual design & color system
 
-The app uses a warm, document-like aesthetic — parchment backgrounds with terracotta and amber accents. All colors are drawn from the v2.0 prototype and must be used consistently across every view.
+The canonical design reference is `docs/DESIGN_SYSTEM.md` (direction: **Terracotta Daylight** — warm cream canvas, deep navy ink, terracotta accent). Values in this section summarise intent; the design system document is the authoritative source for exact token values, type scale details, and component specs.
 
-#### Color palette
+#### Color tokens
 
-| Token | Hex | Usage |
+Token names follow `docs/DESIGN_SYSTEM.md §2`. All component code must reference these tokens — no raw hex values in component files.
+
+| Token | Value | Role |
 | --- | --- | --- |
-| `--color-bg` | `#FBF5EC` | Page background, modal backgrounds |
-| `--color-bg-subtle` | `#FAF4E8` | Card backgrounds, table row alternates, input fills |
-| `--color-primary` | `#C85A3A` | Primary buttons, active tab indicators, brand accents |
-| `--color-primary-tint` | `#C85A3A33` | Primary button hover states, selected row highlights, status tag backgrounds |
-| `--color-accent` | `#D9A441` | Secondary badges, warning indicators, gold accents |
-| `--color-text` | `rgba(27,37,64,1)` | Primary body text (full opacity navy) |
-| `--color-text-muted` | `rgba(27,37,64,0.18)` | Placeholder text, disabled states |
-| `--color-overlay` | `rgba(27,37,64,0.08)` | Card borders, dividers, subtle separators |
-| `--color-overlay-medium` | `rgba(27,37,64,0.18)` | Modal backdrops, hover overlays |
-| `--color-white` | `#FFFFFF` | Surfaces that require full white (e.g. dropdown menus) |
+| `--bg` | `#FBF5EC` | Page background |
+| `--card` | `#FFFFFF` | Card and modal surface |
+| `--soft` | `#F3E9D7` | Chip backgrounds, subtle fills |
+| `--softer` | `#FAF4E8` | Row hover, input fills |
+| `--line` | `#E8DFC9` | Primary borders and dividers |
+| `--ink` | `#1B2540` | Primary text (deep navy) |
+| `--ink-2` | `#4E5775` | Secondary text |
+| `--ink-3` | `#8A93AE` | Muted / placeholder text |
+| `--accent` | `#C85A3A` | Terracotta — primary brand |
+| `--accent-dark` | `#A8442A` | Accent hover / darker text |
+| `--accent-soft` | `#F7D9CD` | Accent pill backgrounds |
+| `--sage` | `#6B8F7A` | Success / calm states |
+| `--sage-soft` | `#DDE8DF` | Success pill backgrounds |
+| `--sun` | `#D9A441` | Attention states |
+| `--sun-soft` | `#F5E6C4` | Attention pill backgrounds |
+| `--violet` | `#7C6CB0` | Technical / informational |
+| `--violet-soft` | `#E0DAF0` | Informational pill backgrounds |
+| `--rose` | `#B5394A` | Overdue / error |
+| `--rose-soft` | `#F3D5DA` | Error pill backgrounds |
 
 #### Typography
 
-- **Font family:** System sans-serif stack — `-apple-system, BlinkMacSystemFont, sans-serif`
-- **Monospace accent:** JetBrains Mono — used for checklist step identifiers, status codes, and any code-like labels
-- **Body text:** 14–16px, regular weight, `--color-text`
-- **Headings:** 18–24px, semibold, `--color-text`
-- **Labels / badges:** 11–12px, medium weight, uppercase or sentence case depending on context
+- **Display + body:** `"Mona Sans", "Inter", -apple-system, sans-serif` — load via Google Fonts, weights 400/500/600/700/800
+- **Monospace:** `"JetBrains Mono", ui-monospace, monospace` — used for kicker labels, timestamps, stat counts, and keyboard shortcuts
+- **Section headings:** 36px / weight 800 / -0.035em tracking / line-height 1.05
+- **Body:** 13–14px / weight 400–500 / line-height 1.55
+- **Badge / pill:** 11px / weight 600
+- **Kicker label:** 10px / weight 600 / uppercase / 0.14em letter-spacing / monospace
 
 #### Elevation & borders
 
-- **Card shadow:** `0 1px 4px rgba(0,0,0,0.08)`
-- **Modal shadow:** `0 4px 16px rgba(0,0,0,0.12)`
-- **Border radius:** 6px for inputs and small elements, 8px for cards and modals, 44px for the app icon
-- **Dividers:** `1px solid rgba(27,37,64,0.08)`
+- **Card shadow:** `0 1px 2px rgba(27,37,64,.04), 0 4px 16px rgba(27,37,64,.04)`
+- **Modal shadow:** `0 2px 6px rgba(27,37,64,.06), 0 12px 32px rgba(27,37,64,.08)`
+- **Border radius:** 8px (inputs, small elements), 12px (medium cards), 16px (page-level cards), 20px (modals), 11px (brand mark)
+- **Dividers:** `1px solid var(--line)`
 
 #### Application type tag colors
 
-| Type | Background | Usage |
+| Type | Foreground token | Background token |
 | --- | --- | --- |
-| Cold Strategic | Blue | `#3B82F6` tint |
-| Recruiter-Assisted | Purple | `#8B5CF6` tint |
-| Referral | Green | `#10B981` tint |
-| Not set | Gray dashed | `rgba(27,37,64,0.08)` with dashed border |
+| Cold Strategic | `--violet` | `--violet-soft` |
+| Recruiter-Assisted | `#A36410` | `--sun-soft` |
+| Referral | `--sage` | `--sage-soft` |
+| Not set | `--ink-3` | `--soft` with dashed border |
 
-#### Interview stage badge colors
+#### Application stage badge colors
 
-These override the default palette for interview type badges only.
-
-| Interview type | Badge color |
-| --- | --- |
-| Screening | Purple — `#8B5CF6` |
-| Phone Screen | Orange — `#F97316` |
-| Technical | Blue — `#3B82F6` |
-| On Site | Red — `#EF4444` |
-| Final Round | Green — `#10B981` |
+| Stage | Foreground token | Background token |
+| --- | --- | --- |
+| Applied | `--ink-2` | `--soft` |
+| Phone Screen | `--accent-dark` | `--accent-soft` |
+| Technical | `--violet` | `--violet-soft` |
+| On Site | `--rose` | `--rose-soft` |
+| Final Round | `--sage` | `--sage-soft` |
+| Offered | `--sage` | `--sage-soft` |
+| Rejected | `--rose` | `--rose-soft` |
+| Screening | `--violet` | `--violet-soft` |
 
 #### Outreach status tag colors
 
-| Status | Color | Hex |
+| Status | Foreground token | Background token |
 | --- | --- | --- |
-| Applied msg sent | Green | `#10B981` |
-| Double-down sent | Blue | `#3B82F6` |
-| Follow-up due | Amber | `--color-accent` `#D9A441` |
-| Follow-up overdue | Red | `#EF4444` |
-| Replied | Bold green | `#10B981` (bold weight) |
-| Not contacted | Gray | `rgba(27,37,64,0.18)` |
+| Applied msg sent | `--sage` | `--sage-soft` |
+| Double-down sent | `--accent` | `--accent-soft` |
+| Follow-up due | `#A36410` | `--sun-soft` |
+| Follow-up overdue | `--rose` | `--rose-soft` |
+| Replied | `--sage` | `--sage-soft` |
+| Not contacted | `--ink-3` | `--soft` |
+
+#### Priority badge colors
+
+| Priority | Foreground token | Background token |
+| --- | --- | --- |
+| High | `--accent` | `--accent-soft` |
+| Medium | `#A36410` | `--sun-soft` |
+| Low | `--ink-3` | `--soft` |
+
+#### Company / contact avatars
+
+Every company and contact row shows a 40×40 rounded square (radius 12) with 2-letter initials. The background color is deterministic — derived from the name so the same company always renders the same color. Cycle through: `--sage-soft`, `--accent-soft`, `--sun-soft`, `--violet-soft`, `--soft`.
+
+#### Kicker section labels
+
+Every page title is preceded by a small monospace kicker in the format `NN / CATEGORY` (e.g. `01 / PIPELINE`, `02 / OUTREACH`, `03 / AGENCY`, `04 / SCHEDULE`, `05 / TODAY`, `06 / METHODOLOGY`). Kickers render in `--accent`, 10px / weight 600 / uppercase / 0.14em tracking.
 
 #### Design rules
 
-- Never use pure black (`#000000`) or pure white (`#FFFFFF`) for backgrounds or text — always use palette tokens
-- All interactive elements must have a visible hover state using `--color-primary-tint`
-- Focus rings use `--color-primary` at 40% opacity
-- Error states use `#EF4444`; success states use `#10B981`; the terracotta primary (`--color-primary`) is reserved for brand actions only, not status indicators
+- All colors must reference design system tokens — no raw hex values in component code
+- Interactive rows shift background to `--softer` on hover; cards lift `translateY(-2px)` and gain `--shadow-md` on hover
+- Focus rings use `--accent` at 40% opacity
+- Error states use `--rose`; success states use `--sage`; `--accent` is reserved for primary CTAs and brand actions only
+- No emoji anywhere in the UI (per `docs/DESIGN_SYSTEM.md §6`)
+- Empty states are warm and direct — no exclamation marks
 
 ---
 
