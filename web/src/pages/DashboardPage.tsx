@@ -225,7 +225,7 @@ export function DashboardPage() {
   function openAdd() { setEditingJob(null); setIsOpen(true); }
 
   return (
-    <div className="flex h-screen flex-col bg-[#F5F5F3] overflow-hidden">
+    <div className="flex h-screen flex-col overflow-hidden" style={{ background: 'var(--bg)' }}>
 
       {/* Header */}
       <AppHeader>
@@ -233,7 +233,7 @@ export function DashboardPage() {
       </AppHeader>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col gap-2 p-3 sm:p-4 pb-6 overflow-hidden">
+      <main className="flex-1 flex flex-col gap-2 p-3 sm:p-4 pb-6 overflow-x-hidden overflow-y-auto">
 
         {/* Page kicker + date */}
         <div>

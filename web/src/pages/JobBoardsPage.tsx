@@ -33,7 +33,7 @@ export function JobBoardsPage() {
   const categories = [...new Set(boards.map((b) => b.category))];
 
   return (
-    <div className="min-h-screen bg-[#F5F5F3] overflow-x-hidden">
+    <div className="min-h-screen overflow-x-hidden" style={{ background: 'var(--bg)' }}>
       <AppHeader>
         <UserMenu />
       </AppHeader>

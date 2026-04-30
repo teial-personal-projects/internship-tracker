@@ -61,7 +61,7 @@
 
 ### DR.7 Avatar component
 
-- [x] DR.7.1 Create `web/src/components/Avatar.tsx` — displays 2-letter initials, radius 12, cycles through `[sage-soft, accent-soft, sun-soft, violet-soft, soft]` based on name hash for consistent color per name
+- [x] DR.7.1 Create `web/src/components/Avatar.tsx` — displays 2-letter initials, radius 12, fixed sun-soft bg (`#F5E6C4`) / amber fg (`#A36410`) for all users
 
 ### DR.8 Kicker section labels
 
@@ -70,13 +70,13 @@
 ### DR.9 Unit tests
 
 - [x] DR.9.1 Add `vitest` to `api/package.json` and `web/package.json`; create `vitest.config.ts` in each workspace
-- [x] DR.9.2 Unit test: `Avatar` color hash — same name always produces the same color slot; every slot in the 5-color cycle is reachable
+- [x] DR.9.2 Unit test: `Avatar` initials — two-word name, single name, three-word name
 
 ### DR.10 QA
 
-- [ ] DR.10.1 Smoke-test Dashboard, Login, Profile pages in Chrome and Safari
-- [ ] DR.10.2 Confirm no green `brand-*` color remains in any rendered UI
-- [ ] DR.10.3 Verify no horizontal overflow at 320px viewport
+- [x] DR.10.1 Smoke-test Dashboard, Login, Profile pages in Chrome and Safari
+- [x] DR.10.2 Confirm no green `brand-*` color remains in any rendered UI
+- [x] DR.10.3 Verify no horizontal overflow at 320px viewport
 
 ---
 
