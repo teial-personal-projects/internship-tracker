@@ -193,9 +193,9 @@ File: `migrations/v2_010_company_watchlist.sql`
 
 ### 0.12 Shared types
 
-- [ ] 0.12.1 Update `shared/src/constants.ts` with new field length limits
-- [ ] 0.12.2 Create Zod schemas in `shared/src/schemas/` for: `Application`, `Contact`, `ContactInteraction`, `ContactTemplate`, `ApplicationContact`, `Task`, `Interview`, `NotificationPreferences`, `CompanyWatchlistEntry`
-- [ ] 0.12.3 Export all schemas from `shared/src/index.ts`
+- [x] 0.12.1 Update `shared/src/constants.ts` with new field length limits
+- [x] 0.12.2 Create Zod schemas in `shared/src/schemas/` for: `Application`, `Contact`, `ContactInteraction`, `ContactTemplate`, `ApplicationContact`, `Task`, `Interview`, `NotificationPreferences`, `CompanyWatchlistEntry`
+- [x] 0.12.3 Export all schemas from `shared/src/index.ts`
 
 ---
 
