@@ -205,11 +205,11 @@ File: `migrations/v2_010_company_watchlist.sql`
 
 ### 1.1 Tab bar component
 
-- [ ] 1.1.1 Create `web/src/components/NavBar.tsx` — four primary tabs: Jobs, Contacts, Interviews, Action Items
-- [ ] 1.1.2 On desktop (≥768px): horizontal tab bar at the top below the header
-- [ ] 1.1.3 On mobile (<768px): fixed bottom navigation bar with icon + label per tab
-- [ ] 1.1.4 Active tab state: underline on desktop, filled icon on mobile
-- [ ] 1.1.5 Tab bar scrolls horizontally (not wrapping) if viewport is too narrow
+- [x] 1.1.1 Create `web/src/components/NavBar.tsx` — four primary tabs: Applications (Apps on mobile), Contacts, Interviews, Action Items
+- [x] 1.1.2 On desktop (≥768px): horizontal tab bar at the top below the header
+- [x] 1.1.3 On mobile (<768px): fixed bottom navigation bar with icon + label per tab
+- [x] 1.1.4 Active tab state: underline on desktop, filled icon on mobile
+- [x] 1.1.5 Tab bar scrolls horizontally (not wrapping) if viewport is too narrow
 
 ### 1.2 Hamburger menu
 
@@ -226,9 +226,9 @@ File: `migrations/v2_010_company_watchlist.sql`
 
 ### 1.4 Routing
 
-- [ ] 1.4.1 Update `web/src/App.tsx` routes: `/jobs`, `/contacts`, `/interviews`, `/action-items`, `/playbook`, `/notifications`, `/profile`
-- [ ] 1.4.2 Default route redirects to `/jobs`
-- [ ] 1.4.3 Redirect old `/dashboard` and `/job-boards` routes to `/jobs`
+- [ ] 1.4.1 Update `web/src/App.tsx` routes: `/applications`, `/contacts`, `/interviews`, `/action-items`, `/playbook`, `/notifications`, `/profile`
+- [ ] 1.4.2 Default route redirects to `/applications`
+- [ ] 1.4.3 Redirect old `/dashboard` and `/job-boards` routes to `/applications`
 
 ### 1.5 Page scaffolding
 
@@ -238,7 +238,7 @@ File: `migrations/v2_010_company_watchlist.sql`
 
 ---
 
-## Phase 2 — Jobs Tab & Application Type
+## Phase 2 — Applications Tab & Application Type
 
 ### 2.1 API — applications route
 
@@ -250,9 +250,9 @@ File: `migrations/v2_010_company_watchlist.sql`
 - [ ] 2.1.6 `DELETE /api/applications/:id` — delete with cascade prompt flag in response
 - [ ] 2.1.7 Register routes in `api/src/app.ts`: `app.use('/api/applications', applicationsRouter)`
 
-### 2.2 Jobs tab UI
+### 2.2 Applications tab UI
 
-- [ ] 2.2.1 Update `web/src/pages/DashboardPage.tsx` → rename to `JobsPage.tsx`; update all imports
+- [ ] 2.2.1 Update `web/src/pages/DashboardPage.tsx` → rename to `ApplicationsPage.tsx`; update all imports
 - [ ] 2.2.2 Add date range filter to the search/filter bar: `date_from` and `date_to` date pickers (both optional); filter applies to `applied_date`; no year constraint enforced anywhere
 - [ ] 2.2.3 Pipeline conversion bar component showing counts per status stage
 - [ ] 2.2.4 Application list: add Application Type tag column and Checklist progress fraction column
@@ -265,7 +265,7 @@ File: `migrations/v2_010_company_watchlist.sql`
 ### 2.3 Application Type field
 
 - [ ] 2.3.1 Add Application Type dropdown to the Add/Edit application modal
-- [ ] 2.3.2 "Not set" shows as gray dashed tag; prompt appears in Jobs tab when any application has `application_type = null`
+- [ ] 2.3.2 "Not set" shows as gray dashed tag; prompt appears in Applications tab when any application has `application_type = null`
 - [ ] 2.3.3 Changing Application Type triggers checklist recalculation and task cancellation logic (API side)
 
 ### 2.4 Checklist
@@ -336,7 +336,7 @@ File: `migrations/v2_010_company_watchlist.sql`
 
 ### 3.5 Per-application contacts panel (within Contacts tab)
 
-- [ ] 3.5.1 When navigating to Contacts tab from a Jobs tab row, the Contacts tab pre-filters to that application
+- [ ] 3.5.1 When navigating to Contacts tab from an Applications tab row, the Contacts tab pre-filters to that application
 - [ ] 3.5.2 Application header card: shows company, role, Application Type tag, checklist progress
 - [ ] 3.5.3 Contacts sub-panel: list of contacts linked to that application with name, role, outreach status, quick-action button
 - [ ] 3.5.4 + Add Contact button scoped to that application
@@ -377,7 +377,7 @@ File: `migrations/v2_010_company_watchlist.sql`
 - [ ] 4.3.7 Add Task button — opens modal with all task fields; application and contact selectors
 - [ ] 4.3.8 Overdue tasks: highlighted row with red "Overdue" label
 
-### 4.4 Jobs tab widget
+### 4.4 Applications tab widget
 
 - [ ] 4.4.1 Create `web/src/components/UrgentTasksWidget.tsx`
 - [ ] 4.4.2 Shows top 3 open high-priority tasks with title, company, due date
@@ -518,7 +518,7 @@ File: `migrations/v2_010_company_watchlist.sql`
 - [ ] 8.2.6 Add Company button — opens modal with all watchlist entry fields
 - [ ] 8.2.7 Edit action on each row — opens prefilled modal
 - [ ] 8.2.8 Delete action — single confirmation prompt before removal
-- [ ] 8.2.9 "Start Application" button on each row — calls `POST /api/watchlist/:id/promote`; on success, navigate to the new application in the Jobs tab
+- [ ] 8.2.9 "Start Application" button on each row — calls `POST /api/watchlist/:id/promote`; on success, navigate to the new application in the Applications tab
 - [ ] 8.2.10 Empty state: instructional text explaining the purpose of the list with a primary "Add a Company" CTA
 - [ ] 8.2.11 Add `/watchlist` route to `web/src/App.tsx`
 - [ ] 8.2.12 Add "Companies To Watch" item to `HamburgerMenu.tsx` linking to `/watchlist`
@@ -544,7 +544,7 @@ File: `migrations/v2_010_company_watchlist.sql`
 ## Phase 10 — Final Wiring & End-to-End Testing
 
 - [ ] 10.1 Final end-to-end test: add application → set type → add contact → update outreach status → verify task auto-created → mark task complete → add interview → verify checklist auto-advanced
-- [ ] 10.2 End-to-end test: add company to watchlist → promote to application → verify application appears in Jobs tab and watchlist entry is removed
+- [ ] 10.2 End-to-end test: add company to watchlist → promote to application → verify application appears in Applications tab and watchlist entry is removed
 - [ ] 10.3 Verify date range filter returns only records with applied_date within the specified range; verify empty result when no records match
 - [ ] 10.4 Verify pagination: 26 records return page 1 (25 records) and page 2 (1 record) with correct `totalPages`
 
@@ -573,8 +573,8 @@ File: `migrations/v2_011_import_jobs.sql`
 ### 11.3 Switch frontend to `applications`
 
 - [ ] 11.3.1 Remove any remaining references to `/api/jobs` in the frontend
-- [ ] 11.3.2 Confirm the Jobs tab loads data exclusively from `/api/applications`
-- [ ] 11.3.3 Smoke-test existing records appear correctly in the new Jobs tab UI
+- [ ] 11.3.2 Confirm the Applications tab loads data exclusively from `/api/applications`
+- [ ] 11.3.3 Smoke-test existing records appear correctly in the new Applications tab UI
 
 ---
 

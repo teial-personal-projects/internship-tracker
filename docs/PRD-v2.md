@@ -27,7 +27,7 @@ Track My Application v1.3.1 provides:
 - Date tracking for when applications were added and submitted
 - Links column for job postings
 - Cover letter and notes fields per application
-- Dashboard and Job Boards views (consolidated into the Jobs tab in v2.0)
+- Dashboard and Job Boards views (consolidated into the Applications tab in v2.0)
 
 ### 2.2 What v2.0 addresses
 
@@ -65,7 +65,7 @@ Primary tabs (always visible):
 
 | Tab | Contents |
 | --- | --- |
-| Jobs | Pipeline bar, application list, urgent tasks widget |
+| Applications (Apps on mobile) | Pipeline bar, application list, urgent tasks widget |
 | Contacts | Unified contact tracker — company contacts and recruiters in one view |
 | Interviews | Global interview tracker across all applications |
 | Action Items | Task queue driven by the outreach method |
@@ -91,8 +91,8 @@ On viewports below 768px:
 
 ### 4.3 General UX rules
 
-- The Jobs tab is the default landing view
-- Clicking any application row in the Jobs tab opens the Contacts tab pre-filtered to that application's detail view
+- The Applications tab is the default landing view
+- Clicking any application row in the Applications tab opens the Contacts tab pre-filtered to that application's detail view
 - Empty states on every tab show instructional content with a primary CTA
 - The word "Dashboard" is removed from all user-facing UI
 - The topbar has a white (`--card`) background with a `1px var(--line)` bottom border; it shows the app brand mark, app name, version badge, and user avatar
@@ -206,9 +206,9 @@ Every page title is preceded by a small monospace kicker in the format `NN / CAT
 
 ## 5. Feature Specifications
 
-### Feature 1: Jobs Tab — Consolidated View
+### Feature 1: Applications Tab — Consolidated View
 
-The existing Dashboard/Job Boards experience is consolidated into a single Jobs tab.
+The existing Dashboard/Job Boards experience is consolidated into a single Applications tab.
 
 #### 5.1 Layout (top to bottom)
 
@@ -227,7 +227,7 @@ Every row shows a color-coded Application Type tag:
 - Green — Referral
 - Gray dashed — Not set
 
-Applications with type Not set show a prompt in the Jobs tab encouraging the user to set the type.
+Applications with type Not set show a prompt in the Applications tab encouraging the user to set the type.
 
 #### 5.3 Checklist progress column
 
@@ -377,9 +377,9 @@ The Action Items tab gives users a single queue of everything that needs to happ
 - Group by: company, category, due date
 - Quick-complete checkbox per row — single click marks complete
 
-#### 3.5 Jobs tab widget
+#### 3.5 Applications tab widget
 
-The Jobs tab surfaces a compact widget showing the top 3 open high-priority tasks with a link to the full Action Items tab.
+The Applications tab surfaces a compact widget showing the top 3 open high-priority tasks with a link to the full Action Items tab.
 
 ---
 
@@ -639,7 +639,7 @@ Companies To Watch is a lightweight research watchlist for users who want to tra
 
 #### 8.4 Promote to application
 
-A "Start Application" button on each watchlist entry creates a new record in `applications` pre-populated with `company_name` and `industry`, then removes the watchlist entry. The user is navigated to the new application record in the Jobs tab.
+A "Start Application" button on each watchlist entry creates a new record in `applications` pre-populated with `company_name` and `industry`, then removes the watchlist entry. The user is navigated to the new application record in the Applications tab.
 
 ---
 
@@ -1040,7 +1040,7 @@ All new routes follow the `requireAuth` middleware pattern used by existing rout
 
 ## 9. Acceptance Criteria
 
-### Feature 1 — Jobs Tab
+### Feature 1 — Applications Tab
 
 - [ ] Application list renders records for the authenticated user with server-side pagination (25 per page)
 - [ ] Date range filter (date_from / date_to) correctly constrains the list to applications with an applied date within the specified range
@@ -1075,7 +1075,7 @@ All new routes follow the `requireAuth` middleware pattern used by existing rout
 ### Feature 4 — Application Type
 
 - [ ] Application Type dropdown appears on every application detail view
-- [ ] Color-coded type tag appears in the Jobs tab application list
+- [ ] Color-coded type tag appears in the Applications tab application list
 - [ ] Changing type to Recruiter-Assisted suppresses checklist steps 6–12
 - [ ] Changing type to Referral suppresses checklist steps 9–12
 - [ ] Changing type cancels no-longer-applicable auto-generated tasks
@@ -1132,4 +1132,5 @@ All new routes follow the `requireAuth` middleware pattern used by existing rout
 | 1.0 | April 24, 2026 | Teial Dickens | Initial draft |
 | 2.0 | April 27, 2026 | Teial Dickens | Navigation simplified; Contacts and Recruiters unified; Playbook moved to menu; Notifications added; persona removed; schema expanded |
 | 2.1 | April 28, 2026 | Teial Dickens | Notifications scoped to in-app only; email delivery moved to v3.0; notification schema simplified |
-| 2.2 | April 28, 2026 | Teial Dickens | Removed year constraint from Jobs tab; added date range filter and server-side pagination; added Companies To Watch feature |
+| 2.2 | April 28, 2026 | Teial Dickens | Removed year constraint from Applications tab; added date range filter and server-side pagination; added Companies To Watch feature |
+| 2.3 | April 30, 2026 | Teial Dickens | Renamed "Jobs" tab to "Applications" (abbreviated "Apps" on mobile) throughout |
