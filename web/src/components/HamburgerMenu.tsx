@@ -1,13 +1,14 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, BookOpen, Bell, User, LogOut } from 'lucide-react';
+import { Menu, X, BookOpen, Bell, User, LogOut, Briefcase } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClickOutside } from '@/hooks/useClickOutside';
 import { Spinner } from './Spinner';
 
 const MENU_ITEMS = [
-  { to: '/playbook',      label: 'Playbook',       Icon: BookOpen },
-  { to: '/notifications', label: 'Notifications',  Icon: Bell     },
+  { to: '/job-boards',    label: 'Job Boards',     Icon: Briefcase },
+  { to: '/playbook',      label: 'Playbook',       Icon: BookOpen  },
+  { to: '/notifications', label: 'Notifications',  Icon: Bell      },
 ] as const;
 
 export function HamburgerMenu() {

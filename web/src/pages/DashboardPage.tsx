@@ -14,7 +14,6 @@ import { JobsTable, SORT_FNS } from '@/components/JobsTable';
 import type { SortKey } from '@/components/JobsTable';
 import { JobCardList } from '@/components/JobCardList';
 import { JobModal } from '@/components/JobModal';
-import { UserMenu } from '@/components/UserMenu';
 import { AppHeader } from '@/components/AppHeader';
 
 const TODAY = todayStr();
@@ -228,20 +227,15 @@ export function DashboardPage() {
     <div className="flex h-screen flex-col overflow-hidden" style={{ background: 'var(--bg)' }}>
 
       {/* Header */}
-      <AppHeader>
-        <UserMenu />
-      </AppHeader>
+      <AppHeader />
 
       {/* Main content */}
       <main className="flex-1 flex flex-col gap-2 p-3 sm:p-4 pb-6 overflow-x-hidden overflow-y-auto">
 
-        {/* Page kicker + date */}
-        <div>
-          <p className="text-kicker mb-1" style={{ color: 'var(--accent)' }}>01 / PIPELINE</p>
-          <p className="text-xs font-medium" style={{ color: 'var(--ink-3)' }}>
-            Today: {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-          </p>
-        </div>
+        {/* Date */}
+        <p className="text-xs font-medium" style={{ color: 'var(--ink-3)' }}>
+          Today: {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+        </p>
 
         {/* Alert bar */}
         {!isLoading && <AlertBar jobs={jobs} currentClass={profile?.current_class} />}

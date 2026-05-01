@@ -65,7 +65,7 @@
 
 ### DR.8 Kicker section labels
 
-- [x] DR.8.1 Add breadcrumb kicker pattern to `DashboardPage.tsx` and `JobBoardsPage.tsx`: small mono label above the page title (e.g. `01 / PIPELINE`)
+- ~~DR.8.1~~ Removed — numbered kicker labels (`01 / PIPELINE`, etc.) were dropped; the `.text-kicker` CSS class remains available for other uses
 
 ### DR.9 Unit tests
 
@@ -214,15 +214,15 @@ File: `migrations/v2_010_company_watchlist.sql`
 ### 1.2 Hamburger menu
 
 - [x] 1.2.1 Create `web/src/components/HamburgerMenu.tsx` — slide-in drawer or dropdown
-- [x] 1.2.2 Menu items: Playbook, Notifications, Profile, Sign out
+- [x] 1.2.2 Menu items: Job Boards, Playbook, Notifications, Profile, Sign out — Job Boards stays in v2 but moves here (not a primary tab)
 - [x] 1.2.3 Hamburger icon in the header top-right; accessible keyboard nav
 - [x] 1.2.4 On mobile: drawer slides in from the right
 
 ### 1.3 App header
 
-- [ ] 1.3.1 Update `web/src/components/AppHeader.tsx` to remove Dashboard/Job Boards pills
-- [ ] 1.3.2 Show app name, version badge, and user avatar only
-- [ ] 1.3.3 Remove all references to the word "Dashboard" from user-facing UI
+- [x] 1.3.1 Update `web/src/components/AppHeader.tsx` to remove Dashboard/Job Boards pills
+- [x] 1.3.2 Show app name, version badge, and user avatar only
+- [x] 1.3.3 Remove all references to the word "Dashboard" from user-facing UI
 
 ### 1.4 Routing
 

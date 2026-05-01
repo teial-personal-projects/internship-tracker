@@ -4,7 +4,6 @@ import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
 import { Spinner } from '@/components/Spinner';
 import { AppHeader } from '@/components/AppHeader';
-import { UserMenu } from '@/components/UserMenu';
 import { supabase } from '@/lib/supabaseClient';
 import { MIN_YEAR_OPTIONS } from '@shared/types';
 import type { MinYear } from '@shared/types';
@@ -114,9 +113,7 @@ export function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#F5F5F3]">
-      <AppHeader>
-        <UserMenu />
-      </AppHeader>
+      <AppHeader />
 
       <div className="max-w-[800px] mx-auto py-8 px-4">
         <div className="bg-white rounded-xl border border-brand-100 overflow-hidden">

@@ -189,10 +189,6 @@ Token names follow `docs/DESIGN_SYSTEM.md §2`. All component code must referenc
 
 Every company and contact row shows a 40×40 rounded square (radius 12) with 2-letter initials. The background color is deterministic — derived from the name so the same company always renders the same color. Cycle through: `--sage-soft`, `--accent-soft`, `--sun-soft`, `--violet-soft`, `--soft`.
 
-#### Kicker section labels
-
-Every page title is preceded by a small monospace kicker in the format `NN / CATEGORY` (e.g. `01 / PIPELINE`, `02 / OUTREACH`, `03 / AGENCY`, `04 / SCHEDULE`, `05 / TODAY`, `06 / METHODOLOGY`). Kickers render in `--accent`, 10px / weight 600 / uppercase / 0.14em tracking.
-
 #### Design rules
 
 - All colors must reference design system tokens — no raw hex values in component code

@@ -1,5 +1,8 @@
 // ============================================================
 // Enums
+// TODO: these manual union types duplicate the Zod enums in schemas.ts
+// (MinYearSchema, JobStatusSchema). Once v1 is fully replaced by v2,
+// remove these types and derive them via z.infer<> from the schemas instead.
 // ============================================================
 
 export type MinYear =
