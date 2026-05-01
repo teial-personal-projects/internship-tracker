@@ -213,10 +213,10 @@ File: `migrations/v2_010_company_watchlist.sql`
 
 ### 1.2 Hamburger menu
 
-- [ ] 1.2.1 Create `web/src/components/HamburgerMenu.tsx` — slide-in drawer or dropdown
-- [ ] 1.2.2 Menu items: Playbook, Notifications, Profile, Sign out
-- [ ] 1.2.3 Hamburger icon in the header top-right; accessible keyboard nav
-- [ ] 1.2.4 On mobile: drawer slides in from the right
+- [x] 1.2.1 Create `web/src/components/HamburgerMenu.tsx` — slide-in drawer or dropdown
+- [x] 1.2.2 Menu items: Playbook, Notifications, Profile, Sign out
+- [x] 1.2.3 Hamburger icon in the header top-right; accessible keyboard nav
+- [x] 1.2.4 On mobile: drawer slides in from the right
 
 ### 1.3 App header
 
