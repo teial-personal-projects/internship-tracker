@@ -48,7 +48,7 @@ export function UserMenu() {
       >
         <Avatar name={avatarName} size={32} />
 
-        <span className="hidden sm:block max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap text-sm">
+        <span className="hidden sm:block max-w-37.5 overflow-hidden text-ellipsis whitespace-nowrap text-sm">
           {displayName}
         </span>
 
@@ -72,7 +72,7 @@ export function UserMenu() {
       {/* Dropdown */}
       {isOpen && (
         <div
-          className="absolute right-0 z-20 mt-2 w-56 min-w-[224px] rounded-xl"
+          className="absolute right-0 z-20 mt-2 w-56 min-w-56 rounded-xl"
           style={{
             background: 'var(--card)',
             border: '1px solid var(--line)',
@@ -90,7 +90,7 @@ export function UserMenu() {
             <Link
               to="/"
               onClick={() => setIsOpen(false)}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors hover:bg-[var(--softer)]"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors hover:bg-(--softer)"
               style={{ color: 'var(--ink-2)' }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -101,7 +101,7 @@ export function UserMenu() {
             <Link
               to="/job-boards"
               onClick={() => setIsOpen(false)}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors hover:bg-[var(--softer)]"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors hover:bg-(--softer)"
               style={{ color: 'var(--ink-2)' }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -116,7 +116,7 @@ export function UserMenu() {
             <Link
               to="/profile"
               onClick={() => setIsOpen(false)}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors hover:bg-[var(--softer)]"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors hover:bg-(--softer)"
               style={{ color: 'var(--ink-2)' }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
