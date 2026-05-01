@@ -1,11 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
-import { todayStr, isDeadlineSoon } from '@/lib/dateUtils';
-import { isJobStaleForStudent } from '@/lib/jobUtils';
-import type { Job, QuickFilter, CreateJobInput, MinYear } from '@shared/types';
-import { MIN_YEAR_RANK } from '@shared/types';
+import { todayStr, isDeadlineSoon, isStaleJob } from '@/lib/dateUtils';
+import type { Job, QuickFilter, CreateJobInput } from '@shared/types';
 import { useJobs, useCreateJob, useUpdateJob, useDeleteJob, useMarkApplied } from '@/hooks/useJobs';
-import { useProfile } from '@/hooks/useProfile';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { Spinner } from '@/components/Spinner';
 import { AlertBar } from '@/components/AlertBar';
@@ -17,9 +14,6 @@ import { JobModal } from '@/components/JobModal';
 import { AppHeader } from '@/components/AppHeader';
 
 const TODAY = todayStr();
-const now = new Date();
-// Academic year starts August 1 — if before August, we're still in last year's cycle
-const CURRENT_ACAD_YEAR = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
 const PAGE_SIZE = 15;
 
 function sortWithInProgressFirst(jobs: Job[]): Job[] {
@@ -30,7 +24,7 @@ function sortWithInProgressFirst(jobs: Job[]): Job[] {
   });
 }
 
-function applyFilter(jobs: Job[], qf: QuickFilter, currentClass?: MinYear | null): Job[] {
+function applyFilter(jobs: Job[], qf: QuickFilter): Job[] {
   if (qf === 'in_progress') return jobs.filter((j) => j.status === 'in_progress');
   if (qf === 'not_started') return jobs.filter((j) => j.status === 'not_started');
   if (qf === 'applied') return jobs.filter((j) => !!j.applied_date);
@@ -39,11 +33,8 @@ function applyFilter(jobs: Job[], qf: QuickFilter, currentClass?: MinYear | null
   if (qf === 'due_soon') return jobs.filter(
     (j) => !['applied', 'archive'].includes(j.status) && isDeadlineSoon(j.deadline)
   );
-  if (qf === 'stale') return jobs.filter((j) => isJobStaleForStudent(j, currentClass));
+  if (qf === 'stale') return jobs.filter((j) => isStaleJob(j.added, j.status));
   if (qf === 'archived') return jobs.filter((j) => j.status === 'archive');
-  if (qf === 'min_class_not_met') return jobs.filter(
-    (j) => j.min_year && currentClass && MIN_YEAR_RANK[currentClass] < MIN_YEAR_RANK[j.min_year]
-  );
   return sortWithInProgressFirst(jobs); // 'all' — in_progress floats to top
 }
 
@@ -120,17 +111,14 @@ export function DashboardPage() {
     () => editingJob ?? { added: TODAY },
     [editingJob],
   );
-  const [year, setYear] = useState(CURRENT_ACAD_YEAR);
   const [page, setPage] = useState(1);
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   const [applyingId, setApplyingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [hideAboveClass, setHideAboveClass] = useState(false);
 
-  const { data: jobs = [], isLoading, error } = useJobs(year);
-  const { data: profile } = useProfile();
+  const { data: jobs = [], isLoading, error } = useJobs();
 
   useEffect(() => {
     if (!isLoading && jobs.length > 0) {
@@ -144,11 +132,7 @@ export function DashboardPage() {
   const markApplied = useMarkApplied();
 
   const filteredJobs = useMemo(() => {
-    let result = applyFilter(jobs, quickFilter, profile?.current_class);
-    if (hideAboveClass && profile?.current_class) {
-      const myRank = MIN_YEAR_RANK[profile.current_class];
-      result = result.filter((j) => !j.min_year || MIN_YEAR_RANK[j.min_year] <= myRank);
-    }
+    let result = applyFilter(jobs, quickFilter);
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter((j) => j.company.toLowerCase().includes(q));
@@ -160,7 +144,7 @@ export function DashboardPage() {
       result = result.filter((j) => !!j[dateField] && (j[dateField] as string) <= dateTo);
     }
     return result;
-  }, [jobs, quickFilter, hideAboveClass, profile, search, dateFrom, dateTo, dateField]);
+  }, [jobs, quickFilter, search, dateFrom, dateTo, dateField]);
   const sortedJobs = useMemo(() => {
     if (!sortKey) return filteredJobs;
     const fn = SORT_FNS[sortKey];
@@ -184,7 +168,6 @@ export function DashboardPage() {
     }
   }
   function handleQuickFilter(qf: QuickFilter) { setQuickFilter(qf); setPage(1); }
-  function handleYear(y: number) { setYear(y); setPage(1); }
   function handleSearch(q: string) { setSearch(q); setPage(1); }
   function clearDates() { setDateFrom(''); setDateTo(''); setPage(1); }
   function handleDateField(f: typeof dateField) { setDateField(f); setDateFrom(''); setDateTo(''); setPage(1); }
@@ -238,7 +221,7 @@ export function DashboardPage() {
         </p>
 
         {/* Alert bar */}
-        {!isLoading && <AlertBar jobs={jobs} currentClass={profile?.current_class} />}
+        {!isLoading && <AlertBar jobs={jobs} />}
 
         {/* Search + date range + add button */}
         <div className="flex gap-2 items-center">
@@ -298,29 +281,9 @@ export function DashboardPage() {
           </button>
         </div>
 
-        {/* Filter bar + year selector + class filter toggle */}
+        {/* Filter bar */}
         <div className="flex flex-wrap items-center gap-2">
-          <FilterBar quickFilter={quickFilter} onQuickFilter={handleQuickFilter} jobs={jobs} currentClass={profile?.current_class} />
-          <select
-            value={year}
-            onChange={(e) => handleYear(Number(e.target.value))}
-            className="text-sm border border-gray-300 rounded-md px-2 py-1.5 bg-white text-gray-700 shrink-0"
-          >
-            {[CURRENT_ACAD_YEAR + 1, CURRENT_ACAD_YEAR, CURRENT_ACAD_YEAR - 1, CURRENT_ACAD_YEAR - 2].map((y, i) => (
-              <option key={y} value={y}>{i === 0 ? `Future (${y}–${y + 1})` : `${y}–${y + 1}`}</option>
-            ))}
-          </select>
-          {profile?.current_class && (
-            <label className="inline-flex items-center gap-1.5 text-sm text-gray-600 cursor-pointer shrink-0">
-              <input
-                type="checkbox"
-                checked={hideAboveClass}
-                onChange={(e) => setHideAboveClass(e.target.checked)}
-                className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
-              />
-              Hide above my class
-            </label>
-          )}
+          <FilterBar quickFilter={quickFilter} onQuickFilter={handleQuickFilter} jobs={jobs} />
         </div>
 
         {/* Error */}

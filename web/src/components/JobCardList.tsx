@@ -4,9 +4,8 @@ import { StatusBadge } from './StatusBadge';
 import { TrashIcon } from './icons/TrashIcon';
 import { DeleteJobDialog } from './DeleteJobDialog';
 import { Spinner } from './Spinner';
-import { safeUrl, getJobUrgency, meetsMinYear } from '@/lib/jobUtils';
+import { safeUrl, getJobUrgency } from '@/lib/jobUtils';
 import { formatDate } from '@/lib/dateUtils';
-import { useProfile } from '@/hooks/useProfile';
 
 interface ListProps {
   jobs: Job[];
@@ -32,9 +31,7 @@ function JobCard({ job, onEdit, onDelete, onMarkApplied, isApplying, isDeleting 
   isDeleting: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const { data: profile } = useProfile();
-  const borderColor = URGENCY_BORDER[getJobUrgency(job, profile?.current_class)];
-  const classNotMet = !!job.min_year && !meetsMinYear(job, profile?.current_class);
+  const borderColor = URGENCY_BORDER[getJobUrgency(job)];
 
   const jobUrl = safeUrl(job.job_link);
   const appUrl = safeUrl(job.app_link);
@@ -75,12 +72,6 @@ function JobCard({ job, onEdit, onDelete, onMarkApplied, isApplying, isDeleting 
           )}
           {job.pay && (
             <span className="text-xs text-gray-500">{job.pay}</span>
-          )}
-          {classNotMet && job.min_year && (
-            <span className="text-xs text-purple-600 font-medium flex items-center gap-0.5">
-              <span className="text-[10px]">⚠</span>
-              MinClass: {job.min_year}
-            </span>
           )}
         </div>
 

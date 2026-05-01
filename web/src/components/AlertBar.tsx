@@ -1,10 +1,8 @@
-import type { Job, MinYear } from '@shared/types';
-import { isDeadlineSoon, DEADLINE_WINDOW, MAX_STALE_DAYS } from '@/lib/dateUtils';
-import { isJobStaleForStudent } from '@/lib/jobUtils';
+import type { Job } from '@shared/types';
+import { isDeadlineSoon, isStaleJob, DEADLINE_WINDOW, MAX_STALE_DAYS } from '@/lib/dateUtils';
 
 interface Props {
   jobs: Job[];
-  currentClass?: MinYear | null;
 }
 
 function AlertPill({
@@ -49,12 +47,12 @@ function AlertPill({
   );
 }
 
-export function AlertBar({ jobs, currentClass }: Props) {
+export function AlertBar({ jobs }: Props) {
   const dueSoon = jobs.filter(
     (j) => !['applied', 'archive'].includes(j.status) && isDeadlineSoon(j.deadline)
   );
 
-  const stale = jobs.filter((j) => isJobStaleForStudent(j, currentClass));
+  const stale = jobs.filter((j) => isStaleJob(j.added, j.status));
 
   if (!dueSoon.length && !stale.length) return null;
 
