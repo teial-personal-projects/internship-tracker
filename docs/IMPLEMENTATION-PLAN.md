@@ -226,15 +226,15 @@ File: `migrations/v2_010_company_watchlist.sql`
 
 ### 1.4 Routing
 
-- [ ] 1.4.1 Update `web/src/App.tsx` routes: `/applications`, `/contacts`, `/interviews`, `/action-items`, `/playbook`, `/notifications`, `/profile`
-- [ ] 1.4.2 Default route redirects to `/applications`
-- [ ] 1.4.3 Redirect old `/dashboard` and `/job-boards` routes to `/applications`
+- [x] 1.4.1 Update `web/src/App.tsx` routes: `/applications`, `/contacts`, `/interviews`, `/action-items`, `/playbook`, `/notifications`, `/profile`
+- [x] 1.4.2 Default route redirects to `/applications`
+- [x] 1.4.3 Redirect old `/dashboard` route to `/applications` — `/job-boards` kept as-is (accessible via hamburger menu)
 
 ### 1.5 Page scaffolding
 
-- [ ] 1.5.1 Create empty page components: `ContactsPage.tsx`, `InterviewsPage.tsx`, `ActionItemsPage.tsx`, `PlaybookPage.tsx`, `NotificationsPage.tsx`
-- [ ] 1.5.2 Each page shows a placeholder empty state with a descriptive heading
-- [ ] 1.5.3 Verify tab bar active state updates on navigation
+- [x] 1.5.1 Create empty page components: `ContactsPage.tsx`, `InterviewsPage.tsx`, `ActionItemsPage.tsx`, `PlaybookPage.tsx`, `NotificationsPage.tsx`
+- [x] 1.5.2 Each page shows a placeholder empty state with a descriptive heading
+- [x] 1.5.3 Verify tab bar active state updates on navigation
 
 ---
 

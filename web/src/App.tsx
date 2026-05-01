@@ -4,6 +4,11 @@ import { LoginPage } from '@/pages/LoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { JobBoardsPage } from '@/pages/JobBoardsPage';
+import { ContactsPage } from '@/pages/ContactsPage';
+import { InterviewsPage } from '@/pages/InterviewsPage';
+import { ActionItemsPage } from '@/pages/ActionItemsPage';
+import { PlaybookPage } from '@/pages/PlaybookPage';
+import { NotificationsPage } from '@/pages/NotificationsPage';
 import { Spinner } from '@/components/Spinner';
 
 function AppRoutes() {
@@ -23,10 +28,24 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/" element={<DashboardPage />} />
-      <Route path="/profile" element={<ProfilePage />} />
-      <Route path="/job-boards" element={<JobBoardsPage />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Primary tabs */}
+      <Route path="/applications"  element={<DashboardPage />} />
+      <Route path="/contacts"      element={<ContactsPage />} />
+      <Route path="/interviews"    element={<InterviewsPage />} />
+      <Route path="/action-items"  element={<ActionItemsPage />} />
+
+      {/* Hamburger menu pages */}
+      <Route path="/job-boards"    element={<JobBoardsPage />} />
+      <Route path="/playbook"      element={<PlaybookPage />} />
+      <Route path="/notifications" element={<NotificationsPage />} />
+      <Route path="/profile"       element={<ProfilePage />} />
+
+      {/* Redirects from old routes */}
+      <Route path="/"          element={<Navigate to="/applications" replace />} />
+      <Route path="/dashboard" element={<Navigate to="/applications" replace />} />
+
+      {/* Catch-all */}
+      <Route path="*" element={<Navigate to="/applications" replace />} />
     </Routes>
   );
 }

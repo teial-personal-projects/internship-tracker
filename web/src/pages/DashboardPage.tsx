@@ -230,7 +230,7 @@ export function DashboardPage() {
       <AppHeader />
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col gap-2 p-3 sm:p-4 pb-6 overflow-x-hidden overflow-y-auto">
+      <main className="flex-1 flex flex-col gap-2 p-3 sm:p-4 pb-20 md:pb-6 overflow-x-hidden overflow-y-auto">
 
         {/* Date */}
         <p className="text-xs font-medium" style={{ color: 'var(--ink-3)' }}>
@@ -260,8 +260,8 @@ export function DashboardPage() {
             )}
           </div>
 
-          {/* Date range — single pill */}
-          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl shadow-sm px-3 py-2 shrink-0">
+          {/* Date range — hidden on mobile, visible sm+ */}
+          <div className="hidden sm:flex items-center gap-2 bg-white border border-gray-200 rounded-xl shadow-sm px-3 py-2 shrink-0">
             <select
               value={dateField}
               onChange={(e) => handleDateField(e.target.value as typeof dateField)}
