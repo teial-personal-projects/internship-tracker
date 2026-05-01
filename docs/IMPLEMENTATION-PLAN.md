@@ -164,10 +164,10 @@ File: `migrations/v2_007_tasks.sql`
 
 File: `migrations/v2_008_interviews.sql`
 
-- [ ] 0.9.1 Create `interviews` table
-- [ ] 0.9.2 Add `updated_at` trigger
-- [ ] 0.9.3 Create indexes
-- [ ] 0.9.4 Write DOWN block
+- [x] 0.9.1 Create `interviews` table
+- [x] 0.9.2 Add `updated_at` trigger
+- [x] 0.9.3 Create indexes
+- [x] 0.9.4 Write DOWN block
 
 ### 0.10 Migration v2_009 — `notification_preferences` and `notification_log` tables
 
