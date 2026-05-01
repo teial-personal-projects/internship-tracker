@@ -9,10 +9,10 @@ export function UserMenu() {
   const { user, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const closeMenu = useCallback(() => setIsOpen(false), []);
-  useClickOutside(ref, closeMenu);
+  useClickOutside(menuRef, closeMenu);
 
   async function handleSignOut() {
     setLoading(true);
@@ -34,7 +34,7 @@ export function UserMenu() {
   const avatarName = displayName;
 
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative" ref={menuRef}>
       {/* Trigger button */}
       <button
         type="button"
