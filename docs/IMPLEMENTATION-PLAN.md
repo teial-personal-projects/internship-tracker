@@ -155,10 +155,10 @@ File: `migrations/v2_006_application_contacts.sql`
 
 File: `migrations/v2_007_tasks.sql`
 
-- [ ] 0.8.1 Create `tasks` table
-- [ ] 0.8.2 Add `updated_at` trigger
-- [ ] 0.8.3 Create indexes
-- [ ] 0.8.4 Write DOWN block
+- [x] 0.8.1 Create `tasks` table
+- [x] 0.8.2 Add `updated_at` trigger
+- [x] 0.8.3 Create indexes
+- [x] 0.8.4 Write DOWN block
 
 ### 0.9 Migration v2_008 — `interviews` table
 
