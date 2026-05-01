@@ -505,7 +505,7 @@ Notifications are marked read when the panel is opened. A "Mark all read" action
 
 #### 6.4 Notification log
 
-Every in-app notification is stored in `notification_log`. A notification for a given entity is not duplicated if one already exists unread for that entity.
+Every in-app notification is stored in `notification_log`. A notification for a given source_id is not duplicated if one already exists unread for that entity.
 
 #### 6.5 Notification generation
 
@@ -794,7 +794,7 @@ Stores each in-app notification. A notification remains until the user reads it;
 | id | UUID PK | |
 | user_id | UUID FK | → `auth.users(id)` |
 | notification_type | ENUM | `overdue_task`, `upcoming_interview`, `follow_up_due`, `recruiter_no_response` |
-| entity_id | UUID | nullable — ID of the task, interview, or contact referenced |
+| source_id | UUID | nullable — ID of the task, interview, or contact referenced |
 | message | TEXT | NOT NULL — short human-readable description |
 | created_at | TIMESTAMPTZ | NOT NULL, default now() |
 | read_at | TIMESTAMPTZ | nullable — null means unread |
@@ -861,7 +861,7 @@ CREATE UNIQUE INDEX idx_notification_prefs_user_id ON notification_preferences(u
 -- notification_log
 CREATE INDEX idx_notification_log_user_id ON notification_log(user_id);
 CREATE INDEX idx_notification_log_sent_at ON notification_log(sent_at DESC);
-CREATE INDEX idx_notification_log_entity_id ON notification_log(entity_id);
+CREATE INDEX idx_notification_log_source_id ON notification_log(source_id);
 
 -- company_watchlist
 CREATE INDEX idx_company_watchlist_user_id ON company_watchlist(user_id);

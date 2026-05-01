@@ -173,12 +173,12 @@ File: `migrations/v2_008_interviews.sql`
 
 File: `migrations/v2_009_notifications.sql`
 
-- [ ] 0.10.1 Create `notification_preferences` table — in-app toggles only (no email, no digest_frequency, no quiet_hours fields)
-- [ ] 0.10.2 Add UNIQUE constraint/index on `notification_preferences.user_id`
-- [ ] 0.10.3 Add `updated_at` trigger
-- [ ] 0.10.4 Create `notification_log` table — stores in-app notifications with `read_at` (nullable); no `email_to` or status fields
-- [ ] 0.10.5 Create indexes
-- [ ] 0.10.6 Write DOWN block for both tables
+- [x] 0.10.1 Create `notification_preferences` table — in-app toggles only (no email, no digest_frequency, no quiet_hours fields)
+- [x] 0.10.2 Add UNIQUE constraint/index on `notification_preferences.user_id`
+- [x] 0.10.3 Add `updated_at` trigger
+- [x] 0.10.4 Create `notification_log` table — stores in-app notifications with `read_at` (nullable); no `email_to` or status fields
+- [x] 0.10.5 Create indexes
+- [x] 0.10.6 Write DOWN block for both tables
 
 > **Note:** `jobs` and `job_boards` tables are untouched by all migrations above. No data is moved until Phase 11.
 
@@ -446,9 +446,9 @@ File: `migrations/v2_010_company_watchlist.sql`
 
 - [ ] 6.2.1 Create `api/src/services/notificationService.ts` — `createNotification(userId, type, entityId, message)`
 - [ ] 6.2.2 Before inserting, check `notification_preferences.enabled` and the relevant type toggle; skip if off
-- [ ] 6.2.3 Deduplicate: skip insert if an unread notification for the same `(user_id, notification_type, entity_id)` already exists
+- [ ] 6.2.3 Deduplicate: skip insert if an unread notification for the same `(user_id, notification_type, source_id)` already exists
 - [ ] 6.2.4 Call `createNotification` from existing trigger points: task auto-generation service, overdue escalation job, interview trigger service
-- [ ] 6.2.5 Unit test: `createNotification` skips insert when an unread notification for the same `(user_id, notification_type, entity_id)` already exists
+- [ ] 6.2.5 Unit test: `createNotification` skips insert when an unread notification for the same `(user_id, notification_type, source_id)` already exists
 - [ ] 6.2.6 Unit test: `createNotification` skips insert when `notification_preferences.enabled = false`
 - [ ] 6.2.7 Unit test: `createNotification` skips insert when the relevant type toggle (e.g. `notify_overdue_tasks`) is false even if the master toggle is on
 
