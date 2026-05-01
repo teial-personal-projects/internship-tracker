@@ -186,10 +186,10 @@ File: `migrations/v2_009_notifications.sql`
 
 File: `migrations/v2_010_company_watchlist.sql`
 
-- [ ] 0.11.1 Create `company_watchlist` table with all columns from PRD §6.1
-- [ ] 0.11.2 Add `updated_at` trigger
-- [ ] 0.11.3 Create all indexes for `company_watchlist`
-- [ ] 0.11.4 Write DOWN block: `DROP TABLE IF EXISTS company_watchlist CASCADE`
+- [x] 0.11.1 Create `company_watchlist` table with all columns from PRD §6.1
+- [x] 0.11.2 Add `updated_at` trigger
+- [x] 0.11.3 Create all indexes for `company_watchlist`
+- [x] 0.11.4 Write DOWN block: `DROP TABLE IF EXISTS company_watchlist CASCADE`
 
 ### 0.12 Shared types
 
