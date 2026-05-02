@@ -152,6 +152,12 @@ export const NotificationTypeSchema = z.enum([
   'overdue_task', 'upcoming_interview', 'follow_up_due', 'recruiter_no_response',
 ]);
 
+export const ApplicationEventTypeSchema = z.enum([
+  'status_change', 'company_reached_out', 'info_requested',
+  'document_submitted', 'offer_received', 'interview_scheduled',
+  'rejection', 'note',
+]);
+
 // ============================================================
 // V2 Entity Schemas
 // ============================================================
@@ -299,6 +305,13 @@ export const CreateCompanyWatchlistEntrySchema = z.object({
 
 export const UpdateCompanyWatchlistEntrySchema = CreateCompanyWatchlistEntrySchema.partial();
 
+export const CreateApplicationEventSchema = z.object({
+  event_type: ApplicationEventTypeSchema,
+  body: z.string().max(MAX_INTERACTION_BODY_LENGTH).nullable().optional(),
+  contact_id: z.string().uuid().nullable().optional(),
+  occurred_at: z.string().datetime().optional(),
+});
+
 // ============================================================
 // V2 Inferred Types
 // ============================================================
@@ -319,6 +332,7 @@ export type ContactTemplateType = z.infer<typeof ContactTemplateTypeSchema>;
 export type PreferredContactMethod = z.infer<typeof PreferredContactMethodSchema>;
 export type HowFound = z.infer<typeof HowFoundSchema>;
 export type NotificationType = z.infer<typeof NotificationTypeSchema>;
+export type ApplicationEventType = z.infer<typeof ApplicationEventTypeSchema>;
 
 export type CreateApplicationSchemaType = z.infer<typeof CreateApplicationSchema>;
 export type UpdateApplicationSchemaType = z.infer<typeof UpdateApplicationSchema>;
@@ -335,3 +349,4 @@ export type UpdateInterviewSchemaType = z.infer<typeof UpdateInterviewSchema>;
 export type UpdateNotificationPreferencesSchemaType = z.infer<typeof UpdateNotificationPreferencesSchema>;
 export type CreateCompanyWatchlistEntrySchemaType = z.infer<typeof CreateCompanyWatchlistEntrySchema>;
 export type UpdateCompanyWatchlistEntrySchemaType = z.infer<typeof UpdateCompanyWatchlistEntrySchema>;
+export type CreateApplicationEventSchemaType = z.infer<typeof CreateApplicationEventSchema>;

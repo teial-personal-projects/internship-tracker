@@ -201,11 +201,11 @@ File: `migrations/v2_010_company_watchlist.sql`
 
 File: `migrations/v2_012_application_events.sql`
 
-- [ ] 0.13.1 Create `application_event_type_enum` (`status_change`, `company_reached_out`, `info_requested`, `document_submitted`, `offer_received`, `interview_scheduled`, `rejection`, `note`)
-- [ ] 0.13.2 Create `application_events` table with all columns from PRD §9.2
-- [ ] 0.13.3 Create indexes: `idx_application_events_application_id`, `idx_application_events_occurred_at`
-- [ ] 0.13.4 Add `CreateApplicationEventSchema` to `shared/src/schemas/`; export from `shared/src/index.ts`
-- [ ] 0.13.5 Write DOWN block: `DROP TABLE IF EXISTS application_events CASCADE; DROP TYPE IF EXISTS application_event_type_enum;`
+- [x] 0.13.1 Create `application_event_type_enum` (`status_change`, `company_reached_out`, `info_requested`, `document_submitted`, `offer_received`, `interview_scheduled`, `rejection`, `note`)
+- [x] 0.13.2 Create `application_events` table with all columns from PRD §9.2
+- [x] 0.13.3 Create indexes: `idx_application_events_application_id`, `idx_application_events_occurred_at`
+- [x] 0.13.4 Add `CreateApplicationEventSchema` to `shared/src/schemas.ts`; exported via `shared/src/index.ts`
+- [x] 0.13.5 Write DOWN block: `DROP TABLE IF EXISTS application_events CASCADE; DROP TYPE IF EXISTS application_event_type_enum;`
 
 ---
 
