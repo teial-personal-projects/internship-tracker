@@ -242,13 +242,13 @@ File: `migrations/v2_010_company_watchlist.sql`
 
 ### 2.1 API — applications route
 
-- [ ] 2.1.1 Create `api/src/routes/applications.ts` mirroring `jobs.ts` but querying the `applications` table
-- [ ] 2.1.2 `GET /api/applications` — list with optional `?status`, `?application_type`, `?search`, `?date_from` (ISO date), `?date_to` (ISO date), `?page` (default 1), `?limit` (default 25, max 100) query params; no year constraint; returns `{ data: Application[], total: number, page: number, totalPages: number }`
-- [ ] 2.1.3 `POST /api/applications` — create; validate with `CreateApplicationSchema`
-- [ ] 2.1.4 `GET /api/applications/:id` — single record with ownership check
-- [ ] 2.1.5 `PATCH /api/applications/:id` — partial update; support `application_type` and `checklist_state`
-- [ ] 2.1.6 `DELETE /api/applications/:id` — delete with cascade prompt flag in response
-- [ ] 2.1.7 Register routes in `api/src/app.ts`: `app.use('/api/applications', applicationsRouter)`
+- [x] 2.1.1 Create `api/src/routes/applications.ts` mirroring `jobs.ts` but querying the `applications` table
+- [x] 2.1.2 `GET /api/applications` — list with optional `?status`, `?application_type`, `?search`, `?date_from` (ISO date), `?date_to` (ISO date), `?page` (default 1), `?limit` (default 25, max 100) query params; no year constraint; returns `{ data: Application[], total: number, page: number, totalPages: number }`
+- [x] 2.1.3 `POST /api/applications` — create; validate with `CreateApplicationSchema`
+- [x] 2.1.4 `GET /api/applications/:id` — single record with ownership check
+- [x] 2.1.5 `PATCH /api/applications/:id` — partial update; support `application_type` and `checklist_state`
+- [x] 2.1.6 `DELETE /api/applications/:id` — delete with cascade prompt flag in response
+- [x] 2.1.7 Register routes in `api/src/app.ts`: `app.use('/api/applications', applicationsRouter)`
 
 ### 2.2 Applications tab UI
 
