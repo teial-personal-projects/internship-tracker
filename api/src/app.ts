@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import jobsRouter from './routes/jobs';
+import applicationsRouter from './routes/applications';
 import profileRouter from './routes/profile';
 import jobBoardsRouter from './routes/jobBoards';
 import { errorHandler } from './middleware/errorHandler';
@@ -21,6 +22,7 @@ export function createApp(version: string) {
   app.get('/health', (_req, res) => res.json({ ok: true, version }));
 
   app.use('/api/jobs', jobsRouter);
+  app.use('/api/applications', applicationsRouter);
   app.use('/api/profile', profileRouter);
   app.use('/api/job-boards', jobBoardsRouter);
 
