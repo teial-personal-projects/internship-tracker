@@ -639,6 +639,46 @@ A "Start Application" button on each watchlist entry creates a new record in `ap
 
 ---
 
+### Feature 9: Application Event Log
+
+#### 9.1 Overview
+
+The Application Event Log is a chronological record of everything that happens to a specific application — messages from the company, requests for additional information, status updates, documents submitted, offers received, and rejections. Unlike the Contact Interaction Log (which tracks outreach to named individuals), the Application Event Log is scoped to the application itself and does not require a named contact.
+
+#### 9.2 Event record fields
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| application_id | FK | Yes | Links to the applications record |
+| user_id | UUID FK | Auto | From auth.users |
+| event_type | Enum | Yes | See §9.3 |
+| body | Text | No | Free-form notes or detail, max 5000 chars |
+| contact_id | FK | No | Optional link to a contact if a specific person was involved |
+| occurred_at | Timestamp | Yes | Auto-set to now; user-editable |
+
+#### 9.3 Event types
+
+| Value | Display label | Description |
+| --- | --- | --- |
+| `status_change` | Status Change | Application moved to a new stage |
+| `company_reached_out` | Company Reached Out | Company initiated contact with the candidate |
+| `info_requested` | Information Requested | Company asked for additional materials or information |
+| `document_submitted` | Document Submitted | Candidate submitted a document (resume, portfolio, work sample) |
+| `offer_received` | Offer Received | Verbal or written offer extended |
+| `interview_scheduled` | Interview Scheduled | A round was booked |
+| `rejection` | Rejection | Rejection received |
+| `note` | Note | Free-form log entry (catch-all) |
+
+#### 9.4 Display
+
+The event log appears on the application detail view as a vertical timeline ordered by `occurred_at` descending (most recent at top). Each entry shows the event type label, elapsed time since it occurred (e.g. "2 days ago"), and body text if present. If a `contact_id` is linked, the contact name renders as a secondary line below the event type.
+
+#### 9.5 Adding events
+
+A user can log an event via an inline form directly in the timeline panel: event type dropdown, optional body text field, and an `occurred_at` field that defaults to the current date and time. No modal is required.
+
+---
+
 ## 6. Technical Requirements
 
 ### 6.1 Data model
@@ -700,7 +740,7 @@ The `applications` table is the v2.0 replacement for the existing `jobs` table. 
 | id | UUID PK | |
 | contact_id | UUID FK | → `contacts(id)` ON DELETE CASCADE |
 | user_id | UUID FK | → `auth.users(id)` |
-| entry_type | ENUM | `application_message`, `double_down`, `follow_up`, `reply_received`, `phone_screen_confirmed`, `initial_contact`, `role_discussion`, `resume_submitted`, `role_update`, `feedback_received`, `note` |
+| purpose | ENUM | `application_message`, `double_down`, `follow_up`, `reply_received`, `phone_screen_confirmed`, `initial_contact`, `role_discussion`, `resume_submitted`, `role_update`, `feedback_received`, `note` |
 | body | TEXT | nullable, max 5000 |
 | occurred_at | TIMESTAMPTZ | NOT NULL, default now() |
 | created_at | TIMESTAMPTZ | NOT NULL, default now() |
@@ -811,6 +851,19 @@ Stores each in-app notification. A notification remains until the user reads it;
 | created_at | TIMESTAMPTZ | NOT NULL, default now() |
 | updated_at | TIMESTAMPTZ | NOT NULL, default now() |
 
+#### New table: `application_events`
+
+| Column | Type | Notes |
+| --- | --- | --- |
+| id | UUID PK | `gen_random_uuid()` |
+| application_id | UUID FK | → `applications(id)` ON DELETE CASCADE NOT NULL |
+| user_id | UUID FK | → `auth.users(id)` NOT NULL |
+| event_type | ENUM | `application_event_type_enum` NOT NULL |
+| body | TEXT | nullable, max 5000 |
+| contact_id | UUID FK | → `contacts(id)` ON DELETE SET NULL, nullable |
+| occurred_at | TIMESTAMPTZ | NOT NULL, default now() |
+| created_at | TIMESTAMPTZ | NOT NULL, default now() |
+
 ### 6.2 Indexes
 
 ```sql
@@ -863,6 +916,10 @@ CREATE INDEX idx_notification_log_source_id ON notification_log(source_id);
 CREATE INDEX idx_company_watchlist_user_id ON company_watchlist(user_id);
 CREATE INDEX idx_company_watchlist_added ON company_watchlist(added DESC);
 CREATE INDEX idx_company_watchlist_priority ON company_watchlist(priority);
+
+-- application_events
+CREATE INDEX idx_application_events_application_id ON application_events(application_id);
+CREATE INDEX idx_application_events_occurred_at ON application_events(occurred_at DESC);
 ```
 
 ### 6.3 Enums
@@ -932,6 +989,12 @@ CREATE TYPE how_found_enum AS ENUM (
 CREATE TYPE notification_type_enum AS ENUM (
   'overdue_task', 'upcoming_interview',
   'follow_up_due', 'recruiter_no_response'
+);
+
+CREATE TYPE application_event_type_enum AS ENUM (
+  'status_change', 'company_reached_out', 'info_requested',
+  'document_submitted', 'offer_received', 'interview_scheduled',
+  'rejection', 'note'
 );
 ```
 
@@ -1007,6 +1070,8 @@ All new routes follow the `requireAuth` middleware pattern used by existing rout
 | PATCH | /api/watchlist/:id | requireAuth + ownership | Update a watchlist entry |
 | DELETE | /api/watchlist/:id | requireAuth + ownership | Delete a watchlist entry |
 | POST | /api/watchlist/:id/promote | requireAuth + ownership | Create an application from this entry pre-populated with company_name and industry, then delete the watchlist record |
+| GET | /api/applications/:id/events | requireAuth + ownership | List event log entries for an application, ordered by occurred_at DESC |
+| POST | /api/applications/:id/events | requireAuth + ownership | Append an event log entry to an application |
 
 ---
 
@@ -1103,6 +1168,16 @@ All new routes follow the `requireAuth` middleware pattern used by existing rout
 - [ ] Step 2's "in" is clearly labeled as the cover letter differentiator
 - [ ] Playbook is read-only (no checkboxes) — reference only
 
+### Feature 9 — Application Event Log
+
+- [ ] Application event timeline is visible on the application detail view
+- [ ] Events render in reverse chronological order (most recent first)
+- [ ] User can log an event with a type, optional body, and optional occurred_at override
+- [ ] occurred_at defaults to now but is user-editable before submission
+- [ ] If a contact_id is linked, the contact name is shown on the event entry
+- [ ] GET /api/applications/:id/events returns 403 when a user accesses another user's application
+- [ ] Events are cascade-deleted when the parent application is deleted
+
 ### Navigation
 
 - [ ] Four primary tabs render at all viewport widths
@@ -1130,3 +1205,4 @@ All new routes follow the `requireAuth` middleware pattern used by existing rout
 | 2.1 | April 28, 2026 | Teial Dickens | Notifications scoped to in-app only; email delivery moved to v3.0; notification schema simplified |
 | 2.2 | April 28, 2026 | Teial Dickens | Removed year constraint from Applications tab; added date range filter and server-side pagination; added Companies To Watch feature |
 | 2.3 | April 30, 2026 | Teial Dickens | Renamed "Jobs" tab to "Applications" (abbreviated "Apps" on mobile) throughout |
+| 2.4 | May 2, 2026 | Teial Dickens | Added Feature 9: Application Event Log — application-level interaction timeline independent of named contacts; fixed `entry_type` → `purpose` column name in contact_interactions technical spec |

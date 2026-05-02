@@ -197,6 +197,16 @@ File: `migrations/v2_010_company_watchlist.sql`
 - [x] 0.12.2 Create Zod schemas in `shared/src/schemas/` for: `Application`, `Contact`, `ContactInteraction`, `ContactTemplate`, `ApplicationContact`, `Task`, `Interview`, `NotificationPreferences`, `CompanyWatchlistEntry`
 - [x] 0.12.3 Export all schemas from `shared/src/index.ts`
 
+### 0.13 Migration v2_012 — `application_events` table
+
+File: `migrations/v2_012_application_events.sql`
+
+- [ ] 0.13.1 Create `application_event_type_enum` (`status_change`, `company_reached_out`, `info_requested`, `document_submitted`, `offer_received`, `interview_scheduled`, `rejection`, `note`)
+- [ ] 0.13.2 Create `application_events` table with all columns from PRD §9.2
+- [ ] 0.13.3 Create indexes: `idx_application_events_application_id`, `idx_application_events_occurred_at`
+- [ ] 0.13.4 Add `CreateApplicationEventSchema` to `shared/src/schemas/`; export from `shared/src/index.ts`
+- [ ] 0.13.5 Write DOWN block: `DROP TABLE IF EXISTS application_events CASCADE; DROP TYPE IF EXISTS application_event_type_enum;`
+
 ---
 
 ## Phase 1 — Navigation & Layout Restructure
@@ -281,6 +291,21 @@ File: `migrations/v2_010_company_watchlist.sql`
 - [ ] 2.5.1 Unit test: pagination — 26 records with `limit=25` returns `page=1` with 25 items and `totalPages=2`
 - [ ] 2.5.2 Unit test: date range filter — records outside `date_from`/`date_to` are excluded; both bounds are inclusive
 - [ ] 2.5.3 Unit test: no year constraint — records from multiple calendar years are all returned when no date filter is applied
+
+### 2.6 API — application events routes
+
+- [ ] 2.6.1 Add `GET /api/applications/:id/events` to `api/src/routes/applications.ts` — list event log entries ordered by `occurred_at DESC`; ownership check on the parent application
+- [ ] 2.6.2 Add `POST /api/applications/:id/events` — append an event log entry; validate with `CreateApplicationEventSchema`; `occurred_at` defaults to now if not provided; `contact_id` must belong to `req.user.id` if provided
+- [ ] 2.6.3 Unit test: POST returns 403 when the parent application belongs to another user
+- [ ] 2.6.4 Unit test: POST with a `contact_id` owned by a different user returns 400
+
+### 2.7 Application event log UI
+
+- [ ] 2.7.1 Create `web/src/components/ApplicationEventLog.tsx` — vertical timeline ordered by `occurred_at` DESC
+- [ ] 2.7.2 Each entry: event type label, elapsed time (e.g. "2 days ago"), body text if present, contact name if linked
+- [ ] 2.7.3 Inline Add Event form below the timeline: `event_type` dropdown, `body` textarea (optional), `occurred_at` field (defaults to now)
+- [ ] 2.7.4 On submit: POST to `/api/applications/:id/events`; prepend the new entry to the timeline
+- [ ] 2.7.5 Surface `ApplicationEventLog` in the application detail panel (within the Contacts tab per-application view — see Phase 3.5)
 
 ---
 
@@ -586,7 +611,7 @@ Run the `-- DOWN` block of the migration file in reverse order from where the fa
 
 ### Rolling back the full v2 schema
 
-Run DOWN blocks in reverse order: v2_010 → v2_009 → v2_008 → ... → v2_002 → v2_001. The `jobs` table is untouched throughout; the application can be reverted to v1 by updating the API routes to point back to `jobs`.
+Run DOWN blocks in reverse order: v2_012 → v2_010 → v2_009 → v2_008 → ... → v2_002 → v2_001. The `jobs` table is untouched throughout; the application can be reverted to v1 by updating the API routes to point back to `jobs`.
 
 ### Feature flag approach (optional for production)
 
