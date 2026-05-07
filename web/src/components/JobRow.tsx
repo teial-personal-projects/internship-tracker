@@ -167,7 +167,7 @@ export function JobRow({
               >
                 Edit
               </button>
-              {!['applied', 'archive'].includes(job.status) && (
+              {!job.applied_date && (
                 <button
                   type="button"
                   disabled={isApplying}

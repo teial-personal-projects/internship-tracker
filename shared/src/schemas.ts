@@ -60,7 +60,12 @@ export const CreateJobSchema = z.object({
   added: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD')
-    .default(() => new Date().toISOString().split('T')[0]),
+    .default(() => {
+      const d = new Date();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${d.getFullYear()}-${month}-${day}`;
+    }),
   applied_date: dateOrEmpty,
   deadline: dateOrEmpty,
 });
