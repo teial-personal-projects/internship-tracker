@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as jobsApi from '@/api/jobs.api';
 import type { UpdateJobInput, CreateJobInput, JobStatus } from '@shared/types';
 import { STATUS_CYCLE } from '@shared/types';
+import { todayStr } from '@/lib/dateUtils';
 
 export const jobKeys = {
   all: ['jobs'] as const,
@@ -75,7 +76,10 @@ export function useToggleReview() {
 export function useMarkApplied() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => jobsApi.updateJob(id, { status: 'applied' }),
+    mutationFn: (id: string) => jobsApi.updateJob(id, {
+      status: 'applied',
+      applied_date: todayStr(),
+    }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: jobKeys.all });
     },
