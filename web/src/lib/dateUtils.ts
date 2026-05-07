@@ -3,9 +3,13 @@ import { addDays, subDays, isWithinInterval, parseISO } from 'date-fns';
 export const DEADLINE_WINDOW = 5;  // days until deadline triggers a warning
 export const MAX_STALE_DAYS  = 7;  // days without applying before a job is considered stale
 
-/** Returns today's date as a YYYY-MM-DD string. */
+/** Returns today's date as a YYYY-MM-DD string in local time. */
 export function todayStr(): string {
-  return new Date().toISOString().split('T')[0];
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 /** Formats a YYYY-MM-DD string to MM/DD/YYYY for display. */

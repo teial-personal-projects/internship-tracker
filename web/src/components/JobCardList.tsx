@@ -39,7 +39,7 @@ function JobCard({ job, onEdit, onDelete, onMarkApplied, isApplying, isDeleting 
   const jobUrl = safeUrl(job.job_link);
   const appUrl = safeUrl(job.app_link);
   const clUrl = safeUrl(job.cover_letter);
-  const canMarkApplied = !['applied', 'archive'].includes(job.status);
+  const canMarkApplied = !job.applied_date;
 
   return (
     <>
