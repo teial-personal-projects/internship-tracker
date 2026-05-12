@@ -3,6 +3,7 @@ import { requireAuth, type AuthRequest } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
 import { createUserClient } from '../lib/supabase';
 import { sanitizeApplicationInput } from '../lib/sanitize';
+import { recalculateChecklist } from '../lib/checklist';
 import { CreateApplicationSchema, UpdateApplicationSchema } from '@internship-tracker/shared';
 import type { Request } from 'express';
 
@@ -85,20 +86,26 @@ router.get('/stats', requireAuth, async (req: Request, res, next) => {
 
     const { data, error } = await db
       .from('applications')
-      .select('status');
+      .select('status, application_type');
 
     if (error) {
       res.status(500).json({ error: error.message });
       return;
     }
 
+    // unset_type_count: total across all pages, for the prompt banner in the Applications tab
     const status_counts: Record<string, number> = {};
+    let unset_type_count = 0;
     for (const row of data ?? []) {
-      const s = (row as { status: string }).status;
+      const app = row as { status: string; application_type: string | null };
+      const s = app.status;
       status_counts[s] = (status_counts[s] ?? 0) + 1;
+      if (!app.application_type) {
+        unset_type_count += 1;
+      }
     }
 
-    res.json({ status_counts });
+    res.json({ status_counts, unset_type_count });
   } catch (err) {
     next(err);
   }
@@ -138,7 +145,37 @@ router.patch('/:id', requireAuth, validateBody(UpdateApplicationSchema), async (
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { user_id, created_at, updated_at, ...rest } = req.body as Record<string, unknown>;
-    const payload = sanitizeApplicationInput(rest);
+    let payload = sanitizeApplicationInput(rest);
+
+    if ('application_type' in rest) {
+      const { data: current } = await db
+        .from('applications')
+        .select('application_type, checklist_state')
+        .eq('id', id)
+        .single();
+
+      const newType = (rest.application_type as string | null) ?? null;
+      const oldType = (current?.application_type as string | null) ?? null;
+
+      if (current && newType !== oldType) {
+        payload = {
+          ...payload,
+          checklist_state: recalculateChecklist(
+            (current.checklist_state ?? {}) as Record<string, boolean>,
+            newType,
+          ),
+        };
+        const { error: taskError } = await db.from('tasks').update({ status: 'skipped' })
+          .eq('application_id', id)
+          .eq('is_auto_generated', true)
+          .eq('status', 'open');
+
+        if (taskError) {
+          res.status(500).json({ error: taskError.message });
+          return;
+        }
+      }
+    }
 
     const { data, error } = await db
       .from('applications')

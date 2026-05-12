@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { CircleAlert } from 'lucide-react';
 import type { Application, CreateApplicationSchemaType } from '@shared/schemas';
 import { useApplications, useApplicationStats, useCreateApplication, useUpdateApplication, useDeleteApplication } from '@/hooks/useApplications';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
@@ -53,6 +54,7 @@ export function ApplicationsPage() {
   const total = data?.total ?? 0;
   const totalPages = data?.totalPages ?? 1;
   const statusCounts = stats?.status_counts ?? {};
+  const unsetTypeCount = stats?.unset_type_count ?? 0;
 
   function setPage(newPage: number) {
     setSearchParams((prev) => {
@@ -190,6 +192,14 @@ export function ApplicationsPage() {
             activeStatus={statusFilter}
             onStatusClick={handleStatusClick}
           />
+        )}
+
+        {/* Unset type prompt */}
+        {!isLoading && unsetTypeCount > 0 && (
+          <div className="flex items-center gap-2 p-3 rounded-lg text-sm" style={{ background: 'var(--sun-soft)', color: '#92400E', border: '1px solid #FDE68A' }}>
+            <CircleAlert size={15} className="shrink-0" />
+            {unsetTypeCount} application{unsetTypeCount > 1 ? 's' : ''} {unsetTypeCount > 1 ? 'have' : 'has'} no type set — edit {unsetTypeCount > 1 ? 'them' : 'it'} to set an Application Type and unlock checklist tracking.
+          </div>
         )}
 
         {/* Error */}

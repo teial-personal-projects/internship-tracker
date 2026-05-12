@@ -274,9 +274,9 @@ File: `migrations/v2_012_application_events.sql`
 
 ### 2.3 Application Type field
 
-- [ ] 2.3.1 Add Application Type dropdown to the Add/Edit application modal
-- [ ] 2.3.2 "Not set" shows as gray dashed tag; prompt appears in Applications tab when any application has `application_type = null`
-- [ ] 2.3.3 Changing Application Type triggers checklist recalculation and task cancellation logic (API side)
+- [x] 2.3.1 Add Application Type dropdown to the Add/Edit application modal
+- [x] 2.3.2 "Not set" shows as gray dashed tag; prompt appears in Applications tab when any application has `application_type = null`
+- [x] 2.3.3 Changing Application Type triggers checklist recalculation and task cancellation logic (API side)
 
 ### 2.4 Checklist
 
@@ -583,11 +583,11 @@ File: `migrations/v2_012_application_events.sql`
 
 File: `migrations/v2_011_import_jobs.sql`
 
-- [ ] 11.1.1 Write `INSERT INTO applications (...) SELECT ... FROM jobs` mapping all overlapping columns
-- [ ] 11.1.2 Map `job_status_enum` values to `application_status_enum` equivalents
-- [ ] 11.1.3 Set `application_type = NULL` for all imported rows (user can set type after import)
-- [ ] 11.1.4 Set `checklist_state = '{}'` for all imported rows
-- [ ] 11.1.5 Write DOWN block: `DELETE FROM applications WHERE id IN (SELECT id FROM jobs)` (idempotent rollback)
+- [x] 11.1.1 Write `INSERT INTO applications (...) SELECT ... FROM jobs` mapping all overlapping columns
+- [x] 11.1.2 Map `job_status_enum` values to `application_status_enum` equivalents
+- [x] 11.1.3 Set `application_type = NULL` for all imported rows (user can set type after import)
+- [x] 11.1.4 Set `checklist_state = '{}'` for all imported rows
+- [x] 11.1.5 Write DOWN block: `DELETE FROM applications WHERE id IN (SELECT id FROM jobs)` (idempotent rollback)
 
 ### 11.2 Verify import
 

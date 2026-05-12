@@ -21,6 +21,7 @@ export interface ApplicationsListResponse {
 
 export interface ApplicationStats {
   status_counts: Record<string, number>;
+  unset_type_count: number;
 }
 
 export async function getApplications(params: ApplicationsListParams = {}): Promise<ApplicationsListResponse> {
