@@ -290,9 +290,9 @@ File: `migrations/v2_012_application_events.sql`
 
 ### 2.5 Unit tests
 
-- [ ] 2.5.1 Unit test: pagination — 26 records with `limit=25` returns `page=1` with 25 items and `totalPages=2`
-- [ ] 2.5.2 Unit test: date range filter — records outside `date_from`/`date_to` are excluded; both bounds are inclusive
-- [ ] 2.5.3 Unit test: no year constraint — records from multiple calendar years are all returned when no date filter is applied
+- [x] 2.5.1 Unit test: pagination — 26 records with `limit=25` returns `page=1` with 25 items and `totalPages=2`
+- [x] 2.5.2 Unit test: date range filter — records outside `date_from`/`date_to` are excluded; both bounds are inclusive
+- [x] 2.5.3 Unit test: no year constraint — records from multiple calendar years are all returned when no date filter is applied
 
 ### 2.6 API — application events routes
 

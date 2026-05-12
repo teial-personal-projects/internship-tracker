@@ -4,6 +4,8 @@ import { validateBody } from '../middleware/validate';
 import { createUserClient } from '../lib/supabase';
 import { sanitizeApplicationInput } from '../lib/sanitize';
 import { recalculateChecklist } from '../lib/checklist';
+import { computePageRange, computeTotalPages } from '../lib/pagination';
+import { applyApplicationFilters } from '../lib/applicationFilters';
 import { CreateApplicationSchema, UpdateApplicationSchema } from '@internship-tracker/shared';
 import type { Request } from 'express';
 
@@ -18,29 +20,20 @@ router.get('/', requireAuth, async (req: Request, res, next) => {
 
     const page = Math.max(1, Number(req.query.page) || 1);
     const limit = Math.min(PAGE_MAX, Math.max(1, Number(req.query.limit) || 25));
-    const from = (page - 1) * limit;
-    const to = from + limit - 1;
+    const { from, to } = computePageRange(page, limit);
 
-    let query = db
+    const baseQuery = db
       .from('applications')
       .select('*', { count: 'exact' })
       .order('added', { ascending: false });
 
-    if (req.query.status) {
-      query = query.eq('status', req.query.status as string);
-    }
-    if (req.query.application_type) {
-      query = query.eq('application_type', req.query.application_type as string);
-    }
-    if (req.query.search) {
-      query = query.ilike('company', `%${req.query.search}%`);
-    }
-    if (req.query.date_from) {
-      query = query.gte('applied_date', req.query.date_from as string);
-    }
-    if (req.query.date_to) {
-      query = query.lte('applied_date', req.query.date_to as string);
-    }
+    const query = applyApplicationFilters(baseQuery, {
+      status:           req.query.status as string | undefined,
+      application_type: req.query.application_type as string | undefined,
+      search:           req.query.search as string | undefined,
+      date_from:        req.query.date_from as string | undefined,
+      date_to:          req.query.date_to as string | undefined,
+    });
 
     const { data, error, count } = await query.range(from, to);
 
@@ -54,7 +47,7 @@ router.get('/', requireAuth, async (req: Request, res, next) => {
       data,
       total,
       page,
-      totalPages: Math.max(1, Math.ceil(total / limit)),
+      totalPages: computeTotalPages(total, limit),
     });
   } catch (err) {
     next(err);
