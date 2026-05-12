@@ -262,15 +262,15 @@ File: `migrations/v2_012_application_events.sql`
 
 ### 2.2 Applications tab UI
 
-- [ ] 2.2.1 Update `web/src/pages/DashboardPage.tsx` → rename to `ApplicationsPage.tsx`; update all imports
-- [ ] 2.2.2 Add date range filter to the search/filter bar: `date_from` and `date_to` date pickers (both optional); filter applies to `applied_date`; no year constraint enforced anywhere
-- [ ] 2.2.3 Pipeline conversion bar component showing counts per status stage
-- [ ] 2.2.4 Application list: add Application Type tag column and Checklist progress fraction column
-- [ ] 2.2.5 Application Type tag: color-coded badge per type (blue/purple/green/gray dashed)
-- [ ] 2.2.6 Checklist progress fraction: color-coded (green/amber/red/dash); clickable → navigates to Contacts tab for that application
-- [ ] 2.2.7 Urgent tasks widget (top 3 high-priority open tasks) below application list
-- [ ] 2.2.8 Create `web/src/components/Pagination.tsx` — previous/next buttons, current page indicator, total pages; props: `page`, `totalPages`, `onPageChange`
-- [ ] 2.2.9 Render `<Pagination>` below the application list; reflect `?page=N` in the URL query string for browser back/forward support
+- [x] 2.2.1 Update `web/src/pages/DashboardPage.tsx` → rename to `ApplicationsPage.tsx`; update all imports
+- [x] 2.2.2 Add date range filter to the search/filter bar: `date_from` and `date_to` date pickers (both optional); filter applies to `applied_date`; no year constraint enforced anywhere
+- [x] 2.2.3 Pipeline conversion bar component showing counts per status stage
+- [x] 2.2.4 Application list: add Application Type tag column and Checklist progress fraction column
+- [x] 2.2.5 Application Type tag: color-coded badge per type (blue/purple/green/gray dashed)
+- [x] 2.2.6 Checklist progress fraction: color-coded (green/amber/red/dash); clickable → navigates to Contacts tab for that application
+- [x] 2.2.7 Urgent tasks widget (top 3 high-priority open tasks) below application list
+- [x] 2.2.8 Create `web/src/components/Pagination.tsx` — previous/next buttons, current page indicator, total pages; props: `page`, `totalPages`, `onPageChange`
+- [x] 2.2.9 Render `<Pagination>` below the application list; reflect `?page=N` in the URL query string for browser back/forward support
 
 ### 2.3 Application Type field
 

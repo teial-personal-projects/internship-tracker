@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoginPage } from '@/pages/LoginPage';
-import { DashboardPage } from '@/pages/DashboardPage';
+import { ApplicationsPage } from '@/pages/ApplicationsPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { JobBoardsPage } from '@/pages/JobBoardsPage';
 import { ContactsPage } from '@/pages/ContactsPage';
@@ -29,7 +29,7 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Primary tabs */}
-      <Route path="/applications"  element={<DashboardPage />} />
+      <Route path="/applications"  element={<ApplicationsPage />} />
       <Route path="/contacts"      element={<ContactsPage />} />
       <Route path="/interviews"    element={<InterviewsPage />} />
       <Route path="/action-items"  element={<ActionItemsPage />} />

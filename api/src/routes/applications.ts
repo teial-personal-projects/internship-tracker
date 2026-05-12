@@ -78,6 +78,32 @@ router.post('/', requireAuth, validateBody(CreateApplicationSchema), async (req:
   }
 });
 
+// GET /api/applications/stats — must appear before /:id to avoid "stats" being parsed as an id
+router.get('/stats', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+
+    const { data, error } = await db
+      .from('applications')
+      .select('status');
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    const status_counts: Record<string, number> = {};
+    for (const row of data ?? []) {
+      const s = (row as { status: string }).status;
+      status_counts[s] = (status_counts[s] ?? 0) + 1;
+    }
+
+    res.json({ status_counts });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/applications/:id
 router.get('/:id', requireAuth, async (req: Request, res, next) => {
   try {

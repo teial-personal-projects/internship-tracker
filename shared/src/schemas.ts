@@ -355,3 +355,32 @@ export type UpdateNotificationPreferencesSchemaType = z.infer<typeof UpdateNotif
 export type CreateCompanyWatchlistEntrySchemaType = z.infer<typeof CreateCompanyWatchlistEntrySchema>;
 export type UpdateCompanyWatchlistEntrySchemaType = z.infer<typeof UpdateCompanyWatchlistEntrySchema>;
 export type CreateApplicationEventSchemaType = z.infer<typeof CreateApplicationEventSchema>;
+
+// ============================================================
+// V2 DB Entity Types
+// ============================================================
+
+export interface Application {
+  id: string;
+  user_id: string;
+  company: string;
+  title: string;
+  industry?: string | null;
+  location?: string | null;
+  job_link?: string | null;
+  app_link?: string | null;
+  status: ApplicationStatus;
+  application_type?: ApplicationType | null;
+  checklist_state: Record<string, unknown>;
+  cover_letter?: string | null;
+  notes?: string | null;
+  pay?: string | null;
+  added: string;
+  applied_date?: string | null;
+  deadline?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CreateApplicationInput = Omit<Application, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
+export type UpdateApplicationInput = Partial<CreateApplicationInput>;

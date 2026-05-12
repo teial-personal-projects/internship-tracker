@@ -84,7 +84,7 @@ export function JobRow({
       case 'status':
         return (
           <td key={key} className="px-2 py-2" style={bgStyle}>
-            <StatusBadge job={job} />
+            <StatusBadge status={job.status} />
           </td>
         );
       case 'conference':

@@ -50,7 +50,7 @@ function JobCard({ job, onEdit, onDelete, onMarkApplied, isApplying, isDeleting 
             <p className="font-bold text-base text-gray-800 leading-tight">{job.company}</p>
             <p className="text-sm text-gray-500">{job.title}</p>
           </div>
-          <StatusBadge job={job} />
+          <StatusBadge status={job.status} />
         </div>
 
         {/* Meta row: location, dates */}
