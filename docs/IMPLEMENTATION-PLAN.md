@@ -280,11 +280,13 @@ File: `migrations/v2_012_application_events.sql`
 
 ### 2.4 Checklist
 
-- [ ] 2.4.1 Create `web/src/components/Checklist.tsx` — 18-step checklist with grouped phases: Before you apply, Day 0, Day 4–5 follow-up, After a phone screen
-- [ ] 2.4.2 Progress bar + summary label (e.g. "8 of 18 complete")
-- [ ] 2.4.3 Steps 6–12 rendered as N/A (muted) when `application_type = recruiter_assisted`
-- [ ] 2.4.4 Steps 9–12 rendered as N/A when `application_type = referral`
+- [x] 2.4.1 Create `web/src/components/Checklist.tsx` — 18-step checklist with grouped phases: Before you apply, Day 0, Day 4–5 follow-up, After a phone screen
+- [x] 2.4.2 Progress bar + summary label (e.g. "8 of 18 complete")
+- [x] 2.4.3 Steps 6–12 rendered as N/A (muted) when `application_type = recruiter_assisted`
+- [x] 2.4.4 Steps 9–12 rendered as N/A when `application_type = referral`
 - [ ] 2.4.5 Each checkbox change PATCHes `checklist_state` on the application record
+
+> **Follow-up:** Render `Checklist` in the application-facing detail/panel once that surface exists, then verify checkbox changes PATCH `checklist_state`.
 
 ### 2.5 Unit tests
 
@@ -363,9 +365,10 @@ File: `migrations/v2_012_application_events.sql`
 
 - [ ] 3.5.1 When navigating to Contacts tab from an Applications tab row, the Contacts tab pre-filters to that application
 - [ ] 3.5.2 Application header card: shows company, role, Application Type tag, checklist progress
-- [ ] 3.5.3 Contacts sub-panel: list of contacts linked to that application with name, role, outreach status, quick-action button
-- [ ] 3.5.4 + Add Contact button scoped to that application
-- [ ] 3.5.5 Linked recruiters section: list of recruiter contacts linked via `application_contacts`
+- [ ] 3.5.3 Go back and finish step 2.4.5
+- [ ] 3.5.4 Contacts sub-panel: list of contacts linked to that application with name, role, outreach status, quick-action button
+- [ ] 3.5.5 + Add Contact button scoped to that application
+- [ ] 3.5.6 Linked recruiters section: list of recruiter contacts linked via `application_contacts`
 
 ---
 
