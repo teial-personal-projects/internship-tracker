@@ -108,19 +108,33 @@ CREATE INDEX idx_jobs_deadline    ON jobs(deadline);
 CREATE INDEX idx_jobs_added       ON jobs(added);
 
 -- ============================================================
+-- DATA API GRANTS
+-- ============================================================
+
+-- jobs: user-scoped only. No anonymous access.
+REVOKE ALL PRIVILEGES ON TABLE public.jobs FROM anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.jobs TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.jobs TO service_role;
+
+-- user_profiles: user-scoped only. No anonymous access.
+REVOKE ALL PRIVILEGES ON TABLE public.user_profiles FROM anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.user_profiles TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.user_profiles TO service_role;
+
+-- ============================================================
 -- ROW LEVEL SECURITY
 -- ============================================================
 
 ALTER TABLE jobs          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "jobs_select"  ON jobs FOR SELECT  USING (auth.uid() = user_id);
-CREATE POLICY "jobs_insert"  ON jobs FOR INSERT  WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "jobs_update"  ON jobs FOR UPDATE
+CREATE POLICY "jobs_select"  ON jobs FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "jobs_insert"  ON jobs FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "jobs_update"  ON jobs FOR UPDATE TO authenticated
   USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "jobs_delete"  ON jobs FOR DELETE  USING (auth.uid() = user_id);
+CREATE POLICY "jobs_delete"  ON jobs FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
-CREATE POLICY "profiles_select" ON user_profiles FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "profiles_insert" ON user_profiles FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "profiles_update" ON user_profiles FOR UPDATE
+CREATE POLICY "profiles_select" ON user_profiles FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "profiles_insert" ON user_profiles FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "profiles_update" ON user_profiles FOR UPDATE TO authenticated
   USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
