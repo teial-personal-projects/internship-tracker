@@ -332,13 +332,13 @@ File: `migrations/v2_012_application_events.sql`
 
 ### 3.2 Business logic — auto task creation
 
-- [ ] 3.2.1 Create `api/src/services/taskAutoGeneration.ts`
-- [ ] 3.2.2 `createDoubleDownFollowUpTask(contactId, userId, applicationId)` — creates follow-up task with `due_date = today + 4 business days`
-- [ ] 3.2.3 `createApplicationDoubleDownTask(applicationId, userId)` — task for cold_strategic on applied status
-- [ ] 3.2.4 Helper: `addBusinessDays(date, days)` — skips Sat/Sun
-- [ ] 3.2.5 Unit tests for `addBusinessDays` — weekends skipped, multi-week spans, spans that start on a Friday
-- [ ] 3.2.6 Unit test: `createDoubleDownFollowUpTask` sets `due_date` to exactly today + 4 business days
-- [ ] 3.2.7 Unit test: `createApplicationDoubleDownTask` does not fire when `application_type` is not `cold_strategic`
+- [x] 3.2.1 Create `api/src/services/taskAutoGeneration.ts`
+- [x] 3.2.2 `createDoubleDownFollowUpTask(contactId, userId, applicationId)` — creates follow-up task with `due_date = today + 4 business days`
+- [x] 3.2.3 `createApplicationDoubleDownTask(applicationId, userId)` — task for cold_strategic on applied status
+- [x] 3.2.4 Helper: `addBusinessDays(date, days)` — skips Sat/Sun
+- [x] 3.2.5 Unit tests for `addBusinessDays` — weekends skipped, multi-week spans, spans that start on a Friday
+- [x] 3.2.6 Unit test: `createDoubleDownFollowUpTask` sets `due_date` to exactly today + 4 business days
+- [x] 3.2.7 Unit test: `createApplicationDoubleDownTask` does not fire when `application_type` is not `cold_strategic`
 
 ### 3.3 Contacts tab UI
 

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireAuth, type AuthRequest } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
 import { createUserClient } from '../lib/supabase';
+import { createDoubleDownFollowUpTask } from '../services/taskAutoGeneration';
 import {
   CreateContactInteractionSchema,
   CreateContactSchema,
@@ -59,44 +60,6 @@ function sendOwnershipError(res: Response, ownership: Exclude<Ownership, 'ok'>):
     return;
   }
   res.status(404).json({ error: 'Contact not found' });
-}
-
-function toIsoDate(date: Date): string {
-  return date.toISOString().split('T')[0];
-}
-
-function addBusinessDays(startDate: Date, days: number): Date {
-  const next = new Date(startDate);
-  let remaining = days;
-
-  while (remaining > 0) {
-    next.setDate(next.getDate() + 1);
-    const day = next.getDay();
-    if (day !== 0 && day !== 6) {
-      remaining -= 1;
-    }
-  }
-
-  return next;
-}
-
-async function createDoubleDownFollowUpTask(
-  db: ReturnType<typeof createUserClient>,
-  contact: { id: string; first_name?: string; last_name?: string; application_id?: string | null },
-  userId: string,
-) {
-  const name = `${contact.first_name ?? ''} ${contact.last_name ?? ''}`.trim() || 'contact';
-  return db.from('tasks').insert({
-    user_id: userId,
-    title: `Send follow-up to ${name}`,
-    category: 'outreach',
-    priority: 'high',
-    status: 'open',
-    due_date: toIsoDate(addBusinessDays(new Date(), 4)),
-    application_id: contact.application_id ?? null,
-    contact_id: contact.id,
-    is_auto_generated: true,
-  });
 }
 
 // GET /api/contacts
@@ -388,8 +351,9 @@ router.patch('/:id', requireAuth, validateBody(UpdateContactSchema), async (req:
     if (previousStatus !== 'double_down_sent' && body.outreach_status === 'double_down_sent') {
       const { error: taskError } = await createDoubleDownFollowUpTask(
         db,
-        data as { id: string; first_name?: string; last_name?: string; application_id?: string | null },
+        id,
         user.id,
+        ((data as { application_id?: string | null }).application_id ?? null),
       );
       if (taskError) {
         res.status(500).json({ error: taskError.message });

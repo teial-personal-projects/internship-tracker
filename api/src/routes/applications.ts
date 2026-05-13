@@ -6,12 +6,19 @@ import { sanitizeApplicationInput } from '../lib/sanitize';
 import { recalculateChecklist } from '../lib/checklist';
 import { computePageRange, computeTotalPages } from '../lib/pagination';
 import { applyApplicationFilters } from '../lib/applicationFilters';
+import { createApplicationDoubleDownTask } from '../services/taskAutoGeneration';
 import { CreateApplicationEventSchema, CreateApplicationSchema, UpdateApplicationSchema } from '@internship-tracker/shared';
 import type { Request, Response } from 'express';
 
 const router = Router();
 
 const PAGE_MAX = 100;
+
+interface ApplicationTaskTriggerState {
+  status?: string | null;
+  application_type?: string | null;
+  checklist_state?: unknown;
+}
 
 // GET /api/applications
 router.get('/', requireAuth, async (req: Request, res, next) => {
@@ -66,6 +73,15 @@ router.post('/', requireAuth, validateBody(CreateApplicationSchema), async (req:
       res.status(500).json({ error: error.message });
       return;
     }
+
+    if (data?.status === 'applied' && data?.application_type === 'cold_strategic') {
+      const { error: taskError } = await createApplicationDoubleDownTask(db, data.id, user.id);
+      if (taskError) {
+        res.status(500).json({ error: taskError.message });
+        return;
+      }
+    }
+
     res.status(201).json({ data });
   } catch (err) {
     next(err);
@@ -339,17 +355,20 @@ router.patch('/:id', requireAuth, validateBody(UpdateApplicationSchema), async (
     const { user_id, created_at, updated_at, ...rest } = req.body as Record<string, unknown>;
     let payload = sanitizeApplicationInput(rest);
 
-    if ('application_type' in rest) {
+    let currentApplication: ApplicationTaskTriggerState | null = null;
+
+    if ('application_type' in rest || 'status' in rest) {
       const { data: current } = await db
         .from('applications')
-        .select('application_type, checklist_state')
+        .select('status, application_type, checklist_state')
         .eq('id', id)
         .single();
 
+      currentApplication = current as ApplicationTaskTriggerState | null;
       const newType = (rest.application_type as string | null) ?? null;
       const oldType = (current?.application_type as string | null) ?? null;
 
-      if (current && newType !== oldType) {
+      if ('application_type' in rest && current && newType !== oldType) {
         payload = {
           ...payload,
           checklist_state: recalculateChecklist(
@@ -384,6 +403,24 @@ router.patch('/:id', requireAuth, validateBody(UpdateApplicationSchema), async (
       res.status(404).json({ error: 'Application not found' });
       return;
     }
+
+    const wasApplied = currentApplication?.status === 'applied';
+    const isApplied = data.status === 'applied';
+    const isColdStrategic = data.application_type === 'cold_strategic';
+    const becameApplied = 'status' in rest && !wasApplied && isApplied;
+    const becameColdApplied = 'application_type' in rest
+      && currentApplication?.application_type !== 'cold_strategic'
+      && isApplied
+      && isColdStrategic;
+
+    if (isColdStrategic && (becameApplied || becameColdApplied)) {
+      const { error: taskError } = await createApplicationDoubleDownTask(db, data.id, (req as AuthRequest).user.id);
+      if (taskError) {
+        res.status(500).json({ error: taskError.message });
+        return;
+      }
+    }
+
     res.json({ data });
   } catch (err) {
     next(err);
