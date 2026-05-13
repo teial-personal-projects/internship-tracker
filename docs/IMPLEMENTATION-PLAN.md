@@ -296,10 +296,10 @@ File: `migrations/v2_012_application_events.sql`
 
 ### 2.6 API — application events routes
 
-- [ ] 2.6.1 Add `GET /api/applications/:id/events` to `api/src/routes/applications.ts` — list event log entries ordered by `occurred_at DESC`; ownership check on the parent application
-- [ ] 2.6.2 Add `POST /api/applications/:id/events` — append an event log entry; validate with `CreateApplicationEventSchema`; `occurred_at` defaults to now if not provided; `contact_id` must belong to `req.user.id` if provided
-- [ ] 2.6.3 Unit test: POST returns 403 when the parent application belongs to another user
-- [ ] 2.6.4 Unit test: POST with a `contact_id` owned by a different user returns 400
+- [x] 2.6.1 Add `GET /api/applications/:id/events` to `api/src/routes/applications.ts` — list event log entries ordered by `occurred_at DESC`; ownership check on the parent application
+- [x] 2.6.2 Add `POST /api/applications/:id/events` — append an event log entry; validate with `CreateApplicationEventSchema`; `occurred_at` defaults to now if not provided; `contact_id` must belong to `req.user.id` if provided
+- [x] 2.6.3 Unit test: POST returns 403 when the parent application belongs to another user
+- [x] 2.6.4 Unit test: POST with a `contact_id` owned by a different user returns 400
 
 ### 2.7 Application event log UI
 

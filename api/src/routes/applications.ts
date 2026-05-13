@@ -6,8 +6,8 @@ import { sanitizeApplicationInput } from '../lib/sanitize';
 import { recalculateChecklist } from '../lib/checklist';
 import { computePageRange, computeTotalPages } from '../lib/pagination';
 import { applyApplicationFilters } from '../lib/applicationFilters';
-import { CreateApplicationSchema, UpdateApplicationSchema } from '@internship-tracker/shared';
-import type { Request } from 'express';
+import { CreateApplicationEventSchema, CreateApplicationSchema, UpdateApplicationSchema } from '@internship-tracker/shared';
+import type { Request, Response } from 'express';
 
 const router = Router();
 
@@ -99,6 +99,122 @@ router.get('/stats', requireAuth, async (req: Request, res, next) => {
     }
 
     res.json({ status_counts, unset_type_count });
+  } catch (err) {
+    next(err);
+  }
+});
+
+async function verifyApplicationOwnership(
+  db: ReturnType<typeof createUserClient>,
+  applicationId: string,
+  userId: string,
+): Promise<'ok' | 'not_found' | 'forbidden'> {
+  const { data, error } = await db
+    .from('applications')
+    .select('id, user_id')
+    .eq('id', applicationId)
+    .single();
+
+  if (error || !data) {
+    return 'not_found';
+  }
+
+  return (data as { user_id: string }).user_id === userId ? 'ok' : 'forbidden';
+}
+
+function sendOwnershipError(
+  res: Response,
+  ownership: 'not_found' | 'forbidden',
+): void {
+  if (ownership === 'forbidden') {
+    res.status(403).json({ error: 'Application does not belong to current user' });
+    return;
+  }
+  res.status(404).json({ error: 'Application not found' });
+}
+
+// GET /api/applications/:id/events
+router.get('/:id/events', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const { id } = req.params;
+
+    const ownership = await verifyApplicationOwnership(db, id, user.id);
+    if (ownership !== 'ok') {
+      sendOwnershipError(res, ownership);
+      return;
+    }
+
+    const { data, error } = await db
+      .from('application_events')
+      .select('*')
+      .eq('application_id', id)
+      .order('occurred_at', { ascending: false });
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.json({ data: data ?? [] });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/applications/:id/events
+router.post('/:id/events', requireAuth, validateBody(CreateApplicationEventSchema), async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const { id } = req.params;
+
+    const ownership = await verifyApplicationOwnership(db, id, user.id);
+    if (ownership !== 'ok') {
+      sendOwnershipError(res, ownership);
+      return;
+    }
+
+    const body = req.body as {
+      event_type: string;
+      body?: string | null;
+      contact_id?: string | null;
+      occurred_at?: string;
+    };
+
+    if (body.contact_id) {
+      const { data: contact, error: contactError } = await db
+        .from('contacts')
+        .select('id, user_id')
+        .eq('id', body.contact_id)
+        .single();
+
+      if (contactError || !contact || (contact as { user_id: string }).user_id !== user.id) {
+        res.status(400).json({ error: 'Contact does not belong to current user' });
+        return;
+      }
+    }
+
+    const payload = {
+      ...body,
+      application_id: id,
+      user_id: user.id,
+      occurred_at: body.occurred_at ?? new Date().toISOString(),
+    };
+
+    const { data, error } = await db
+      .from('application_events')
+      .insert(payload)
+      .select()
+      .single();
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.status(201).json({ data });
   } catch (err) {
     next(err);
   }
