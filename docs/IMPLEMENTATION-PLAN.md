@@ -354,12 +354,12 @@ File: `migrations/v2_012_application_events.sql`
 
 ### 3.4 Contact detail panel
 
-- [ ] 3.4.1 Clicking a contact row expands an inline detail panel (or modal on mobile)
-- [ ] 3.4.2 Panel shows all fields, interaction log (reverse chronological), templates list
-- [ ] 3.4.3 Quick-action: update outreach status from the panel
-- [ ] 3.4.4 Interaction log entry form: purpose dropdown + body text field + occurred_at (defaults to now)
-- [ ] 3.4.5 Templates section: list existing templates; Add Template button opens inline form
-- [ ] 3.4.6 Template form: name, template_type dropdown, body rich text
+- [x] 3.4.1 Clicking a contact row expands an inline detail panel (or modal on mobile)
+- [x] 3.4.2 Panel shows all fields, interaction log (reverse chronological), templates list
+- [x] 3.4.3 Quick-action: update outreach status from the panel
+- [x] 3.4.4 Interaction log entry form: purpose dropdown + body text field + occurred_at (defaults to now)
+- [x] 3.4.5 Templates section: list existing templates; Add Template button opens inline form
+- [x] 3.4.6 Template form: name, template_type dropdown, body rich text
 
 ### 3.5 Per-application contacts panel (within Contacts tab)
 

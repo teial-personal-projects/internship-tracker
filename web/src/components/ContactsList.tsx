@@ -3,6 +3,7 @@ import type { ContactType } from '@shared/schemas';
 import { formatDate } from '@/lib/dateUtils';
 import { CONTACT_TYPE_LABELS, OUTREACH_LABELS, RECRUITER_LABELS, contactName } from '@/lib/contactDisplay';
 import { Users } from 'lucide-react';
+import { Fragment, type ReactNode } from 'react';
 import { Spinner } from './Spinner';
 
 const OUTREACH_COLORS: Record<string, { bg: string; color: string }> = {
@@ -65,9 +66,20 @@ interface Props {
   applicationById: Map<string, { company: string; title: string }>;
   isLoading: boolean;
   error: unknown;
+  selectedContactId?: string | null;
+  onSelectContact?: (contact: Contact) => void;
+  renderDetail?: (contact: Contact) => ReactNode;
 }
 
-export function ContactsList({ contacts, applicationById, isLoading, error }: Props) {
+export function ContactsList({
+  contacts,
+  applicationById,
+  isLoading,
+  error,
+  selectedContactId,
+  onSelectContact,
+  renderDetail,
+}: Props) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -109,29 +121,47 @@ export function ContactsList({ contacts, applicationById, isLoading, error }: Pr
           {contacts.map((contact) => {
             const app = contact.application_id ? applicationById.get(contact.application_id) : undefined;
             return (
-              <tr key={contact.id} className="border-b last:border-b-0 hover:bg-gray-50" style={{ borderColor: 'var(--line)' }}>
-                <td className="px-3 py-3">
-                  <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>{contactName(contact)}</p>
-                  <p className="text-xs" style={{ color: 'var(--ink-3)' }}>
-                    {contact.contact_type === 'recruiter'
-                      ? contact.agency || contact.email || 'Recruiter'
-                      : contact.title || contact.email || 'Company contact'}
-                  </p>
-                </td>
-                <td className="px-3 py-3">
-                  <ContactTypeBadge type={contact.contact_type} />
-                </td>
-                <td className="px-3 py-3">
-                  <p className="text-sm" style={{ color: app ? 'var(--ink-2)' : 'var(--ink-4)' }}>{app?.company ?? 'Not linked'}</p>
-                  {app && <p className="text-xs" style={{ color: 'var(--ink-3)' }}>{app.title}</p>}
-                </td>
-                <td className="px-3 py-3">
-                  <StatusTag contact={contact} />
-                </td>
-                <td className="px-3 py-3 text-sm" style={{ color: 'var(--ink-3)' }}>
-                  {formatDate(contact.date_of_last_outreach)}
-                </td>
-              </tr>
+              <Fragment key={contact.id}>
+                <tr
+                  className="border-b last:border-b-0 hover:bg-gray-50"
+                  style={{ borderColor: 'var(--line)' }}
+                >
+                  <td className="px-3 py-3">
+                    <button
+                      type="button"
+                      className="block text-left"
+                      onClick={() => onSelectContact?.(contact)}
+                    >
+                      <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>{contactName(contact)}</p>
+                      <p className="text-xs" style={{ color: 'var(--ink-3)' }}>
+                        {contact.contact_type === 'recruiter'
+                          ? contact.agency || contact.email || 'Recruiter'
+                          : contact.title || contact.email || 'Company contact'}
+                      </p>
+                    </button>
+                  </td>
+                  <td className="px-3 py-3">
+                    <ContactTypeBadge type={contact.contact_type} />
+                  </td>
+                  <td className="px-3 py-3">
+                    <p className="text-sm" style={{ color: app ? 'var(--ink-2)' : 'var(--ink-4)' }}>{app?.company ?? 'Not linked'}</p>
+                    {app && <p className="text-xs" style={{ color: 'var(--ink-3)' }}>{app.title}</p>}
+                  </td>
+                  <td className="px-3 py-3">
+                    <StatusTag contact={contact} />
+                  </td>
+                  <td className="px-3 py-3 text-sm" style={{ color: 'var(--ink-3)' }}>
+                    {formatDate(contact.date_of_last_outreach)}
+                  </td>
+                </tr>
+                {selectedContactId === contact.id && renderDetail && (
+                  <tr className="border-b" style={{ borderColor: 'var(--line)' }}>
+                    <td className="bg-gray-50 p-3" colSpan={5}>
+                      {renderDetail(contact)}
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
             );
           })}
         </tbody>

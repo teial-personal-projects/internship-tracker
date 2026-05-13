@@ -1,6 +1,7 @@
 import { AppHeader } from '@/components/AppHeader';
 import { ApplicationEventLog } from '@/components/ApplicationEventLog';
 import { ApplicationTypeBadge } from '@/components/ApplicationTypeBadge';
+import { ContactDetailPanel } from '@/components/ContactDetailPanel';
 import { ContactModal } from '@/components/ContactModal';
 import { ContactsList } from '@/components/ContactsList';
 import { Spinner } from '@/components/Spinner';
@@ -23,6 +24,7 @@ export function ContactsPage() {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
 
   const contactParams = useMemo(() => ({
     ...(applicationId && { application_id: applicationId }),
@@ -138,6 +140,14 @@ export function ContactsPage() {
                     applicationById={applicationById}
                     isLoading={contactsLoading}
                     error={contactsError}
+                    selectedContactId={selectedContactId}
+                    onSelectContact={(contact) => setSelectedContactId((current) => current === contact.id ? null : contact.id)}
+                    renderDetail={(contact) => (
+                      <ContactDetailPanel
+                        contact={contact}
+                        application={contact.application_id ? applicationById.get(contact.application_id) : undefined}
+                      />
+                    )}
                   />
                 </section>
 
@@ -236,6 +246,14 @@ export function ContactsPage() {
             applicationById={applicationById}
             isLoading={contactsLoading}
             error={contactsError}
+            selectedContactId={selectedContactId}
+            onSelectContact={(contact) => setSelectedContactId((current) => current === contact.id ? null : contact.id)}
+            renderDetail={(contact) => (
+              <ContactDetailPanel
+                contact={contact}
+                application={contact.application_id ? applicationById.get(contact.application_id) : undefined}
+              />
+            )}
           />
         </div>
       </main>

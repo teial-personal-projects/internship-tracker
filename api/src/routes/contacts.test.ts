@@ -279,12 +279,19 @@ describe('contacts routes', () => {
     expect(getResponse.body.data.map((interaction: Row) => interaction.purpose)).toEqual(['follow_up', 'note']);
   });
 
-  it('POST, PATCH, and DELETE contact templates are scoped to the owned contact', async () => {
+  it('GET, POST, PATCH, and DELETE contact templates are scoped to the owned contact', async () => {
     const db = createMockDb({
       contacts: [{ id: CONTACT_ID, user_id: USER_ID }],
       contact_templates: [{ id: TEMPLATE_ID, contact_id: CONTACT_ID, user_id: USER_ID, name: 'Old' }],
     });
     mockCreateUserClient.mockReturnValue(db.client);
+
+    const getResponse = await request(app)
+      .get(`/api/contacts/${CONTACT_ID}/templates`)
+      .set('Authorization', 'Bearer test-token');
+
+    expect(getResponse.status).toBe(200);
+    expect(getResponse.body.data).toHaveLength(1);
 
     const postResponse = await request(app)
       .post(`/api/contacts/${CONTACT_ID}/templates`)

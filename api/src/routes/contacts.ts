@@ -196,6 +196,36 @@ router.post('/:id/interactions', requireAuth, validateBody(CreateContactInteract
 });
 
 // POST /api/contacts/:id/templates
+router.get('/:id/templates', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const { id } = req.params;
+
+    const { ownership } = await getOwnedContact(db, id, user.id);
+    if (ownership !== 'ok') {
+      sendOwnershipError(res, ownership);
+      return;
+    }
+
+    const { data, error } = await db
+      .from('contact_templates')
+      .select('*')
+      .eq('contact_id', id)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.json({ data: data ?? [] });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.post('/:id/templates', requireAuth, validateBody(CreateContactTemplateBodySchema), async (req: Request, res, next) => {
   try {
     const db = createUserClient(req);
