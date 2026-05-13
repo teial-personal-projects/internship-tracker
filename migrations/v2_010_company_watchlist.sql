@@ -35,21 +35,26 @@ CREATE INDEX IF NOT EXISTS idx_company_watchlist_added
 CREATE INDEX IF NOT EXISTS idx_company_watchlist_priority
   ON company_watchlist(priority);
 
+-- Data API grants
+REVOKE ALL PRIVILEGES ON TABLE public.company_watchlist FROM anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.company_watchlist TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.company_watchlist TO service_role;
+
 -- Row Level Security
 ALTER TABLE company_watchlist ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "company_watchlist_select" ON company_watchlist
-  FOR SELECT USING (auth.uid() = user_id);
+  FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
 CREATE POLICY "company_watchlist_insert" ON company_watchlist
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "company_watchlist_update" ON company_watchlist
-  FOR UPDATE USING (auth.uid() = user_id)
+  FOR UPDATE TO authenticated USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "company_watchlist_delete" ON company_watchlist
-  FOR DELETE USING (auth.uid() = user_id);
+  FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
 -- ============================================================
 -- DOWN

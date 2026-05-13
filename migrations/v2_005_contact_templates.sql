@@ -26,21 +26,26 @@ CREATE TRIGGER contact_templates_updated_at
 CREATE INDEX IF NOT EXISTS idx_contact_templates_contact_id
   ON contact_templates(contact_id);
 
+-- Data API grants
+REVOKE ALL PRIVILEGES ON TABLE public.contact_templates FROM anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.contact_templates TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.contact_templates TO service_role;
+
 -- Row Level Security
 ALTER TABLE contact_templates ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "contact_templates_select" ON contact_templates
-  FOR SELECT USING (auth.uid() = user_id);
+  FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
 CREATE POLICY "contact_templates_insert" ON contact_templates
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "contact_templates_update" ON contact_templates
-  FOR UPDATE USING (auth.uid() = user_id)
+  FOR UPDATE TO authenticated USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "contact_templates_delete" ON contact_templates
-  FOR DELETE USING (auth.uid() = user_id);
+  FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
 -- ============================================================
 -- DOWN

@@ -35,21 +35,26 @@ CREATE INDEX IF NOT EXISTS idx_application_events_application_id
 CREATE INDEX IF NOT EXISTS idx_application_events_occurred_at
   ON application_events(occurred_at DESC);
 
+-- Data API grants
+REVOKE ALL PRIVILEGES ON TABLE public.application_events FROM anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.application_events TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.application_events TO service_role;
+
 -- Row Level Security
 ALTER TABLE application_events ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "application_events_select" ON application_events
-  FOR SELECT USING (auth.uid() = user_id);
+  FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
 CREATE POLICY "application_events_insert" ON application_events
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "application_events_update" ON application_events
-  FOR UPDATE USING (auth.uid() = user_id)
+  FOR UPDATE TO authenticated USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "application_events_delete" ON application_events
-  FOR DELETE USING (auth.uid() = user_id);
+  FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
 -- ============================================================
 -- DOWN

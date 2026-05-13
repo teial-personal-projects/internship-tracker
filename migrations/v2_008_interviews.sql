@@ -39,21 +39,26 @@ CREATE INDEX IF NOT EXISTS idx_interviews_scheduled_at
 CREATE INDEX IF NOT EXISTS idx_interviews_status
   ON interviews(status);
 
+-- Data API grants
+REVOKE ALL PRIVILEGES ON TABLE public.interviews FROM anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.interviews TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.interviews TO service_role;
+
 -- Row Level Security
 ALTER TABLE interviews ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "interviews_select" ON interviews
-  FOR SELECT USING (auth.uid() = user_id);
+  FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
 CREATE POLICY "interviews_insert" ON interviews
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "interviews_update" ON interviews
-  FOR UPDATE USING (auth.uid() = user_id)
+  FOR UPDATE TO authenticated USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "interviews_delete" ON interviews
-  FOR DELETE USING (auth.uid() = user_id);
+  FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
 -- ============================================================
 -- DOWN

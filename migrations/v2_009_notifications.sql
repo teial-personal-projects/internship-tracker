@@ -28,17 +28,22 @@ CREATE TRIGGER notification_preferences_updated_at
 CREATE UNIQUE INDEX IF NOT EXISTS idx_notification_prefs_user_id
   ON notification_preferences(user_id);
 
+-- Data API grants
+REVOKE ALL PRIVILEGES ON TABLE public.notification_preferences FROM anon, authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.notification_preferences TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.notification_preferences TO service_role;
+
 -- Row Level Security
 ALTER TABLE notification_preferences ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "notification_preferences_select" ON notification_preferences
-  FOR SELECT USING (auth.uid() = user_id);
+  FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
 CREATE POLICY "notification_preferences_insert" ON notification_preferences
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "notification_preferences_update" ON notification_preferences
-  FOR UPDATE USING (auth.uid() = user_id)
+  FOR UPDATE TO authenticated USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
 -- ============================================================
@@ -63,21 +68,26 @@ CREATE INDEX IF NOT EXISTS idx_notification_log_created_at
 CREATE INDEX IF NOT EXISTS idx_notification_log_source_id
   ON notification_log(source_id);
 
+-- Data API grants
+REVOKE ALL PRIVILEGES ON TABLE public.notification_log FROM anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.notification_log TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.notification_log TO service_role;
+
 -- Row Level Security
 ALTER TABLE notification_log ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "notification_log_select" ON notification_log
-  FOR SELECT USING (auth.uid() = user_id);
+  FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
 CREATE POLICY "notification_log_insert" ON notification_log
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "notification_log_update" ON notification_log
-  FOR UPDATE USING (auth.uid() = user_id)
+  FOR UPDATE TO authenticated USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "notification_log_delete" ON notification_log
-  FOR DELETE USING (auth.uid() = user_id);
+  FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
 -- ============================================================
 -- DOWN

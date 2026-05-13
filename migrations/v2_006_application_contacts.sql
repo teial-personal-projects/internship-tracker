@@ -23,17 +23,22 @@ CREATE INDEX IF NOT EXISTS idx_application_contacts_application_id
 CREATE INDEX IF NOT EXISTS idx_application_contacts_contact_id
   ON application_contacts(contact_id);
 
+-- Data API grants
+REVOKE ALL PRIVILEGES ON TABLE public.application_contacts FROM anon, authenticated;
+GRANT SELECT, INSERT, DELETE ON TABLE public.application_contacts TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.application_contacts TO service_role;
+
 -- Row Level Security
 ALTER TABLE application_contacts ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "application_contacts_select" ON application_contacts
-  FOR SELECT USING (auth.uid() = user_id);
+  FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
 CREATE POLICY "application_contacts_insert" ON application_contacts
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "application_contacts_delete" ON application_contacts
-  FOR DELETE USING (auth.uid() = user_id);
+  FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
 -- ============================================================
 -- DOWN

@@ -52,21 +52,26 @@ CREATE INDEX IF NOT EXISTS idx_applications_application_type
 CREATE INDEX IF NOT EXISTS idx_applications_added
   ON applications(added DESC);
 
+-- Data API grants
+REVOKE ALL PRIVILEGES ON TABLE public.applications FROM anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.applications TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.applications TO service_role;
+
 -- Row Level Security
 ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "applications_select" ON applications
-  FOR SELECT USING (auth.uid() = user_id);
+  FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
 CREATE POLICY "applications_insert" ON applications
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "applications_update" ON applications
-  FOR UPDATE USING (auth.uid() = user_id)
+  FOR UPDATE TO authenticated USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "applications_delete" ON applications
-  FOR DELETE USING (auth.uid() = user_id);
+  FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
 -- ============================================================
 -- DOWN

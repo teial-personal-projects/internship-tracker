@@ -46,21 +46,26 @@ CREATE INDEX IF NOT EXISTS idx_tasks_application_id
 CREATE INDEX IF NOT EXISTS idx_tasks_contact_id
   ON tasks(contact_id);
 
+-- Data API grants
+REVOKE ALL PRIVILEGES ON TABLE public.tasks FROM anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.tasks TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.tasks TO service_role;
+
 -- Row Level Security
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "tasks_select" ON tasks
-  FOR SELECT USING (auth.uid() = user_id);
+  FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
 CREATE POLICY "tasks_insert" ON tasks
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "tasks_update" ON tasks
-  FOR UPDATE USING (auth.uid() = user_id)
+  FOR UPDATE TO authenticated USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "tasks_delete" ON tasks
-  FOR DELETE USING (auth.uid() = user_id);
+  FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
 -- ============================================================
 -- DOWN

@@ -42,6 +42,10 @@ Each file contains an `-- UP` block and a `-- DOWN` block.
 | `v2_012_application_events.sql` | Create `application_events` table |
 | `v2_013_contacts_company.sql` | Add `company` column to `contacts` table |
 
+For existing v2 environments where some migrations were already applied before
+explicit Data API grants were added, run `../supabase-grants.sql` once after the
+latest migration.
+
 ## Important rules
 
 - The `jobs` and `job_boards` tables are **never modified** by any v2 migration.

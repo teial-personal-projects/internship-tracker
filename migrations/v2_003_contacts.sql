@@ -63,21 +63,26 @@ CREATE INDEX IF NOT EXISTS idx_contacts_application_id
 CREATE INDEX IF NOT EXISTS idx_contacts_outreach_status
   ON contacts(outreach_status);
 
+-- Data API grants
+REVOKE ALL PRIVILEGES ON TABLE public.contacts FROM anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.contacts TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.contacts TO service_role;
+
 -- Row Level Security
 ALTER TABLE contacts ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "contacts_select" ON contacts
-  FOR SELECT USING (auth.uid() = user_id);
+  FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
 CREATE POLICY "contacts_insert" ON contacts
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "contacts_update" ON contacts
-  FOR UPDATE USING (auth.uid() = user_id)
+  FOR UPDATE TO authenticated USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "contacts_delete" ON contacts
-  FOR DELETE USING (auth.uid() = user_id);
+  FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
 -- ============================================================
 -- DOWN
