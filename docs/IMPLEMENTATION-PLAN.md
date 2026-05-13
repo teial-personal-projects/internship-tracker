@@ -303,11 +303,11 @@ File: `migrations/v2_012_application_events.sql`
 
 ### 2.7 Application event log UI
 
-- [ ] 2.7.1 Create `web/src/components/ApplicationEventLog.tsx` — vertical timeline ordered by `occurred_at` DESC
-- [ ] 2.7.2 Each entry: event type label, elapsed time (e.g. "2 days ago"), body text if present, contact name if linked
-- [ ] 2.7.3 Inline Add Event form below the timeline: `event_type` dropdown, `body` textarea (optional), `occurred_at` field (defaults to now)
-- [ ] 2.7.4 On submit: POST to `/api/applications/:id/events`; prepend the new entry to the timeline
-- [ ] 2.7.5 Surface `ApplicationEventLog` in the application detail panel (within the Contacts tab per-application view — see Phase 3.5)
+- [x] 2.7.1 Create `web/src/components/ApplicationEventLog.tsx` — vertical timeline ordered by `occurred_at` DESC
+- [x] 2.7.2 Each entry: event type label, elapsed time (e.g. "2 days ago"), body text if present, contact name if linked
+- [x] 2.7.3 Inline Add Event form below the timeline: `event_type` dropdown, `body` textarea (optional), `occurred_at` field (defaults to now)
+- [x] 2.7.4 On submit: POST to `/api/applications/:id/events`; prepend the new entry to the timeline
+- [x] 2.7.5 Surface `ApplicationEventLog` in the application detail panel (within the Contacts tab per-application view — see Phase 3.5)
 
 ---
 

@@ -1,12 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as applicationsApi from '@/api/applications.api';
 import type { ApplicationsListParams } from '@/api/applications.api';
-import type { CreateApplicationSchemaType, UpdateApplicationSchemaType } from '@shared/schemas';
+import type {
+  CreateApplicationEventSchemaType,
+  CreateApplicationSchemaType,
+  UpdateApplicationSchemaType,
+} from '@shared/schemas';
 
 export const applicationKeys = {
   all: ['applications'] as const,
   list: (params: ApplicationsListParams) => ['applications', 'list', params] as const,
+  detail: (id: string) => ['applications', 'detail', id] as const,
   stats: () => ['applications', 'stats'] as const,
+  events: (id: string) => ['applications', 'events', id] as const,
 };
 // Query keys define the cache buckets for application data. Mutations invalidate
 // applicationKeys.all so lists, stats, and other application queries refetch.
@@ -20,11 +26,29 @@ export function useApplications(params: ApplicationsListParams = {}) {
   });
 }
 
+export function useApplication(id: string | null) {
+  return useQuery({
+    queryKey: id ? applicationKeys.detail(id) : ['applications', 'detail', 'none'],
+    queryFn: () => applicationsApi.getApplication(id as string),
+    enabled: Boolean(id),
+    staleTime: 30_000,
+  });
+}
+
 export function useApplicationStats() {
   return useQuery({
     queryKey: applicationKeys.stats(),
     queryFn: () => applicationsApi.getApplicationStats(),
     staleTime: 60_000,
+  });
+}
+
+export function useApplicationEvents(applicationId: string | null) {
+  return useQuery({
+    queryKey: applicationId ? applicationKeys.events(applicationId) : ['applications', 'events', 'none'],
+    queryFn: () => applicationsApi.getApplicationEvents(applicationId as string),
+    enabled: Boolean(applicationId),
+    staleTime: 30_000,
   });
 }
 
@@ -55,6 +79,20 @@ export function useDeleteApplication() {
     mutationFn: (id: string) => applicationsApi.deleteApplication(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: applicationKeys.all });
+    },
+  });
+}
+
+export function useCreateApplicationEvent(applicationId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateApplicationEventSchemaType) =>
+      applicationsApi.createApplicationEvent(applicationId, input),
+    onSuccess: (event) => {
+      qc.setQueryData<applicationsApi.ApplicationEvent[]>(
+        applicationKeys.events(applicationId),
+        (current) => [event, ...(current ?? [])],
+      );
     },
   });
 }

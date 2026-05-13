@@ -1,6 +1,11 @@
 import { apiClient } from './client';
 import type { Application } from '@shared/schemas';
-import type { CreateApplicationSchemaType, UpdateApplicationSchemaType } from '@shared/schemas';
+import type {
+  ApplicationEventType,
+  CreateApplicationEventSchemaType,
+  CreateApplicationSchemaType,
+  UpdateApplicationSchemaType,
+} from '@shared/schemas';
 
 export interface ApplicationsListParams {
   status?: string;
@@ -24,9 +29,29 @@ export interface ApplicationStats {
   unset_type_count: number;
 }
 
+export interface ApplicationEvent {
+  id: string;
+  application_id: string;
+  user_id: string;
+  event_type: ApplicationEventType;
+  body?: string | null;
+  contact_id?: string | null;
+  occurred_at: string;
+  created_at: string;
+  contacts?: {
+    first_name: string;
+    last_name: string;
+  } | null;
+}
+
 export async function getApplications(params: ApplicationsListParams = {}): Promise<ApplicationsListResponse> {
   const { data } = await apiClient.get<ApplicationsListResponse>('/applications', { params });
   return data;
+}
+
+export async function getApplication(id: string): Promise<Application> {
+  const { data } = await apiClient.get<{ data: Application }>(`/applications/${id}`);
+  return data.data;
 }
 
 export async function getApplicationStats(): Promise<ApplicationStats> {
@@ -47,4 +72,17 @@ export async function updateApplication(id: string, input: UpdateApplicationSche
 export async function deleteApplication(id: string): Promise<{ cascaded: boolean }> {
   const { data } = await apiClient.delete<{ data: null; cascaded: boolean }>(`/applications/${id}`);
   return { cascaded: data.cascaded };
+}
+
+export async function getApplicationEvents(applicationId: string): Promise<ApplicationEvent[]> {
+  const { data } = await apiClient.get<{ data: ApplicationEvent[] }>(`/applications/${applicationId}/events`);
+  return data.data;
+}
+
+export async function createApplicationEvent(
+  applicationId: string,
+  input: CreateApplicationEventSchemaType,
+): Promise<ApplicationEvent> {
+  const { data } = await apiClient.post<{ data: ApplicationEvent }>(`/applications/${applicationId}/events`, input);
+  return data.data;
 }

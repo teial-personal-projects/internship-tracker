@@ -22,6 +22,8 @@ interface TableRow {
   event_type?: string;
   body?: string | null;
   contact_id?: string | null;
+  first_name?: string;
+  last_name?: string;
 }
 
 interface QueryCall {
@@ -36,6 +38,7 @@ class TableQuery {
     private readonly table: string,
     private readonly rows: TableRow[],
     private readonly insertedRows: Record<string, TableRow[]>,
+    private readonly rowsByTable: Record<string, TableRow[]>,
   ) {}
 
   select(...args: unknown[]) {
@@ -56,7 +59,7 @@ class TableQuery {
   insert(payload: TableRow) {
     this.calls.push({ method: 'insert', args: [payload] });
     this.insertedRows[this.table] = [...(this.insertedRows[this.table] ?? []), payload];
-    return new InsertQuery(payload);
+    return new InsertQuery(payload, this.rowsByTable);
   }
 
   async single() {
@@ -97,18 +100,24 @@ class TableQuery {
 }
 
 class InsertQuery {
-  constructor(private readonly payload: TableRow) {}
+  constructor(private readonly payload: TableRow, private readonly allRows: Record<string, TableRow[]>) {}
 
   select() {
     return this;
   }
 
   async single() {
+    const contact = this.payload.contact_id
+      ? (this.allRows['contacts'] ?? []).find((c) => c.id === this.payload.contact_id)
+      : undefined;
     return {
       data: {
         ...this.payload,
         id: this.payload.id ?? 'event-new',
         created_at: '2026-05-12T00:00:00.000Z',
+        contacts: contact
+          ? { first_name: contact.first_name ?? '', last_name: contact.last_name ?? '' }
+          : null,
       },
       error: null,
     };
@@ -124,7 +133,7 @@ function createMockDb(rowsByTable: Record<string, TableRow[]>) {
     queries,
     client: {
       from: vi.fn((table: string) => {
-        const query = new TableQuery(table, rowsByTable[table] ?? [], insertedRows);
+        const query = new TableQuery(table, rowsByTable[table] ?? [], insertedRows, rowsByTable);
         queries[table] = [...(queries[table] ?? []), query];
         return query;
       }),
@@ -172,7 +181,7 @@ describe('application event routes', () => {
   it('POST /api/applications/:id/events creates an event and defaults occurred_at', async () => {
     const db = createMockDb({
       applications: [{ id: 'app-1', user_id: 'user-1' }],
-      contacts: [{ id: '11111111-1111-4111-8111-111111111111', user_id: 'user-1' }],
+      contacts: [{ id: '11111111-1111-4111-8111-111111111111', user_id: 'user-1', first_name: 'Jane', last_name: 'Doe' }],
     });
     mockCreateUserClient.mockReturnValue(db.client);
 
@@ -192,6 +201,7 @@ describe('application event routes', () => {
       event_type: 'note',
       body: 'Followed up with hiring manager.',
       contact_id: '11111111-1111-4111-8111-111111111111',
+      contacts: { first_name: 'Jane', last_name: 'Doe' },
     });
     expect(typeof response.body.data.occurred_at).toBe('string');
     expect(db.insertedRows.application_events).toHaveLength(1);

@@ -148,7 +148,7 @@ router.get('/:id/events', requireAuth, async (req: Request, res, next) => {
 
     const { data, error } = await db
       .from('application_events')
-      .select('*')
+      .select('*, contacts(first_name, last_name)')
       .eq('application_id', id)
       .order('occurred_at', { ascending: false });
 
@@ -206,7 +206,7 @@ router.post('/:id/events', requireAuth, validateBody(CreateApplicationEventSchem
     const { data, error } = await db
       .from('application_events')
       .insert(payload)
-      .select()
+      .select('*, contacts(first_name, last_name)')
       .single();
 
     if (error) {
