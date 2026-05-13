@@ -315,20 +315,20 @@ File: `migrations/v2_012_application_events.sql`
 
 ### 3.1 API — contacts routes
 
-- [ ] 3.1.1 Create `api/src/routes/contacts.ts`
-- [ ] 3.1.2 `GET /api/contacts` — list with `?contact_type`, `?application_id`, `?outreach_status`, `?recruiter_status` filters
-- [ ] 3.1.3 `POST /api/contacts` — create; verify `application_id` ownership if provided
-- [ ] 3.1.4 `GET /api/contacts/:id` — ownership check
-- [ ] 3.1.5 `PATCH /api/contacts/:id` — update; on `outreach_status → double_down_sent`, auto-create follow-up task
-- [ ] 3.1.6 `DELETE /api/contacts/:id` — cascade delete interactions and templates
-- [ ] 3.1.7 `POST /api/contacts/:id/interactions` — append interaction log entry
-- [ ] 3.1.8 `GET /api/contacts/:id/interactions` — list entries, ordered by `occurred_at DESC`
-- [ ] 3.1.9 `POST /api/contacts/:id/templates` — attach template
-- [ ] 3.1.10 `PATCH /api/contacts/:id/templates/:tid` — update template
-- [ ] 3.1.11 `DELETE /api/contacts/:id/templates/:tid` — delete template
-- [ ] 3.1.12 `POST /api/applications/:id/contacts` — link recruiter contact to application
-- [ ] 3.1.13 `DELETE /api/applications/:id/contacts/:cid` — unlink recruiter from application
-- [ ] 3.1.14 Register in `app.ts`
+- [x] 3.1.1 Create `api/src/routes/contacts.ts`
+- [x] 3.1.2 `GET /api/contacts` — list with `?contact_type`, `?application_id`, `?outreach_status`, `?recruiter_status` filters
+- [x] 3.1.3 `POST /api/contacts` — create; verify `application_id` ownership if provided
+- [x] 3.1.4 `GET /api/contacts/:id` — ownership check
+- [x] 3.1.5 `PATCH /api/contacts/:id` — update; on `outreach_status → double_down_sent`, auto-create follow-up task
+- [x] 3.1.6 `DELETE /api/contacts/:id` — cascade delete interactions and templates
+- [x] 3.1.7 `POST /api/contacts/:id/interactions` — append interaction log entry
+- [x] 3.1.8 `GET /api/contacts/:id/interactions` — list entries, ordered by `occurred_at DESC`
+- [x] 3.1.9 `POST /api/contacts/:id/templates` — attach template
+- [x] 3.1.10 `PATCH /api/contacts/:id/templates/:tid` — update template
+- [x] 3.1.11 `DELETE /api/contacts/:id/templates/:tid` — delete template
+- [x] 3.1.12 `POST /api/applications/:id/contacts` — link recruiter contact to application
+- [x] 3.1.13 `DELETE /api/applications/:id/contacts/:cid` — unlink recruiter from application
+- [x] 3.1.14 Register in `app.ts`
 
 ### 3.2 Business logic — auto task creation
 

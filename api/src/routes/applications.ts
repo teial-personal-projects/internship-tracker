@@ -220,6 +220,89 @@ router.post('/:id/events', requireAuth, validateBody(CreateApplicationEventSchem
   }
 });
 
+// POST /api/applications/:id/contacts
+router.post('/:id/contacts', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const { id } = req.params;
+    const contactId = (req.body as { contact_id?: string }).contact_id;
+
+    if (!contactId) {
+      res.status(400).json({ error: 'contact_id is required' });
+      return;
+    }
+
+    const ownership = await verifyApplicationOwnership(db, id, user.id);
+    if (ownership !== 'ok') {
+      sendOwnershipError(res, ownership);
+      return;
+    }
+
+    const { data: contact, error: contactError } = await db
+      .from('contacts')
+      .select('id, user_id, contact_type')
+      .eq('id', contactId)
+      .single();
+
+    if (contactError || !contact || (contact as { user_id: string }).user_id !== user.id) {
+      res.status(400).json({ error: 'Contact does not belong to current user' });
+      return;
+    }
+
+    if ((contact as { contact_type: string }).contact_type !== 'recruiter') {
+      res.status(400).json({ error: 'Only recruiter contacts can be linked to applications' });
+      return;
+    }
+
+    const { data, error } = await db
+      .from('application_contacts')
+      .insert({ application_id: id, contact_id: contactId, user_id: user.id })
+      .select()
+      .single();
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.status(201).json({ data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/applications/:id/contacts/:cid
+router.delete('/:id/contacts/:cid', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const { id, cid } = req.params;
+
+    const ownership = await verifyApplicationOwnership(db, id, user.id);
+    if (ownership !== 'ok') {
+      sendOwnershipError(res, ownership);
+      return;
+    }
+
+    const { error } = await db
+      .from('application_contacts')
+      .delete()
+      .eq('application_id', id)
+      .eq('contact_id', cid)
+      .eq('user_id', user.id);
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.json({ data: null });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/applications/:id
 router.get('/:id', requireAuth, async (req: Request, res, next) => {
   try {
