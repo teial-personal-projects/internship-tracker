@@ -1,6 +1,7 @@
 -- ============================================================
 -- job_boards table
--- Public read-only — no RLS needed since this is shared data.
+-- Public read-only reference data protected by explicit grants
+-- and a read-only RLS policy.
 -- ============================================================
 
 create table if not exists job_boards (
@@ -13,11 +14,17 @@ create table if not exists job_boards (
   created_at  timestamptz not null default now()
 );
 
--- Allow anyone (authenticated or anonymous) to read
+-- Data API grants: public read-only reference data.
+REVOKE ALL PRIVILEGES ON TABLE public.job_boards FROM anon, authenticated;
+GRANT SELECT ON TABLE public.job_boards TO anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.job_boards TO service_role;
+
+-- Allow anyone (authenticated or anonymous) to read.
 alter table job_boards enable row level security;
 
 create policy "job_boards_public_read"
   on job_boards for select
+  to anon, authenticated
   using (true);
 
 -- ============================================================
