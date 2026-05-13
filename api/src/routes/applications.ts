@@ -236,6 +236,36 @@ router.post('/:id/events', requireAuth, validateBody(CreateApplicationEventSchem
   }
 });
 
+// GET /api/applications/:id/contacts
+router.get('/:id/contacts', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const { id } = req.params;
+
+    const ownership = await verifyApplicationOwnership(db, id, user.id);
+    if (ownership !== 'ok') {
+      sendOwnershipError(res, ownership);
+      return;
+    }
+
+    const { data, error } = await db
+      .from('application_contacts')
+      .select('*, contacts(*)')
+      .eq('application_id', id)
+      .eq('user_id', user.id);
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.json({ data: data ?? [] });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // POST /api/applications/:id/contacts
 router.post('/:id/contacts', requireAuth, async (req: Request, res, next) => {
   try {

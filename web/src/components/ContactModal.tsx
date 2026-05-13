@@ -12,6 +12,7 @@ import type {
   RecruiterStatus,
 } from '@shared/schemas';
 import type { Application } from '@shared/schemas';
+import type { Contact } from '@/api/contacts.api';
 
 const CONTACT_TYPES: Array<{ value: ContactType; label: string }> = [
   { value: 'company_contact', label: 'Company' },
@@ -53,6 +54,7 @@ interface Props {
   isLoading: boolean;
   applications: Application[];
   scopedApplicationId?: string | null;
+  initialContact?: Contact | null;
   onClose: () => void;
   onSubmit: (input: CreateContactSchemaType) => void;
 }
@@ -62,12 +64,14 @@ export function ContactModal({
   isLoading,
   applications,
   scopedApplicationId,
+  initialContact,
   onClose,
   onSubmit,
 }: Props) {
   const [contactType, setContactType] = useState<ContactType>('company_contact');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [company, setCompany] = useState('');
   const [title, setTitle] = useState('');
   const [email, setEmail] = useState('');
   const [linkedinUrl, setLinkedinUrl] = useState('');
@@ -81,21 +85,39 @@ export function ContactModal({
 
   useEffect(() => {
     if (isOpen) {
-      setContactType('company_contact');
-      setFirstName('');
-      setLastName('');
-      setTitle('');
-      setEmail('');
-      setLinkedinUrl('');
-      setApplicationId(scopedApplicationId ?? '');
-      setOutreachStatus('');
-      setHowFound('');
-      setAgency('');
-      setPreferredContactMethod('');
-      setRecruiterStatus('');
-      setNotes('');
+      if (initialContact) {
+        setContactType(initialContact.contact_type);
+        setFirstName(initialContact.first_name);
+        setLastName(initialContact.last_name);
+        setCompany(initialContact.company ?? '');
+        setTitle(initialContact.title ?? '');
+        setEmail(initialContact.email ?? '');
+        setLinkedinUrl(initialContact.linkedin_url ?? '');
+        setApplicationId(initialContact.application_id ?? scopedApplicationId ?? '');
+        setOutreachStatus(initialContact.outreach_status ?? '');
+        setHowFound(initialContact.how_found ?? '');
+        setAgency(initialContact.agency ?? '');
+        setPreferredContactMethod(initialContact.preferred_contact_method ?? '');
+        setRecruiterStatus(initialContact.recruiter_status ?? '');
+        setNotes(initialContact.notes ?? '');
+      } else {
+        setContactType('company_contact');
+        setFirstName('');
+        setLastName('');
+        setCompany('');
+        setTitle('');
+        setEmail('');
+        setLinkedinUrl('');
+        setApplicationId(scopedApplicationId ?? '');
+        setOutreachStatus('');
+        setHowFound('');
+        setAgency('');
+        setPreferredContactMethod('');
+        setRecruiterStatus('');
+        setNotes('');
+      }
     }
-  }, [isOpen, scopedApplicationId]);
+  }, [isOpen, scopedApplicationId, initialContact]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -104,6 +126,7 @@ export function ContactModal({
       contact_type: contactType,
       first_name: firstName.trim(),
       last_name: lastName.trim(),
+      company: company.trim() || null,
       title: title.trim() || null,
       email: email.trim() || null,
       linkedin_url: linkedinUrl.trim() || null,
@@ -126,7 +149,7 @@ export function ContactModal({
         <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[85vh] bg-white rounded-xl shadow-2xl z-50 flex flex-col overflow-hidden">
           <div className="px-6 py-4 flex items-center justify-between border-b" style={{ background: 'var(--soft)', borderColor: 'var(--line)' }}>
             <Dialog.Title className="text-base font-bold" style={{ color: 'var(--ink)' }}>
-              Add Contact
+              {initialContact ? 'Edit Contact' : 'Add Contact'}
             </Dialog.Title>
             <Dialog.Close asChild>
               <button type="button" aria-label="Close" className="p-1 rounded hover:bg-black/10 transition-colors">
@@ -156,13 +179,20 @@ export function ContactModal({
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <label>
-                  <span className="field-label">Title</span>
+                  <span className="field-label">Company</span>
+                  <input className="field-input" value={company} onChange={(event) => setCompany(event.target.value)} placeholder="e.g. Acme Corp" />
+                </label>
+                <label>
+                  <span className="field-label">Title / Role</span>
                   <input className="field-input" value={title} onChange={(event) => setTitle(event.target.value)} />
                 </label>
                 <label>
                   <span className="field-label">Email</span>
                   <input type="email" className="field-input" value={email} onChange={(event) => setEmail(event.target.value)} />
                 </label>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <label>
                   <span className="field-label">LinkedIn</span>
                   <input type="url" className="field-input" placeholder="https://" value={linkedinUrl} onChange={(event) => setLinkedinUrl(event.target.value)} />

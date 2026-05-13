@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import type { Contact } from './contacts.api';
 import type { Application } from '@shared/schemas';
 import type {
   ApplicationEventType,
@@ -44,6 +45,15 @@ export interface ApplicationEvent {
   } | null;
 }
 
+export interface ApplicationContactLink {
+  id: string;
+  application_id: string;
+  contact_id: string;
+  user_id: string;
+  created_at: string;
+  contacts?: Contact | null;
+}
+
 export async function getApplications(params: ApplicationsListParams = {}): Promise<ApplicationsListResponse> {
   const { data } = await apiClient.get<ApplicationsListResponse>('/applications', { params });
   return data;
@@ -84,5 +94,10 @@ export async function createApplicationEvent(
   input: CreateApplicationEventSchemaType,
 ): Promise<ApplicationEvent> {
   const { data } = await apiClient.post<{ data: ApplicationEvent }>(`/applications/${applicationId}/events`, input);
+  return data.data;
+}
+
+export async function getApplicationContacts(applicationId: string): Promise<ApplicationContactLink[]> {
+  const { data } = await apiClient.get<{ data: ApplicationContactLink[] }>(`/applications/${applicationId}/contacts`);
   return data.data;
 }

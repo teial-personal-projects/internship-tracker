@@ -18,6 +18,7 @@ export interface Contact {
   user_id: string;
   contact_type: ContactType;
   application_id?: string | null;
+  company?: string | null;
   first_name: string;
   last_name: string;
   title?: string | null;
@@ -76,6 +77,10 @@ export async function createContact(input: CreateContactSchemaType): Promise<Con
 export async function updateContact(id: string, input: UpdateContactSchemaType): Promise<Contact> {
   const { data } = await apiClient.patch<{ data: Contact }>(`/contacts/${id}`, input);
   return data.data;
+}
+
+export async function deleteContact(id: string): Promise<void> {
+  await apiClient.delete(`/contacts/${id}`);
 }
 
 export async function getContactInteractions(id: string): Promise<ContactInteraction[]> {

@@ -5,10 +5,18 @@ import { ContactDetailPanel } from '@/components/ContactDetailPanel';
 import { ContactModal } from '@/components/ContactModal';
 import { ContactsList } from '@/components/ContactsList';
 import { Spinner } from '@/components/Spinner';
-import { useApplication, useApplications } from '@/hooks/useApplications';
-import { useContacts, useCreateContact } from '@/hooks/useContacts';
+import { useApplication, useApplicationContacts, useApplications } from '@/hooks/useApplications';
+import { useContacts, useCreateContact, useUpdateContact, useDeleteContact } from '@/hooks/useContacts';
+import type { Contact } from '@/api/contacts.api';
+import type { ApplicationContactLink } from '@/api/applications.api';
+import {
+  CHECKLIST_TOTAL,
+  checklistDoneCount,
+  checklistProgressColor,
+  checklistProgressPercent,
+} from '@/lib/checklistProgress';
 import { OUTREACH_LABELS, RECRUITER_LABELS, contactName } from '@/lib/contactDisplay';
-import type { CreateContactSchemaType } from '@shared/schemas';
+import type { Application, CreateContactSchemaType } from '@shared/schemas';
 import { ArrowLeft, Plus, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -25,6 +33,8 @@ export function ContactsPage() {
   const [sortBy, setSortBy] = useState('created_at');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [deletingContactId, setDeletingContactId] = useState<string | null>(null);
 
   const contactParams = useMemo(() => ({
     ...(applicationId && { application_id: applicationId }),
@@ -34,8 +44,11 @@ export function ContactsPage() {
   }), [applicationId, contactTypeFilter, outreachFilter, recruiterFilter]);
 
   const { data: contacts = [], isLoading: contactsLoading, error: contactsError } = useContacts(contactParams);
+  const { data: linkedRecruiters = [], isLoading: linkedRecruitersLoading, error: linkedRecruitersError } = useApplicationContacts(applicationId);
   const { data: applicationsData } = useApplications({ limit: 100 });
   const createContact = useCreateContact();
+  const updateContact = useUpdateContact();
+  const deleteContact = useDeleteContact();
   const applications = applicationsData?.data ?? [];
 
   const applicationById = useMemo(
@@ -74,14 +87,43 @@ export function ContactsPage() {
     });
   }, [applicationById, contacts, search, sortBy]);
 
-  async function handleCreateContact(input: CreateContactSchemaType) {
+  async function handleSubmitContact(input: CreateContactSchemaType) {
     try {
-      await createContact.mutateAsync(input);
+      if (editingContact) {
+        await updateContact.mutateAsync({ id: editingContact.id, data: input });
+        toast.success('Contact updated');
+      } else {
+        await createContact.mutateAsync(input);
+        toast.success('Contact added');
+      }
+      setEditingContact(null);
       setIsModalOpen(false);
-      toast.success('Contact added');
     } catch {
-      toast.error('Could not add contact');
+      toast.error(editingContact ? 'Could not update contact' : 'Could not add contact');
     }
+  }
+
+  async function handleDeleteContact(id: string) {
+    setDeletingContactId(id);
+    try {
+      await deleteContact.mutateAsync(id);
+      if (selectedContactId === id) setSelectedContactId(null);
+      toast.success('Contact deleted');
+    } catch {
+      toast.error('Delete failed');
+    } finally {
+      setDeletingContactId(null);
+    }
+  }
+
+  function handleEditContact(contact: Contact) {
+    setEditingContact(contact);
+    setIsModalOpen(true);
+  }
+
+  function handleOpenAddModal() {
+    setEditingContact(null);
+    setIsModalOpen(true);
   }
 
   if (applicationId) {
@@ -122,6 +164,7 @@ export function ContactsPage() {
                     </div>
                     <ApplicationTypeBadge type={application.application_type} />
                   </div>
+                  <ChecklistProgress application={application} />
                 </section>
 
                 <section className="rounded-xl border bg-white p-5" style={{ borderColor: 'var(--line)' }}>
@@ -130,7 +173,7 @@ export function ContactsPage() {
                       <h2 className="text-base font-bold" style={{ color: 'var(--ink)' }}>Linked contacts</h2>
                       <p className="text-xs" style={{ color: 'var(--ink-3)' }}>Contacts scoped to this application</p>
                     </div>
-                    <button type="button" className="btn-primary inline-flex items-center gap-2 text-sm px-4 py-2" onClick={() => setIsModalOpen(true)}>
+                    <button type="button" className="btn-primary inline-flex items-center gap-2 text-sm px-4 py-2" onClick={handleOpenAddModal}>
                       <Plus size={16} />
                       Add Contact
                     </button>
@@ -142,6 +185,10 @@ export function ContactsPage() {
                     error={contactsError}
                     selectedContactId={selectedContactId}
                     onSelectContact={(contact) => setSelectedContactId((current) => current === contact.id ? null : contact.id)}
+                    showQuickAction
+                    onEdit={handleEditContact}
+                    onDelete={handleDeleteContact}
+                    deletingContactId={deletingContactId}
                     renderDetail={(contact) => (
                       <ContactDetailPanel
                         contact={contact}
@@ -151,6 +198,12 @@ export function ContactsPage() {
                   />
                 </section>
 
+                <LinkedRecruitersSection
+                  links={linkedRecruiters}
+                  isLoading={linkedRecruitersLoading}
+                  error={linkedRecruitersError}
+                />
+
                 <ApplicationEventLog applicationId={application.id} />
               </>
             )}
@@ -158,11 +211,12 @@ export function ContactsPage() {
         </main>
         <ContactModal
           isOpen={isModalOpen}
-          isLoading={createContact.isPending}
+          isLoading={createContact.isPending || updateContact.isPending}
           applications={applications}
           scopedApplicationId={applicationId}
-          onClose={() => setIsModalOpen(false)}
-          onSubmit={handleCreateContact}
+          initialContact={editingContact}
+          onClose={() => { setIsModalOpen(false); setEditingContact(null); }}
+          onSubmit={handleSubmitContact}
         />
       </div>
     );
@@ -180,7 +234,7 @@ export function ContactsPage() {
                 Company contacts and recruiters across your applications.
               </p>
             </div>
-            <button type="button" className="btn-primary inline-flex items-center gap-2 text-sm px-4 py-2" onClick={() => setIsModalOpen(true)}>
+            <button type="button" className="btn-primary inline-flex items-center gap-2 text-sm px-4 py-2" onClick={handleOpenAddModal}>
               <Plus size={16} />
               Add Contact
             </button>
@@ -248,6 +302,9 @@ export function ContactsPage() {
             error={contactsError}
             selectedContactId={selectedContactId}
             onSelectContact={(contact) => setSelectedContactId((current) => current === contact.id ? null : contact.id)}
+            onEdit={handleEditContact}
+            onDelete={handleDeleteContact}
+            deletingContactId={deletingContactId}
             renderDetail={(contact) => (
               <ContactDetailPanel
                 contact={contact}
@@ -260,12 +317,93 @@ export function ContactsPage() {
 
       <ContactModal
         isOpen={isModalOpen}
-        isLoading={createContact.isPending}
+        isLoading={createContact.isPending || updateContact.isPending}
         applications={applications}
         scopedApplicationId={applicationId}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleCreateContact}
+        initialContact={editingContact}
+        onClose={() => { setIsModalOpen(false); setEditingContact(null); }}
+        onSubmit={handleSubmitContact}
       />
+    </div>
+  );
+}
+
+function ChecklistProgress({ application }: { application: Application }) {
+  const done = checklistDoneCount(application);
+  const percent = checklistProgressPercent(application);
+  const color = checklistProgressColor(done);
+
+  return (
+    <div className="mt-4 flex flex-col gap-1.5">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm font-semibold" style={{ color }}>
+          Checklist: {done}/{CHECKLIST_TOTAL}
+        </span>
+        <span className="text-xs" style={{ color: 'var(--ink-4)' }}>{percent}%</span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full" style={{ background: 'var(--soft)' }}>
+        <div
+          className="h-full rounded-full transition-all duration-300"
+          style={{ width: `${percent}%`, background: color }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function LinkedRecruitersSection({
+  links,
+  isLoading,
+  error,
+}: {
+  links: ApplicationContactLink[];
+  isLoading: boolean;
+  error: unknown;
+}) {
+  return (
+    <section className="rounded-xl border bg-white p-5" style={{ borderColor: 'var(--line)' }}>
+      <div className="mb-4">
+        <h2 className="text-base font-bold" style={{ color: 'var(--ink)' }}>Linked recruiters</h2>
+        <p className="text-xs" style={{ color: 'var(--ink-3)' }}>Recruiter contacts linked through this application</p>
+      </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-8">
+          <Spinner size="lg" />
+        </div>
+      ) : error ? (
+        <div className="rounded-xl border bg-white p-5" style={{ borderColor: '#FECACA' }}>
+          <p className="text-sm" style={{ color: '#B91C1C' }}>Could not load linked recruiters.</p>
+        </div>
+      ) : links.length === 0 ? (
+        <p className="text-sm" style={{ color: 'var(--ink-3)' }}>No linked recruiters yet.</p>
+      ) : (
+        <div className="flex flex-col divide-y" style={{ borderColor: 'var(--line)' }}>
+          {links.map((link) => link.contacts && (
+            <LinkedRecruiterRow key={link.id} recruiter={link.contacts} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function LinkedRecruiterRow({ recruiter }: { recruiter: Contact }) {
+  const status = recruiter.recruiter_status ? RECRUITER_LABELS[recruiter.recruiter_status] : 'Not set';
+
+  return (
+    <div className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>{contactName(recruiter)}</p>
+        <p className="text-xs" style={{ color: 'var(--ink-3)' }}>
+          {recruiter.agency || recruiter.email || recruiter.preferred_contact_method || 'Recruiter'}
+        </p>
+      </div>
+      <span
+        className="inline-flex w-fit items-center rounded px-2 py-0.5 text-[11px] font-semibold"
+        style={{ background: 'var(--soft)', color: 'var(--ink-2)' }}
+      >
+        {status}
+      </span>
     </div>
   );
 }

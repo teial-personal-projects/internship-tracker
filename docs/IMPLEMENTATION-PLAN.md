@@ -284,7 +284,7 @@ File: `migrations/v2_012_application_events.sql`
 - [x] 2.4.2 Progress bar + summary label (e.g. "8 of 18 complete")
 - [x] 2.4.3 Steps 6–12 rendered as N/A (muted) when `application_type = recruiter_assisted`
 - [x] 2.4.4 Steps 9–12 rendered as N/A when `application_type = referral`
-- [ ] 2.4.5 Each checkbox change PATCHes `checklist_state` on the application record
+- [x] 2.4.5 Each checkbox change PATCHes `checklist_state` on the application record
 
 > **Follow-up:** Render `Checklist` in the application-facing detail/panel once that surface exists, then verify checkbox changes PATCH `checklist_state`.
 
@@ -363,12 +363,20 @@ File: `migrations/v2_012_application_events.sql`
 
 ### 3.5 Per-application contacts panel (within Contacts tab)
 
-- [ ] 3.5.1 When navigating to Contacts tab from an Applications tab row, the Contacts tab pre-filters to that application
-- [ ] 3.5.2 Application header card: shows company, role, Application Type tag, checklist progress
-- [ ] 3.5.3 Go back and finish step 2.4.5
-- [ ] 3.5.4 Contacts sub-panel: list of contacts linked to that application with name, role, outreach status, quick-action button
-- [ ] 3.5.5 + Add Contact button scoped to that application
-- [ ] 3.5.6 Linked recruiters section: list of recruiter contacts linked via `application_contacts`
+- [x] 3.5.1 When navigating to Contacts tab from an Applications tab row, the Contacts tab pre-filters to that application
+- [x] 3.5.2 Application header card: shows company, role, Application Type tag, checklist progress
+- [x] 3.5.3 Go back and finish step 2.4.5
+- [x] 3.5.4 Contacts sub-panel: list of contacts linked to that application with name, role, outreach status, quick-action button
+- [x] 3.5.5 + Add Contact button scoped to that application
+- [x] 3.5.6 Linked recruiters section: list of recruiter contacts linked via `application_contacts`
+
+### 3.6 Edit and delete contacts
+
+- [x] 3.6.1 Add `deleteContact` to `web/src/api/contacts.api.ts`
+- [x] 3.6.2 Add `useDeleteContact` hook to `web/src/hooks/useContacts.ts`
+- [x] 3.6.3 Extend `ContactModal` with `initialContact` prop — pre-populates all fields; title becomes "Edit Contact"
+- [x] 3.6.4 Add `onEdit`, `onDelete`, and `deletingContactId` props to `ContactsList`; render Edit button and trash icon with AlertDialog confirm in each row
+- [x] 3.6.5 Wire up edit/delete handlers in `ContactsPage` — both the global list and the per-application scoped list
 
 ---
 
@@ -453,6 +461,14 @@ File: `migrations/v2_012_application_events.sql`
 - [ ] 5.4.2 Compact row per interview: type badge, date/time, interviewer, countdown
 - [ ] 5.4.3 "Not yet scheduled" placeholder for future stages
 - [ ] 5.4.4 + Add Interview button — opens modal pre-populated with the current application
+
+### 5.5 Edit and delete interviews
+
+- [ ] 5.5.1 Add `deleteInterview` to the interviews API client
+- [ ] 5.5.2 Add `useDeleteInterview` hook
+- [ ] 5.5.3 Extend the Interview modal with edit mode (pre-populate from selected interview)
+- [ ] 5.5.4 Add Edit button and trash icon with AlertDialog confirm to each interview row in both the global list and per-application panel
+- [ ] 5.5.5 Wire up edit/delete handlers in `InterviewsPage`
 
 ---
 

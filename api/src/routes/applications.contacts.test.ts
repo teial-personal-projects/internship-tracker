@@ -108,6 +108,40 @@ describe('application contact link routes', () => {
     vi.clearAllMocks();
   });
 
+  it('lists linked recruiter contacts for an application', async () => {
+    const db = createMockDb({
+      applications: [{ id: APPLICATION_ID, user_id: USER_ID }],
+      application_contacts: [{
+        id: 'link-1',
+        application_id: APPLICATION_ID,
+        contact_id: CONTACT_ID,
+        user_id: USER_ID,
+        contacts: {
+          id: CONTACT_ID,
+          first_name: 'Grace',
+          last_name: 'Hopper',
+          contact_type: 'recruiter',
+        },
+      }],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .get(`/api/applications/${APPLICATION_ID}/contacts`)
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0]).toMatchObject({
+      application_id: APPLICATION_ID,
+      contact_id: CONTACT_ID,
+      contacts: {
+        first_name: 'Grace',
+        last_name: 'Hopper',
+      },
+    });
+  });
+
   it('links recruiter contacts to applications', async () => {
     const db = createMockDb({
       applications: [{ id: APPLICATION_ID, user_id: USER_ID }],

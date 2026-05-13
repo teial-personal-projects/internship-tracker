@@ -46,6 +46,16 @@ export function useUpdateContact() {
   });
 }
 
+export function useDeleteContact() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => contactsApi.deleteContact(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: contactKeys.all });
+    },
+  });
+}
+
 export function useContactInteractions(id: string | null) {
   return useQuery({
     queryKey: id ? contactKeys.interactions(id) : ['contacts', 'interactions', 'disabled'],

@@ -198,6 +198,7 @@ export const CreateContactSchema = z.object({
   first_name: z.string().min(1, 'First name is required').max(MAX_FIRST_NAME_LENGTH),
   last_name: z.string().min(1, 'Last name is required').max(MAX_LAST_NAME_LENGTH),
   contact_type: ContactTypeSchema,
+  company: z.string().max(MAX_COMPANY_LENGTH).nullable().optional(),
   title: z.string().max(MAX_TITLE_LENGTH).nullable().optional(),
   email: z.string().email().max(MAX_EMAIL_LENGTH).nullable().optional(),
   phone: z.string().max(MAX_PHONE_LENGTH).nullable().optional(),

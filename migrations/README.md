@@ -39,6 +39,8 @@ Each file contains an `-- UP` block and a `-- DOWN` block.
 | `v2_009_notifications.sql` | Create `notification_preferences` and `notification_log` tables |
 | `v2_010_company_watchlist.sql` | Create `company_watchlist` table |
 | `v2_011_import_jobs.sql` | Import existing `jobs` data into `applications` |
+| `v2_012_application_events.sql` | Create `application_events` table |
+| `v2_013_contacts_company.sql` | Add `company` column to `contacts` table |
 
 ## Important rules
 
