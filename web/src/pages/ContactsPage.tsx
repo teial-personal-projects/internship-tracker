@@ -1,15 +1,86 @@
 import { AppHeader } from '@/components/AppHeader';
 import { ApplicationEventLog } from '@/components/ApplicationEventLog';
 import { ApplicationTypeBadge } from '@/components/ApplicationTypeBadge';
+import { ContactModal } from '@/components/ContactModal';
+import { ContactsList } from '@/components/ContactsList';
 import { Spinner } from '@/components/Spinner';
-import { useApplication } from '@/hooks/useApplications';
-import { ArrowLeft, Users } from 'lucide-react';
+import { useApplication, useApplications } from '@/hooks/useApplications';
+import { useContacts, useCreateContact } from '@/hooks/useContacts';
+import { OUTREACH_LABELS, RECRUITER_LABELS, contactName } from '@/lib/contactDisplay';
+import type { CreateContactSchemaType } from '@shared/schemas';
+import { ArrowLeft, Plus, Search } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export function ContactsPage() {
   const [searchParams] = useSearchParams();
   const applicationId = searchParams.get('application_id');
   const { data: application, isLoading, error } = useApplication(applicationId);
+  const [contactTypeFilter, setContactTypeFilter] = useState('');
+  const [outreachFilter, setOutreachFilter] = useState('');
+  const [recruiterFilter, setRecruiterFilter] = useState('');
+  const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState('created_at');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const contactParams = useMemo(() => ({
+    ...(applicationId && { application_id: applicationId }),
+    ...(contactTypeFilter && { contact_type: contactTypeFilter }),
+    ...(outreachFilter && { outreach_status: outreachFilter }),
+    ...(recruiterFilter && { recruiter_status: recruiterFilter }),
+  }), [applicationId, contactTypeFilter, outreachFilter, recruiterFilter]);
+
+  const { data: contacts = [], isLoading: contactsLoading, error: contactsError } = useContacts(contactParams);
+  const { data: applicationsData } = useApplications({ limit: 100 });
+  const createContact = useCreateContact();
+  const applications = applicationsData?.data ?? [];
+
+  const applicationById = useMemo(
+    () => new Map(applications.map((item) => [item.id, item])),
+    [applications],
+  );
+
+  const visibleContacts = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    const filtered = contacts.filter((contact) => {
+      if (!needle) return true;
+      const app = contact.application_id ? applicationById.get(contact.application_id) : undefined;
+      return [
+        contactName(contact),
+        contact.title,
+        contact.agency,
+        app?.company,
+      ].some((value) => value?.toLowerCase().includes(needle));
+    });
+
+    return [...filtered].sort((left, right) => {
+      if (sortBy === 'status') {
+        const leftStatus = left.contact_type === 'recruiter' ? left.recruiter_status : left.outreach_status;
+        const rightStatus = right.contact_type === 'recruiter' ? right.recruiter_status : right.outreach_status;
+        return (leftStatus ?? '').localeCompare(rightStatus ?? '');
+      }
+      if (sortBy === 'company') {
+        const leftCompany = left.application_id ? applicationById.get(left.application_id)?.company ?? '' : '';
+        const rightCompany = right.application_id ? applicationById.get(right.application_id)?.company ?? '' : '';
+        return leftCompany.localeCompare(rightCompany);
+      }
+      if (sortBy === 'date_of_last_outreach') {
+        return (right.date_of_last_outreach ?? '').localeCompare(left.date_of_last_outreach ?? '');
+      }
+      return (right.created_at ?? '').localeCompare(left.created_at ?? '');
+    });
+  }, [applicationById, contacts, search, sortBy]);
+
+  async function handleCreateContact(input: CreateContactSchemaType) {
+    try {
+      await createContact.mutateAsync(input);
+      setIsModalOpen(false);
+      toast.success('Contact added');
+    } catch {
+      toast.error('Could not add contact');
+    }
+  }
 
   if (applicationId) {
     return (
@@ -51,11 +122,38 @@ export function ContactsPage() {
                   </div>
                 </section>
 
+                <section className="rounded-xl border bg-white p-5" style={{ borderColor: 'var(--line)' }}>
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                      <h2 className="text-base font-bold" style={{ color: 'var(--ink)' }}>Linked contacts</h2>
+                      <p className="text-xs" style={{ color: 'var(--ink-3)' }}>Contacts scoped to this application</p>
+                    </div>
+                    <button type="button" className="btn-primary inline-flex items-center gap-2 text-sm px-4 py-2" onClick={() => setIsModalOpen(true)}>
+                      <Plus size={16} />
+                      Add Contact
+                    </button>
+                  </div>
+                  <ContactsList
+                    contacts={visibleContacts}
+                    applicationById={applicationById}
+                    isLoading={contactsLoading}
+                    error={contactsError}
+                  />
+                </section>
+
                 <ApplicationEventLog applicationId={application.id} />
               </>
             )}
           </div>
         </main>
+        <ContactModal
+          isOpen={isModalOpen}
+          isLoading={createContact.isPending}
+          applications={applications}
+          scopedApplicationId={applicationId}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleCreateContact}
+        />
       </div>
     );
   }
@@ -63,18 +161,93 @@ export function ContactsPage() {
   return (
     <div className="flex h-screen flex-col" style={{ background: 'var(--bg)' }}>
       <AppHeader />
-      <main className="flex-1 flex flex-col items-center justify-center gap-3 p-6 pb-20 md:pb-6">
-        <div
-          className="w-14 h-14 rounded-2xl flex items-center justify-center"
-          style={{ background: 'var(--soft)' }}
-        >
-          <Users size={26} strokeWidth={1.5} style={{ color: 'var(--ink-3)' }} />
+      <main className="flex-1 overflow-y-auto p-3 sm:p-4 pb-20 md:pb-6">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-xl font-bold" style={{ color: 'var(--ink)' }}>Contacts</h1>
+              <p className="text-sm" style={{ color: 'var(--ink-3)' }}>
+                Company contacts and recruiters across your applications.
+              </p>
+            </div>
+            <button type="button" className="btn-primary inline-flex items-center gap-2 text-sm px-4 py-2" onClick={() => setIsModalOpen(true)}>
+              <Plus size={16} />
+              Add Contact
+            </button>
+          </div>
+
+          <section className="rounded-xl border bg-white p-3 sm:p-4" style={{ borderColor: 'var(--line)' }}>
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+                <div className="relative min-w-0 flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--ink-4)' }} />
+                  <input
+                    className="field-input pl-9"
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Search by contact or company..."
+                  />
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    ['', 'All'],
+                    ['company_contact', 'Company'],
+                    ['recruiter', 'Recruiter'],
+                  ].map(([value, label]) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => setContactTypeFilter(value)}
+                      className="rounded-lg border px-3 py-2 text-sm font-medium"
+                      style={{
+                        borderColor: contactTypeFilter === value ? 'var(--accent)' : 'var(--line)',
+                        background: contactTypeFilter === value ? 'var(--accent-soft)' : 'white',
+                        color: contactTypeFilter === value ? 'var(--accent-dark)' : 'var(--ink-2)',
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <select className="field-select" value={outreachFilter} onChange={(event) => setOutreachFilter(event.target.value)}>
+                  <option value="">All outreach statuses</option>
+                  {Object.entries(OUTREACH_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+                <select className="field-select" value={recruiterFilter} onChange={(event) => setRecruiterFilter(event.target.value)}>
+                  <option value="">All recruiter statuses</option>
+                  {Object.entries(RECRUITER_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+                <select className="field-select" value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
+                  <option value="created_at">Sort by date added</option>
+                  <option value="status">Sort by status</option>
+                  <option value="company">Sort by company</option>
+                  <option value="date_of_last_outreach">Sort by last outreach</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <ContactsList
+            contacts={visibleContacts}
+            applicationById={applicationById}
+            isLoading={contactsLoading}
+            error={contactsError}
+          />
         </div>
-        <h1 className="text-xl font-bold" style={{ color: 'var(--ink)' }}>Contacts</h1>
-        <p className="text-sm text-center max-w-xs" style={{ color: 'var(--ink-3)' }}>
-          Your company contacts and recruiters will appear here.
-        </p>
       </main>
+
+      <ContactModal
+        isOpen={isModalOpen}
+        isLoading={createContact.isPending}
+        applications={applications}
+        scopedApplicationId={applicationId}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleCreateContact}
+      />
     </div>
   );
 }

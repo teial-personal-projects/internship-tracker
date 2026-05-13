@@ -342,15 +342,15 @@ File: `migrations/v2_012_application_events.sql`
 
 ### 3.3 Contacts tab UI
 
-- [ ] 3.3.1 Create `web/src/pages/ContactsPage.tsx`
-- [ ] 3.3.2 Contact list view: rows show contact_type badge, name, title/agency, linked company, outreach/recruiter status, date of last outreach
-- [ ] 3.3.3 Filter bar: contact_type toggle (All / Company / Recruiter), outreach_status filter, recruiter_status filter
-- [ ] 3.3.4 Search by contact name or company
-- [ ] 3.3.5 Sort controls: status, company, date added, date of last outreach
-- [ ] 3.3.6 Color-coded outreach status tags per PRD §2.8
-- [ ] 3.3.7 Add Contact button — opens modal with contact_type selector; form fields change based on type
-- [ ] 3.3.8 Company contact form fields: application selector, outreach_status, how_found
-- [ ] 3.3.9 Recruiter form fields: agency, preferred_contact_method, recruiter_status
+- [x] 3.3.1 Create `web/src/pages/ContactsPage.tsx`
+- [x] 3.3.2 Contact list view: rows show contact_type badge, name, title/agency, linked company, outreach/recruiter status, date of last outreach
+- [x] 3.3.3 Filter bar: contact_type toggle (All / Company / Recruiter), outreach_status filter, recruiter_status filter
+- [x] 3.3.4 Search by contact name or company
+- [x] 3.3.5 Sort controls: status, company, date added, date of last outreach
+- [x] 3.3.6 Color-coded outreach status tags per PRD §2.8
+- [x] 3.3.7 Add Contact button — opens modal with contact_type selector; form fields change based on type
+- [x] 3.3.8 Company contact form fields: application selector, outreach_status, how_found
+- [x] 3.3.9 Recruiter form fields: agency, preferred_contact_method, recruiter_status
 
 ### 3.4 Contact detail panel
 
