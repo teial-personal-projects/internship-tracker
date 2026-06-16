@@ -1,16 +1,17 @@
 # Track My Application v2.0 — Implementation Plan
 
-**Last updated:** April 28, 2026
+**Last updated:** June 16, 2026
 **Branch strategy:** Feature branches off `dev`, merged to `dev`, promoted to `main` per phase.
 **Migration strategy:** Numbered versioned SQL files in `migrations/`. Each file has an `-- UP` block and a `-- DOWN` block. Run UP sequentially; run DOWN in reverse to rollback.
 
 > **Checkbox legend**
 >
-> - `[ ]` — not started
-> - `[x]` — complete
+> - `[ ]` not started
+> - `[x]` complete
+
+**Scope (June 2026).** Interview Tracker, In-App Notifications, and Playbook moved to `IMPLEMENTATION-PLAN-v3.md`. The Job Radar is folded in here as Phases 6 through 12, directly after Companies To Watch (Phase 5), since it builds on the watchlist and the promote-to-application flow. Phases are renumbered contiguously. Radar notification alerts are specified in `IMPLEMENTATION-PLAN-v3.md` (Phase 14), since they require In-App Notifications.
 
 ---
-
 ## Phase DR — Design System & Visual Refresh
 
 *Targets the current v1 codebase. No schema, API, or data model changes. Ship as a standalone PR before starting any v2 feature phases. Reference: `docs/DESIGN_SYSTEM.md` — Terracotta Daylight direction.*
@@ -422,203 +423,219 @@ File: `migrations/v2_012_application_events.sql`
 
 ---
 
-## Phase 5 — Interview Tracker
+## Phase 5 — Companies To Watch
 
-### 5.1 API — interviews routes
+### 5.1 API — watchlist routes
 
-- [ ] 5.1.1 Create `api/src/routes/interviews.ts`
-- [ ] 5.1.2 `GET /api/interviews` — list with `?type`, `?status`, `?application_id` filters; sorted by `scheduled_at ASC`
-- [ ] 5.1.3 `POST /api/interviews` — create; triggers checklist advance and auto-task creation on insert
-- [ ] 5.1.4 `GET /api/interviews/:id` — ownership check
-- [ ] 5.1.5 `PATCH /api/interviews/:id` — update fields, status, outcome
-- [ ] 5.1.6 `DELETE /api/interviews/:id` — ownership check
-- [ ] 5.1.7 Register in `app.ts`
+- [ ] 5.1.1 Create `api/src/routes/watchlist.ts`
+- [ ] 5.1.2 `GET /api/watchlist` — list with `?search`, `?priority`, `?target_apply_year` filters; ordered by `added DESC`
+- [ ] 5.1.3 `POST /api/watchlist` — create entry; validate with `CreateWatchlistEntrySchema`
+- [ ] 5.1.4 `GET /api/watchlist/:id` — ownership check
+- [ ] 5.1.5 `PATCH /api/watchlist/:id` — update fields
+- [ ] 5.1.6 `DELETE /api/watchlist/:id` — ownership check
+- [ ] 5.1.7 `POST /api/watchlist/:id/promote` — create an `applications` record from `company_name` and `industry`; delete the watchlist entry; return the new application ID
+- [ ] 5.1.8 Register in `app.ts`
+- [ ] 5.1.9 Unit test: `promote` returns the new application ID and the watchlist entry no longer exists after the call
+- [ ] 5.1.10 Unit test: `promote` on a non-existent entry returns 404; on another user's entry returns 403
 
-### 5.2 Interview business logic service
+### 5.2 Companies To Watch UI
 
-- [ ] 5.2.1 Create `api/src/services/interviewTriggers.ts`
-- [ ] 5.2.2 `onInterviewCreated(interview, userId)` — dispatches checklist advance and task creation
-- [ ] 5.2.3 Checklist advance: update `checklist_state` on the linked application per PRD §5.6 rules
-- [ ] 5.2.4 Task creation: create prep and reminder tasks per PRD §5.6 table
-- [ ] 5.2.5 Call this service from the POST /api/interviews handler after successful insert
-- [ ] 5.2.6 Unit test: `onInterviewCreated` with `phone_screen` creates a prep task (due 1 day before) and a thank-you task (due same day as interview)
-- [ ] 5.2.7 Unit test: `onInterviewCreated` with `technical` creates a review-topics task (due 2 days before) and no thank-you task
-- [ ] 5.2.8 Unit test: `onInterviewCreated` with any type advances `checklist_state` step 15 on the linked application
-
-### 5.3 Global Interviews tab UI
-
-- [ ] 5.3.1 Create `web/src/pages/InterviewsPage.tsx`
-- [ ] 5.3.2 Two sections: Upcoming (sorted asc) and Completed (muted, sorted desc)
-- [ ] 5.3.3 Filter bar: All, Phone Screen, Technical, On Site, Final Round — each with count badge
-- [ ] 5.3.4 Each row: completion checkbox, interview type badge, company logo/initials, company, role title, Application Type tag, countdown label
-- [ ] 5.3.5 Clicking a row expands an inline detail panel: scheduled date/time, interviewer, location/link, notes, outcome
-- [ ] 5.3.6 Prep reminder callout at top of tab when any interview is within 24 hours
-- [ ] 5.3.7 Completing an interview (checkbox click): prompts for outcome before marking done
-
-### 5.4 Per-application interview panel
-
-- [ ] 5.4.1 Add Interviews sub-panel to the application detail section in the Contacts tab
-- [ ] 5.4.2 Compact row per interview: type badge, date/time, interviewer, countdown
-- [ ] 5.4.3 "Not yet scheduled" placeholder for future stages
-- [ ] 5.4.4 + Add Interview button — opens modal pre-populated with the current application
-
-### 5.5 Edit and delete interviews
-
-- [ ] 5.5.1 Add `deleteInterview` to the interviews API client
-- [ ] 5.5.2 Add `useDeleteInterview` hook
-- [ ] 5.5.3 Extend the Interview modal with edit mode (pre-populate from selected interview)
-- [ ] 5.5.4 Add Edit button and trash icon with AlertDialog confirm to each interview row in both the global list and per-application panel
-- [ ] 5.5.5 Wire up edit/delete handlers in `InterviewsPage`
+- [ ] 5.2.1 Create `web/src/pages/WatchlistPage.tsx`
+- [ ] 5.2.2 List view: rows show company name, industry badge, priority dot, target apply year, one-line notes preview
+- [ ] 5.2.3 Search bar: filter by company name as user types
+- [ ] 5.2.4 Filter controls: priority dropdown, target apply year input
+- [ ] 5.2.5 Sort controls: date added, company name, priority, target apply year
+- [ ] 5.2.6 Add Company button — opens modal with all watchlist entry fields
+- [ ] 5.2.7 Edit action on each row — opens prefilled modal
+- [ ] 5.2.8 Delete action — single confirmation prompt before removal
+- [ ] 5.2.9 "Start Application" button on each row — calls `POST /api/watchlist/:id/promote`; on success, navigate to the new application in the Applications tab
+- [ ] 5.2.10 Empty state: instructional text explaining the purpose of the list with a primary "Add a Company" CTA
+- [ ] 5.2.11 Add `/watchlist` route to `web/src/App.tsx`
+- [ ] 5.2.12 Add "Companies To Watch" item to `HamburgerMenu.tsx` linking to `/watchlist`
 
 ---
 
-## Phase 6 — In-App Notifications
+> **What this is.** The job radar automates Companies To Watch. Instead of adding a company and checking its careers page by hand, a scheduled poller reads each company's public ATS feed, normalizes the postings, filters them to your criteria (senior and remote or LA), and surfaces fresh matches you promote into an application with the promote flow that already exists. It reuses the `applications` table, the watchlist promote pattern, and, once v3 lands, the notification pipeline. A first version ships without alerts and surfaces new roles through a Discover list with a NEW badge. The alerting phase itself is specified in `IMPLEMENTATION-PLAN-v3.md` (Phase 14), since it depends on In-App Notifications.
 
-*No email sending in v2.0. Notifications are written to `notification_log` at the moment triggering events occur. Email delivery is deferred to v3.0 — see `implementation-plan-v3.md`.*
+---
+## Phase 6. Schema additions
 
-### 6.1 API — notifications routes
+*All changes are additive. The `applications` and `company_watchlist` base tables are extended, not modified destructively. One migration file, following the existing versioned convention.*
 
-- [ ] 6.1.1 Create `api/src/routes/notifications.ts`
-- [ ] 6.1.2 `GET /api/notifications` — list notifications for req.user.id; support `?unread_only=true` filter
-- [ ] 6.1.3 `PATCH /api/notifications/read` — mark all notifications read for req.user.id (sets `read_at = now()`)
-- [ ] 6.1.4 `PATCH /api/notifications/:id/read` — mark a single notification read; ownership check
-- [ ] 6.1.5 `GET /api/notifications/preferences` — return preferences for req.user.id (or defaults if none exist)
-- [ ] 6.1.6 `PUT /api/notifications/preferences` — upsert notification preferences; validate with Zod schema
-- [ ] 6.1.7 Register in `app.ts`
+### 6.1 Migration radar_001
 
-### 6.2 Notification creation service
+File: `migrations/radar_001_job_radar.sql`
 
-- [ ] 6.2.1 Create `api/src/services/notificationService.ts` — `createNotification(userId, type, entityId, message)`
-- [ ] 6.2.2 Before inserting, check `notification_preferences.enabled` and the relevant type toggle; skip if off
-- [ ] 6.2.3 Deduplicate: skip insert if an unread notification for the same `(user_id, notification_type, source_id)` already exists
-- [ ] 6.2.4 Call `createNotification` from existing trigger points: task auto-generation service, overdue escalation job, interview trigger service
-- [ ] 6.2.5 Unit test: `createNotification` skips insert when an unread notification for the same `(user_id, notification_type, source_id)` already exists
-- [ ] 6.2.6 Unit test: `createNotification` skips insert when `notification_preferences.enabled = false`
-- [ ] 6.2.7 Unit test: `createNotification` skips insert when the relevant type toggle (e.g. `notify_overdue_tasks`) is false even if the master toggle is on
+- [ ] 6.1.1 Create `ats_type_enum` (`greenhouse`, `lever`, `ashby`, `smartrecruiters`, `pinpoint`, `welcomekit`, `custom`)
+- [ ] 6.1.2 Create `posting_status_enum` (`new`, `seen`, `dismissed`, `promoted`)
+- [ ] 6.1.3 `ALTER TABLE company_watchlist` add `ats_type`, `ats_board_token`, `radar_enabled` (boolean default false), `last_polled_at`
+- [ ] 6.1.4 Create `discovered_postings` table: `id`, `user_id`, `watchlist_id` FK, `company_name`, `external_job_id`, `title`, `location`, `remote_status`, `url`, `posted_at`, `first_seen_at` default now, `status` (posting_status_enum default new), `raw_payload` jsonb
+- [ ] 6.1.5 Add UNIQUE constraint on `(watchlist_id, external_job_id)` to dedupe sightings
+- [ ] 6.1.6 Create indexes: `user_id`, `status`, `first_seen_at`, `watchlist_id`
+- [ ] 6.1.7 Add `updated_at` trigger
+- [ ] 6.1.8 Write DOWN block: drop the table, the enums, and the added watchlist columns in reverse order
 
-### 6.3 Notification bell UI (header)
+### 6.2 Shared types
 
-- [ ] 6.3.1 Add bell icon to `web/src/components/AppHeader.tsx`
-- [ ] 6.3.2 Fetch unread count from `GET /api/notifications?unread_only=true` on mount and on tab focus
-- [ ] 6.3.3 Show red badge with count when unread count > 0; hide badge when count is 0
-- [ ] 6.3.4 Clicking bell opens a dropdown panel (max 300px wide, max 400px tall, scrollable)
-- [ ] 6.3.5 Panel lists up to 20 most recent notifications: type icon, message, relative timestamp, navigation link
-- [ ] 6.3.6 Opening panel calls `PATCH /api/notifications/read` to mark all read and clear badge
-- [ ] 6.3.7 Each notification row is a link — clicking navigates to the relevant application, task, or interview
-
-### 6.4 Notification preferences UI
-
-- [ ] 6.4.1 Create `web/src/pages/NotificationsPage.tsx`
-- [ ] 6.4.2 Master on/off toggle — disables all other controls when off
-- [ ] 6.4.3 Individual toggles: overdue tasks, upcoming interviews, follow-up due, recruiter no response
-- [ ] 6.4.4 Save button PUTs to `/api/notifications/preferences`
-- [ ] 6.4.5 Success/error toast on save
-- [ ] 6.4.6 Page accessible from hamburger menu → Notification settings
+- [ ] 6.2.1 Add Zod schemas `DiscoveredPosting` and `RadarSource` in `shared/src/schemas/`
+- [ ] 6.2.2 Export both from `shared/src/index.ts`
 
 ---
 
-## Phase 7 — Playbook Page
+## Phase 7. ATS adapter layer
 
-### 7.1 Playbook content
+*The core abstraction. Each ATS returns a different JSON shape, so one adapter per type maps to a single normalized posting. Greenhouse first, since it covers seven of your current targets.*
 
-- [ ] 7.1.1 Create `web/src/pages/PlaybookPage.tsx`
-- [ ] 7.1.2 Render all 7 sections from PRD §7 as a scrollable, readable reference page
-- [ ] 7.1.3 Sections: 4-step process, Cover letter writing guide, Where to apply, Double-down email, Follow-up email, Using templates, Per-application checklist reference
-- [ ] 7.1.4 Step 2 heading explicitly labels the "in" as "the cover letter differentiator"
-- [ ] 7.1.5 Template section: links to the Contacts tab with a "Manage your templates →" CTA
-- [ ] 7.1.6 Checklist section: read-only numbered reference (no interactive checkboxes); CTA links to the application's checklist in the Contacts tab
-- [ ] 7.1.7 Page is accessible from the hamburger menu only — not a primary tab
+### 7.1 Adapter interface and normalizer
 
-### 7.2 Mobile layout
+- [ ] 7.1.1 Create `api/src/radar/adapters/types.ts` defining `AtsAdapter` with `fetch(boardToken): Promise<NormalizedPosting[]>`
+- [ ] 7.1.2 Define `NormalizedPosting`: `externalId`, `title`, `location`, `remoteStatus`, `url`, `postedAt`, `raw`
+- [ ] 7.1.3 Create `api/src/radar/normalize.ts` with location parsing and a remote-status detector (remote US, LA, onsite, unknown)
 
-- [ ] 7.2.1 Playbook stacks to single-column on viewports below 768px
-- [ ] 7.2.2 Tables reflow to card layout or horizontal scroll on mobile
-- [ ] 7.2.3 Sticky section nav (optional for desktop; hidden on mobile)
+### 7.2 Greenhouse adapter
 
----
+- [ ] 7.2.1 Create `greenhouse.ts`: GET `https://boards-api.greenhouse.io/v1/boards/{token}/jobs?content=true`, map `jobs[]` fields (`id`, `title`, `location.name`, `absolute_url`, `updated_at`)
+- [ ] 7.2.2 Unit test against a saved Greenhouse fixture payload (Khan, Newsela, CodePath, Outschool, Guild, Learneo, GoGuardian all use this)
 
-## Phase 8 — Companies To Watch
+### 7.3 Additional adapters
 
-### 8.1 API — watchlist routes
+- [ ] 7.3.1 Lever adapter: GET `https://api.lever.co/v0/postings/{site}?mode=json` (Age of Learning)
+- [ ] 7.3.2 Ashby adapter: the posting-api job board endpoint (Instructure)
+- [ ] 7.3.3 SmartRecruiters adapter: the public postings API (Turnitin)
+- [ ] 7.3.4 Pinpoint and Welcome Kit adapters, or an HTML fallback if no clean JSON feed (Desmos, UPchieve)
+- [ ] 7.3.5 Custom-site fallback for Nerdy (`careers.varsitytutors.com`)
+- [ ] 7.3.6 Unit test each adapter against a saved fixture
 
-- [ ] 8.1.1 Create `api/src/routes/watchlist.ts`
-- [ ] 8.1.2 `GET /api/watchlist` — list with `?search`, `?priority`, `?target_apply_year` filters; ordered by `added DESC`
-- [ ] 8.1.3 `POST /api/watchlist` — create entry; validate with `CreateWatchlistEntrySchema`
-- [ ] 8.1.4 `GET /api/watchlist/:id` — ownership check
-- [ ] 8.1.5 `PATCH /api/watchlist/:id` — update fields
-- [ ] 8.1.6 `DELETE /api/watchlist/:id` — ownership check
-- [ ] 8.1.7 `POST /api/watchlist/:id/promote` — create an `applications` record from `company_name` and `industry`; delete the watchlist entry; return the new application ID
-- [ ] 8.1.8 Register in `app.ts`
-- [ ] 8.1.9 Unit test: `promote` returns the new application ID and the watchlist entry no longer exists after the call
-- [ ] 8.1.10 Unit test: `promote` on a non-existent entry returns 404; on another user's entry returns 403
+### 7.4 Adapter registry
 
-### 8.2 Companies To Watch UI
-
-- [ ] 8.2.1 Create `web/src/pages/WatchlistPage.tsx`
-- [ ] 8.2.2 List view: rows show company name, industry badge, priority dot, target apply year, one-line notes preview
-- [ ] 8.2.3 Search bar: filter by company name as user types
-- [ ] 8.2.4 Filter controls: priority dropdown, target apply year input
-- [ ] 8.2.5 Sort controls: date added, company name, priority, target apply year
-- [ ] 8.2.6 Add Company button — opens modal with all watchlist entry fields
-- [ ] 8.2.7 Edit action on each row — opens prefilled modal
-- [ ] 8.2.8 Delete action — single confirmation prompt before removal
-- [ ] 8.2.9 "Start Application" button on each row — calls `POST /api/watchlist/:id/promote`; on success, navigate to the new application in the Applications tab
-- [ ] 8.2.10 Empty state: instructional text explaining the purpose of the list with a primary "Add a Company" CTA
-- [ ] 8.2.11 Add `/watchlist` route to `web/src/App.tsx`
-- [ ] 8.2.12 Add "Companies To Watch" item to `HamburgerMenu.tsx` linking to `/watchlist`
+- [ ] 7.4.1 Map `ats_type` to the right adapter; throw a clear error on an unknown type
 
 ---
 
-## Phase 9 — Mobile Polish & Cross-Browser QA
+## Phase 8. Ingestion job
 
-- [ ] 9.1 Verify all pages render correctly on iPhone 14 viewport (390×844)
-- [ ] 9.2 Verify all pages render correctly on Android mid-range viewport (360×780)
-- [ ] 9.3 Bottom navigation bar is fixed and does not overlap content on any mobile viewport
-- [ ] 9.4 Modals and drawers are full-screen on mobile
-- [ ] 9.5 All form inputs are at least 44px tap target height
-- [ ] 9.6 Touch scrolling works on all lists (application list, contact list, task list, interview list, watchlist)
-- [ ] 9.7 Filter bars scroll horizontally on mobile without wrapping
-- [ ] 9.8 Checklist checkboxes are tappable on mobile
-- [ ] 9.9 Empty states display correctly on all viewports
-- [ ] 9.10 Test in Chrome, Firefox, and Safari (desktop)
-- [ ] 9.11 Verify no horizontal overflow on any page at 320px viewport width
+### 8.1 Poller
 
----
-
-## Phase 10 — Final Wiring & End-to-End Testing
-
-- [ ] 10.1 Final end-to-end test: add application → set type → add contact → update outreach status → verify task auto-created → mark task complete → add interview → verify checklist auto-advanced
-- [ ] 10.2 End-to-end test: add company to watchlist → promote to application → verify application appears in Applications tab and watchlist entry is removed
-- [ ] 10.3 Verify date range filter returns only records with applied_date within the specified range; verify empty result when no records match
-- [ ] 10.4 Verify pagination: 26 records return page 1 (25 records) and page 2 (1 record) with correct `totalPages`
+- [ ] 8.1.1 Create `api/src/jobs/pollRadarSources.ts`
+- [ ] 8.1.2 Query `company_watchlist` rows where `radar_enabled = true`
+- [ ] 8.1.3 For each, resolve the adapter by `ats_type`, fetch, and normalize. Isolate errors per source so one bad board does not abort the run
+- [ ] 8.1.4 Apply the match filter (Phase 4) to each normalized posting
+- [ ] 8.1.5 Upsert into `discovered_postings` on `(watchlist_id, external_job_id)`; insert with status `new` on first sighting, leave existing rows untouched
+- [ ] 8.1.6 Update `last_polled_at` on the watchlist row
+- [ ] 8.1.7 Schedule via `node-cron` every 30 minutes, with a staggered start to stay polite to the boards
+- [ ] 8.1.8 Register job startup in `api/src/index.ts`
+- [ ] 8.1.9 Unit test: a new `external_job_id` inserts one row with status `new`; a repeat sighting inserts nothing
 
 ---
 
-## Phase 11 — Data Import from `jobs` table
+## Phase 9. Match filter
+
+### 9.1 Filter logic
+
+- [ ] 9.1.1 Create `api/src/radar/match.ts` with `matches(posting, criteria): boolean`
+- [ ] 9.1.2 MVP criteria hardcoded: title contains a seniority term (senior, staff, principal) and excludes junior or intern, AND location reads remote US or LA
+- [ ] 9.1.3 Unit test: senior remote passes; junior remote fails; senior onsite outside LA fails
+
+### 9.2 Configurable criteria (after MVP)
+
+- [ ] 9.2.1 Add a `radar_criteria` jsonb column (on `notification_preferences` or a small new table) for include and exclude keywords, location rules, and seniority terms
+- [ ] 9.2.2 Read per-user criteria in the matcher; fall back to the MVP defaults when none are set
+
+---
+
+## Phase 10. API routes
+
+### 10.1 Radar routes
+
+- [ ] 10.1.1 Create `api/src/routes/radar.ts`
+- [ ] 10.1.2 `GET /api/radar/postings` for `req.user.id` with `?status`, `?watchlist_id`, `?search`; sort `first_seen_at DESC`
+- [ ] 10.1.3 `PATCH /api/radar/postings/:id` to set status (`seen`, `dismissed`); ownership check
+- [ ] 10.1.4 `POST /api/radar/postings/:id/promote` creates an `applications` record from the posting (`company_name`, `title`, `url`, `source = radar`, `applied_date = null`), sets status `promoted`, and returns the new application id. Reuse the watchlist promote pattern from Phase 5
+- [ ] 10.1.5 Extend `PATCH /api/watchlist/:id` to set `ats_type`, `ats_board_token`, and `radar_enabled`
+- [ ] 10.1.6 Register in `app.ts`
+- [ ] 10.1.7 Unit test: promote creates an application and flips the posting to `promoted`; promote on another user's posting returns 403
+
+---
+
+## Phase 11. Discover UI
+
+### 11.1 Discover page
+
+- [ ] 11.1.1 Create `web/src/pages/RadarPage.tsx`, labeled Discover in navigation
+- [ ] 11.1.2 List new matched postings grouped by company, newest first, each with a NEW badge, posted and first-seen dates, and a remote tag
+- [ ] 11.1.3 Add to tracker button on each card calls promote, then navigates to the new application
+- [ ] 11.1.4 Dismiss button sets status `dismissed` and removes the card
+- [ ] 11.1.5 Filter bar: status, company, search
+- [ ] 11.1.6 Empty state explaining how to enable radar on a watchlist company
+- [ ] 11.1.7 Add the `/radar` route to `App.tsx` and a Discover entry to `HamburgerMenu.tsx`
+
+### 11.2 Watchlist radar toggle
+
+- [ ] 11.2.1 Extend the Companies To Watch modal with ATS type, board token, and an Enable radar toggle
+- [ ] 11.2.2 Helper text on where to find the board token, pointing at the careers URL
+
+---
+
+## Phase 12. QA and verification
+
+- [ ] 12.1 Run the poller against the seven Greenhouse boards and confirm real postings land in `discovered_postings`
+- [ ] 12.2 Confirm dedupe: a second run inserts no duplicate rows
+- [ ] 12.3 Confirm the match filter keeps only senior remote or LA roles
+- [ ] 12.4 Promote a discovered posting and confirm it appears in the Applications tab with `source = radar`
+- [ ] 12.5 Confirm per-source error isolation: a deliberately bad board token does not abort the run
+
+---
+
+## Phase 13 — Mobile Polish & Cross-Browser QA
+
+- [ ] 13.1 Verify all pages render correctly on iPhone 14 viewport (390×844)
+- [ ] 13.2 Verify all pages render correctly on Android mid-range viewport (360×780)
+- [ ] 13.3 Bottom navigation bar is fixed and does not overlap content on any mobile viewport
+- [ ] 13.4 Modals and drawers are full-screen on mobile
+- [ ] 13.5 All form inputs are at least 44px tap target height
+- [ ] 13.6 Touch scrolling works on all lists (application list, contact list, task list, interview list, watchlist)
+- [ ] 13.7 Filter bars scroll horizontally on mobile without wrapping
+- [ ] 13.8 Checklist checkboxes are tappable on mobile
+- [ ] 13.9 Empty states display correctly on all viewports
+- [ ] 13.10 Test in Chrome, Firefox, and Safari (desktop)
+- [ ] 13.11 Verify no horizontal overflow on any page at 320px viewport width
+
+---
+
+## Phase 14 — Final Wiring & End-to-End Testing
+
+- [ ] 14.1 Final end-to-end test: add application → set type → add contact → update outreach status → verify task auto-created → mark task complete → add interview → verify checklist auto-advanced
+- [ ] 14.2 End-to-end test: add company to watchlist → promote to application → verify application appears in Applications tab and watchlist entry is removed
+- [ ] 14.3 Verify date range filter returns only records with applied_date within the specified range; verify empty result when no records match
+- [ ] 14.4 Verify pagination: 26 records return page 1 (25 records) and page 2 (1 record) with correct `totalPages`
+
+---
+
+## Phase 15 — Data Import from `jobs` table
 
 *Run this phase only after all features are complete and tested. The `jobs` table is read-only during this step — no records are deleted or modified.*
 
-### 11.1 Write import migration
+### 15.1 Write import migration
 
 File: `migrations/v2_011_import_jobs.sql`
 
-- [x] 11.1.1 Write `INSERT INTO applications (...) SELECT ... FROM jobs` mapping all overlapping columns
-- [x] 11.1.2 Map `job_status_enum` values to `application_status_enum` equivalents
-- [x] 11.1.3 Set `application_type = NULL` for all imported rows (user can set type after import)
-- [x] 11.1.4 Set `checklist_state = '{}'` for all imported rows
-- [x] 11.1.5 Write DOWN block: `DELETE FROM applications WHERE id IN (SELECT id FROM jobs)` (idempotent rollback)
+- [x] 15.1.1 Write `INSERT INTO applications (...) SELECT ... FROM jobs` mapping all overlapping columns
+- [x] 15.1.2 Map `job_status_enum` values to `application_status_enum` equivalents
+- [x] 15.1.3 Set `application_type = NULL` for all imported rows (user can set type after import)
+- [x] 15.1.4 Set `checklist_state = '{}'` for all imported rows
+- [x] 15.1.5 Write DOWN block: `DELETE FROM applications WHERE id IN (SELECT id FROM jobs)` (idempotent rollback)
 
-### 11.2 Verify import
+### 15.2 Verify import
 
-- [ ] 11.2.1 Confirm row count in `applications` matches row count in `jobs`
-- [ ] 11.2.2 Spot-check 5–10 records across both tables to verify field mapping
-- [ ] 11.2.3 Confirm `jobs` table is unchanged after import
+- [ ] 15.2.1 Confirm row count in `applications` matches row count in `jobs`
+- [ ] 15.2.2 Spot-check 5–10 records across both tables to verify field mapping
+- [ ] 15.2.3 Confirm `jobs` table is unchanged after import
 
-### 11.3 Switch frontend to `applications`
+### 15.3 Switch frontend to `applications`
 
-- [ ] 11.3.1 Remove any remaining references to `/api/jobs` in the frontend
-- [ ] 11.3.2 Confirm the Applications tab loads data exclusively from `/api/applications`
-- [ ] 11.3.3 Smoke-test existing records appear correctly in the new Applications tab UI
+- [ ] 15.3.1 Remove any remaining references to `/api/jobs` in the frontend
+- [ ] 15.3.2 Confirm the Applications tab loads data exclusively from `/api/applications`
+- [ ] 15.3.3 Smoke-test existing records appear correctly in the new Applications tab UI
 
 ---
 
@@ -638,6 +655,9 @@ To deploy schema changes before UI changes are live, each new API route can chec
 
 ---
 
+### Rolling back the Job Radar
+
+Run the DOWN block of `radar_001_job_radar.sql` to drop `discovered_postings`, the radar enums, and the added `company_watchlist` columns. The `applications` and `company_watchlist` base tables are otherwise untouched. Remove the poller registration from `api/src/index.ts` before rolling back to avoid startup errors.
 ## Environment Variables (new in v2.0)
 
 Add to `.env.example`:
