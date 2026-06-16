@@ -692,7 +692,6 @@ UNIQUE constraint on `(application_id, contact_id)`.
 
 UNIQUE constraint on `(watchlist_id, external_job_id)`.
 
-
 ### 6.2 Indexes
 
 ```sql

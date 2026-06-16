@@ -81,7 +81,7 @@
 
 ## 3. Status → color mapping
 
-**Application stage**
+### Application stage
 
 | Stage          | fg              | bg              |
 | -------------- | --------------- | --------------- |
@@ -92,7 +92,7 @@
 | `offer`        | sage            | sage-soft       |
 | `rejected`     | rose            | rose-soft       |
 
-**Contact status**
+### Contact status
 
 | Status              | fg          | bg          |
 | ------------------- | ----------- | ----------- |
@@ -115,7 +115,7 @@
 - **Section gap:** 18 px between cards, 22–28 px before section headers
 - **Grid gap (stat strip):** 14 px
 
-**Shadows**
+### Shadows
 
 ```css
 --shadow-sm: 0 1px 2px rgba(27,37,64,.04), 0 4px 16px rgba(27,37,64,.04);

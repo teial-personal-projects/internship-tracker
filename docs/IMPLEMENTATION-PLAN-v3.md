@@ -4,14 +4,15 @@
 **Status:** Future. Begin after v2.0 (descoped) is shipped.
 **Depends on:** All phases in `IMPLEMENTATION-PLAN-v2.md` complete.
 
-> **Checkbox legend**
->
-> - `[ ]` not started
-> - `[x]` complete
+Checkbox legend:
+
+- `[ ]` not started
+- `[x]` complete
 
 > **Scope note (June 2026).** Phases 5 through 7 were moved here intact from the original v2 plan, keeping their original numbers for traceability (Interview Tracker, In-App Notifications, Playbook). The email notification work that originally made up v3 follows as Phases 8 onward. Build in numeric order. Interviews and notifications must land before the email digest, which depends on both.
 
 ---
+
 ## Phase 5 — Interview Tracker
 
 ### 5.1 API — interviews routes
@@ -223,7 +224,6 @@ File: `migrations/v3_001_email_preferences.sql`
 
 ---
 
-
 ## Phase 14. Job radar alerts
 
 *Builds on the Job Radar (Phases 6 through 12 of `IMPLEMENTATION-PLAN-v2.md`) and the In-App Notifications in Phase 6 of this plan, and feeds the digest from Phase 10. Build after all three are in place.*
@@ -234,6 +234,7 @@ File: `migrations/v3_001_email_preferences.sql`
 - [ ] 14.4 Confirm a new matching role produces exactly one notification and respects the dedupe rule
 
 ---
+
 ## Rollback
 
 Roll back in reverse phase order. The interview, notification, and playbook phases (5 to 7) have their own migration DOWN blocks where applicable; run those first if rolling the whole release back. Then roll back the email schema:

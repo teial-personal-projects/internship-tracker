@@ -1,0 +1,4 @@
+node_modules
+shared/dist
+api/dist
+web/dist
