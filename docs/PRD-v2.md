@@ -3,16 +3,16 @@
 **Product:** track-my-app.com
 **Prepared by:** Teial Dickens
 **Date:** April 27, 2026
-**Version:** 2.0 — Revised Draft
+**Version:** 2.5 — Job Radar added; deferred features moved to v3
 **Status:** In Progress
 
 ---
 
 ## 1. Executive Summary
 
-Track My Application helps job seekers log applications and track statuses across the job search pipeline. Version 2.0 augments the platform with five new feature modules grounded in a proven outreach-driven application methodology — showing that a personalized cover letter, a same-day double-down email to a specific person at the company, and a structured follow-up process increases application-to-phone-screen conversion from roughly 2% to approximately 10%.
+Track My Application helps job seekers log applications and track statuses across the job search pipeline. Version 2.0 augments the platform with several new feature modules grounded in a proven outreach-driven application methodology — showing that a personalized cover letter, a same-day double-down email to a specific person at the company, and a structured follow-up process increases application-to-phone-screen conversion from roughly 2% to approximately 10%.
 
-The v2.0 feature set introduces a unified Contacts system (covering both company contacts and external recruiters), an Interview Tracker, an Action Items task queue, an Application Type classification field, a Playbook reference guide, and an In-App Notifications system. Navigation is simplified to four primary tabs with secondary items accessible via a menu.
+The v2.0 feature set introduces a unified Contacts system (covering both company contacts and external recruiters), an Action Items task queue, an Application Type classification field, a Companies To Watch research list, an Application Event Log, and a Job Radar that automatically surfaces fresh matching roles from monitored companies. The Interview Tracker, In-App Notifications, and Playbook originally drafted for v2.0 have moved to v3.0. Navigation keeps four primary tabs with secondary items in a menu.
 
 ---
 
@@ -51,7 +51,7 @@ Additionally, many job seekers work with external recruiters who have their own 
 - Support recruiter relationship management including notes, preferences, and templates
 - Automate follow-up reminders based on application date
 - Give users an action-item queue that reflects the proven 4-step method
-- Surface in-app alerts for overdue tasks, upcoming interviews, and follow-ups due
+- Automatically surface fresh matching job postings from a watchlist of monitored companies
 
 ---
 
@@ -67,16 +67,14 @@ Primary tabs (always visible):
 | --- | --- |
 | Applications (Apps on mobile) | Pipeline bar, application list, urgent tasks widget |
 | Contacts | Unified contact tracker — company contacts and recruiters in one view |
-| Interviews | Global interview tracker across all applications |
+| Discover | Job radar of fresh matching roles from monitored companies |
 | Action Items | Task queue driven by the outreach method |
 
 Overflow / hamburger menu (top-right):
 
 | Item | Contents |
 | --- | --- |
-| Playbook | Strategic application method reference guide |
 | Companies To Watch | Research watchlist of companies to apply to in the future |
-| Notifications | In-app notification preferences |
 | Profile | User profile settings |
 | Sign out | End session |
 
@@ -85,7 +83,7 @@ Overflow / hamburger menu (top-right):
 On viewports below 768px:
 
 - Primary tabs render as a **bottom navigation bar** with icon + label
-- Hamburger icon in the top-right header opens a slide-in drawer for Playbook, Companies To Watch, Notification settings, Profile, and Sign out
+- Hamburger icon in the top-right header opens a slide-in drawer for Companies To Watch, Profile, and Sign out
 - All tab content stacks to single-column
 - The tab bar never wraps or collapses — it scrolls horizontally if viewport is too narrow at any breakpoint
 
@@ -208,9 +206,9 @@ The existing Dashboard/Job Boards experience is consolidated into a single Appli
 
 #### 5.1 Layout (top to bottom)
 
-- Pipeline bar: segmented bar showing application count at each stage (Applied, Screening, Technical, On Site, Final Round, Offer). "Interview today" badge links to the Interviews tab.
+- Pipeline bar: segmented bar showing application count at each stage (Applied, Screening, Technical, On Site, Final Round, Offer).
 - Search and filter bar: text search by company name, Status dropdown, Application Type dropdown, Date Range picker (applied date from / to), + Add Application button
-- Application list: columnar list showing Date added, Company and role, Status badge, Application Type tag, Checklist progress (e.g. 8/18). Rows with active interviews are highlighted.
+- Application list: columnar list showing Date added, Company and role, Status badge, Application Type tag, Checklist progress (e.g. 8/18).
 - Server-side pagination at the bottom — default page size 25, with previous/next controls and a page indicator (e.g. "Page 2 of 5")
 - Recent contacts widget and Urgent action items widget side by side below the list
 
@@ -357,10 +355,6 @@ The Action Items tab gives users a single queue of everything that needs to happ
 | --- | --- | --- | --- |
 | Application status → Applied (Cold Strategic) | Send double-down email to [company] contact | High | Same day |
 | Contact outreach_status → Double-down sent | Send follow-up to [contact name] at [company] | High | +4 business days |
-| Phone Screen interview scheduled | Prepare 3–4 PS/TC stories for [company] screen | High | 1 day before screen |
-| Phone Screen interview scheduled | Send thank-you note to [interviewer] | Medium | Same day as interview |
-| Technical interview scheduled | Review expected technical topics | Medium | 2 days before |
-| On Site or Final Round scheduled | Review all prior interview notes | High | 1 day before |
 | Application added (no contact linked) | Find engineering lead at [company] for double-down | Medium | +1 day |
 | Follow-up task due date passes (still Open) | Priority escalates to High; title appends "(Overdue)" | High | Immediate |
 | Application type = Recruiter-Assisted, no recruiter update in 5 days | Follow up with recruiter about [company] | High | +5 days |
@@ -410,200 +404,6 @@ Application Type is a field on every application record. It controls which check
 | Cold Strategic | All 18 steps active |
 | Recruiter-Assisted | Steps 6–12 (contact-finding and double-down) marked N/A; 12 active steps |
 | Referral | Steps 9–12 (double-down and contact-finding) marked N/A; 14 active steps |
-
----
-
-### Feature 5: Interview Tracker
-
-#### 5.1 Overview
-
-The Interview Tracker provides a global view of all scheduled interviews across every application, plus a per-application interview panel inside the Contacts tab.
-
-#### 5.2 Interview record fields
-
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| interview_type | Enum | Yes | `phone_screen`, `technical`, `on_site`, `final_round`, `screening` |
-| application_id | FK | Yes | Links to application record |
-| scheduled_at | DateTime | Yes | Date and time |
-| interviewer_names | Text | No | Free text |
-| location_link | Text | No | Video URL, address, or phone number |
-| notes | Rich text | No | Prep notes, topics expected |
-| status | Enum | Yes | `scheduled`, `completed`, `cancelled` |
-| outcome | Enum | No | `passed`, `rejected`, `withdrawn`, `no_decision_yet`. Available only when status = `completed` |
-
-#### 5.3 Interview types and stage colors
-
-| Type | Badge color |
-| --- | --- |
-| Screening | Purple |
-| Phone Screen | Orange |
-| Technical | Blue |
-| On Site | Red |
-| Final Round | Green |
-
-#### 5.4 Global Interviews tab
-
-- Default sort: scheduled_at ascending, section break between Upcoming and Completed
-- Filter bar: All, Phone Screen, Technical, On Site, Final Round (with count badges)
-- Each row: completion checkbox, type badge, company logo/initials, company name, role title, Application Type tag, countdown (e.g. "Today", "in 3 days", "11 days ago")
-- Completed rows: muted opacity, moved to Completed section
-- Clicking a row expands an inline detail panel
-- Prep reminder callout at top when any interview is within 24 hours
-
-#### 5.5 Per-application interview panel
-
-Each application card in the Contacts tab shows an Interviews sub-panel with:
-
-- Compact row per interview: type badge, date/time, interviewer name, countdown
-- "Not yet scheduled" placeholder for future stages
-- \+ Add button to schedule a new interview without leaving the tab
-
-#### 5.6 Checklist auto-advance on interview scheduling
-
-| Interview scheduled | Checklist auto-check | Tasks auto-created |
-| --- | --- | --- |
-| Any type | Step 15 (move-on reminder) marked N/A | None |
-| Phone Screen | Steps 13–14 (follow-up steps) if not done | Prep task (1 day before), thank-you note (same day) |
-| Technical | None | Review technical topics task (2 days before) |
-| On Site / Final Round | Steps 16–17 pre-populated | Review all prior notes task (1 day before) |
-
----
-
-### Feature 6: In-App Notifications
-
-#### 6.1 Overview
-
-Users can configure which events trigger in-app alerts. Alerts appear inside the app — no emails are sent in v2.0. Email delivery is planned for v3.0.
-
-#### 6.2 Notification preferences
-
-Accessible from the hamburger menu → Notification settings. Each setting is stored per user in `notification_preferences`.
-
-| Setting | Type | Options |
-| --- | --- | --- |
-| Notifications enabled | Toggle | On / Off (master switch) |
-| Notify on overdue tasks | Toggle | On / Off |
-| Notify on upcoming interviews (within 24h) | Toggle | On / Off |
-| Notify when follow-up is due | Toggle | On / Off |
-| Notify when recruiter hasn't responded in 5 days | Toggle | On / Off |
-
-#### 6.3 In-app notification panel
-
-A notification bell icon in the app header shows an unread badge count. Clicking it opens a dropdown panel listing unread notifications, each showing:
-
-- Notification type icon
-- Short description (e.g. "Follow-up overdue — Acme Corp")
-- Relative timestamp (e.g. "2 hours ago")
-- Link that navigates directly to the relevant application, task, or interview
-
-Notifications are marked read when the panel is opened. A "Mark all read" action clears the badge.
-
-#### 6.4 Notification log
-
-Every in-app notification is stored in `notification_log`. A notification for a given source_id is not duplicated if one already exists unread for that entity.
-
-#### 6.5 Notification generation
-
-In-app notifications are created server-side by the same triggers that create tasks (see §6.4 business logic). Each trigger inserts a row into `notification_log` for the affected user. No background job or cron is required — notifications are written at the moment the triggering event occurs.
-
----
-
-### Feature 7: Playbook
-
-#### 7.1 Overview
-
-The Playbook is the strategic application method reference guide. It is accessed from the hamburger/overflow menu, not a primary tab, to keep the main navigation focused.
-
-#### 7.2 Content: The 4-step application process
-
-Every application should follow these four steps in order. Skipping any step significantly reduces your conversion rate.
-
-| Step | What to do | When |
-| --- | --- | --- |
-| 1 | Apply on the company website or LinkedIn with a strong resume and a personalized **cover letter** (application message). Use any saved cover letter templates from your Contacts if applicable. | Day 0 — when you submit |
-| 2 | Send a double-down email directly to a named person at the company (eng lead, CTO, or recruiter depending on company size) | Same day as application — do not wait |
-| 3 | Send a follow-up email as a reply to your double-down thread | 4–5 business days after applying, if no response |
-| 4 | If you land a phone screen, send a thank-you note to every person you spoke with | Within 24 hours of the call |
-
-#### 7.3 Writing the cover letter (your application message)
-
-The cover letter should be 120–150 words maximum. It is not a formal letter — think of it as a direct, confident message to a colleague. It has four parts:
-
-#### Part 1: Engineering credibility signal (include 2×)
-
-Show your value as an engineer. Reference something specific and real:
-
-- Open source project: name it, describe the problem in 5 words, note the dev community response
-- Talk or publication: name the talk and the venue. Italicize the title.
-- Mature technical opinion: reference a specific challenge (scaling, architecture) and your take on it
-- Prestigious school or prior company: put this in your signature rather than the body
-
-#### Part 2: Your personalized "in" — the cover letter differentiator (include 1×)
-
-This must be something you could only know if you genuinely researched the company — not from the job description. The "in" is what makes your cover letter a cover letter rather than a generic email.
-
-| Research method | What to look for | Example |
-| --- | --- | --- |
-| Engineering blog | A specific post by a named engineer | "I loved [Name]'s post on [topic]" |
-| Engineering lead's LinkedIn | Prior company, a talk, or post about current work | "Saw [Name]'s post about the team's shift to [tech]" |
-| Tech stack research | Unusual or interesting stack choices via Wappalyzer/StackShare | "Noticed the team's move to [tech]" |
-| Team member's current role | Project blurbs in their LinkedIn current role | "[Name]'s work on [project] caught my eye" |
-
-#### Part 3: Call to action (optional but recommended)
-
-Suggest specific availability. One sentence only.
-
-#### Part 4: Style rules
-
-| Do | Avoid |
-| --- | --- |
-| Keep under 150 words | Formal cover letter structure |
-| Use abbreviations: dev, AWS, eng | Spelling out every proper noun |
-| Use dashes and parentheses | Dense punctuation |
-| Sign off with "All best" or "Cheers" | "Sincerely" or "Best regards" |
-| "Hi there" or "Hi [Name]" | "To Whom It May Concern" |
-
-#### 7.4 Using templates
-
-Templates stored in your Contacts (under a company contact or recruiter record) can be reused directly from the Playbook or from the Action Items task view. When a task references a contact who has templates, a "Use template" shortcut surfaces in the task detail panel. Templates can be of type: Cover letter, Email format, Resume version, Intro pitch, or Other.
-
-#### 7.5 Sending the double-down email
-
-Sent the same day you apply. Short note forwarding your cover letter to a specific person at the company.
-
-#### Who to send it to
-
-| Company size | Target |
-| --- | --- |
-| < 20 people | CEO |
-| 20–200 | CTO or engineering lead |
-| 200–2000 | Engineering manager or lead for the relevant team |
-| Large / conglomerate | An engineer on the team — informational interview first |
-| Any size, if stuck | A technical recruiter at the company on LinkedIn |
-
-#### How to find the email address
-
-- Hunter.io — paste the company domain
-- Apollo.io — requires a Google or corporate email
-- RocketReach — useful fallback
-- Pattern matching from any known address
-- LinkedIn InMail as a fallback
-
-**Double-down structure:** Under 4 sentences. Reference the role title. State you applied, say you wanted to make sure it reached them, then paste your full cover letter below.
-
-#### 7.6 The follow-up email
-
-Send 4–5 business days after the double-down if no reply. Reply to the same thread.
-
-> Hi [Name] — did you get a chance to read this? Let me know if you did. All good either way.
-> — [Your name] | [LinkedIn] | [GitHub]
-
-#### 7.7 The per-application checklist
-
-Every application record has its own independent 18-step checklist. Checklist state is stored as a JSON blob on the application record and is scoped to that application.
-
-**Checklist data model:** JSON blob of 18 boolean flags keyed by step identifier stored on the `applications` table in `checklist_state`.
 
 ---
 
@@ -676,6 +476,54 @@ The event log appears on the application detail view as a vertical timeline orde
 #### 9.5 Adding events
 
 A user can log an event via an inline form directly in the timeline panel: event type dropdown, optional body text field, and an `occurred_at` field that defaults to the current date and time. No modal is required.
+
+---
+
+### Feature 10: Job Radar
+
+#### 10.1 Overview
+
+The Job Radar automates Companies To Watch. Instead of checking each company's careers page by hand, the system polls the public applicant tracking system (ATS) feed for every monitored company on a schedule, normalizes the postings, filters them to the user's criteria, and surfaces fresh matches in a Discover view. A matched role is promoted into an application with the same promote flow used by Companies To Watch. The radar is the discovery layer and does not send alerts in v2.0. Notification and email alerting for new matches is specified in `PRD-v3.md`.
+
+#### 10.2 Monitored sources
+
+Radar settings live on each Companies To Watch entry. A watchlist company becomes a radar source when the user supplies its ATS type and board token and enables the radar.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| ats_type | Enum | Yes | `greenhouse`, `lever`, `ashby`, `smartrecruiters`, `pinpoint`, `welcomekit`, `custom` |
+| ats_board_token | Text | Yes | The board identifier from the ATS URL |
+| radar_enabled | Boolean | Yes | Off by default; the poller reads only enabled sources |
+| last_polled_at | Timestamp | Auto | Updated after each poll |
+
+#### 10.3 Discovered postings
+
+Each normalized posting is stored once per source, deduped on the external job id.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| watchlist_id | FK | The monitored company the posting came from |
+| company_name | Text | Denormalized for display |
+| external_job_id | Text | The ATS job id; unique per source for dedupe |
+| title | Text | Role title |
+| location | Text | Raw location string from the ATS |
+| remote_status | Text | Parsed remote or LA classification |
+| url | Text | Direct link to the posting |
+| posted_at | Timestamp | From the ATS when available |
+| first_seen_at | Timestamp | When the radar first saw it; drives the apply-fast goal |
+| status | Enum | `new`, `seen`, `dismissed`, `promoted` |
+
+#### 10.4 Matching
+
+The poller keeps only postings that match the user's criteria. The v2.0 default keeps roles whose title signals seniority (senior, staff, or principal, never junior or intern) and whose location reads remote US or LA. Per-user criteria refinement is a fast-follow.
+
+#### 10.5 Discover surface
+
+The Discover tab lists new matched postings grouped by company, newest first, each with a NEW badge, the posted and first-seen dates, and a remote tag. Each card offers Add to tracker, which promotes the posting into an application and navigates to it, and Dismiss, which hides it. A filter bar narrows by status, company, and search.
+
+#### 10.6 Promote to application
+
+Add to tracker creates an `applications` record pre-populated with company name, title, and the posting URL, sets the posting status to `promoted`, and reuses the Companies To Watch promote pattern.
 
 ---
 
@@ -790,51 +638,6 @@ UNIQUE constraint on `(application_id, contact_id)`.
 | created_at | TIMESTAMPTZ | NOT NULL, default now() |
 | updated_at | TIMESTAMPTZ | NOT NULL, default now() |
 
-#### New table: `interviews`
-
-| Column | Type | Notes |
-| --- | --- | --- |
-| id | UUID PK | |
-| user_id | UUID FK | → `auth.users(id)` |
-| application_id | UUID FK | → `applications(id)` ON DELETE CASCADE |
-| interview_type | ENUM | `phone_screen`, `technical`, `on_site`, `final_round`, `screening` |
-| scheduled_at | TIMESTAMPTZ | NOT NULL |
-| interviewer_names | TEXT | nullable, max 500 |
-| location_link | TEXT | nullable, max 2048 |
-| notes | TEXT | nullable, max 5000 |
-| status | ENUM | `scheduled`, `completed`, `cancelled` |
-| outcome | ENUM | `passed`, `rejected`, `withdrawn`, `no_decision_yet`, nullable |
-| created_at | TIMESTAMPTZ | NOT NULL, default now() |
-| updated_at | TIMESTAMPTZ | NOT NULL, default now() |
-
-#### New table: `notification_preferences`
-
-| Column | Type | Notes |
-| --- | --- | --- |
-| id | UUID PK | |
-| user_id | UUID FK | → `auth.users(id)` UNIQUE |
-| enabled | BOOLEAN | NOT NULL, default true |
-| notify_overdue_tasks | BOOLEAN | NOT NULL, default true |
-| notify_upcoming_interviews | BOOLEAN | NOT NULL, default true |
-| notify_follow_up_due | BOOLEAN | NOT NULL, default true |
-| notify_recruiter_no_response | BOOLEAN | NOT NULL, default false |
-| created_at | TIMESTAMPTZ | NOT NULL, default now() |
-| updated_at | TIMESTAMPTZ | NOT NULL, default now() |
-
-#### New table: `notification_log`
-
-Stores each in-app notification. A notification remains until the user reads it; `read_at` is null for unread notifications.
-
-| Column | Type | Notes |
-| --- | --- | --- |
-| id | UUID PK | |
-| user_id | UUID FK | → `auth.users(id)` |
-| notification_type | ENUM | `overdue_task`, `upcoming_interview`, `follow_up_due`, `recruiter_no_response` |
-| source_id | UUID | nullable — ID of the task, interview, or contact referenced |
-| message | TEXT | NOT NULL — short human-readable description |
-| created_at | TIMESTAMPTZ | NOT NULL, default now() |
-| read_at | TIMESTAMPTZ | nullable — null means unread |
-
 #### New table: `company_watchlist`
 
 | Column | Type | Notes |
@@ -850,6 +653,10 @@ Stores each in-app notification. A notification remains until the user reads it;
 | added | DATE | NOT NULL, default today |
 | created_at | TIMESTAMPTZ | NOT NULL, default now() |
 | updated_at | TIMESTAMPTZ | NOT NULL, default now() |
+| ats_type | ats_type_enum | nullable — set when the company is a radar source |
+| ats_board_token | TEXT | nullable, max 200 |
+| radar_enabled | BOOLEAN | NOT NULL, default false |
+| last_polled_at | TIMESTAMPTZ | nullable |
 
 #### New table: `application_events`
 
@@ -863,6 +670,28 @@ Stores each in-app notification. A notification remains until the user reads it;
 | contact_id | UUID FK | → `contacts(id)` ON DELETE SET NULL, nullable |
 | occurred_at | TIMESTAMPTZ | NOT NULL, default now() |
 | created_at | TIMESTAMPTZ | NOT NULL, default now() |
+
+#### New table: `discovered_postings`
+
+| Column | Type | Notes |
+| --- | --- | --- |
+| id | UUID PK | `gen_random_uuid()` |
+| user_id | UUID FK | → `auth.users(id)` |
+| watchlist_id | UUID FK | → `company_watchlist(id)` ON DELETE CASCADE |
+| company_name | TEXT | NOT NULL, max 200 |
+| external_job_id | TEXT | NOT NULL — ATS job id |
+| title | TEXT | NOT NULL, max 300 |
+| location | TEXT | nullable, max 200 |
+| remote_status | TEXT | nullable |
+| url | TEXT | nullable, URL validated |
+| posted_at | TIMESTAMPTZ | nullable |
+| first_seen_at | TIMESTAMPTZ | NOT NULL, default now() |
+| status | posting_status_enum | NOT NULL, default `new` |
+| raw_payload | JSONB | nullable — original ATS record |
+| created_at | TIMESTAMPTZ | NOT NULL, default now() |
+
+UNIQUE constraint on `(watchlist_id, external_job_id)`.
+
 
 ### 6.2 Indexes
 
@@ -898,20 +727,6 @@ CREATE INDEX idx_tasks_due_date ON tasks(due_date);
 CREATE INDEX idx_tasks_application_id ON tasks(application_id);
 CREATE INDEX idx_tasks_contact_id ON tasks(contact_id);
 
--- interviews
-CREATE INDEX idx_interviews_user_id ON interviews(user_id);
-CREATE INDEX idx_interviews_application_id ON interviews(application_id);
-CREATE INDEX idx_interviews_scheduled_at ON interviews(scheduled_at);
-CREATE INDEX idx_interviews_status ON interviews(status);
-
--- notification_preferences
-CREATE UNIQUE INDEX idx_notification_prefs_user_id ON notification_preferences(user_id);
-
--- notification_log
-CREATE INDEX idx_notification_log_user_id ON notification_log(user_id);
-CREATE INDEX idx_notification_log_sent_at ON notification_log(sent_at DESC);
-CREATE INDEX idx_notification_log_source_id ON notification_log(source_id);
-
 -- company_watchlist
 CREATE INDEX idx_company_watchlist_user_id ON company_watchlist(user_id);
 CREATE INDEX idx_company_watchlist_added ON company_watchlist(added DESC);
@@ -920,6 +735,15 @@ CREATE INDEX idx_company_watchlist_priority ON company_watchlist(priority);
 -- application_events
 CREATE INDEX idx_application_events_application_id ON application_events(application_id);
 CREATE INDEX idx_application_events_occurred_at ON application_events(occurred_at DESC);
+
+-- discovered_postings
+CREATE UNIQUE INDEX idx_discovered_unique ON discovered_postings(watchlist_id, external_job_id);
+CREATE INDEX idx_discovered_user_id ON discovered_postings(user_id);
+CREATE INDEX idx_discovered_status ON discovered_postings(status);
+CREATE INDEX idx_discovered_first_seen ON discovered_postings(first_seen_at DESC);
+
+-- company_watchlist radar
+CREATE INDEX idx_company_watchlist_radar_enabled ON company_watchlist(radar_enabled);
 ```
 
 ### 6.3 Enums
@@ -948,18 +772,6 @@ CREATE TYPE recruiter_status_enum AS ENUM (
   'active', 'inactive', 'follow_up_needed'
 );
 
-CREATE TYPE interview_type_enum AS ENUM (
-  'phone_screen', 'technical', 'on_site', 'final_round', 'screening'
-);
-
-CREATE TYPE interview_status_enum AS ENUM (
-  'scheduled', 'completed', 'cancelled'
-);
-
-CREATE TYPE interview_outcome_enum AS ENUM (
-  'passed', 'rejected', 'withdrawn', 'no_decision_yet'
-);
-
 CREATE TYPE task_category_enum AS ENUM (
   'application', 'outreach', 'research', 'interview_prep', 'recruiter', 'other'
 );
@@ -986,15 +798,18 @@ CREATE TYPE how_found_enum AS ENUM (
   'linkedin', 'company_site', 'referral', 'other'
 );
 
-CREATE TYPE notification_type_enum AS ENUM (
-  'overdue_task', 'upcoming_interview',
-  'follow_up_due', 'recruiter_no_response'
-);
-
 CREATE TYPE application_event_type_enum AS ENUM (
   'status_change', 'company_reached_out', 'info_requested',
   'document_submitted', 'offer_received', 'interview_scheduled',
   'rejection', 'note'
+);
+
+CREATE TYPE ats_type_enum AS ENUM (
+  'greenhouse', 'lever', 'ashby', 'smartrecruiters', 'pinpoint', 'welcomekit', 'custom'
+);
+
+CREATE TYPE posting_status_enum AS ENUM (
+  'new', 'seen', 'dismissed', 'promoted'
 );
 ```
 
@@ -1007,8 +822,6 @@ CREATE TYPE application_event_type_enum AS ENUM (
 5. When `contacts.outreach_status` changes to `double_down_sent`, auto-create a follow-up Task with `due_date = today + 4 business days`.
 6. A nightly job scans all open Tasks past `due_date` and escalates `priority` to `high`, appending `(Overdue)` to the title if not already present.
 7. Deleting an application prompts the user before cascade-deleting linked contacts (company_contact type), interactions, tasks, and checklist state. Recruiter contacts are not deleted — only the `application_contacts` join record is removed.
-8. When an Interview record is inserted, auto-advance the application's `checklist_state` and auto-create relevant prep tasks (see Feature 5, section 5.6).
-9. When any task-generating trigger fires (status changes, overdue escalation, interview scheduling), also insert a row into `notification_log` for the affected user if the relevant preference toggle is enabled.
 
 ### 6.5 Authentication & user scoping
 
@@ -1054,16 +867,6 @@ All new routes follow the `requireAuth` middleware pattern used by existing rout
 | GET | /api/tasks/:id | requireAuth + ownership | Get a single task |
 | PATCH | /api/tasks/:id | requireAuth + ownership | Update task status, priority, or due date |
 | DELETE | /api/tasks/:id | requireAuth + ownership | Delete a task |
-| GET | /api/interviews | requireAuth | List all interviews; ?type, ?status, ?application_id filters |
-| POST | /api/interviews | requireAuth | Create an interview; triggers checklist advance and task creation |
-| GET | /api/interviews/:id | requireAuth + ownership | Get a single interview |
-| PATCH | /api/interviews/:id | requireAuth + ownership | Update interview fields, status, or outcome |
-| DELETE | /api/interviews/:id | requireAuth + ownership | Delete an interview |
-| GET | /api/notifications | requireAuth | List in-app notifications for req.user.id; supports ?unread_only filter |
-| PATCH | /api/notifications/read | requireAuth | Mark all notifications read for req.user.id |
-| PATCH | /api/notifications/:id/read | requireAuth + ownership | Mark a single notification read |
-| GET | /api/notifications/preferences | requireAuth | Get notification preferences for req.user.id |
-| PUT | /api/notifications/preferences | requireAuth | Create or update notification preferences |
 | GET | /api/watchlist | requireAuth | List all watchlist entries for req.user.id; supports ?search, ?priority, ?target_apply_year filters |
 | POST | /api/watchlist | requireAuth | Create a watchlist entry |
 | GET | /api/watchlist/:id | requireAuth + ownership | Get a single watchlist entry |
@@ -1072,11 +875,15 @@ All new routes follow the `requireAuth` middleware pattern used by existing rout
 | POST | /api/watchlist/:id/promote | requireAuth + ownership | Create an application from this entry pre-populated with company_name and industry, then delete the watchlist record |
 | GET | /api/applications/:id/events | requireAuth + ownership | List event log entries for an application, ordered by occurred_at DESC |
 | POST | /api/applications/:id/events | requireAuth + ownership | Append an event log entry to an application |
+| GET | /api/radar/postings | requireAuth | List discovered postings for req.user.id; ?status, ?watchlist_id, ?search filters |
+| PATCH | /api/radar/postings/:id | requireAuth + ownership | Update posting status (seen, dismissed) |
+| POST | /api/radar/postings/:id/promote | requireAuth + ownership | Create an application from the posting and mark it promoted |
 
 ---
 
 ## 7. Out of Scope for v2.0
 
+- Interview Tracker, In-App Notifications, and Playbook, all moved to v3.0 (originally drafted for v2.0)
 - Email integration of any kind (outreach emails, notification digests, follow-up reminders) — planned for v3.0
 - Calendar integration for phone screen scheduling
 - AI-generated cover letter drafting
@@ -1094,8 +901,8 @@ All new routes follow the `requireAuth` middleware pattern used by existing rout
 | Auto-task generation creates noise for users not following the 4-step method | Medium | Medium | Allow users to disable auto-task generation per application |
 | Contact email field creates expectation of email send functionality | High | Low | Label field as reference only; no mailto links in v2.0 |
 | Data model changes require migration of existing application records | High | Low | All new entities are additive; jobs table untouched during rollout |
-| In-app notification panel adds UI complexity to the header | Low | Low | Keep bell icon and badge simple; full panel only opens on click |
 | Unified contacts model creates confusion about recruiter vs. company contact | Low | Medium | Clear visual differentiation in the UI with contact_type badge |
+| ATS feed format changes break a source adapter | Medium | Low | Per-source error isolation in the poller; one bad board never aborts the run |
 
 ---
 
@@ -1141,33 +948,6 @@ All new routes follow the `requireAuth` middleware pattern used by existing rout
 - [ ] Changing type to Referral suppresses checklist steps 9–12
 - [ ] Changing type cancels no-longer-applicable auto-generated tasks
 
-### Feature 5 — Interview Tracker
-
-- [ ] Global Interviews tab shows all interview records sorted by scheduled_at ascending
-- [ ] Filter bar correctly filters by interview type with count badges
-- [ ] Scheduling a Phone Screen auto-creates prep task and thank-you task
-- [ ] Scheduling any interview auto-checks Step 15 of that application's checklist
-- [ ] Prep reminder callout appears when any interview is within 24 hours
-- [ ] Interview routes return 403 when a user accesses another user's record
-
-### Feature 6 — Notifications
-
-- [ ] Notification bell icon appears in the app header with an unread badge count
-- [ ] Clicking the bell opens a dropdown panel listing unread notifications
-- [ ] Each notification shows type icon, description, timestamp, and a navigation link
-- [ ] Opening the panel marks all notifications as read and clears the badge
-- [ ] Notification preferences page is accessible from the hamburger menu
-- [ ] Master on/off toggle prevents all in-app notifications when off
-- [ ] Individual toggles correctly suppress notification creation for each event type
-- [ ] `notification_log` records every generated in-app notification
-
-### Feature 7 — Playbook
-
-- [ ] Playbook is accessible from the hamburger menu
-- [ ] Playbook content mentions cover letter templates and links to Contacts
-- [ ] Step 2's "in" is clearly labeled as the cover letter differentiator
-- [ ] Playbook is read-only (no checkboxes) — reference only
-
 ### Feature 9 — Application Event Log
 
 - [ ] Application event timeline is visible on the application detail view
@@ -1181,7 +961,8 @@ All new routes follow the `requireAuth` middleware pattern used by existing rout
 ### Navigation
 
 - [ ] Four primary tabs render at all viewport widths
-- [ ] Hamburger menu contains Playbook, Companies To Watch, Notifications, Profile, Sign out
+- [ ] Hamburger menu contains Companies To Watch, Profile, Sign out
+- [ ] Discover tab renders the job radar as a primary tab
 - [ ] On mobile (<768px), primary tabs render as bottom navigation bar
 - [ ] Bottom nav never wraps — scrolls horizontally if needed
 - [ ] All tab content stacks to single-column on viewports below 600px
@@ -1193,6 +974,16 @@ All new routes follow the `requireAuth` middleware pattern used by existing rout
 - [ ] List is searchable by company name and filterable by priority and target apply year
 - [ ] "Start Application" button creates a new application pre-populated with company name and industry, removes the watchlist entry, and navigates to the new record
 - [ ] Watchlist entries are scoped to the authenticated user (403 on unauthorized access)
+
+### Feature 10 — Job Radar
+
+- [ ] A Companies To Watch entry becomes a radar source by setting ATS type, board token, and enabling the radar
+- [ ] The poller reads only radar-enabled sources and writes new matches to discovered_postings
+- [ ] A repeat poll inserts no duplicate postings (deduped on watchlist_id and external_job_id)
+- [ ] The Discover tab lists new matched postings grouped by company with a NEW badge and first-seen date
+- [ ] Add to tracker promotes a posting into an application and marks the posting promoted
+- [ ] Dismiss hides a posting and it does not reappear on the next poll
+- [ ] Radar data is scoped to the authenticated user (403 on unauthorized access)
 
 ---
 
@@ -1206,3 +997,4 @@ All new routes follow the `requireAuth` middleware pattern used by existing rout
 | 2.2 | April 28, 2026 | Teial Dickens | Removed year constraint from Applications tab; added date range filter and server-side pagination; added Companies To Watch feature |
 | 2.3 | April 30, 2026 | Teial Dickens | Renamed "Jobs" tab to "Applications" (abbreviated "Apps" on mobile) throughout |
 | 2.4 | May 2, 2026 | Teial Dickens | Added Feature 9: Application Event Log — application-level interaction timeline independent of named contacts; fixed `entry_type` → `purpose` column name in contact_interactions technical spec |
+| 2.5 | June 16, 2026 | Teial Dickens | Interview Tracker, In-App Notifications, and Playbook moved to PRD-v3.md; added Job Radar (automated ATS discovery feeding Companies To Watch); Interviews tab replaced with Discover |
