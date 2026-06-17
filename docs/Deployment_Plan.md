@@ -1,6 +1,6 @@
-# Application Tracker Deployment Plan
+# Track My Application Deployment Plan
 
-This document provides step-by-step instructions for deploying Application Tracker to production.
+This document provides step-by-step instructions for deploying Track My Application to production.
 
 ---
 

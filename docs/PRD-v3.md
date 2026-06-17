@@ -1,6 +1,6 @@
 # Track My Application — Product Requirements Document v3.0
 
-**Product:** Application Tracker
+**Product:** Track My Application
 **Site:** track-my-app.com
 **Prepared by:** Teial Dickens
 **Date:** June 16, 2026
@@ -252,17 +252,27 @@ Every email carries a one-click unsubscribe link backed by a signed token. Follo
 
 ---
 
-### Feature 5: Job Radar Alerts
+### Feature 5: Job Radar Automation and Alerts
 
 #### 5.1 Overview
 
-The Job Radar in v2.0 surfaces new matching roles in the Discover tab with a NEW badge. This feature adds active alerting on top, so a new match also raises an in-app notification and, when email is enabled, appears in the next digest.
+The Job Radar in v2.0 surfaces new matching roles in the Discover tab after a manual refresh. This feature adds scheduled polling and active alerting on top, so a new match also raises an in-app notification and, when email is enabled, appears in the next digest.
 
 #### 5.2 Behavior
 
-When the poller inserts a new matching posting, it creates a notification of type `new_matching_role` referencing the posting, subject to the user's notification preferences. The same match becomes a line item in the email digest from Feature 4. Each new match produces at most one notification and respects the existing dedupe rule.
+The scheduled poller reads radar-enabled watchlist entries, refreshes their ATS feeds, and inserts newly matched postings. When it inserts a new matching posting, it creates a notification of type `new_matching_role` referencing the posting, subject to the user's notification preferences. The same match becomes a line item in the email digest from Feature 4. Each new match produces at most one notification and respects the existing dedupe rule.
 
 ---
+
+### Feature 6: Scheduled Overdue Handling
+
+#### 6.1 Overview
+
+V2 visually marks past-due tasks but does not run scheduled escalation. V3 adds background overdue handling so late tasks can generate in-app notifications, appear in email digests, and optionally escalate priority.
+
+#### 6.2 Behavior
+
+A scheduled job checks open tasks whose due date has passed. It marks the task as overdue for display, escalates priority when appropriate, and creates at most one unread overdue-task notification per task.
 
 ---
 

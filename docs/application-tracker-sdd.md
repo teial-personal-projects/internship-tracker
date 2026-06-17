@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-Application Tracker is a job application workflow system. It tracks applications,
+Track My Application is a job application workflow system. It tracks applications,
 contacts, outreach tasks, companies to watch, and discovered job postings from
 monitored applicant tracking system feeds.
 
@@ -224,7 +224,7 @@ live on each watchlist entry.
 | `ats_type` | `ats_type_enum` | Nullable |
 | `ats_board_token` | TEXT | Nullable |
 | `radar_enabled` | BOOLEAN | Defaults false |
-| `last_polled_at` | TIMESTAMPTZ | Nullable |
+| `last_refreshed_at` | TIMESTAMPTZ | Nullable |
 | `created_at` | TIMESTAMPTZ | Defaults to now |
 | `updated_at` | TIMESTAMPTZ | Updated by trigger |
 
@@ -271,9 +271,8 @@ Deduplication is enforced by a unique constraint on
 ### 5.8 Dormant V3 Schema
 
 The `interviews`, `notification_preferences`, and `notification_log` tables are
-created by V2 migrations because those migrations already exist. V2 does not
-expose active Interview Tracker or In-App Notification behavior; V3 owns those
-features.
+V3-owned. V2 does not expose active Interview Tracker or In-App Notification
+behavior; V3 owns those features and their supporting schema.
 
 ---
 
@@ -340,22 +339,24 @@ The implementation plan owns exact route sequencing and tests.
 
 ### 8.2 Auto-Generated Tasks
 
-Task generation runs from API-side mutations and scheduled jobs:
+V2 task generation runs from API-side mutations only:
 
 - Applied cold strategic applications create same-day double-down tasks.
 - Company contact `double_down_sent` creates follow-up tasks due in four
   business days.
 - Cold strategic applications with no contact create a find-contact task.
-- Recruiter-assisted applications create recruiter follow-up tasks if no recent
-  recruiter interaction exists.
+- Recruiter-assisted applications suppress cold outreach tasks; recruiter
+  follow-up tasks are manual in V2.
 - Referral applications create referral thank-you tasks.
-- Overdue open tasks escalate to high priority and append `(Overdue)` once.
+- Past-due tasks are visually marked in V2; scheduled overdue escalation moves
+  to V3.
 
 ### 8.3 Job Radar
 
-The radar poller reads enabled watchlist sources, fetches ATS postings through an
-adapter registry, normalizes each posting, filters by match criteria, and upserts
-new matches into `discovered_postings`.
+V2 Job Radar is manually refreshed. The refresh service reads one enabled
+watchlist source, fetches ATS postings through an adapter registry, normalizes
+each posting, filters by match criteria, and upserts new matches into
+`discovered_postings`. Scheduled polling moves to V3.
 
 Adapters return a common normalized shape:
 
@@ -376,13 +377,13 @@ reads remote US or Los Angeles.
 
 ## 9. Background Jobs
 
-Background jobs are registered from `api/src/index.ts` and guarded by
-`ENABLE_BACKGROUND_JOBS`.
+V2 does not register background jobs. Scheduled work is deferred to V3 and should
+be registered from `api/src/index.ts` only when guarded by `ENABLE_BACKGROUND_JOBS`.
 
 | Job | Cadence | Purpose |
 | --- | --- | --- |
-| `escalateOverdueTasks` | Daily | Escalate overdue open tasks |
-| `pollRadarSources` | Every 30 minutes | Poll enabled ATS sources |
+| `escalateOverdueTasks` | V3 daily | Escalate overdue open tasks and notify users |
+| `pollRadarSources` | V3 every 30 minutes | Poll enabled ATS sources |
 
 Jobs should not run during tests unless explicitly invoked. If the API is scaled
 to multiple Railway instances, job execution should move to a single worker
@@ -438,4 +439,4 @@ Summary:
 - Database and auth run on Supabase.
 - SQL migrations are applied through the Supabase SQL Editor.
 - `FEATURE_V2_ENABLED` may gate V2 API surfaces during staged rollout.
-- `ENABLE_BACKGROUND_JOBS` controls scheduled job startup.
+- V2 has no scheduled job startup. V3 uses `ENABLE_BACKGROUND_JOBS` for scheduled jobs.

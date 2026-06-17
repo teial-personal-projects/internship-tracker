@@ -178,6 +178,7 @@ File: `migrations/v3_001_email_preferences.sql`
 
 ### 10.1 Digest job implementation
 
+- [ ] 10.1.0 Add `node-cron` dependency to `api/package.json` for V3 background jobs
 - [ ] 10.1.1 Create `api/src/jobs/sendNotificationDigests.ts`
 - [ ] 10.1.2 Query all users where `email_enabled = true` AND `digest_frequency != 'never'`
 - [ ] 10.1.3 For each user: calculate whether next send time has been reached based on `digest_frequency` and `last_digest_sent_at`
@@ -224,18 +225,38 @@ File: `migrations/v3_001_email_preferences.sql`
 
 ---
 
-## Phase 14. Job radar alerts
+## Phase 14. Scheduled Job Radar Polling and Alerts
 
-*Builds on the Job Radar (Phases 6 through 12 of `IMPLEMENTATION-PLAN-v2.md`) and the In-App Notifications in Phase 6 of this plan, and feeds the digest from Phase 10. Build after all three are in place.*
+*Builds on the manual Job Radar refresh flow (Phases 6 through 12 of `IMPLEMENTATION-PLAN-v2.md`) and the In-App Notifications in Phase 6 of this plan, and feeds the digest from Phase 10. Build after all three are in place.*
 
 - [ ] 14.1 Add `new_matching_role` to `notification_type_enum` (additive migration)
-- [ ] 14.2 In the poller, after inserting a new matching posting, call `createNotification(userId, 'new_matching_role', postingId, message)`
-- [ ] 14.3 Include new matching roles in the v3 email digest qualifying events
-- [ ] 14.4 Confirm a new matching role produces exactly one notification and respects the dedupe rule
+- [ ] 14.2 Create `api/src/jobs/pollRadarSources.ts` using the V2 radar refresh service
+- [ ] 14.3 Query `company_watchlist` rows where `radar_enabled = true`
+- [ ] 14.4 Refresh each source, isolate errors per source, and update `last_refreshed_at`
+- [ ] 14.5 Schedule via `node-cron` every 30 minutes, with a staggered start to stay polite to boards
+- [ ] 14.6 Guard startup with `ENABLE_BACKGROUND_JOBS`; jobs do not run in tests unless explicitly invoked
+- [ ] 14.7 After inserting a new matching posting, call `createNotification(userId, 'new_matching_role', postingId, message)`
+- [ ] 14.8 Include new matching roles in the v3 email digest qualifying events
+- [ ] 14.9 Confirm a new matching role produces exactly one notification and respects the dedupe rule
+
+---
+
+## Phase 15. Scheduled Overdue Task Handling
+
+*Builds on V2 Action Items and V3 In-App Notifications. V2 only visually marks past-due tasks; this phase adds background escalation and notification behavior.*
+
+- [ ] 15.1 Create `api/src/jobs/escalateOverdueTasks.ts`
+- [ ] 15.2 Query all open tasks where `due_date < today`
+- [ ] 15.3 Set `priority = high` and append `(Overdue)` to title if not already present
+- [ ] 15.4 Create one `overdue_task` notification per task, subject to notification preferences and dedupe rules
+- [ ] 15.5 Schedule via `node-cron` daily at 00:05 UTC
+- [ ] 15.6 Guard startup with `ENABLE_BACKGROUND_JOBS`; jobs do not run in tests unless explicitly invoked
+- [ ] 15.7 Unit test: past-due tasks have `priority` set to `high` and `(Overdue)` appended once
+- [ ] 15.8 Unit test: overdue notification is created once and not duplicated while unread
 
 ---
 
 ## Rollback
 
-Roll back in reverse phase order. The interview, notification, and playbook phases (5 to 7) have their own migration DOWN blocks where applicable; run those first if rolling the whole release back. Then roll back the email schema:
-To roll back v3.0 schema changes run the DOWN block of `v3_001_email_preferences.sql`. This drops the added columns and enums. All v2.0 data is unaffected. Remove the digest cron job registration from `api/src/index.ts` before running the rollback to avoid job errors on startup.
+Roll back in reverse phase order. The interview, notification, playbook, scheduled Radar polling, and overdue task phases have their own migration DOWN blocks where applicable; run those first if rolling the whole release back. Then roll back the email schema:
+To roll back v3.0 schema changes run the DOWN block of `v3_001_email_preferences.sql`. This drops the added columns and enums. All v2.0 data is unaffected. Remove digest, Radar polling, and overdue cron registrations from `api/src/index.ts` before running the rollback to avoid job errors on startup.
