@@ -505,7 +505,7 @@ File: `migrations/radar_001_job_radar.sql`
 
 ---
 
-## [ ] Phase 7. ATS adapter layer
+## [x] Phase 7. ATS adapter layer
 
 *The core abstraction. Each ATS returns a different JSON shape, so one adapter per type maps to a single normalized posting. Greenhouse first, since it covers seven of your current targets.*
 
