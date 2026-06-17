@@ -1,6 +1,6 @@
 # Migrations
 
-Numbered SQL migration files for Track My Application v2.0.
+Numbered SQL migration files for Application Tracker v2.0.
 
 ## File naming
 

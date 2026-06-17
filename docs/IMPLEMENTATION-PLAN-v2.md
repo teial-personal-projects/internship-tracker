@@ -15,7 +15,7 @@
 
 ## Phase DR — Design System & Visual Refresh
 
-*Targets the current v1 codebase. No schema, API, or data model changes. Ship as a standalone PR before starting any v2 feature phases. Reference: `docs/DESIGN_SYSTEM.md` — Terracotta Daylight direction.*
+*Targets the current v1 codebase. No schema, API, or data model changes. Ship as a standalone PR before starting any v2 feature phases. Reference: [application-tracker-sdd.md](application-tracker-sdd.md) §4 — Terracotta Daylight direction.*
 
 ### DR.1 Font setup
 
@@ -25,14 +25,14 @@
 
 ### DR.2 CSS design tokens
 
-- [x] DR.2.1 Replace the `@theme` block in `web/src/index.css` with the full token set from `DESIGN_SYSTEM.md §2`: surface tokens (`--bg`, `--card`, `--soft`, `--line`, etc.), ink scale (`--ink` through `--ink-4`), terracotta scale (`--accent`, `--accent-dark`, `--accent-soft`, `--accent-tint`), sage, sun, violet, rose
+- [x] DR.2.1 Replace the `@theme` block in `web/src/index.css` with the full token set from [application-tracker-sdd.md](application-tracker-sdd.md) §4: surface tokens (`--bg`, `--card`, `--soft`, `--line`, etc.), ink scale (`--ink` through `--ink-4`), terracotta scale (`--accent`, `--accent-dark`, `--accent-soft`, `--accent-tint`), sage, sun, violet, rose
 - [x] DR.2.2 Remove the old green `brand-*` palette and blue `accent-*` palette from `@theme`
-- [x] DR.2.3 Add shadow tokens: `--shadow-sm`, `--shadow-md`, `--shadow-lg` per `DESIGN_SYSTEM.md §4`
+- [x] DR.2.3 Add shadow tokens: `--shadow-sm`, `--shadow-md`, `--shadow-lg` per [application-tracker-sdd.md](application-tracker-sdd.md) §4
 
 ### DR.3 Global base styles
 
 - [x] DR.3.1 Update `body` base style: `background: var(--bg)` (`#FBF5EC`), `color: var(--ink)` (`#1B2540`)
-- [x] DR.3.2 Add type scale utility classes per `DESIGN_SYSTEM.md §1`: `.text-kicker` (10px / 600 / mono / 0.14em UPPER), `.text-hero`, `.text-section`, `.text-drawer`
+- [x] DR.3.2 Add type scale utility classes per [application-tracker-sdd.md](application-tracker-sdd.md) §4: `.text-kicker` (10px / 600 / mono / 0.14em UPPER), `.text-hero`, `.text-section`, `.text-drawer`
 
 ### DR.4 Component class updates (`index.css`)
 
@@ -45,7 +45,7 @@
 
 ### DR.5 Status and priority color mapping
 
-- [x] DR.5.1 Update `web/src/theme/index.ts` `STATUS_COLORS` to match `DESIGN_SYSTEM.md §3`:
+- [x] DR.5.1 Update `web/src/theme/index.ts` `STATUS_COLORS` to match [application-tracker-sdd.md](application-tracker-sdd.md) §4:
   - `applied` → ink-2 / soft
   - `phone_screen` → accent-dark / accent-soft
   - `technical` → violet / violet-soft
@@ -113,7 +113,7 @@ File: `migrations/v2_001_enums.sql`
 
 File: `migrations/v2_002_applications.sql`
 
-- [x] 0.3.1 Create `applications` table with all columns from PRD §6.1
+- [x] 0.3.1 Create `applications` table with all columns from [application-tracker-sdd.md](application-tracker-sdd.md) §5.2
 - [x] 0.3.2 Add `updated_at` trigger (reuse `update_updated_at()` function)
 - [x] 0.3.3 Add `auto_applied_date` trigger (same logic as on `jobs`)
 - [x] 0.3.4 Create all indexes for `applications` (see PRD §6.2)
@@ -123,7 +123,7 @@ File: `migrations/v2_002_applications.sql`
 
 File: `migrations/v2_003_contacts.sql`
 
-- [x] 0.4.1 Create `contacts` table with all columns from PRD §6.1 — use `first_name` and `last_name` (separate columns, both NOT NULL max 100) instead of a single `full_name` column
+- [x] 0.4.1 Create `contacts` table with all columns from [application-tracker-sdd.md](application-tracker-sdd.md) §5.3 — use `first_name` and `last_name` (separate columns, both NOT NULL max 100) instead of a single `full_name` column
 - [x] 0.4.2 Add `updated_at` trigger
 - [x] 0.4.3 Create all indexes for `contacts`
 - [x] 0.4.4 Write DOWN block
@@ -192,7 +192,7 @@ File: `migrations/v2_009_notifications.sql`
 
 File: `migrations/v2_010_company_watchlist.sql`
 
-- [x] 0.11.1 Create `company_watchlist` table with all columns from PRD §6.1
+- [x] 0.11.1 Create `company_watchlist` table with all columns from [application-tracker-sdd.md](application-tracker-sdd.md) §5.5
 - [x] 0.11.2 Add `updated_at` trigger
 - [x] 0.11.3 Create all indexes for `company_watchlist`
 - [x] 0.11.4 Write DOWN block: `DROP TABLE IF EXISTS company_watchlist CASCADE`

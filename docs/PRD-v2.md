@@ -1,6 +1,7 @@
 # Track My Application — Product Requirements Document v2.0
 
-**Product:** track-my-app.com
+**Product:** Application Tracker
+**Site:** track-my-app.com
 **Prepared by:** Teial Dickens
 **Date:** April 27, 2026
 **Version:** 2.5 — Job Radar added; deferred features moved to v3
@@ -10,7 +11,7 @@
 
 ## 1. Executive Summary
 
-Track My Application helps job seekers log applications and track statuses across the job search pipeline. Version 2.0 augments the platform with several new feature modules grounded in a proven outreach-driven application methodology — showing that a personalized cover letter, a same-day double-down email to a specific person at the company, and a structured follow-up process increases application-to-phone-screen conversion from roughly 2% to approximately 10%.
+Application Tracker helps job seekers log applications and track statuses across the job search pipeline. Version 2.0 augments the platform with several new feature modules grounded in a proven outreach-driven application methodology — showing that a personalized cover letter, a same-day double-down email to a specific person at the company, and a structured follow-up process increases application-to-phone-screen conversion from roughly 2% to approximately 10%.
 
 The v2.0 feature set introduces a unified Contacts system (covering both company contacts and external recruiters), an Action Items task queue, an Application Type classification field, a Companies To Watch research list, an Application Event Log, and a Job Radar that automatically surfaces fresh matching roles from monitored companies. The Interview Tracker, In-App Notifications, and Playbook originally drafted for v2.0 have moved to v3.0. Navigation keeps four primary tabs with secondary items in a menu.
 
@@ -20,7 +21,7 @@ The v2.0 feature set introduces a unified Contacts system (covering both company
 
 ### 2.1 Current product state
 
-Track My Application v1.3.1 provides:
+Application Tracker v1.3.1 provides:
 
 - Job application log with company, title, location, and status fields
 - Status categories: In Progress, Not Started, Applied
@@ -98,11 +99,11 @@ On viewports below 768px:
 
 ### 4.4 Visual design & color system
 
-The canonical design reference is `docs/DESIGN_SYSTEM.md` (direction: **Terracotta Daylight** — warm cream canvas, deep navy ink, terracotta accent). Values in this section summarise intent; the design system document is the authoritative source for exact token values, type scale details, and component specs.
+The visual direction is **Terracotta Daylight**: warm cream canvas, deep navy ink, and terracotta primary actions. The system design document defines where canonical design tokens live in code.
 
 #### Color tokens
 
-Token names follow `docs/DESIGN_SYSTEM.md §2`. All component code must reference these tokens — no raw hex values in component files.
+Token names follow the design token section of [application-tracker-sdd.md](application-tracker-sdd.md). All component code must reference these tokens — no raw hex values in component files.
 
 | Token | Value | Role |
 | --- | --- | --- |
@@ -193,7 +194,7 @@ Every company and contact row shows a 40×40 rounded square (radius 12) with 2-l
 - Interactive rows shift background to `--softer` on hover; cards lift `translateY(-2px)` and gain `--shadow-md` on hover
 - Focus rings use `--accent` at 40% opacity
 - Error states use `--rose`; success states use `--sage`; `--accent` is reserved for primary CTAs and brand actions only
-- No emoji anywhere in the UI (per `docs/DESIGN_SYSTEM.md §6`)
+- No emoji anywhere in the UI
 - Empty states are warm and direct — no exclamation marks
 
 ---
@@ -411,7 +412,7 @@ Application Type is a field on every application record. It controls which check
 
 #### 8.1 Overview
 
-Companies To Watch is a lightweight research watchlist for users who want to track promising companies before they are ready to apply. It is especially useful for college students in their first or second year who want to build a target list for future job or internship cycles. The feature is accessible from the hamburger/overflow menu — not a primary tab.
+Companies To Watch is a lightweight research watchlist for users who want to track promising companies before they are ready to apply. It is especially useful for users who want to build a target list for future recruiting cycles. The feature is accessible from the hamburger/overflow menu — not a primary tab.
 
 #### 8.2 Watchlist entry fields
 
@@ -527,356 +528,44 @@ Add to tracker creates an `applications` record pre-populated with company name,
 
 ---
 
-## 6. Technical Requirements
+## 6. Product Data and Technical Boundaries
 
-### 6.1 Data model
+V2 product requirements define what data the product must capture and how users should experience the workflow. Physical table schemas, indexes, enum definitions, route implementation details, RLS policy shape, and background job design live in [application-tracker-sdd.md](application-tracker-sdd.md).
 
-#### New table: `applications`
+### 6.1 Product data concepts
 
-The `applications` table is the v2.0 replacement for the existing `jobs` table. The `jobs` table is left in place; data is bulk-migrated into `applications` during rollout. All new feature code targets `applications`.
+| Concept | Product responsibility |
+| --- | --- |
+| Application | Stores company, role, status, application type, dates, links, notes, checklist progress, and source. |
+| Contact | Stores company contacts and external recruiters, differentiated by type. |
+| Contact interaction | Stores dated outreach, recruiter communication, reply, and note history. |
+| Contact template | Stores reusable contact-specific email, resume, cover-letter, and pitch guidance. |
+| Application-contact link | Links recruiters to one or more applications without deleting recruiters when applications are deleted. |
+| Task | Stores manual and auto-generated action items with category, priority, status, due date, and optional application/contact links. |
+| Company watchlist entry | Stores companies a user wants to monitor before applying. |
+| Application event | Stores application-scoped timeline entries independent of named contacts. |
+| Discovered posting | Stores normalized roles found by Job Radar from monitored company sources. |
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| id | UUID PK | `gen_random_uuid()` |
-| user_id | UUID FK | → `auth.users(id)` |
-| company | TEXT | NOT NULL, max 200 |
-| title | TEXT | NOT NULL, max 200 |
-| industry | TEXT | nullable, max 100 |
-| location | TEXT | nullable, max 200 |
-| job_link | TEXT | nullable, URL validated |
-| app_link | TEXT | nullable, URL validated |
-| status | ENUM | `application_status_enum` |
-| application_type | ENUM | `cold_strategic`, `recruiter_assisted`, `referral`, nullable |
-| checklist_state | JSONB | 18 boolean flags; default `{}` |
-| cover_letter | TEXT | nullable, max 5000 |
-| notes | TEXT | nullable, max 5000 |
-| pay | TEXT | nullable |
-| applied_date | DATE | nullable |
-| deadline | DATE | nullable |
-| added | DATE | NOT NULL, default today |
-| created_at | TIMESTAMPTZ | NOT NULL, default now() |
-| updated_at | TIMESTAMPTZ | NOT NULL, default now() |
+### 6.2 Business rules
 
-#### New table: `contacts`
+1. Cold strategic applications create same-day double-down outreach tasks when they move to Applied.
+2. Recruiter-assisted applications suppress double-down tasks and instead create recruiter follow-up work when communication goes stale.
+3. Referral applications suppress irrelevant outreach checklist steps and create thank-you note work.
+4. Changing an application type recalculates active checklist steps and cancels pending auto-generated tasks that no longer apply.
+5. Marking double-down outreach as sent creates a follow-up task due four business days later.
+6. Overdue open tasks are escalated to high priority by the nightly task job.
+7. Deleting an application requires user confirmation and preserves standalone recruiter contacts.
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| id | UUID PK | |
-| user_id | UUID FK | → `auth.users(id)` |
-| contact_type | ENUM | `company_contact`, `recruiter` NOT NULL |
-| application_id | UUID FK | → `applications(id)`, nullable (required for company_contact; null for recruiter) |
-| first_name | TEXT | NOT NULL, max 100 |
-| last_name | TEXT | NOT NULL, max 100 |
-| title | TEXT | nullable, max 200 |
-| email | TEXT | nullable, max 254, format validated |
-| phone | TEXT | nullable, max 30 |
-| linkedin_url | TEXT | nullable, URL validated |
-| agency | TEXT | nullable, max 200 (recruiters only) |
-| preferred_contact_method | ENUM | `email`, `linkedin`, `phone`, `text`, nullable |
-| how_found | ENUM | `linkedin`, `company_site`, `referral`, `other`, nullable |
-| outreach_status | ENUM | `not_contacted`, `applied_msg_sent`, `double_down_sent`, `follow_up_sent`, `replied`, `no_response`, nullable (company contacts only) |
-| recruiter_status | ENUM | `active`, `inactive`, `follow_up_needed`, nullable (recruiters only) |
-| notes | TEXT | nullable, max 5000 |
-| date_of_last_outreach | DATE | nullable, auto-set on status change |
-| created_at | TIMESTAMPTZ | NOT NULL, default now() |
-| updated_at | TIMESTAMPTZ | NOT NULL, default now() |
+### 6.3 Authentication and ownership expectations
 
-#### New table: `contact_interactions`
+- All V2 user data is scoped to the authenticated user.
+- The API never accepts a user ID from client-controlled request data.
+- Existing records owned by another user return forbidden responses; nonexistent records return not-found responses.
+- Linked entities must belong to the same authenticated user before they can be connected.
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| id | UUID PK | |
-| contact_id | UUID FK | → `contacts(id)` ON DELETE CASCADE |
-| user_id | UUID FK | → `auth.users(id)` |
-| purpose | ENUM | `application_message`, `double_down`, `follow_up`, `reply_received`, `phone_screen_confirmed`, `initial_contact`, `role_discussion`, `resume_submitted`, `role_update`, `feedback_received`, `note` |
-| body | TEXT | nullable, max 5000 |
-| occurred_at | TIMESTAMPTZ | NOT NULL, default now() |
-| created_at | TIMESTAMPTZ | NOT NULL, default now() |
+### 6.4 API surface expectations
 
-#### New table: `contact_templates`
-
-| Column | Type | Notes |
-| --- | --- | --- |
-| id | UUID PK | |
-| contact_id | UUID FK | → `contacts(id)` ON DELETE CASCADE |
-| user_id | UUID FK | → `auth.users(id)` |
-| name | TEXT | NOT NULL, max 200 |
-| template_type | ENUM | `email_format`, `resume_version`, `intro_pitch`, `cover_letter`, `other` |
-| body | TEXT | nullable, max 10000 |
-| created_at | TIMESTAMPTZ | NOT NULL, default now() |
-| updated_at | TIMESTAMPTZ | NOT NULL, default now() |
-
-#### New table: `application_contacts` (join table)
-
-Links recruiter-type contacts to applications (many-to-many).
-
-| Column | Type | Notes |
-| --- | --- | --- |
-| id | UUID PK | |
-| application_id | UUID FK | → `applications(id)` ON DELETE CASCADE |
-| contact_id | UUID FK | → `contacts(id)` ON DELETE CASCADE |
-| user_id | UUID FK | → `auth.users(id)` |
-| created_at | TIMESTAMPTZ | NOT NULL, default now() |
-
-UNIQUE constraint on `(application_id, contact_id)`.
-
-#### New table: `tasks`
-
-| Column | Type | Notes |
-| --- | --- | --- |
-| id | UUID PK | |
-| user_id | UUID FK | → `auth.users(id)` |
-| title | TEXT | NOT NULL, max 500 |
-| category | ENUM | `application`, `outreach`, `research`, `interview_prep`, `recruiter`, `other` |
-| priority | ENUM | `high`, `medium`, `low` |
-| status | ENUM | `open`, `complete`, `skipped` |
-| due_date | DATE | nullable |
-| application_id | UUID FK | → `applications(id)`, nullable, ON DELETE SET NULL |
-| contact_id | UUID FK | → `contacts(id)`, nullable, ON DELETE SET NULL |
-| notes | TEXT | nullable, max 2000 |
-| is_auto_generated | BOOLEAN | NOT NULL, default false |
-| created_at | TIMESTAMPTZ | NOT NULL, default now() |
-| updated_at | TIMESTAMPTZ | NOT NULL, default now() |
-
-#### New table: `company_watchlist`
-
-| Column | Type | Notes |
-| --- | --- | --- |
-| id | UUID PK | `gen_random_uuid()` |
-| user_id | UUID FK | → `auth.users(id)` |
-| company_name | TEXT | NOT NULL, max 200 |
-| industry | TEXT | nullable, max 100 |
-| website | TEXT | nullable, URL validated |
-| notes | TEXT | nullable, max 5000 |
-| priority | task_priority_enum | nullable — reuses existing enum |
-| target_apply_year | SMALLINT | nullable — four-digit year, e.g. 2027 |
-| added | DATE | NOT NULL, default today |
-| created_at | TIMESTAMPTZ | NOT NULL, default now() |
-| updated_at | TIMESTAMPTZ | NOT NULL, default now() |
-| ats_type | ats_type_enum | nullable — set when the company is a radar source |
-| ats_board_token | TEXT | nullable, max 200 |
-| radar_enabled | BOOLEAN | NOT NULL, default false |
-| last_polled_at | TIMESTAMPTZ | nullable |
-
-#### New table: `application_events`
-
-| Column | Type | Notes |
-| --- | --- | --- |
-| id | UUID PK | `gen_random_uuid()` |
-| application_id | UUID FK | → `applications(id)` ON DELETE CASCADE NOT NULL |
-| user_id | UUID FK | → `auth.users(id)` NOT NULL |
-| event_type | ENUM | `application_event_type_enum` NOT NULL |
-| body | TEXT | nullable, max 5000 |
-| contact_id | UUID FK | → `contacts(id)` ON DELETE SET NULL, nullable |
-| occurred_at | TIMESTAMPTZ | NOT NULL, default now() |
-| created_at | TIMESTAMPTZ | NOT NULL, default now() |
-
-#### New table: `discovered_postings`
-
-| Column | Type | Notes |
-| --- | --- | --- |
-| id | UUID PK | `gen_random_uuid()` |
-| user_id | UUID FK | → `auth.users(id)` |
-| watchlist_id | UUID FK | → `company_watchlist(id)` ON DELETE CASCADE |
-| company_name | TEXT | NOT NULL, max 200 |
-| external_job_id | TEXT | NOT NULL — ATS job id |
-| title | TEXT | NOT NULL, max 300 |
-| location | TEXT | nullable, max 200 |
-| remote_status | TEXT | nullable |
-| url | TEXT | nullable, URL validated |
-| posted_at | TIMESTAMPTZ | nullable |
-| first_seen_at | TIMESTAMPTZ | NOT NULL, default now() |
-| status | posting_status_enum | NOT NULL, default `new` |
-| raw_payload | JSONB | nullable — original ATS record |
-| created_at | TIMESTAMPTZ | NOT NULL, default now() |
-
-UNIQUE constraint on `(watchlist_id, external_job_id)`.
-
-### 6.2 Indexes
-
-```sql
--- applications
-CREATE INDEX idx_applications_user_id ON applications(user_id);
-CREATE INDEX idx_applications_status ON applications(status);
-CREATE INDEX idx_applications_application_type ON applications(application_type);
-CREATE INDEX idx_applications_added ON applications(added DESC);
-
--- contacts
-CREATE INDEX idx_contacts_user_id ON contacts(user_id);
-CREATE INDEX idx_contacts_contact_type ON contacts(contact_type);
-CREATE INDEX idx_contacts_application_id ON contacts(application_id);
-CREATE INDEX idx_contacts_outreach_status ON contacts(outreach_status);
-
--- contact_interactions
-CREATE INDEX idx_contact_interactions_contact_id ON contact_interactions(contact_id);
-CREATE INDEX idx_contact_interactions_occurred_at ON contact_interactions(occurred_at DESC);
-
--- contact_templates
-CREATE INDEX idx_contact_templates_contact_id ON contact_templates(contact_id);
-
--- application_contacts
-CREATE INDEX idx_application_contacts_application_id ON application_contacts(application_id);
-CREATE INDEX idx_application_contacts_contact_id ON application_contacts(contact_id);
-
--- tasks
-CREATE INDEX idx_tasks_user_id ON tasks(user_id);
-CREATE INDEX idx_tasks_status ON tasks(status);
-CREATE INDEX idx_tasks_priority ON tasks(priority);
-CREATE INDEX idx_tasks_due_date ON tasks(due_date);
-CREATE INDEX idx_tasks_application_id ON tasks(application_id);
-CREATE INDEX idx_tasks_contact_id ON tasks(contact_id);
-
--- company_watchlist
-CREATE INDEX idx_company_watchlist_user_id ON company_watchlist(user_id);
-CREATE INDEX idx_company_watchlist_added ON company_watchlist(added DESC);
-CREATE INDEX idx_company_watchlist_priority ON company_watchlist(priority);
-
--- application_events
-CREATE INDEX idx_application_events_application_id ON application_events(application_id);
-CREATE INDEX idx_application_events_occurred_at ON application_events(occurred_at DESC);
-
--- discovered_postings
-CREATE UNIQUE INDEX idx_discovered_unique ON discovered_postings(watchlist_id, external_job_id);
-CREATE INDEX idx_discovered_user_id ON discovered_postings(user_id);
-CREATE INDEX idx_discovered_status ON discovered_postings(status);
-CREATE INDEX idx_discovered_first_seen ON discovered_postings(first_seen_at DESC);
-
--- company_watchlist radar
-CREATE INDEX idx_company_watchlist_radar_enabled ON company_watchlist(radar_enabled);
-```
-
-### 6.3 Enums
-
-```sql
-CREATE TYPE application_status_enum AS ENUM (
-  'not_started', 'in_progress', 'applied', 'screening', 'interviewing',
-  'technical', 'on_site', 'final_round', 'offered', 'rejected',
-  'withdrawn', 'archive'
-);
-
-CREATE TYPE application_type_enum AS ENUM (
-  'cold_strategic', 'recruiter_assisted', 'referral'
-);
-
-CREATE TYPE contact_type_enum AS ENUM (
-  'company_contact', 'recruiter'
-);
-
-CREATE TYPE outreach_status_enum AS ENUM (
-  'not_contacted', 'applied_msg_sent', 'double_down_sent',
-  'follow_up_sent', 'replied', 'no_response'
-);
-
-CREATE TYPE recruiter_status_enum AS ENUM (
-  'active', 'inactive', 'follow_up_needed'
-);
-
-CREATE TYPE task_category_enum AS ENUM (
-  'application', 'outreach', 'research', 'interview_prep', 'recruiter', 'other'
-);
-
-CREATE TYPE task_priority_enum AS ENUM ('high', 'medium', 'low');
-
-CREATE TYPE task_status_enum AS ENUM ('open', 'complete', 'skipped');
-
-CREATE TYPE contact_interaction_type_enum AS ENUM (
-  'application_message', 'double_down', 'follow_up', 'reply_received',
-  'phone_screen_confirmed', 'initial_contact', 'role_discussion',
-  'resume_submitted', 'role_update', 'feedback_received', 'note'
-);
-
-CREATE TYPE contact_template_type_enum AS ENUM (
-  'email_format', 'resume_version', 'intro_pitch', 'cover_letter', 'other'
-);
-
-CREATE TYPE preferred_contact_method_enum AS ENUM (
-  'email', 'linkedin', 'phone', 'text'
-);
-
-CREATE TYPE how_found_enum AS ENUM (
-  'linkedin', 'company_site', 'referral', 'other'
-);
-
-CREATE TYPE application_event_type_enum AS ENUM (
-  'status_change', 'company_reached_out', 'info_requested',
-  'document_submitted', 'offer_received', 'interview_scheduled',
-  'rejection', 'note'
-);
-
-CREATE TYPE ats_type_enum AS ENUM (
-  'greenhouse', 'lever', 'ashby', 'smartrecruiters', 'pinpoint', 'welcomekit', 'custom'
-);
-
-CREATE TYPE posting_status_enum AS ENUM (
-  'new', 'seen', 'dismissed', 'promoted'
-);
-```
-
-### 6.4 Business logic requirements
-
-1. When `applications.status` changes to `applied` AND `application_type = cold_strategic`, auto-create a Task (category: `outreach`, priority: `high`, due: today) for double-down outreach.
-2. When `application_type = recruiter_assisted`, suppress double-down task auto-generation. Auto-create a recruiter follow-up task if no interaction logged within 5 days.
-3. When `application_type = referral`, suppress checklist steps 9–12 and auto-create a thank-you note task.
-4. When `application_type` is changed on an existing application, recalculate active checklist steps and cancel any pending auto-generated tasks that no longer apply.
-5. When `contacts.outreach_status` changes to `double_down_sent`, auto-create a follow-up Task with `due_date = today + 4 business days`.
-6. A nightly job scans all open Tasks past `due_date` and escalates `priority` to `high`, appending `(Overdue)` to the title if not already present.
-7. Deleting an application prompts the user before cascade-deleting linked contacts (company_contact type), interactions, tasks, and checklist state. Recruiter contacts are not deleted — only the `application_contacts` join record is removed.
-
-### 6.5 Authentication & user scoping
-
-All new routes follow the `requireAuth` middleware pattern used by existing routes. Every endpoint is protected. User ID is sourced exclusively from `req.user.id` — never from URL parameters, query strings, or request body.
-
-#### Ownership check pattern (all record-level routes)
-
-1. Fetch the record by ID with no user filter
-2. If record does not exist → 404
-3. If `record.user_id !== req.user.id` → 403 (never 404)
-4. Proceed with the operation
-
-#### Cross-entity ownership
-
-- `contact_interactions` — owned via `contact.user_id`
-- `contact_templates` — owned via `contact.user_id`
-- `application_contacts` — owned via both `application.user_id` and `contact.user_id` (must match)
-- `tasks` — own `user_id` field; linked application/contact must also belong to same user
-
-### 6.6 API endpoints (new)
-
-| Method | Endpoint | Auth | Description |
-| --- | --- | --- | --- |
-| GET | /api/applications | requireAuth | List all applications for req.user.id; supports ?status, ?application_type, ?search, ?date_from (ISO date), ?date_to (ISO date), ?page (default 1), ?limit (default 25, max 100) query params; no year constraint |
-| POST | /api/applications | requireAuth | Create an application |
-| GET | /api/applications/:id | requireAuth + ownership | Get a single application |
-| PATCH | /api/applications/:id | requireAuth + ownership | Update fields including application_type and checklist_state |
-| DELETE | /api/applications/:id | requireAuth + ownership | Soft-prompt cascade delete |
-| GET | /api/contacts | requireAuth | List all contacts; ?contact_type, ?application_id, ?outreach_status filters |
-| POST | /api/contacts | requireAuth | Create contact; application_id must belong to req.user.id if provided |
-| GET | /api/contacts/:id | requireAuth + ownership | Get a single contact |
-| PATCH | /api/contacts/:id | requireAuth + ownership | Update contact fields or status |
-| DELETE | /api/contacts/:id | requireAuth + ownership | Delete contact and its interactions and templates |
-| POST | /api/contacts/:id/interactions | requireAuth + ownership | Append an interaction log entry |
-| GET | /api/contacts/:id/interactions | requireAuth + ownership | List interaction log entries |
-| POST | /api/contacts/:id/templates | requireAuth + ownership | Attach a template to a contact |
-| PATCH | /api/contacts/:id/templates/:tid | requireAuth + ownership | Update a template |
-| DELETE | /api/contacts/:id/templates/:tid | requireAuth + ownership | Delete a template |
-| POST | /api/applications/:id/contacts | requireAuth + ownership | Link a recruiter contact to an application |
-| DELETE | /api/applications/:id/contacts/:cid | requireAuth + ownership | Unlink a recruiter contact from an application |
-| GET | /api/tasks | requireAuth | List tasks; ?category, ?priority, ?status, ?application_id filters |
-| POST | /api/tasks | requireAuth | Create a task manually |
-| GET | /api/tasks/:id | requireAuth + ownership | Get a single task |
-| PATCH | /api/tasks/:id | requireAuth + ownership | Update task status, priority, or due date |
-| DELETE | /api/tasks/:id | requireAuth + ownership | Delete a task |
-| GET | /api/watchlist | requireAuth | List all watchlist entries for req.user.id; supports ?search, ?priority, ?target_apply_year filters |
-| POST | /api/watchlist | requireAuth | Create a watchlist entry |
-| GET | /api/watchlist/:id | requireAuth + ownership | Get a single watchlist entry |
-| PATCH | /api/watchlist/:id | requireAuth + ownership | Update a watchlist entry |
-| DELETE | /api/watchlist/:id | requireAuth + ownership | Delete a watchlist entry |
-| POST | /api/watchlist/:id/promote | requireAuth + ownership | Create an application from this entry pre-populated with company_name and industry, then delete the watchlist record |
-| GET | /api/applications/:id/events | requireAuth + ownership | List event log entries for an application, ordered by occurred_at DESC |
-| POST | /api/applications/:id/events | requireAuth + ownership | Append an event log entry to an application |
-| GET | /api/radar/postings | requireAuth | List discovered postings for req.user.id; ?status, ?watchlist_id, ?search filters |
-| PATCH | /api/radar/postings/:id | requireAuth + ownership | Update posting status (seen, dismissed) |
-| POST | /api/radar/postings/:id/promote | requireAuth + ownership | Create an application from the posting and mark it promoted |
+The app exposes authenticated API capabilities for Applications, Contacts, Action Items, Companies To Watch, Application Events, Job Radar, and Profile. Exact route paths, validation schemas, persistence details, and ownership-check implementation live in [application-tracker-sdd.md](application-tracker-sdd.md) and the implementation plan.
 
 ---
 

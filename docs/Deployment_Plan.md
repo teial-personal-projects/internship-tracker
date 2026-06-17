@@ -1,6 +1,6 @@
-# Internship Tracker Deployment Plan
+# Application Tracker Deployment Plan
 
-This document provides step-by-step instructions for deploying Internship Tracker to production.
+This document provides step-by-step instructions for deploying Application Tracker to production.
 
 ---
 

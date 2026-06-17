@@ -1,6 +1,7 @@
 # Track My Application — Product Requirements Document v3.0
 
-**Product:** track-my-app.com
+**Product:** Application Tracker
+**Site:** track-my-app.com
 **Prepared by:** Teial Dickens
 **Date:** June 16, 2026
 **Version:** 3.0 — Draft

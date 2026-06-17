@@ -1,6 +1,6 @@
-# Internship Tracker
+# Track My Application
 
-A full-stack web application for tracking job applications, deadlines, and job boards. Built as a monorepo with a React frontend, Express API backend, and Supabase PostgreSQL database.
+A full-stack web application for tracking job applications, deadlines, contacts, and job discovery workflows. Built as a monorepo with a React frontend, Express API backend, and Supabase PostgreSQL database.
 
 ---
 
@@ -106,7 +106,7 @@ See [docs/Deployment_Plan.md](docs/Deployment_Plan.md) for full step-by-step ins
 ## Features
 
 - Email/password authentication via Supabase Auth (email confirmation required)
-- Add, edit, delete internship applications
+- Add, edit, delete applications
 - Track status, deadlines, pay, location, cover letter links, and more
 - Smart alerts for upcoming deadlines and stale applications
 - Quick filters: Active, Not Started, Applied, Due Soon, Stale, Archived, Conference, All
@@ -114,5 +114,5 @@ See [docs/Deployment_Plan.md](docs/Deployment_Plan.md) for full step-by-step ins
 - Paginated results (15 per page)
 - Sortable, draggable column headers
 - Responsive design — table on desktop, card view on mobile
-- Job Boards page with curated links to internship search sites
+- Job Boards page with curated links to application search sites
 - User profile with major, preferred positions, and preferred locations
