@@ -32,6 +32,12 @@ const TASK_TEXT_FIELDS = [
   'notes',
 ];
 
+const WATCHLIST_TEXT_FIELDS = [
+  'company_name',
+  'industry',
+  'notes',
+];
+
 export function sanitizeJobInput(data: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = { ...data };
   for (const field of JOB_TEXT_FIELDS) {
@@ -55,6 +61,16 @@ export function sanitizeApplicationInput(data: Record<string, unknown>): Record<
 export function sanitizeTaskInput(data: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = { ...data };
   for (const field of TASK_TEXT_FIELDS) {
+    if (typeof result[field] === 'string') {
+      result[field] = sanitizeText(result[field] as string);
+    }
+  }
+  return result;
+}
+
+export function sanitizeWatchlistInput(data: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...data };
+  for (const field of WATCHLIST_TEXT_FIELDS) {
     if (typeof result[field] === 'string') {
       result[field] = sanitizeText(result[field] as string);
     }

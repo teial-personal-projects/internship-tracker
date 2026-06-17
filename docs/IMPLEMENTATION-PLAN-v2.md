@@ -440,16 +440,16 @@ File: `migrations/v2_015_application_source.sql`
 
 ### [ ] 5.1 API — watchlist routes
 
-- [ ] 5.1.1 Create `api/src/routes/watchlist.ts`
-- [ ] 5.1.2 `GET /api/watchlist` — list with `?search`, `?priority`, `?target_apply_date_from`, and `?target_apply_date_to` filters; ordered by `added DESC`
-- [ ] 5.1.3 `POST /api/watchlist` — create entry; validate with `CreateWatchlistEntrySchema`
-- [ ] 5.1.4 `GET /api/watchlist/:id` — ownership check
-- [ ] 5.1.5 `PATCH /api/watchlist/:id` — update fields
-- [ ] 5.1.6 `DELETE /api/watchlist/:id` — ownership check
-- [ ] 5.1.7 `POST /api/watchlist/:id/promote` — create an `applications` record from `company_name` and `industry` with `source = 'watchlist'`; delete the watchlist entry; return the new application ID
-- [ ] 5.1.8 Register in `app.ts`
-- [ ] 5.1.9 Unit test: `promote` returns the new application ID and the watchlist entry no longer exists after the call
-- [ ] 5.1.10 Unit test: `promote` on a non-existent entry returns 404; on another user's entry returns 403
+- [x] 5.1.1 Create `api/src/routes/watchlist.ts`
+- [x] 5.1.2 `GET /api/watchlist` — list with `?search`, `?priority`, `?target_apply_date_from`, and `?target_apply_date_to` filters; ordered by `added DESC`
+- [x] 5.1.3 `POST /api/watchlist` — create entry; validate with `CreateWatchlistEntrySchema`
+- [x] 5.1.4 `GET /api/watchlist/:id` — ownership check
+- [x] 5.1.5 `PATCH /api/watchlist/:id` — update fields
+- [x] 5.1.6 `DELETE /api/watchlist/:id` — ownership check
+- [x] 5.1.7 `POST /api/watchlist/:id/promote` — create an `applications` record from `company_name` and `industry` with `source = 'watchlist'`; delete the watchlist entry; return the new application ID
+- [x] 5.1.8 Register in `app.ts`
+- [x] 5.1.9 Unit test: `promote` returns the new application ID and the watchlist entry no longer exists after the call
+- [x] 5.1.10 Unit test: `promote` on a non-existent entry returns 404; on another user's entry returns 403
 
 ### [ ] 5.2 Companies To Watch UI
 
