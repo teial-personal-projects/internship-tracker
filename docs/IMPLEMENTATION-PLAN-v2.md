@@ -509,11 +509,11 @@ File: `migrations/radar_001_job_radar.sql`
 
 *The core abstraction. Each ATS returns a different JSON shape, so one adapter per type maps to a single normalized posting. Greenhouse first, since it covers seven of your current targets.*
 
-### [ ] 7.1 Adapter interface and normalizer
+### [x] 7.1 Adapter interface and normalizer
 
-- [ ] 7.1.1 Create `api/src/radar/adapters/types.ts` defining `AtsAdapter` with `fetch(boardToken): Promise<NormalizedPosting[]>`
-- [ ] 7.1.2 Define `NormalizedPosting`: `externalId`, `title`, `location`, `remoteStatus`, `url`, `postedAt`, `raw`
-- [ ] 7.1.3 Create `api/src/radar/normalize.ts` with location parsing and a remote-status detector (remote US, LA, onsite, unknown)
+- [x] 7.1.1 Create `api/src/radar/adapters/types.ts` defining `AtsAdapter` with `fetch(boardToken): Promise<NormalizedPosting[]>`
+- [x] 7.1.2 Define `NormalizedPosting`: `externalId`, `title`, `location`, `remoteStatus`, `url`, `postedAt`, `raw`
+- [x] 7.1.3 Create `api/src/radar/normalize.ts` with location parsing and a remote-status detector (remote US, LA, onsite, unknown)
 
 ### [ ] 7.2 Greenhouse adapter
 
