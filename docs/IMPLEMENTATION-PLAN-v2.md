@@ -210,11 +210,12 @@ File: `migrations/v2_014_default_application_type.sql`
 
 File: `migrations/v2_015_application_source.sql`
 
-- [ ] 0.15.1 Create `application_source_enum` (`manual`, `imported`, `watchlist`, `radar`)
-- [ ] 0.15.2 `ALTER TABLE applications` add `source application_source_enum NOT NULL DEFAULT 'manual'`
-- [ ] 0.15.3 `ALTER TABLE applications` add `source_metadata JSONB NOT NULL DEFAULT '{}'::jsonb`
-- [ ] 0.15.4 Create index `idx_applications_source`
-- [ ] 0.15.5 Write DOWN block: drop `source_metadata`, `source`, and `application_source_enum`
+- [x] 0.15.1 Create `application_source_enum` (`manual`, `imported`, `watchlist`, `radar`)
+- [x] 0.15.2 `ALTER TABLE applications` add `source application_source_enum NOT NULL DEFAULT 'manual'`
+- [x] 0.15.3 `ALTER TABLE applications` add `source_metadata JSONB NOT NULL DEFAULT '{}'::jsonb`
+- [x] 0.15.4 Backfill rows imported from `jobs` to `source = 'imported'`
+- [x] 0.15.5 Create index `idx_applications_source`
+- [x] 0.15.6 Write DOWN block: drop `source_metadata`, `source`, and `application_source_enum`
 
 ---
 

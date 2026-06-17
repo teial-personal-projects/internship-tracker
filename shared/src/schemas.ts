@@ -102,6 +102,10 @@ export const ApplicationTypeSchema = z.enum([
   'cold_strategic', 'recruiter_assisted', 'referral', 'other',
 ]);
 
+export const ApplicationSourceSchema = z.enum([
+  'manual', 'imported', 'watchlist', 'radar',
+]);
+
 export const ContactTypeSchema = z.enum([
   'company_contact', 'recruiter', 'other',
 ]);
@@ -180,6 +184,8 @@ export const CreateApplicationSchema = z.object({
     ApplicationTypeSchema.default('cold_strategic'),
   ),
   checklist_state: z.record(z.unknown()).default({}),
+  source: ApplicationSourceSchema.default('manual'),
+  source_metadata: z.record(z.unknown()).default({}),
   cover_letter: z.string().max(MAX_COVER_LETTER_LENGTH).nullable().optional(),
   notes: z.string().max(MAX_NOTES_LENGTH).nullable().optional(),
   pay: z.string().max(MAX_PAY_LENGTH).nullable().optional(),
@@ -324,6 +330,7 @@ export const CreateApplicationEventSchema = z.object({
 
 export type ApplicationStatus = z.infer<typeof ApplicationStatusSchema>;
 export type ApplicationType = z.infer<typeof ApplicationTypeSchema>;
+export type ApplicationSource = z.infer<typeof ApplicationSourceSchema>;
 export type ContactType = z.infer<typeof ContactTypeSchema>;
 export type OutreachStatus = z.infer<typeof OutreachStatusSchema>;
 export type RecruiterStatus = z.infer<typeof RecruiterStatusSchema>;
@@ -371,8 +378,10 @@ export interface Application {
   job_link?: string | null;
   app_link?: string | null;
   status: ApplicationStatus;
-  application_type?: ApplicationType | null;
+  application_type: ApplicationType;
   checklist_state: Record<string, unknown>;
+  source: ApplicationSource;
+  source_metadata: Record<string, unknown>;
   cover_letter?: string | null;
   notes?: string | null;
   pay?: string | null;

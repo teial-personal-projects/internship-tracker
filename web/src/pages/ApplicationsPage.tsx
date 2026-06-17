@@ -93,6 +93,8 @@ export function ApplicationsPage() {
       ...formData,
       application_type: appType || 'cold_strategic',
       checklist_state: editingApp?.checklist_state ?? {},
+      source: editingApp?.source ?? 'manual',
+      source_metadata: editingApp?.source_metadata ?? {},
     };
     try {
       if (editingApp) {
