@@ -384,7 +384,7 @@ File: `migrations/v2_014_application_source.sql`
 
 ---
 
-## [ ] Phase 4 — Action Items & Task Queue
+## [x] Phase 4 — Action Items & Task Queue
 
 ### [x] 4.1 API — tasks routes
 
@@ -396,33 +396,33 @@ File: `migrations/v2_014_application_source.sql`
 - [x] 4.1.6 `DELETE /api/tasks/:id` — ownership check
 - [x] 4.1.7 Register in `app.ts`
 
-### [ ] 4.2 Auto-task triggers
+### [x] 4.2 Auto-task triggers
 
-- [ ] 4.2.1 Application added or changed to `cold_strategic` with no linked contact creates "Find engineering lead at [company] for double-down" due next day
-- [ ] 4.2.2 Application changed to `recruiter_assisted` suppresses cold-outreach auto-tasks; recruiter follow-up remains a manual task in V2
-- [ ] 4.2.3 Application changed to `referral` creates a referral thank-you task due same day when a referral contact is linked
-- [ ] 4.2.4 Changing application type cancels or skips pending auto-generated tasks that no longer apply
-- [ ] 4.2.5 Unit test: no-contact cold strategic task is created once and not duplicated
-- [ ] 4.2.6 Unit test: recruiter-assisted applications do not create time-based follow-up tasks in V2
-- [ ] 4.2.7 Unit test: referral thank-you task is created only for referral applications
+- [x] 4.2.1 Application added or changed to `cold_strategic` with no linked contact creates "Find engineering lead at [company] for double-down" due next day
+- [x] 4.2.2 Application changed to `recruiter_assisted` suppresses cold-outreach auto-tasks; recruiter follow-up remains a manual task in V2
+- [x] 4.2.3 Application changed to `referral` creates a referral thank-you task due same day when a referral contact is linked
+- [x] 4.2.4 Changing application type cancels or skips pending auto-generated tasks that no longer apply
+- [x] 4.2.5 Unit test: no-contact cold strategic task is created once and not duplicated
+- [x] 4.2.6 Unit test: recruiter-assisted applications do not create time-based follow-up tasks in V2
+- [x] 4.2.7 Unit test: referral thank-you task is created only for referral applications
 
-### [ ] 4.3 Action Items tab UI
+### [x] 4.3 Action Items tab UI
 
-- [ ] 4.3.1 Create `web/src/pages/ActionItemsPage.tsx`
-- [ ] 4.3.2 Task list: grouped sections Open and Done
-- [ ] 4.3.3 Each row: priority indicator dot, title, category badge, linked company name, due date, countdown, application_type secondary label
-- [ ] 4.3.4 Quick-complete checkbox — single click marks `status = complete`, moves to Done section
-- [ ] 4.3.5 Filter bar: category, priority, status (open/done/skipped), due date range
-- [ ] 4.3.6 Group by toggle: company, category, due date
-- [ ] 4.3.7 Add Task button — opens modal with all task fields; application and contact selectors
-- [ ] 4.3.8 Past-due tasks: highlighted row with red "Missed" label; no automatic priority escalation
+- [x] 4.3.1 Create `web/src/pages/ActionItemsPage.tsx`
+- [x] 4.3.2 Task list: grouped sections Open and Done
+- [x] 4.3.3 Each row: priority indicator dot, title, category badge, linked company name, due date, countdown, application_type secondary label
+- [x] 4.3.4 Quick-complete checkbox — single click marks `status = complete`, moves to Done section
+- [x] 4.3.5 Filter bar: category, priority, status (open/done/skipped), due date range
+- [x] 4.3.6 Group by toggle: company, category, due date
+- [x] 4.3.7 Add Task button — opens modal with all task fields; application and contact selectors
+- [x] 4.3.8 Past-due tasks: highlighted row with red "Missed" label; no automatic priority escalation
 
-### 4.4 Applications tab widget
+### [x] 4.4 Applications tab widget
 
-- [ ] 4.4.1 Create `web/src/components/UrgentTasksWidget.tsx`
-- [ ] 4.4.2 Shows top 3 open high-priority tasks with title, company, due date
-- [ ] 4.4.3 "View all" link → navigates to Action Items tab
-- [ ] 4.4.4 Updates in real time on task status change (re-fetch on focus or after mutation)
+- [x] 4.4.1 Create `web/src/components/UrgentTasksWidget.tsx`
+- [x] 4.4.2 Shows top 3 open high-priority tasks with title, company, due date
+- [x] 4.4.3 "View all" link → navigates to Action Items tab
+- [x] 4.4.4 Updates in real time on task status change (re-fetch on focus or after mutation)
 
 ---
 

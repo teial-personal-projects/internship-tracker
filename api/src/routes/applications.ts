@@ -6,7 +6,11 @@ import { sanitizeApplicationInput } from '../lib/sanitize';
 import { recalculateChecklist } from '../lib/checklist';
 import { computePageRange, computeTotalPages } from '../lib/pagination';
 import { applyApplicationFilters } from '../lib/applicationFilters';
-import { createApplicationDoubleDownTask } from '../services/taskAutoGeneration';
+import {
+  createApplicationDoubleDownTask,
+  createFindEngineeringLeadTask,
+  createReferralThankYouTask,
+} from '../services/taskAutoGeneration';
 import { CreateApplicationEventSchema, CreateApplicationSchema, UpdateApplicationSchema } from '@internship-tracker/shared';
 import type { Request, Response } from 'express';
 
@@ -76,6 +80,14 @@ router.post('/', requireAuth, validateBody(CreateApplicationSchema), async (req:
 
     if (data?.status === 'applied' && data?.application_type === 'cold_strategic') {
       const { error: taskError } = await createApplicationDoubleDownTask(db, data.id, user.id);
+      if (taskError) {
+        res.status(500).json({ error: taskError.message });
+        return;
+      }
+    }
+
+    if (data?.application_type === 'cold_strategic') {
+      const { error: taskError } = await createFindEngineeringLeadTask(db, data.id, user.id);
       if (taskError) {
         res.status(500).json({ error: taskError.message });
         return;
@@ -386,6 +398,7 @@ router.patch('/:id', requireAuth, validateBody(UpdateApplicationSchema), async (
     let payload = sanitizeApplicationInput(rest);
 
     let currentApplication: ApplicationTaskTriggerState | null = null;
+    let applicationTypeChanged = false;
 
     if ('application_type' in rest || 'status' in rest) {
       const { data: current } = await db
@@ -399,6 +412,7 @@ router.patch('/:id', requireAuth, validateBody(UpdateApplicationSchema), async (
       const oldType = (current?.application_type as string | null) ?? null;
 
       if ('application_type' in rest && current && newType !== oldType) {
+        applicationTypeChanged = true;
         payload = {
           ...payload,
           checklist_state: recalculateChecklist(
@@ -406,15 +420,6 @@ router.patch('/:id', requireAuth, validateBody(UpdateApplicationSchema), async (
             newType,
           ),
         };
-        const { error: taskError } = await db.from('tasks').update({ status: 'skipped' })
-          .eq('application_id', id)
-          .eq('is_auto_generated', true)
-          .eq('status', 'open');
-
-        if (taskError) {
-          res.status(500).json({ error: taskError.message });
-          return;
-        }
       }
     }
 
@@ -443,11 +448,59 @@ router.patch('/:id', requireAuth, validateBody(UpdateApplicationSchema), async (
       && isApplied
       && isColdStrategic;
 
+    if (applicationTypeChanged) {
+      const { error: taskError } = await db.from('tasks').update({ status: 'skipped' })
+        .eq('application_id', id)
+        .eq('user_id', (req as AuthRequest).user.id)
+        .eq('is_auto_generated', true)
+        .eq('status', 'open');
+
+      if (taskError) {
+        res.status(500).json({ error: taskError.message });
+        return;
+      }
+    }
+
     if (isColdStrategic && (becameApplied || becameColdApplied)) {
       const { error: taskError } = await createApplicationDoubleDownTask(db, data.id, (req as AuthRequest).user.id);
       if (taskError) {
         res.status(500).json({ error: taskError.message });
         return;
+      }
+    }
+
+    if ('application_type' in rest && currentApplication?.application_type !== 'cold_strategic' && isColdStrategic) {
+      const { error: taskError } = await createFindEngineeringLeadTask(db, data.id, (req as AuthRequest).user.id);
+      if (taskError) {
+        res.status(500).json({ error: taskError.message });
+        return;
+      }
+    }
+
+    if ('application_type' in rest && currentApplication?.application_type !== 'referral' && data.application_type === 'referral') {
+      const { data: referralContacts, error: contactsError } = await db
+        .from('contacts')
+        .select('id')
+        .eq('application_id', id)
+        .eq('user_id', (req as AuthRequest).user.id)
+        .eq('how_found', 'referral');
+
+      if (contactsError) {
+        res.status(500).json({ error: contactsError.message });
+        return;
+      }
+
+      for (const contact of referralContacts ?? []) {
+        const { error: taskError } = await createReferralThankYouTask(
+          db,
+          data.id,
+          (contact as { id: string }).id,
+          (req as AuthRequest).user.id,
+        );
+        if (taskError) {
+          res.status(500).json({ error: taskError.message });
+          return;
+        }
       }
     }
 
