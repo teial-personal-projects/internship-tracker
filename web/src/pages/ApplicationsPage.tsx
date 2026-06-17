@@ -1,9 +1,16 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { CircleAlert } from 'lucide-react';
 import type { Application, CreateApplicationSchemaType } from '@shared/schemas';
-import { useApplications, useApplicationStats, useCreateApplication, useUpdateApplication, useDeleteApplication } from '@/hooks/useApplications';
+import {
+  useApplication,
+  useApplications,
+  useApplicationStats,
+  useCreateApplication,
+  useUpdateApplication,
+  useDeleteApplication,
+} from '@/hooks/useApplications';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { AppHeader } from '@/components/AppHeader';
 import { Spinner } from '@/components/Spinner';
@@ -23,6 +30,7 @@ export function ApplicationsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const page = Math.max(1, Number(searchParams.get('page') ?? '1'));
+  const applicationIdParam = searchParams.get('application_id');
 
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
@@ -45,6 +53,7 @@ export function ApplicationsPage() {
 
   const { data, isLoading, error } = useApplications(queryParams);
   const { data: stats } = useApplicationStats();
+  const { data: routedApplication } = useApplication(applicationIdParam);
 
   const createApp = useCreateApplication();
   const updateApp = useUpdateApplication();
@@ -127,6 +136,18 @@ export function ApplicationsPage() {
   }
 
   const hasDateFilter = dateFrom || dateTo;
+
+  useEffect(() => {
+    if (!routedApplication || isModalOpen || editingApp) return;
+
+    setEditingApp(routedApplication);
+    setIsModalOpen(true);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('application_id');
+      return next;
+    }, { replace: true });
+  }, [editingApp, isModalOpen, routedApplication, setSearchParams]);
 
   return (
     <div className="flex h-screen flex-col overflow-hidden" style={{ background: 'var(--bg)' }}>

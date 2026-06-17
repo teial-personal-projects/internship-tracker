@@ -583,15 +583,15 @@ File: `migrations/radar_001_job_radar.sql`
 
 ## [ ] Phase 11. Discover UI
 
-### [ ] 11.1 Discover page
+### [x] 11.1 Discover page
 
-- [ ] 11.1.1 Create `web/src/pages/RadarPage.tsx`, labeled Discover in navigation
-- [ ] 11.1.2 List new matched postings grouped by company, newest first, each with a NEW badge, posted and first-seen dates, and a remote tag
-- [ ] 11.1.3 Add to tracker button on each card calls promote, then navigates to the new application
-- [ ] 11.1.4 Dismiss button sets status `dismissed` and removes the card
-- [ ] 11.1.5 Filter bar: status, company, search
-- [ ] 11.1.6 Empty state explaining how to enable radar on a watchlist company and use manual refresh
-- [ ] 11.1.7 Add the `/radar` route to `App.tsx` and a Discover entry to the primary `NavBar`
+- [x] 11.1.1 Create `web/src/pages/RadarPage.tsx`, labeled Discover in navigation
+- [x] 11.1.2 List new matched postings grouped by company, newest first, each with a NEW badge, posted and first-seen dates, and a remote tag
+- [x] 11.1.3 Add to tracker button on each card calls promote, then navigates to the new application
+- [x] 11.1.4 Dismiss button sets status `dismissed` and removes the card
+- [x] 11.1.5 Filter bar: status, company, search
+- [x] 11.1.6 Empty state explaining how to enable radar on a watchlist company and use manual refresh
+- [x] 11.1.7 Add the `/radar` route to `App.tsx` and a Discover entry to the primary `NavBar`
 
 ### [ ] 11.2 Watchlist radar toggle
 
