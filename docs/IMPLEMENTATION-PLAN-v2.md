@@ -481,7 +481,7 @@ File: `migrations/v2_016_company_watchlist_target_apply_date.sql`
 
 ---
 
-## [ ] Phase 6. Schema additions
+## [x] Phase 6. Schema additions
 
 *All changes are additive. The `applications` and `company_watchlist` base tables are extended, not modified destructively. One migration file, following the existing versioned convention.*
 
@@ -498,10 +498,10 @@ File: `migrations/radar_001_job_radar.sql`
 - [x] 6.1.7 Add `updated_at` trigger
 - [x] 6.1.8 Write DOWN block: drop the table, the enums, and the added watchlist columns in reverse order
 
-### [ ] 6.2 Shared types
+### [x] 6.2 Shared types
 
-- [ ] 6.2.1 Add Zod schemas `DiscoveredPosting` and `RadarSource` in `shared/src/schemas/`
-- [ ] 6.2.2 Export both from `shared/src/index.ts`
+- [x] 6.2.1 Add Zod schemas `DiscoveredPosting` and `RadarSource` in `shared/src/schemas/`
+- [x] 6.2.2 Export both from `shared/src/index.ts`
 
 ---
 

@@ -167,6 +167,15 @@ export const ApplicationEventTypeSchema = z.enum([
   'rejection', 'note',
 ]);
 
+export const AtsTypeSchema = z.enum([
+  'greenhouse', 'lever', 'ashby', 'smartrecruiters', 'pinpoint',
+  'welcomekit', 'custom',
+]);
+
+export const PostingStatusSchema = z.enum([
+  'new', 'seen', 'dismissed', 'promoted',
+]);
+
 // ============================================================
 // V2 Entity Schemas
 // ============================================================
@@ -322,6 +331,37 @@ export const CreateApplicationEventSchema = z.object({
   occurred_at: z.string().datetime().optional(),
 });
 
+export const RadarSourceSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  company_name: z.string().min(1).max(MAX_COMPANY_LENGTH),
+  ats_type: AtsTypeSchema.nullable(),
+  ats_board_token: z.string().nullable(),
+  radar_enabled: z.boolean(),
+  last_refreshed_at: z.string().datetime().nullable(),
+});
+
+export const DiscoveredPostingSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  watchlist_id: z.string().uuid(),
+  company_name: z.string().min(1).max(MAX_COMPANY_LENGTH),
+  external_job_id: z.string().min(1),
+  title: z.string().min(1).max(MAX_TITLE_LENGTH),
+  location: z.string().max(MAX_LOCATION_LENGTH).nullable(),
+  remote_status: z.string().max(100).nullable(),
+  url: z.string().max(MAX_URL_LENGTH).refine(
+    (value) => /^https?:\/\/.+/.test(value),
+    { message: 'Must be a valid URL' },
+  ),
+  posted_at: z.string().datetime().nullable(),
+  first_seen_at: z.string().datetime(),
+  status: PostingStatusSchema,
+  raw_payload: z.record(z.unknown()),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+});
+
 // ============================================================
 // V2 Inferred Types
 // ============================================================
@@ -344,6 +384,8 @@ export type PreferredContactMethod = z.infer<typeof PreferredContactMethodSchema
 export type HowFound = z.infer<typeof HowFoundSchema>;
 export type NotificationType = z.infer<typeof NotificationTypeSchema>;
 export type ApplicationEventType = z.infer<typeof ApplicationEventTypeSchema>;
+export type AtsType = z.infer<typeof AtsTypeSchema>;
+export type PostingStatus = z.infer<typeof PostingStatusSchema>;
 
 export type CreateApplicationSchemaType = z.infer<typeof CreateApplicationSchema>;
 export type UpdateApplicationSchemaType = z.infer<typeof UpdateApplicationSchema>;
@@ -361,6 +403,8 @@ export type UpdateNotificationPreferencesSchemaType = z.infer<typeof UpdateNotif
 export type CreateCompanyWatchlistEntrySchemaType = z.infer<typeof CreateCompanyWatchlistEntrySchema>;
 export type UpdateCompanyWatchlistEntrySchemaType = z.infer<typeof UpdateCompanyWatchlistEntrySchema>;
 export type CreateApplicationEventSchemaType = z.infer<typeof CreateApplicationEventSchema>;
+export type RadarSource = z.infer<typeof RadarSourceSchema>;
+export type DiscoveredPosting = z.infer<typeof DiscoveredPostingSchema>;
 
 // ============================================================
 // V2 DB Entity Types
