@@ -1,6 +1,6 @@
 # Track My Application — Product Requirements Document v2.0
 
-**Product:** Application Tracker
+**Product:** Track My Application
 **Site:** track-my-app.com
 **Prepared by:** Teial Dickens
 **Date:** April 27, 2026
@@ -11,9 +11,9 @@
 
 ## 1. Executive Summary
 
-Application Tracker helps job seekers log applications and track statuses across the job search pipeline. Version 2.0 augments the platform with several new feature modules grounded in a proven outreach-driven application methodology — showing that a personalized cover letter, a same-day double-down email to a specific person at the company, and a structured follow-up process increases application-to-phone-screen conversion from roughly 2% to approximately 10%.
+Track My Application helps job seekers log applications and track statuses across the job search pipeline. Version 2.0 augments the platform with several new feature modules grounded in a proven outreach-driven application methodology — showing that a personalized cover letter, same-day double-down outreach to a specific person at the company, and a structured follow-up process increases application-to-phone-screen conversion from roughly 2% to approximately 10%.
 
-The v2.0 feature set introduces a unified Contacts system (covering both company contacts and external recruiters), an Action Items task queue, an Application Type classification field, a Companies To Watch research list, an Application Event Log, and a Job Radar that automatically surfaces fresh matching roles from monitored companies. The Interview Tracker, In-App Notifications, and Playbook originally drafted for v2.0 have moved to v3.0. Navigation keeps four primary tabs with secondary items in a menu.
+The v2.0 feature set introduces a unified Contacts system (covering both company contacts and external recruiters), an Action Items task queue, an Application Type classification field, a Companies To Watch research list, an Application Event Log, and a manual Job Radar refresh flow for discovering roles from monitored companies. The Interview Tracker, In-App Notifications, scheduled background jobs, email delivery, and Playbook originally drafted for v2.0 have moved to v3.0. Navigation keeps four primary tabs with secondary items in a menu.
 
 ---
 
@@ -21,7 +21,7 @@ The v2.0 feature set introduces a unified Contacts system (covering both company
 
 ### 2.1 Current product state
 
-Application Tracker v1.3.1 provides:
+Track My Application v1.3.1 provides:
 
 - Job application log with company, title, location, and status fields
 - Status categories: In Progress, Not Started, Applied
@@ -37,8 +37,8 @@ The current product treats the application as the end of the workflow. In practi
 | Step | Action | Timing |
 | --- | --- | --- |
 | 1 | Submit application with personalized cover letter | Day 0 |
-| 2 | Send double-down email to a named person at the company | Same day as application |
-| 3 | Send follow-up email if no response | 4–5 business days later |
+| 2 | Log double-down outreach to a named person at the company | Same day as application |
+| 3 | Track follow-up outreach if no response | 4–5 business days later |
 | 4 | Research company engineering culture for personalized outreach | Before application |
 
 Additionally, many job seekers work with external recruiters who have their own preferred templates, resume formats, and communication preferences. v2.0 brings the entire workflow — company contacts and recruiters — into a unified Contacts system.
@@ -50,9 +50,9 @@ Additionally, many job seekers work with external recruiters who have their own 
 - Surface the complete per-application outreach workflow in a single view
 - Track every named contact (company contact or recruiter) in one unified system
 - Support recruiter relationship management including notes, preferences, and templates
-- Automate follow-up reminders based on application date
+- Help users create and manage follow-up tasks without sending reminders or notifications
 - Give users an action-item queue that reflects the proven 4-step method
-- Automatically surface fresh matching job postings from a watchlist of monitored companies
+- Let users manually refresh watched-company job feeds and review fresh matches in Discover
 
 ---
 
@@ -68,7 +68,7 @@ Primary tabs (always visible):
 | --- | --- |
 | Applications (Apps on mobile) | Pipeline bar, application list, urgent tasks widget |
 | Contacts | Unified contact tracker — company contacts and recruiters in one view |
-| Discover | Job radar of fresh matching roles from monitored companies |
+| Discover | Job radar of fresh matching roles from manually refreshed monitored companies |
 | Action Items | Task queue driven by the outreach method |
 
 Overflow / hamburger menu (top-right):
@@ -172,7 +172,7 @@ Token names follow the design token section of [application-tracker-sdd.md](appl
 | Applied msg sent | `--sage` | `--sage-soft` |
 | Double-down sent | `--accent` | `--accent-soft` |
 | Follow-up due | `#A36410` | `--sun-soft` |
-| Follow-up overdue | `--rose` | `--rose-soft` |
+| Follow-up missed | `--rose` | `--rose-soft` |
 | Replied | `--sage` | `--sage-soft` |
 | Not contacted | `--ink-3` | `--soft` |
 
@@ -313,9 +313,9 @@ A recruiter contact can be linked to one or more application records via a join 
 | Tag | Color | Meaning |
 | --- | --- | --- |
 | Applied msg sent | Green | Cover letter submitted with application |
-| Double-down sent | Blue | Direct outreach email sent same day |
+| Double-down sent | Blue | Direct outreach logged same day |
 | Follow-up due | Amber | 4–5 business days passed, no response |
-| Follow-up overdue | Red | Follow-up deadline passed |
+| Follow-up missed | Red | Follow-up due date has passed |
 | Replied | Bold green | Contact responded |
 | Not contacted | Gray | No outreach sent yet |
 
@@ -325,9 +325,9 @@ A recruiter contact can be linked to one or more application records via a join 
 - Sort by: contact_type, status, company name, date added, date of last outreach
 - Search by contact name or company
 
-#### 2.10 Auto-generated follow-up reminders
+#### 2.10 Follow-up task creation
 
-When a company contact's outreach status is set to `Double-down sent`, the system auto-creates a follow-up Task with due date = today + 4 business days, referencing the contact name and company.
+When a company contact's outreach status is set to `Double-down sent`, the system creates a follow-up Task with due date = today + 4 business days, referencing the contact name and company. V2 creates the task only as a record in Action Items; it does not send notifications, emails, or scheduled reminders.
 
 ---
 
@@ -354,11 +354,10 @@ The Action Items tab gives users a single queue of everything that needs to happ
 
 | Trigger | Task generated | Priority | Default due date |
 | --- | --- | --- | --- |
-| Application status → Applied (Cold Strategic) | Send double-down email to [company] contact | High | Same day |
+| Application status → Applied (Cold Strategic) | Log double-down outreach to [company] contact | High | Same day |
 | Contact outreach_status → Double-down sent | Send follow-up to [contact name] at [company] | High | +4 business days |
 | Application added (no contact linked) | Find engineering lead at [company] for double-down | Medium | +1 day |
-| Follow-up task due date passes (still Open) | Priority escalates to High; title appends "(Overdue)" | High | Immediate |
-| Application type = Recruiter-Assisted, no recruiter update in 5 days | Follow up with recruiter about [company] | High | +5 days |
+| Application type = Recruiter-Assisted | Optional manual follow-up with recruiter about [company] | Medium | User-selected |
 | Application type = Referral | Send thank-you note to referral contact | Medium | Same day |
 
 #### 3.4 Task list view
@@ -385,7 +384,7 @@ Application Type is a field on every application record. It controls which check
 | Type | Definition | Auto-generated tasks |
 | --- | --- | --- |
 | Cold Strategic | Direct application, no prior connection. Full 4-step outreach applies. | Double-down task (Day 0), follow-up task (Day 4–5), find-contact task if no contact linked |
-| Recruiter-Assisted | Application sourced or managed by an external recruiter. | Resume submission task per recruiter template, follow-up to recruiter task if no update after 5 days |
+| Recruiter-Assisted | Application sourced or managed by an external recruiter. | Resume submission task per recruiter template; user may add recruiter follow-up tasks manually |
 | Referral | Someone inside the company referred the candidate. Cold outreach not needed. | Thank-you note task to referral contact, post-screen follow-up tasks only |
 
 #### 4.3 Field spec
@@ -484,7 +483,7 @@ A user can log an event via an inline form directly in the timeline panel: event
 
 #### 10.1 Overview
 
-The Job Radar automates Companies To Watch. Instead of checking each company's careers page by hand, the system polls the public applicant tracking system (ATS) feed for every monitored company on a schedule, normalizes the postings, filters them to the user's criteria, and surfaces fresh matches in a Discover view. A matched role is promoted into an application with the same promote flow used by Companies To Watch. The radar is the discovery layer and does not send alerts in v2.0. Notification and email alerting for new matches is specified in `PRD-v3.md`.
+The Job Radar supports Companies To Watch without introducing background jobs in v2.0. Instead of checking each company's careers page by hand, the user can manually refresh monitored public applicant tracking system (ATS) feeds. The system normalizes the postings, filters them to the user's criteria, and surfaces fresh matches in a Discover view. A matched role is promoted into an application with the same promote flow used by Companies To Watch. Scheduled polling, notifications, and email alerting for new matches are specified in `PRD-v3.md`.
 
 #### 10.2 Monitored sources
 
@@ -494,8 +493,8 @@ Radar settings live on each Companies To Watch entry. A watchlist company become
 | --- | --- | --- | --- |
 | ats_type | Enum | Yes | `greenhouse`, `lever`, `ashby`, `smartrecruiters`, `pinpoint`, `welcomekit`, `custom` |
 | ats_board_token | Text | Yes | The board identifier from the ATS URL |
-| radar_enabled | Boolean | Yes | Off by default; the poller reads only enabled sources |
-| last_polled_at | Timestamp | Auto | Updated after each poll |
+| radar_enabled | Boolean | Yes | Off by default; manual refresh reads only enabled sources |
+| last_refreshed_at | Timestamp | Auto | Updated after each manual refresh |
 
 #### 10.3 Discovered postings
 
@@ -516,7 +515,7 @@ Each normalized posting is stored once per source, deduped on the external job i
 
 #### 10.4 Matching
 
-The poller keeps only postings that match the user's criteria. The v2.0 default keeps roles whose title signals seniority (senior, staff, or principal, never junior or intern) and whose location reads remote US or LA. Per-user criteria refinement is a fast-follow.
+Manual refresh keeps only postings that match the user's criteria. The v2.0 default keeps roles whose title signals seniority (senior, staff, or principal, never junior or intern) and whose location reads remote US or LA. Per-user criteria refinement is a fast-follow.
 
 #### 10.5 Discover surface
 
@@ -530,7 +529,7 @@ Add to tracker creates an `applications` record pre-populated with company name,
 
 ## 6. Product Data and Technical Boundaries
 
-V2 product requirements define what data the product must capture and how users should experience the workflow. Physical table schemas, indexes, enum definitions, route implementation details, RLS policy shape, and background job design live in [application-tracker-sdd.md](application-tracker-sdd.md).
+V2 product requirements define what data the product must capture and how users should experience the workflow. Physical table schemas, indexes, enum definitions, route implementation details, RLS policy shape, and background job design live in [application-tracker-sdd.md](application-tracker-sdd.md). V2 does not implement background jobs.
 
 ### 6.1 Product data concepts
 
@@ -549,11 +548,11 @@ V2 product requirements define what data the product must capture and how users 
 ### 6.2 Business rules
 
 1. Cold strategic applications create same-day double-down outreach tasks when they move to Applied.
-2. Recruiter-assisted applications suppress double-down tasks and instead create recruiter follow-up work when communication goes stale.
+2. Recruiter-assisted applications suppress double-down tasks and let users create recruiter follow-up work manually.
 3. Referral applications suppress irrelevant outreach checklist steps and create thank-you note work.
 4. Changing an application type recalculates active checklist steps and cancels pending auto-generated tasks that no longer apply.
 5. Marking double-down outreach as sent creates a follow-up task due four business days later.
-6. Overdue open tasks are escalated to high priority by the nightly task job.
+6. V2 does not send notifications, emails, scheduled reminders, or overdue escalations.
 7. Deleting an application requires user confirmation and preserves standalone recruiter contacts.
 
 ### 6.3 Authentication and ownership expectations
@@ -573,6 +572,7 @@ The app exposes authenticated API capabilities for Applications, Contacts, Actio
 
 - Interview Tracker, In-App Notifications, and Playbook, all moved to v3.0 (originally drafted for v2.0)
 - Email integration of any kind (outreach emails, notification digests, follow-up reminders) — planned for v3.0
+- Background schedulers or cron jobs, including overdue escalation and scheduled Radar polling — planned for v3.0
 - Calendar integration for phone screen scheduling
 - AI-generated cover letter drafting
 - Resume file storage and version management
@@ -587,10 +587,10 @@ The app exposes authenticated API capabilities for Applications, Contacts, Actio
 | Risk | Likelihood | Impact | Mitigation |
 | --- | --- | --- | --- |
 | Auto-task generation creates noise for users not following the 4-step method | Medium | Medium | Allow users to disable auto-task generation per application |
-| Contact email field creates expectation of email send functionality | High | Low | Label field as reference only; no mailto links in v2.0 |
+| Contact email field creates expectation of email send functionality | High | Low | Label field as reference only; no mailto links or send-email actions in v2.0 |
 | Data model changes require migration of existing application records | High | Low | All new entities are additive; jobs table untouched during rollout |
 | Unified contacts model creates confusion about recruiter vs. company contact | Low | Medium | Clear visual differentiation in the UI with contact_type badge |
-| ATS feed format changes break a source adapter | Medium | Low | Per-source error isolation in the poller; one bad board never aborts the run |
+| ATS feed format changes break a source adapter | Medium | Low | Per-source error isolation in manual refresh; one bad board never aborts another refresh |
 
 ---
 
@@ -623,7 +623,7 @@ The app exposes authenticated API capabilities for Applications, Contacts, Actio
 
 - [ ] Task queue displays all open tasks sorted by priority then due date
 - [ ] Auto-generated tasks are created within 5 seconds of the triggering status change
-- [ ] Tasks past due date are automatically escalated to High priority
+- [ ] Tasks past due date are visually marked as missed; no automatic escalation occurs
 - [ ] Task can be marked complete with a single click
 - [ ] Completed tasks move to a Done section
 - [ ] Task list supports filtering by category, priority, status, linked company
@@ -666,11 +666,11 @@ The app exposes authenticated API capabilities for Applications, Contacts, Actio
 ### Feature 10 — Job Radar
 
 - [ ] A Companies To Watch entry becomes a radar source by setting ATS type, board token, and enabling the radar
-- [ ] The poller reads only radar-enabled sources and writes new matches to discovered_postings
-- [ ] A repeat poll inserts no duplicate postings (deduped on watchlist_id and external_job_id)
+- [ ] Manual refresh reads only radar-enabled sources and writes new matches to discovered_postings
+- [ ] A repeat manual refresh inserts no duplicate postings (deduped on watchlist_id and external_job_id)
 - [ ] The Discover tab lists new matched postings grouped by company with a NEW badge and first-seen date
 - [ ] Add to tracker promotes a posting into an application and marks the posting promoted
-- [ ] Dismiss hides a posting and it does not reappear on the next poll
+- [ ] Dismiss hides a posting and it does not reappear on the next manual refresh
 - [ ] Radar data is scoped to the authenticated user (403 on unauthorized access)
 
 ---
@@ -685,4 +685,4 @@ The app exposes authenticated API capabilities for Applications, Contacts, Actio
 | 2.2 | April 28, 2026 | Teial Dickens | Removed year constraint from Applications tab; added date range filter and server-side pagination; added Companies To Watch feature |
 | 2.3 | April 30, 2026 | Teial Dickens | Renamed "Jobs" tab to "Applications" (abbreviated "Apps" on mobile) throughout |
 | 2.4 | May 2, 2026 | Teial Dickens | Added Feature 9: Application Event Log — application-level interaction timeline independent of named contacts; fixed `entry_type` → `purpose` column name in contact_interactions technical spec |
-| 2.5 | June 16, 2026 | Teial Dickens | Interview Tracker, In-App Notifications, and Playbook moved to PRD-v3.md; added Job Radar (automated ATS discovery feeding Companies To Watch); Interviews tab replaced with Discover |
+| 2.5 | June 16, 2026 | Teial Dickens | Interview Tracker, In-App Notifications, and Playbook moved to PRD-v3.md; added Job Radar (manual ATS refresh feeding Companies To Watch); Interviews tab replaced with Discover |

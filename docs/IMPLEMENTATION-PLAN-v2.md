@@ -9,7 +9,7 @@
 > - `[ ]` not started
 > - `[x]` complete
 
-**Scope (June 2026).** Interview Tracker, In-App Notifications, and Playbook moved to `IMPLEMENTATION-PLAN-v3.md`. Discover is the fourth V2 primary tab, powered by the Job Radar. The Job Radar is folded in here as Phases 6 through 12, directly after Companies To Watch (Phase 5), since it builds on the watchlist and the promote-to-application flow. Radar notification alerts are specified in `IMPLEMENTATION-PLAN-v3.md` (Phase 14), since they require In-App Notifications.
+**Scope (June 2026).** Interview Tracker, In-App Notifications, Playbook, email delivery, scheduled background jobs, overdue escalation, and scheduled Radar polling moved to `IMPLEMENTATION-PLAN-v3.md`. Discover is the fourth V2 primary tab, powered by a manual Job Radar refresh flow. The Job Radar is folded in here as Phases 6 through 12, directly after Companies To Watch (Phase 5), since it builds on the watchlist and the promote-to-application flow. Radar notification alerts and automated polling are specified in `IMPLEMENTATION-PLAN-v3.md` since they require V3 notification/background-job infrastructure.
 
 ---
 
@@ -106,8 +106,7 @@ File: `migrations/v2_001_enums.sql`
 - [x] 0.2.8 Create `contact_interaction_type_enum`
 - [x] 0.2.9 Create `contact_template_type_enum`
 - [x] 0.2.10 Create `preferred_contact_method_enum`, `how_found_enum`
-- [x] 0.2.11 Create `notification_type_enum` (`overdue_task`, `upcoming_interview`, `follow_up_due`, `recruiter_no_response`)
-- [x] 0.2.12 Write DOWN block: `DROP TYPE IF EXISTS` for each enum in reverse order
+- [x] 0.2.11 Write DOWN block: `DROP TYPE IF EXISTS` for each enum in reverse order
 
 ### 0.3 Migration v2_002 — `applications` table
 
@@ -173,35 +172,20 @@ File: `migrations/v2_008_interviews.sql`
 
 > **Dormant V3 schema note:** `interviews` is intentionally created in V2 as forward-compatible schema because the migration already exists. No V2 route or UI should expose Interview Tracker behavior. V3 owns the active interview API and UI work.
 
-### 0.10 Migration v2_009 — `notification_preferences` and `notification_log` tables
-
-File: `migrations/v2_009_notifications.sql`
-
-- [x] 0.10.1 Create `notification_preferences` table — in-app toggles only (no email, no digest_frequency, no quiet_hours fields)
-- [x] 0.10.2 Add UNIQUE constraint/index on `notification_preferences.user_id`
-- [x] 0.10.3 Add `updated_at` trigger
-- [x] 0.10.4 Create `notification_log` table — stores in-app notifications with `read_at` (nullable); no `email_to` or status fields
-- [x] 0.10.5 Create indexes
-- [x] 0.10.6 Write DOWN block for both tables
-
-> **Dormant V3 schema note:** `notification_preferences` and `notification_log` are intentionally created in V2 as forward-compatible schema because the migrations already exist. No V2 header bell, notification settings UI, or notification generation service should ship. V3 owns active notification behavior.
->
-> **Note:** `jobs` and `job_boards` tables are untouched by all migrations above. No data is moved until Phase 15.
-
-### 0.11 Migration v2_010 — `company_watchlist` table
+### 0.10 Migration v2_010 — `company_watchlist` table
 
 File: `migrations/v2_010_company_watchlist.sql`
 
-- [x] 0.11.1 Create `company_watchlist` table with all columns from [application-tracker-sdd.md](application-tracker-sdd.md) §5.5
-- [x] 0.11.2 Add `updated_at` trigger
-- [x] 0.11.3 Create all indexes for `company_watchlist`
-- [x] 0.11.4 Write DOWN block: `DROP TABLE IF EXISTS company_watchlist CASCADE`
+- [x] 0.10.1 Create `company_watchlist` table with all columns from [application-tracker-sdd.md](application-tracker-sdd.md) §5.5
+- [x] 0.10.2 Add `updated_at` trigger
+- [x] 0.10.3 Create all indexes for `company_watchlist`
+- [x] 0.10.4 Write DOWN block: `DROP TABLE IF EXISTS company_watchlist CASCADE`
 
-### 0.12 Shared types
+### 0.11 Shared types
 
-- [x] 0.12.1 Update `shared/src/constants.ts` with new field length limits
-- [x] 0.12.2 Create Zod schemas in `shared/src/schemas/` for: `Application`, `Contact`, `ContactInteraction`, `ContactTemplate`, `ApplicationContact`, `Task`, `Interview`, `NotificationPreferences`, `CompanyWatchlistEntry`
-- [x] 0.12.3 Export all schemas from `shared/src/index.ts`
+- [x] 0.11.1 Update `shared/src/constants.ts` with new field length limits
+- [x] 0.11.2 Create Zod schemas in `shared/src/schemas/` for: `Application`, `Contact`, `ContactInteraction`, `ContactTemplate`, `ApplicationContact`, `Task`, `Interview`, `CompanyWatchlistEntry`
+- [x] 0.11.3 Export all schemas from `shared/src/index.ts`
 
 ### 0.13 Migration v2_012 — `application_events` table
 
@@ -404,7 +388,6 @@ File: `migrations/v2_014_application_source.sql`
 
 ### 4.1 API — tasks routes
 
-- [ ] 4.1.0 Add `node-cron` dependency to `api/package.json` for background jobs
 - [ ] 4.1.1 Create `api/src/routes/tasks.ts`
 - [ ] 4.1.2 `GET /api/tasks` — list with `?category`, `?priority`, `?status`, `?application_id`, `?date_from`, and `?date_to` filters; default sort: priority high→low, due_date asc
 - [ ] 4.1.3 `POST /api/tasks` — manual creation; verify linked application/contact ownership
@@ -413,45 +396,33 @@ File: `migrations/v2_014_application_source.sql`
 - [ ] 4.1.6 `DELETE /api/tasks/:id` — ownership check
 - [ ] 4.1.7 Register in `app.ts`
 
-### 4.2 Overdue escalation job
+### 4.2 Auto-task triggers
 
-- [ ] 4.2.1 Create `api/src/jobs/escalateOverdueTasks.ts`
-- [ ] 4.2.2 Query all open tasks where `due_date < today`
-- [ ] 4.2.3 Set `priority = high` and append `(Overdue)` to title if not already present
-- [ ] 4.2.4 Schedule via cron (daily at 00:05 UTC) — use `node-cron` or equivalent
-- [ ] 4.2.5 Register job startup in `api/src/index.ts`
-- [ ] 4.2.6 Unit test: tasks past `due_date` have `priority` set to `high` and `(Overdue)` appended to title
-- [ ] 4.2.7 Unit test: `(Overdue)` is not appended a second time if already present in the title
-- [ ] 4.2.8 Add `ENABLE_BACKGROUND_JOBS` env guard; jobs do not run in tests unless explicitly invoked
-- [ ] 4.2.9 Document production behavior for single-instance scheduling on Railway; if multiple API instances are used, move cron execution to a single worker process
+- [ ] 4.2.1 Application added or changed to `cold_strategic` with no linked contact creates "Find engineering lead at [company] for double-down" due next day
+- [ ] 4.2.2 Application changed to `recruiter_assisted` suppresses cold-outreach auto-tasks; recruiter follow-up remains a manual task in V2
+- [ ] 4.2.3 Application changed to `referral` creates a referral thank-you task due same day when a referral contact is linked
+- [ ] 4.2.4 Changing application type cancels or skips pending auto-generated tasks that no longer apply
+- [ ] 4.2.5 Unit test: no-contact cold strategic task is created once and not duplicated
+- [ ] 4.2.6 Unit test: recruiter-assisted applications do not create time-based follow-up tasks in V2
+- [ ] 4.2.7 Unit test: referral thank-you task is created only for referral applications
 
-### 4.3 Additional auto-task triggers
+### 4.3 Action Items tab UI
 
-- [ ] 4.3.1 Application added or changed to `cold_strategic` with no linked contact creates "Find engineering lead at [company] for double-down" due next day
-- [ ] 4.3.2 Application changed to `recruiter_assisted` creates a recruiter follow-up task if no recruiter interaction has been logged within 5 days
-- [ ] 4.3.3 Application changed to `referral` creates a referral thank-you task due same day when a referral contact is linked
-- [ ] 4.3.4 Changing application type cancels or skips pending auto-generated tasks that no longer apply
-- [ ] 4.3.5 Unit test: no-contact cold strategic task is created once and not duplicated
-- [ ] 4.3.6 Unit test: recruiter-assisted follow-up task is suppressed when a recent recruiter interaction exists
-- [ ] 4.3.7 Unit test: referral thank-you task is created only for referral applications
+- [ ] 4.3.1 Create `web/src/pages/ActionItemsPage.tsx`
+- [ ] 4.3.2 Task list: grouped sections Open and Done
+- [ ] 4.3.3 Each row: priority indicator dot, title, category badge, linked company name, due date, countdown, application_type secondary label
+- [ ] 4.3.4 Quick-complete checkbox — single click marks `status = complete`, moves to Done section
+- [ ] 4.3.5 Filter bar: category, priority, status (open/done/skipped), due date range
+- [ ] 4.3.6 Group by toggle: company, category, due date
+- [ ] 4.3.7 Add Task button — opens modal with all task fields; application and contact selectors
+- [ ] 4.3.8 Past-due tasks: highlighted row with red "Missed" label; no automatic priority escalation
 
-### 4.4 Action Items tab UI
+### 4.4 Applications tab widget
 
-- [ ] 4.4.1 Create `web/src/pages/ActionItemsPage.tsx`
-- [ ] 4.4.2 Task list: grouped sections Open and Done
-- [ ] 4.4.3 Each row: priority indicator dot, title, category badge, linked company name, due date, countdown, application_type secondary label
-- [ ] 4.4.4 Quick-complete checkbox — single click marks `status = complete`, moves to Done section
-- [ ] 4.4.5 Filter bar: category, priority, status (open/done/skipped), due date range
-- [ ] 4.4.6 Group by toggle: company, category, due date
-- [ ] 4.4.7 Add Task button — opens modal with all task fields; application and contact selectors
-- [ ] 4.4.8 Overdue tasks: highlighted row with red "Overdue" label
-
-### 4.5 Applications tab widget
-
-- [ ] 4.5.1 Create `web/src/components/UrgentTasksWidget.tsx`
-- [ ] 4.5.2 Shows top 3 open high-priority tasks with title, company, due date
-- [ ] 4.5.3 "View all" link → navigates to Action Items tab
-- [ ] 4.5.4 Updates in real time on task status change (re-fetch on focus or after mutation)
+- [ ] 4.4.1 Create `web/src/components/UrgentTasksWidget.tsx`
+- [ ] 4.4.2 Shows top 3 open high-priority tasks with title, company, due date
+- [ ] 4.4.3 "View all" link → navigates to Action Items tab
+- [ ] 4.4.4 Updates in real time on task status change (re-fetch on focus or after mutation)
 
 ---
 
@@ -487,7 +458,7 @@ File: `migrations/v2_014_application_source.sql`
 
 ---
 
-> **What this is.** The job radar automates Companies To Watch. Instead of adding a company and checking its careers page by hand, a scheduled poller reads each company's public ATS feed, normalizes the postings, filters them to your criteria (senior and remote or LA), and surfaces fresh matches you promote into an application with the promote flow that already exists. It reuses the `applications` table, the watchlist promote pattern, and, once v3 lands, the notification pipeline. A first version ships without alerts and surfaces new roles through a Discover list with a NEW badge. The alerting phase itself is specified in `IMPLEMENTATION-PLAN-v3.md` (Phase 14), since it depends on In-App Notifications.
+> **What this is.** The job radar supports Companies To Watch without adding a V2 background scheduler. Instead of adding a company and checking its careers page by hand, the user can manually refresh each enabled company's public ATS feed. The app normalizes the postings, filters them to your criteria (senior and remote or LA), and surfaces fresh matches you promote into an application with the promote flow that already exists. It reuses the `applications` table and the watchlist promote pattern. Scheduled polling and alerting are specified in `IMPLEMENTATION-PLAN-v3.md` since they depend on V3 notification/background-job infrastructure.
 
 ---
 
@@ -501,7 +472,7 @@ File: `migrations/radar_001_job_radar.sql`
 
 - [ ] 6.1.1 Create `ats_type_enum` (`greenhouse`, `lever`, `ashby`, `smartrecruiters`, `pinpoint`, `welcomekit`, `custom`)
 - [ ] 6.1.2 Create `posting_status_enum` (`new`, `seen`, `dismissed`, `promoted`)
-- [ ] 6.1.3 `ALTER TABLE company_watchlist` add `ats_type`, `ats_board_token`, `radar_enabled` (boolean default false), `last_polled_at`
+- [ ] 6.1.3 `ALTER TABLE company_watchlist` add `ats_type`, `ats_board_token`, `radar_enabled` (boolean default false), `last_refreshed_at`
 - [ ] 6.1.4 Create `discovered_postings` table: `id`, `user_id`, `watchlist_id` FK, `company_name`, `external_job_id`, `title`, `location`, `remote_status`, `url`, `posted_at`, `first_seen_at` default now, `status` (posting_status_enum default new), `raw_payload` jsonb
 - [ ] 6.1.5 Add UNIQUE constraint on `(watchlist_id, external_job_id)` to dedupe sightings
 - [ ] 6.1.6 Create indexes: `user_id`, `status`, `first_seen_at`, `watchlist_id`
@@ -545,20 +516,18 @@ File: `migrations/radar_001_job_radar.sql`
 
 ---
 
-## Phase 8. Ingestion job
+## Phase 8. Manual ingestion
 
-### 8.1 Poller
+### 8.1 Refresh service
 
-- [ ] 8.1.1 Create `api/src/jobs/pollRadarSources.ts`
-- [ ] 8.1.2 Query `company_watchlist` rows where `radar_enabled = true`
-- [ ] 8.1.3 For each, resolve the adapter by `ats_type`, fetch, and normalize. Isolate errors per source so one bad board does not abort the run
+- [ ] 8.1.1 Create `api/src/radar/refreshRadarSource.ts`
+- [ ] 8.1.2 Accept a single `company_watchlist` row where `radar_enabled = true`
+- [ ] 8.1.3 Resolve the adapter by `ats_type`, fetch, and normalize; return a clear error for a bad board token without affecting other sources
 - [ ] 8.1.4 Apply the match filter (Phase 9) to each normalized posting
 - [ ] 8.1.5 Upsert into `discovered_postings` on `(watchlist_id, external_job_id)`; insert with status `new` on first sighting, leave existing rows untouched
-- [ ] 8.1.6 Update `last_polled_at` on the watchlist row
-- [ ] 8.1.7 Schedule via `node-cron` every 30 minutes, with a staggered start to stay polite to the boards
-- [ ] 8.1.8 Register job startup in `api/src/index.ts`
-- [ ] 8.1.9 Unit test: a new `external_job_id` inserts one row with status `new`; a repeat sighting inserts nothing
-- [ ] 8.1.10 Use the same `ENABLE_BACKGROUND_JOBS` guard as the overdue escalation job; poller does not run in tests unless explicitly invoked
+- [ ] 8.1.6 Update `last_refreshed_at` on the watchlist row
+- [ ] 8.1.7 Unit test: a new `external_job_id` inserts one row with status `new`; a repeat refresh inserts nothing
+- [ ] 8.1.8 Unit test: a bad source returns an error and does not insert partial data
 
 ---
 
@@ -572,7 +541,7 @@ File: `migrations/radar_001_job_radar.sql`
 
 ### 9.2 Configurable criteria (after MVP)
 
-- [ ] 9.2.1 Add a `radar_criteria` jsonb column (on `notification_preferences` or a small new table) for include and exclude keywords, location rules, and seniority terms
+- [ ] 9.2.1 Add a small `radar_criteria` table or a user profile column for include and exclude keywords, location rules, and seniority terms
 - [ ] 9.2.2 Read per-user criteria in the matcher; fall back to the MVP defaults when none are set
 
 ---
@@ -586,8 +555,10 @@ File: `migrations/radar_001_job_radar.sql`
 - [ ] 10.1.3 `PATCH /api/radar/postings/:id` to set status (`seen`, `dismissed`); ownership check
 - [ ] 10.1.4 `POST /api/radar/postings/:id/promote` creates an `applications` record from the posting (`company_name`, `title`, `job_link`, `source = 'radar'`, `source_metadata.discovered_posting_id`, `applied_date = null`), sets status `promoted`, and returns the new application id. Reuse the watchlist promote pattern from Phase 5
 - [ ] 10.1.5 Extend `PATCH /api/watchlist/:id` to set `ats_type`, `ats_board_token`, and `radar_enabled`
-- [ ] 10.1.6 Register in `app.ts`
-- [ ] 10.1.7 Unit test: promote creates an application and flips the posting to `promoted`; promote on another user's posting returns 403
+- [ ] 10.1.6 Add `POST /api/radar/sources/:watchlistId/refresh` to manually refresh one enabled source and return inserted/matched counts
+- [ ] 10.1.7 Register in `app.ts`
+- [ ] 10.1.8 Unit test: promote creates an application and flips the posting to `promoted`; promote on another user's posting returns 403
+- [ ] 10.1.9 Unit test: manual refresh on another user's watchlist entry returns 403
 
 ---
 
@@ -600,20 +571,21 @@ File: `migrations/radar_001_job_radar.sql`
 - [ ] 11.1.3 Add to tracker button on each card calls promote, then navigates to the new application
 - [ ] 11.1.4 Dismiss button sets status `dismissed` and removes the card
 - [ ] 11.1.5 Filter bar: status, company, search
-- [ ] 11.1.6 Empty state explaining how to enable radar on a watchlist company
+- [ ] 11.1.6 Empty state explaining how to enable radar on a watchlist company and use manual refresh
 - [ ] 11.1.7 Add the `/radar` route to `App.tsx` and a Discover entry to the primary `NavBar`
 
 ### 11.2 Watchlist radar toggle
 
 - [ ] 11.2.1 Extend the Companies To Watch modal with ATS type, board token, and an Enable radar toggle
 - [ ] 11.2.2 Helper text on where to find the board token, pointing at the careers URL
+- [ ] 11.2.3 Add a Refresh radar button on enabled watchlist entries; show last refreshed timestamp and inserted/matched count after completion
 
 ---
 
 ## Phase 12. QA and verification
 
-- [ ] 12.1 Run the poller against the seven Greenhouse boards and confirm real postings land in `discovered_postings`
-- [ ] 12.2 Confirm dedupe: a second run inserts no duplicate rows
+- [ ] 12.1 Run manual refresh against the seven Greenhouse boards and confirm real postings land in `discovered_postings`
+- [ ] 12.2 Confirm dedupe: a second manual refresh inserts no duplicate rows
 - [ ] 12.3 Confirm the match filter keeps only senior remote or LA roles
 - [ ] 12.4 Promote a discovered posting and confirm it appears in the Applications tab with `source = 'radar'`
 - [ ] 12.5 Confirm per-source error isolation: a deliberately bad board token does not abort the run
@@ -681,7 +653,7 @@ Run the `-- DOWN` block of the migration file in reverse order from where the fa
 
 ### Rolling back the full v2 schema
 
-Run DOWN blocks in reverse order: radar_001 → v2_014 → v2_013 → v2_012 → v2_011 → v2_010 → v2_009 → v2_008 → ... → v2_002 → v2_001. The `jobs` table is untouched throughout; the application can be reverted to v1 by updating the API routes to point back to `jobs`.
+Run DOWN blocks in reverse order: radar_001 → v2_014 → v2_013 → v2_012 → v2_011 → v2_010 → v2_008 → ... → v2_002 → v2_001. The `jobs` table is untouched throughout; the application can be reverted to v1 by updating the API routes to point back to `jobs`.
 
 ### Feature flag approach (optional for production)
 
@@ -691,7 +663,7 @@ To deploy schema changes before UI changes are live, each new API route can chec
 
 ### Rolling back the Job Radar
 
-Run the DOWN block of `radar_001_job_radar.sql` to drop `discovered_postings`, the radar enums, and the added `company_watchlist` columns. The `applications` and `company_watchlist` base tables are otherwise untouched. Remove the poller registration from `api/src/index.ts` before rolling back to avoid startup errors.
+Run the DOWN block of `radar_001_job_radar.sql` to drop `discovered_postings`, the radar enums, and the added `company_watchlist` columns. The `applications` and `company_watchlist` base tables are otherwise untouched. No V2 background poller is registered; run the DOWN block only.
 
 ## Environment Variables (new in v2.0)
 
