@@ -82,7 +82,7 @@
 
 ---
 
-## [ ] Phase 0 — Schema & Infrastructure
+## [x] Phase 0 — Schema & Infrastructure
 
 *All schema work must complete before any feature code is written. The existing `jobs` and `job_boards` tables are never modified. New feature code targets the new `applications` table exclusively. A one-time data import from `jobs` → `applications` runs after all features are complete (see Phase 15). Each migration is a standalone file that can be applied or rolled back independently.*
 
@@ -219,27 +219,27 @@ File: `migrations/v2_015_application_source.sql`
 
 ---
 
-## [ ] Phase 1 — Navigation & Layout Restructure
+## [x] Phase 1 — Navigation & Layout Restructure
 
 *Restructure the shell before adding feature content. This phase is purely frontend.*
 
 ### 1.1 Tab bar component
 
-- [ ] 1.1.1 Update `web/src/components/NavBar.tsx` — four primary tabs: Applications (Apps on mobile), Contacts, Discover, Action Items
+- [x] 1.1.1 Update `web/src/components/NavBar.tsx` — four primary tabs: Applications (Apps on mobile), Contacts, Discover, Action Items
 - [x] 1.1.2 On desktop (≥768px): horizontal tab bar at the top below the header
 - [x] 1.1.3 On mobile (<768px): fixed bottom navigation bar with icon + label per tab
 - [x] 1.1.4 Active tab state: underline on desktop, filled icon on mobile
 - [x] 1.1.5 Tab bar scrolls horizontally (not wrapping) if viewport is too narrow
-- [ ] 1.1.6 Remove Interviews from V2 primary navigation; V3 owns Interview Tracker navigation
+- [x] 1.1.6 Remove Interviews from V2 primary navigation; V3 owns Interview Tracker navigation
 
 ### 1.2 Hamburger menu
 
 - [x] 1.2.1 Create `web/src/components/HamburgerMenu.tsx` — slide-in drawer or dropdown
-- [ ] 1.2.2 Menu items: Companies To Watch, Profile, Sign out
+- [x] 1.2.2 Menu items: Companies To Watch, Profile, Sign out
 - [x] 1.2.3 Hamburger icon in the header top-right; accessible keyboard nav
 - [x] 1.2.4 On mobile: drawer slides in from the right
-- [ ] 1.2.5 Remove Playbook and Notifications from V2 hamburger menu; V3 owns those routes
-- [ ] 1.2.6 Remove Job Boards from V2 hamburger menu once Companies To Watch is available
+- [x] 1.2.5 Remove Playbook and Notifications from V2 hamburger menu; V3 owns those routes
+- [x] 1.2.6 Remove Job Boards from V2 hamburger menu once Companies To Watch is available
 
 ### 1.3 App header
 
@@ -249,14 +249,14 @@ File: `migrations/v2_015_application_source.sql`
 
 ### 1.4 Routing
 
-- [ ] 1.4.1 Update `web/src/App.tsx` routes: `/applications`, `/contacts`, `/radar`, `/action-items`, `/watchlist`, `/profile`
+- [x] 1.4.1 Update `web/src/App.tsx` routes: `/applications`, `/contacts`, `/radar`, `/action-items`, `/watchlist`, `/profile`
 - [x] 1.4.2 Default route redirects to `/applications`
-- [ ] 1.4.3 Redirect old `/dashboard`, `/interviews`, `/playbook`, and `/notifications` routes to `/applications` until V3 restores the deferred pages
-- [ ] 1.4.4 Remove `/job-boards` from V2 navigation; keep route only if needed for backwards-compatible redirect
+- [x] 1.4.3 Redirect old `/dashboard`, `/interviews`, `/playbook`, and `/notifications` routes to `/applications` until V3 restores the deferred pages
+- [x] 1.4.4 Remove `/job-boards` from V2 navigation; keep route only if needed for backwards-compatible redirect
 
 ### 1.5 Page scaffolding
 
-- [ ] 1.5.1 Create empty page components needed for V2: `ContactsPage.tsx`, `ActionItemsPage.tsx`, `WatchlistPage.tsx`, `RadarPage.tsx`
+- [x] 1.5.1 Create empty page components needed for V2: `ContactsPage.tsx`, `ActionItemsPage.tsx`, `WatchlistPage.tsx`, `RadarPage.tsx`
 - [x] 1.5.2 Each page shows a placeholder empty state with a descriptive heading
 - [x] 1.5.3 Verify tab bar active state updates on navigation
 

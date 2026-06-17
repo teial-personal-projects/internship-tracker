@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Briefcase, Users, Calendar, ClipboardList } from 'lucide-react';
+import { Briefcase, ClipboardList, Search, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface TabConfig {
@@ -12,7 +12,7 @@ interface TabConfig {
 const TABS: TabConfig[] = [
   { to: '/applications', label: 'Applications', mobileLabel: 'Apps',      Icon: Briefcase     },
   { to: '/contacts',     label: 'Contacts',      mobileLabel: 'Contacts',  Icon: Users         },
-  { to: '/interviews',   label: 'Interviews',    mobileLabel: 'Interviews', Icon: Calendar      },
+  { to: '/radar',        label: 'Discover',      mobileLabel: 'Discover',  Icon: Search        },
   { to: '/action-items', label: 'Action Items',  mobileLabel: 'Actions',   Icon: ClipboardList },
 ];
 
