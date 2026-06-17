@@ -520,14 +520,14 @@ File: `migrations/radar_001_job_radar.sql`
 - [x] 7.2.1 Create `greenhouse.ts`: GET `https://boards-api.greenhouse.io/v1/boards/{token}/jobs?content=true`, map `jobs[]` fields (`id`, `title`, `location.name`, `absolute_url`, `updated_at`)
 - [x] 7.2.2 Unit test against a saved Greenhouse fixture payload (Khan, Newsela, CodePath, Outschool, Guild, Learneo, GoGuardian all use this)
 
-### [ ] 7.3 Additional adapters
+### [x] 7.3 Additional adapters
 
-- [ ] 7.3.1 Lever adapter: GET `https://api.lever.co/v0/postings/{site}?mode=json` (Age of Learning)
-- [ ] 7.3.2 Ashby adapter: the posting-api job board endpoint (Instructure)
-- [ ] 7.3.3 SmartRecruiters adapter: the public postings API (Turnitin)
-- [ ] 7.3.4 Pinpoint and Welcome Kit adapters, or an HTML fallback if no clean JSON feed (Desmos, UPchieve)
-- [ ] 7.3.5 Custom-site fallback for Nerdy (`careers.varsitytutors.com`)
-- [ ] 7.3.6 Unit test each adapter against a saved fixture
+- [x] 7.3.1 Lever adapter: GET `https://api.lever.co/v0/postings/{site}?mode=json` (Age of Learning)
+- [x] 7.3.2 Ashby adapter: the posting-api job board endpoint (Instructure)
+- [x] 7.3.3 SmartRecruiters adapter: the public postings API (Turnitin)
+- [x] 7.3.4 Pinpoint and Welcome Kit adapters, or an HTML fallback if no clean JSON feed (Desmos, UPchieve)
+- [x] 7.3.5 Custom-site fallback for Nerdy (`careers.varsitytutors.com`)
+- [x] 7.3.6 Unit test each adapter against a saved fixture
 
 ### 7.4 Adapter registry
 
