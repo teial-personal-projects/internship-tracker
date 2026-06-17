@@ -438,7 +438,7 @@ File: `migrations/v2_015_application_source.sql`
 
 ## [ ] Phase 5 — Companies To Watch
 
-### [ ] 5.1 API — watchlist routes
+### [x] 5.1 API — watchlist routes
 
 - [x] 5.1.1 Create `api/src/routes/watchlist.ts`
 - [x] 5.1.2 `GET /api/watchlist` — list with `?search`, `?priority`, `?target_apply_date_from`, and `?target_apply_date_to` filters; ordered by `added DESC`
