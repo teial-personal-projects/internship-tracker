@@ -515,10 +515,10 @@ File: `migrations/radar_001_job_radar.sql`
 - [x] 7.1.2 Define `NormalizedPosting`: `externalId`, `title`, `location`, `remoteStatus`, `url`, `postedAt`, `raw`
 - [x] 7.1.3 Create `api/src/radar/normalize.ts` with location parsing and a remote-status detector (remote US, LA, onsite, unknown)
 
-### [ ] 7.2 Greenhouse adapter
+### [x] 7.2 Greenhouse adapter
 
-- [ ] 7.2.1 Create `greenhouse.ts`: GET `https://boards-api.greenhouse.io/v1/boards/{token}/jobs?content=true`, map `jobs[]` fields (`id`, `title`, `location.name`, `absolute_url`, `updated_at`)
-- [ ] 7.2.2 Unit test against a saved Greenhouse fixture payload (Khan, Newsela, CodePath, Outschool, Guild, Learneo, GoGuardian all use this)
+- [x] 7.2.1 Create `greenhouse.ts`: GET `https://boards-api.greenhouse.io/v1/boards/{token}/jobs?content=true`, map `jobs[]` fields (`id`, `title`, `location.name`, `absolute_url`, `updated_at`)
+- [x] 7.2.2 Unit test against a saved Greenhouse fixture payload (Khan, Newsela, CodePath, Outschool, Guild, Learneo, GoGuardian all use this)
 
 ### [ ] 7.3 Additional adapters
 
