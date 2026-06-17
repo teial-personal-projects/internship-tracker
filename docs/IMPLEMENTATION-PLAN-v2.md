@@ -529,9 +529,9 @@ File: `migrations/radar_001_job_radar.sql`
 - [x] 7.3.5 Custom-site fallback for Nerdy (`careers.varsitytutors.com`)
 - [x] 7.3.6 Unit test each adapter against a saved fixture
 
-### 7.4 Adapter registry
+### [x] 7.4 Adapter registry
 
-- [ ] 7.4.1 Map `ats_type` to the right adapter; throw a clear error on an unknown type
+- [x] 7.4.1 Map `ats_type` to the right adapter; throw a clear error on an unknown type
 
 ---
 
