@@ -6,6 +6,7 @@ import applicationsRouter from './routes/applications';
 import contactsRouter from './routes/contacts';
 import tasksRouter from './routes/tasks';
 import watchlistRouter from './routes/watchlist';
+import radarRouter from './routes/radar';
 import profileRouter from './routes/profile';
 import jobBoardsRouter from './routes/jobBoards';
 import { errorHandler } from './middleware/errorHandler';
@@ -29,6 +30,7 @@ export function createApp(version: string) {
   app.use('/api/contacts', contactsRouter);
   app.use('/api/tasks', tasksRouter);
   app.use('/api/watchlist', watchlistRouter);
+  app.use('/api/radar', radarRouter);
   app.use('/api/profile', profileRouter);
   app.use('/api/job-boards', jobBoardsRouter);
 

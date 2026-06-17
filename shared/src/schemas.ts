@@ -322,7 +322,13 @@ export const CreateCompanyWatchlistEntrySchema = z.object({
     .default(() => new Date().toISOString().split('T')[0]),
 });
 
-export const UpdateCompanyWatchlistEntrySchema = CreateCompanyWatchlistEntrySchema.partial();
+export const UpdateCompanyWatchlistEntrySchema = CreateCompanyWatchlistEntrySchema
+  .partial()
+  .extend({
+    ats_type: AtsTypeSchema.nullable().optional(),
+    ats_board_token: z.string().nullable().optional(),
+    radar_enabled: z.boolean().optional(),
+  });
 
 export const CreateApplicationEventSchema = z.object({
   event_type: ApplicationEventTypeSchema,

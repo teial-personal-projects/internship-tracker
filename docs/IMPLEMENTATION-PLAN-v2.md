@@ -565,19 +565,19 @@ File: `migrations/radar_001_job_radar.sql`
 
 ---
 
-## [ ] Phase 10. API routes
+## [x] Phase 10. API routes
 
-### [ ] 10.1 Radar routes
+### [x] 10.1 Radar routes
 
-- [ ] 10.1.1 Create `api/src/routes/radar.ts`
-- [ ] 10.1.2 `GET /api/radar/postings` for `req.user.id` with `?status`, `?watchlist_id`, `?search`; sort `first_seen_at DESC`
-- [ ] 10.1.3 `PATCH /api/radar/postings/:id` to set status (`seen`, `dismissed`); ownership check
-- [ ] 10.1.4 `POST /api/radar/postings/:id/promote` creates an `applications` record from the posting (`company_name`, `title`, `job_link`, `source = 'radar'`, `source_metadata.discovered_posting_id`, `applied_date = null`), sets status `promoted`, and returns the new application id. Reuse the watchlist promote pattern from Phase 5
-- [ ] 10.1.5 Extend `PATCH /api/watchlist/:id` to set `ats_type`, `ats_board_token`, and `radar_enabled`
-- [ ] 10.1.6 Add `POST /api/radar/sources/:watchlistId/refresh` to manually refresh one enabled source and return inserted/matched counts
-- [ ] 10.1.7 Register in `app.ts`
-- [ ] 10.1.8 Unit test: promote creates an application and flips the posting to `promoted`; promote on another user's posting returns 403
-- [ ] 10.1.9 Unit test: manual refresh on another user's watchlist entry returns 403
+- [x] 10.1.1 Create `api/src/routes/radar.ts`
+- [x] 10.1.2 `GET /api/radar/postings` for `req.user.id` with `?status`, `?watchlist_id`, `?search`; sort `first_seen_at DESC`
+- [x] 10.1.3 `PATCH /api/radar/postings/:id` to set status (`seen`, `dismissed`); ownership check
+- [x] 10.1.4 `POST /api/radar/postings/:id/promote` creates an `applications` record from the posting (`company_name`, `title`, `job_link`, `source = 'radar'`, `source_metadata.discovered_posting_id`, `applied_date = null`), sets status `promoted`, and returns the new application id. Reuse the watchlist promote pattern from Phase 5
+- [x] 10.1.5 Extend `PATCH /api/watchlist/:id` to set `ats_type`, `ats_board_token`, and `radar_enabled`
+- [x] 10.1.6 Add `POST /api/radar/sources/:watchlistId/refresh` to manually refresh one enabled source and return inserted/matched counts
+- [x] 10.1.7 Register in `app.ts`
+- [x] 10.1.8 Unit test: promote creates an application and flips the posting to `promoted`; promote on another user's posting returns 403
+- [x] 10.1.9 Unit test: manual refresh on another user's watchlist entry returns 403
 
 ---
 
