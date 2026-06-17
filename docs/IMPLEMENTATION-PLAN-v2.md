@@ -197,15 +197,24 @@ File: `migrations/v2_012_application_events.sql`
 - [x] 0.13.4 Add `CreateApplicationEventSchema` to `shared/src/schemas.ts`; exported via `shared/src/index.ts`
 - [x] 0.13.5 Write DOWN block: `DROP TABLE IF EXISTS application_events CASCADE; DROP TYPE IF EXISTS application_event_type_enum;`
 
-### 0.14 Migration v2_014 — application source field
+### 0.14 Migration v2_014 — default application type
 
-File: `migrations/v2_014_application_source.sql`
+File: `migrations/v2_014_default_application_type.sql`
 
-- [ ] 0.14.1 Create `application_source_enum` (`manual`, `imported`, `watchlist`, `radar`)
-- [ ] 0.14.2 `ALTER TABLE applications` add `source application_source_enum NOT NULL DEFAULT 'manual'`
-- [ ] 0.14.3 `ALTER TABLE applications` add `source_metadata JSONB NOT NULL DEFAULT '{}'::jsonb`
-- [ ] 0.14.4 Create index `idx_applications_source`
-- [ ] 0.14.5 Write DOWN block: drop `source_metadata`, `source`, and `application_source_enum`
+- [x] 0.14.1 Backfill existing `applications.application_type IS NULL` rows to `cold_strategic`
+- [x] 0.14.2 Set `applications.application_type` default to `cold_strategic`
+- [x] 0.14.3 Set `applications.application_type` to `NOT NULL`
+- [x] 0.14.4 Write DOWN block: drop `NOT NULL` and default from `application_type`
+
+### 0.15 Migration v2_015 — application source field
+
+File: `migrations/v2_015_application_source.sql`
+
+- [ ] 0.15.1 Create `application_source_enum` (`manual`, `imported`, `watchlist`, `radar`)
+- [ ] 0.15.2 `ALTER TABLE applications` add `source application_source_enum NOT NULL DEFAULT 'manual'`
+- [ ] 0.15.3 `ALTER TABLE applications` add `source_metadata JSONB NOT NULL DEFAULT '{}'::jsonb`
+- [ ] 0.15.4 Create index `idx_applications_source`
+- [ ] 0.15.5 Write DOWN block: drop `source_metadata`, `source`, and `application_source_enum`
 
 ---
 
@@ -627,7 +636,7 @@ File: `migrations/v2_011_import_jobs.sql`
 
 - [x] 15.1.1 Write `INSERT INTO applications (...) SELECT ... FROM jobs` mapping all overlapping columns
 - [x] 15.1.2 Map `job_status_enum` values to `application_status_enum` equivalents
-- [x] 15.1.3 Set `application_type = NULL` for all imported rows (user can set type after import)
+- [x] 15.1.3 Set `application_type = 'cold_strategic'` for all imported rows
 - [x] 15.1.4 Set `checklist_state = '{}'` for all imported rows
 - [x] 15.1.5 Write DOWN block: `DELETE FROM applications WHERE id IN (SELECT id FROM jobs)` (idempotent rollback)
 
@@ -653,7 +662,7 @@ Run the `-- DOWN` block of the migration file in reverse order from where the fa
 
 ### Rolling back the full v2 schema
 
-Run DOWN blocks in reverse order: radar_001 → v2_014 → v2_013 → v2_012 → v2_011 → v2_010 → v2_008 → ... → v2_002 → v2_001. The `jobs` table is untouched throughout; the application can be reverted to v1 by updating the API routes to point back to `jobs`.
+Run DOWN blocks in reverse order: radar_001 → v2_015 → v2_014 → v2_013 → v2_012 → v2_011 → v2_010 → v2_008 → ... → v2_002 → v2_001. The `jobs` table is untouched throughout; the application can be reverted to v1 by updating the API routes to point back to `jobs`.
 
 ### Feature flag approach (optional for production)
 

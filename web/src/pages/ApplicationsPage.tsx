@@ -91,7 +91,7 @@ export function ApplicationsPage() {
     const appType = formData.application_type;
     const payload: CreateApplicationSchemaType = {
       ...formData,
-      application_type: appType === '' ? null : appType,
+      application_type: appType || 'cold_strategic',
       checklist_state: editingApp?.checklist_state ?? {},
     };
     try {

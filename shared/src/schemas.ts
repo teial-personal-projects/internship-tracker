@@ -176,8 +176,8 @@ export const CreateApplicationSchema = z.object({
   app_link: urlOrEmpty,
   status: ApplicationStatusSchema.default('not_started'),
   application_type: z.preprocess(
-    v => (v === '' ? null : v),
-    ApplicationTypeSchema.nullable().optional(),
+    v => (v === '' || v == null ? 'cold_strategic' : v),
+    ApplicationTypeSchema.default('cold_strategic'),
   ),
   checklist_state: z.record(z.unknown()).default({}),
   cover_letter: z.string().max(MAX_COVER_LETTER_LENGTH).nullable().optional(),

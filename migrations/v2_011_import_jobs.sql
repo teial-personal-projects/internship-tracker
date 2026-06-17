@@ -49,7 +49,7 @@ SELECT
     WHEN 'archive'         THEN 'archive'
     ELSE                        'not_started'
   END::application_status_enum,
-  NULL,     -- application_type: user sets after import
+  'cold_strategic'::application_type_enum,
   '{}',     -- checklist_state: blank for all imported rows
   j.cover_letter,
   j.pay,

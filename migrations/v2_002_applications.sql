@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS applications (
   job_link         TEXT CHECK (job_link IS NULL OR job_link LIKE 'http%'),
   app_link         TEXT CHECK (app_link IS NULL OR app_link LIKE 'http%'),
   status           application_status_enum NOT NULL DEFAULT 'not_started',
-  application_type application_type_enum,
+  application_type application_type_enum NOT NULL DEFAULT 'cold_strategic',
   checklist_state  JSONB NOT NULL DEFAULT '{}',
   cover_letter     TEXT CHECK (char_length(cover_letter) <= 5000),
   notes            TEXT CHECK (char_length(notes) <= 5000),

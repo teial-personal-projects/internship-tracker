@@ -48,12 +48,12 @@ interface Props {
 
 export function ApplicationModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, title = 'Add Application' }: Props) {
   const { register, handleSubmit, formState: { errors }, reset } = useForm<ApplicationFormValues>({
-    defaultValues: { added: TODAY, status: 'not_started', ...defaultValues } as Partial<ApplicationFormValues>,
+    defaultValues: { added: TODAY, status: 'not_started', application_type: 'cold_strategic', ...defaultValues } as Partial<ApplicationFormValues>,
   });
 
   useEffect(() => {
     if (isOpen) {
-      reset({ added: TODAY, status: 'not_started', ...defaultValues } as Partial<ApplicationFormValues>);
+      reset({ added: TODAY, status: 'not_started', application_type: 'cold_strategic', ...defaultValues } as Partial<ApplicationFormValues>);
     }
   }, [isOpen, defaultValues, reset]);
 
@@ -120,7 +120,6 @@ export function ApplicationModal({ isOpen, onClose, onSubmit, isLoading, default
                 <div>
                   <label className="field-label">Application Type</label>
                   <select className="field-select" {...register('application_type')}>
-                    <option value="">Not set</option>
                     {APPLICATION_TYPES.map(t => (
                       <option key={t} value={t}>{APPLICATION_TYPE_LABELS[t]}</option>
                     ))}
