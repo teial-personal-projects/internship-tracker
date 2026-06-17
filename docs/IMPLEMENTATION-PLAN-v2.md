@@ -485,18 +485,18 @@ File: `migrations/v2_016_company_watchlist_target_apply_date.sql`
 
 *All changes are additive. The `applications` and `company_watchlist` base tables are extended, not modified destructively. One migration file, following the existing versioned convention.*
 
-### [ ] 6.1 Migration radar_001
+### [x] 6.1 Migration radar_001
 
 File: `migrations/radar_001_job_radar.sql`
 
-- [ ] 6.1.1 Create `ats_type_enum` (`greenhouse`, `lever`, `ashby`, `smartrecruiters`, `pinpoint`, `welcomekit`, `custom`)
-- [ ] 6.1.2 Create `posting_status_enum` (`new`, `seen`, `dismissed`, `promoted`)
-- [ ] 6.1.3 `ALTER TABLE company_watchlist` add `ats_type`, `ats_board_token`, `radar_enabled` (boolean default false), `last_refreshed_at`
-- [ ] 6.1.4 Create `discovered_postings` table: `id`, `user_id`, `watchlist_id` FK, `company_name`, `external_job_id`, `title`, `location`, `remote_status`, `url`, `posted_at`, `first_seen_at` default now, `status` (posting_status_enum default new), `raw_payload` jsonb
-- [ ] 6.1.5 Add UNIQUE constraint on `(watchlist_id, external_job_id)` to dedupe sightings
-- [ ] 6.1.6 Create indexes: `user_id`, `status`, `first_seen_at`, `watchlist_id`
-- [ ] 6.1.7 Add `updated_at` trigger
-- [ ] 6.1.8 Write DOWN block: drop the table, the enums, and the added watchlist columns in reverse order
+- [x] 6.1.1 Create `ats_type_enum` (`greenhouse`, `lever`, `ashby`, `smartrecruiters`, `pinpoint`, `welcomekit`, `custom`)
+- [x] 6.1.2 Create `posting_status_enum` (`new`, `seen`, `dismissed`, `promoted`)
+- [x] 6.1.3 `ALTER TABLE company_watchlist` add `ats_type`, `ats_board_token`, `radar_enabled` (boolean default false), `last_refreshed_at`
+- [x] 6.1.4 Create `discovered_postings` table: `id`, `user_id`, `watchlist_id` FK, `company_name`, `external_job_id`, `title`, `location`, `remote_status`, `url`, `posted_at`, `first_seen_at` default now, `status` (posting_status_enum default new), `raw_payload` jsonb
+- [x] 6.1.5 Add UNIQUE constraint on `(watchlist_id, external_job_id)` to dedupe sightings
+- [x] 6.1.6 Create indexes: `user_id`, `status`, `first_seen_at`, `watchlist_id`
+- [x] 6.1.7 Add `updated_at` trigger
+- [x] 6.1.8 Write DOWN block: drop the table, the enums, and the added watchlist columns in reverse order
 
 ### [ ] 6.2 Shared types
 
