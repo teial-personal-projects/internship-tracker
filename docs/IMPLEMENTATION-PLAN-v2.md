@@ -13,7 +13,7 @@
 
 ---
 
-## Phase DR — Design System & Visual Refresh
+## [x] Phase DR — Design System & Visual Refresh
 
 *Targets the current v1 codebase. No schema, API, or data model changes. Ship as a standalone PR before starting any v2 feature phases. Reference: [application-tracker-sdd.md](application-tracker-sdd.md) §4 — Terracotta Daylight direction.*
 
@@ -82,7 +82,7 @@
 
 ---
 
-## Phase 0 — Schema & Infrastructure
+## [ ] Phase 0 — Schema & Infrastructure
 
 *All schema work must complete before any feature code is written. The existing `jobs` and `job_boards` tables are never modified. New feature code targets the new `applications` table exclusively. A one-time data import from `jobs` → `applications` runs after all features are complete (see Phase 15). Each migration is a standalone file that can be applied or rolled back independently.*
 
@@ -209,7 +209,7 @@ File: `migrations/v2_014_application_source.sql`
 
 ---
 
-## Phase 1 — Navigation & Layout Restructure
+## [ ] Phase 1 — Navigation & Layout Restructure
 
 *Restructure the shell before adding feature content. This phase is purely frontend.*
 
@@ -252,7 +252,7 @@ File: `migrations/v2_014_application_source.sql`
 
 ---
 
-## Phase 2 — Applications Tab & Application Type
+## [x] Phase 2 — Applications Tab & Application Type
 
 ### 2.1 API — applications route
 
@@ -315,7 +315,7 @@ File: `migrations/v2_014_application_source.sql`
 
 ---
 
-## Phase 3 — Unified Contacts System
+## [x] Phase 3 — Unified Contacts System
 
 ### 3.1 API — contacts routes
 
@@ -384,19 +384,19 @@ File: `migrations/v2_014_application_source.sql`
 
 ---
 
-## Phase 4 — Action Items & Task Queue
+## [ ] Phase 4 — Action Items & Task Queue
 
-### 4.1 API — tasks routes
+### [x] 4.1 API — tasks routes
 
-- [ ] 4.1.1 Create `api/src/routes/tasks.ts`
-- [ ] 4.1.2 `GET /api/tasks` — list with `?category`, `?priority`, `?status`, `?application_id`, `?date_from`, and `?date_to` filters; default sort: priority high→low, due_date asc
-- [ ] 4.1.3 `POST /api/tasks` — manual creation; verify linked application/contact ownership
-- [ ] 4.1.4 `GET /api/tasks/:id` — ownership check
-- [ ] 4.1.5 `PATCH /api/tasks/:id` — update status, priority, due_date, notes
-- [ ] 4.1.6 `DELETE /api/tasks/:id` — ownership check
-- [ ] 4.1.7 Register in `app.ts`
+- [x] 4.1.1 Create `api/src/routes/tasks.ts`
+- [x] 4.1.2 `GET /api/tasks` — list with `?category`, `?priority`, `?status`, `?application_id`, `?date_from`, and `?date_to` filters; default sort: priority high→low, due_date asc
+- [x] 4.1.3 `POST /api/tasks` — manual creation; verify linked application/contact ownership
+- [x] 4.1.4 `GET /api/tasks/:id` — ownership check
+- [x] 4.1.5 `PATCH /api/tasks/:id` — update status, priority, due_date, notes
+- [x] 4.1.6 `DELETE /api/tasks/:id` — ownership check
+- [x] 4.1.7 Register in `app.ts`
 
-### 4.2 Auto-task triggers
+### [ ] 4.2 Auto-task triggers
 
 - [ ] 4.2.1 Application added or changed to `cold_strategic` with no linked contact creates "Find engineering lead at [company] for double-down" due next day
 - [ ] 4.2.2 Application changed to `recruiter_assisted` suppresses cold-outreach auto-tasks; recruiter follow-up remains a manual task in V2
@@ -406,7 +406,7 @@ File: `migrations/v2_014_application_source.sql`
 - [ ] 4.2.6 Unit test: recruiter-assisted applications do not create time-based follow-up tasks in V2
 - [ ] 4.2.7 Unit test: referral thank-you task is created only for referral applications
 
-### 4.3 Action Items tab UI
+### [ ] 4.3 Action Items tab UI
 
 - [ ] 4.3.1 Create `web/src/pages/ActionItemsPage.tsx`
 - [ ] 4.3.2 Task list: grouped sections Open and Done
@@ -426,9 +426,9 @@ File: `migrations/v2_014_application_source.sql`
 
 ---
 
-## Phase 5 — Companies To Watch
+## [ ] Phase 5 — Companies To Watch
 
-### 5.1 API — watchlist routes
+### [ ] 5.1 API — watchlist routes
 
 - [ ] 5.1.1 Create `api/src/routes/watchlist.ts`
 - [ ] 5.1.2 `GET /api/watchlist` — list with `?search`, `?priority`, `?target_apply_year` filters; ordered by `added DESC`
@@ -441,7 +441,7 @@ File: `migrations/v2_014_application_source.sql`
 - [ ] 5.1.9 Unit test: `promote` returns the new application ID and the watchlist entry no longer exists after the call
 - [ ] 5.1.10 Unit test: `promote` on a non-existent entry returns 404; on another user's entry returns 403
 
-### 5.2 Companies To Watch UI
+### [ ] 5.2 Companies To Watch UI
 
 - [ ] 5.2.1 Create `web/src/pages/WatchlistPage.tsx`
 - [ ] 5.2.2 List view: rows show company name, industry badge, priority dot, target apply year, one-line notes preview
@@ -462,11 +462,11 @@ File: `migrations/v2_014_application_source.sql`
 
 ---
 
-## Phase 6. Schema additions
+## [ ] Phase 6. Schema additions
 
 *All changes are additive. The `applications` and `company_watchlist` base tables are extended, not modified destructively. One migration file, following the existing versioned convention.*
 
-### 6.1 Migration radar_001
+### [ ] 6.1 Migration radar_001
 
 File: `migrations/radar_001_job_radar.sql`
 
@@ -479,29 +479,29 @@ File: `migrations/radar_001_job_radar.sql`
 - [ ] 6.1.7 Add `updated_at` trigger
 - [ ] 6.1.8 Write DOWN block: drop the table, the enums, and the added watchlist columns in reverse order
 
-### 6.2 Shared types
+### [ ] 6.2 Shared types
 
 - [ ] 6.2.1 Add Zod schemas `DiscoveredPosting` and `RadarSource` in `shared/src/schemas/`
 - [ ] 6.2.2 Export both from `shared/src/index.ts`
 
 ---
 
-## Phase 7. ATS adapter layer
+## [ ] Phase 7. ATS adapter layer
 
 *The core abstraction. Each ATS returns a different JSON shape, so one adapter per type maps to a single normalized posting. Greenhouse first, since it covers seven of your current targets.*
 
-### 7.1 Adapter interface and normalizer
+### [ ] 7.1 Adapter interface and normalizer
 
 - [ ] 7.1.1 Create `api/src/radar/adapters/types.ts` defining `AtsAdapter` with `fetch(boardToken): Promise<NormalizedPosting[]>`
 - [ ] 7.1.2 Define `NormalizedPosting`: `externalId`, `title`, `location`, `remoteStatus`, `url`, `postedAt`, `raw`
 - [ ] 7.1.3 Create `api/src/radar/normalize.ts` with location parsing and a remote-status detector (remote US, LA, onsite, unknown)
 
-### 7.2 Greenhouse adapter
+### [ ] 7.2 Greenhouse adapter
 
 - [ ] 7.2.1 Create `greenhouse.ts`: GET `https://boards-api.greenhouse.io/v1/boards/{token}/jobs?content=true`, map `jobs[]` fields (`id`, `title`, `location.name`, `absolute_url`, `updated_at`)
 - [ ] 7.2.2 Unit test against a saved Greenhouse fixture payload (Khan, Newsela, CodePath, Outschool, Guild, Learneo, GoGuardian all use this)
 
-### 7.3 Additional adapters
+### [ ] 7.3 Additional adapters
 
 - [ ] 7.3.1 Lever adapter: GET `https://api.lever.co/v0/postings/{site}?mode=json` (Age of Learning)
 - [ ] 7.3.2 Ashby adapter: the posting-api job board endpoint (Instructure)
@@ -516,9 +516,9 @@ File: `migrations/radar_001_job_radar.sql`
 
 ---
 
-## Phase 8. Manual ingestion
+## [ ] Phase 8. Manual ingestion
 
-### 8.1 Refresh service
+### [ ] 8.1 Refresh service
 
 - [ ] 8.1.1 Create `api/src/radar/refreshRadarSource.ts`
 - [ ] 8.1.2 Accept a single `company_watchlist` row where `radar_enabled = true`
@@ -531,24 +531,24 @@ File: `migrations/radar_001_job_radar.sql`
 
 ---
 
-## Phase 9. Match filter
+## [ ] Phase 9. Match filter
 
-### 9.1 Filter logic
+### [ ] 9.1 Filter logic
 
 - [ ] 9.1.1 Create `api/src/radar/match.ts` with `matches(posting, criteria): boolean`
 - [ ] 9.1.2 MVP criteria hardcoded: title contains a seniority term (senior, staff, principal) and excludes junior or intern, AND location reads remote US or LA
 - [ ] 9.1.3 Unit test: senior remote passes; junior remote fails; senior onsite outside LA fails
 
-### 9.2 Configurable criteria (after MVP)
+### [ ] 9.2 Configurable criteria (after MVP)
 
 - [ ] 9.2.1 Add a small `radar_criteria` table or a user profile column for include and exclude keywords, location rules, and seniority terms
 - [ ] 9.2.2 Read per-user criteria in the matcher; fall back to the MVP defaults when none are set
 
 ---
 
-## Phase 10. API routes
+## [ ] Phase 10. API routes
 
-### 10.1 Radar routes
+### [ ] 10.1 Radar routes
 
 - [ ] 10.1.1 Create `api/src/routes/radar.ts`
 - [ ] 10.1.2 `GET /api/radar/postings` for `req.user.id` with `?status`, `?watchlist_id`, `?search`; sort `first_seen_at DESC`
@@ -562,9 +562,9 @@ File: `migrations/radar_001_job_radar.sql`
 
 ---
 
-## Phase 11. Discover UI
+## [ ] Phase 11. Discover UI
 
-### 11.1 Discover page
+### [ ] 11.1 Discover page
 
 - [ ] 11.1.1 Create `web/src/pages/RadarPage.tsx`, labeled Discover in navigation
 - [ ] 11.1.2 List new matched postings grouped by company, newest first, each with a NEW badge, posted and first-seen dates, and a remote tag
@@ -574,7 +574,7 @@ File: `migrations/radar_001_job_radar.sql`
 - [ ] 11.1.6 Empty state explaining how to enable radar on a watchlist company and use manual refresh
 - [ ] 11.1.7 Add the `/radar` route to `App.tsx` and a Discover entry to the primary `NavBar`
 
-### 11.2 Watchlist radar toggle
+### [ ] 11.2 Watchlist radar toggle
 
 - [ ] 11.2.1 Extend the Companies To Watch modal with ATS type, board token, and an Enable radar toggle
 - [ ] 11.2.2 Helper text on where to find the board token, pointing at the careers URL
@@ -582,7 +582,7 @@ File: `migrations/radar_001_job_radar.sql`
 
 ---
 
-## Phase 12. QA and verification
+## [ ] Phase 12. QA and verification
 
 - [ ] 12.1 Run manual refresh against the seven Greenhouse boards and confirm real postings land in `discovered_postings`
 - [ ] 12.2 Confirm dedupe: a second manual refresh inserts no duplicate rows
@@ -592,7 +592,7 @@ File: `migrations/radar_001_job_radar.sql`
 
 ---
 
-## Phase 13 — Mobile Polish & Cross-Browser QA
+## [ ] Phase 13 — Mobile Polish & Cross-Browser QA
 
 - [ ] 13.1 Verify all pages render correctly on iPhone 14 viewport (390×844)
 - [ ] 13.2 Verify all pages render correctly on Android mid-range viewport (360×780)
@@ -608,7 +608,7 @@ File: `migrations/radar_001_job_radar.sql`
 
 ---
 
-## Phase 14 — Final Wiring & End-to-End Testing
+## [ ] Phase 14 — Final Wiring & End-to-End Testing
 
 - [ ] 14.1 Final end-to-end test: add application → set type → add contact → update outreach status → verify task auto-created → mark task complete
 - [ ] 14.2 End-to-end test: add company to watchlist → promote to application → verify application appears in Applications tab and watchlist entry is removed
@@ -617,11 +617,11 @@ File: `migrations/radar_001_job_radar.sql`
 
 ---
 
-## Phase 15 — Data Import from `jobs` table
+## [ ] Phase 15 — Data Import from `jobs` table
 
 *Run this phase only after all features are complete and tested. The `jobs` table is read-only during this step — no records are deleted or modified.*
 
-### 15.1 Write import migration
+### [x] 15.1 Write import migration
 
 File: `migrations/v2_011_import_jobs.sql`
 
@@ -631,13 +631,13 @@ File: `migrations/v2_011_import_jobs.sql`
 - [x] 15.1.4 Set `checklist_state = '{}'` for all imported rows
 - [x] 15.1.5 Write DOWN block: `DELETE FROM applications WHERE id IN (SELECT id FROM jobs)` (idempotent rollback)
 
-### 15.2 Verify import
+### [ ] 15.2 Verify import
 
 - [ ] 15.2.1 Confirm row count in `applications` matches row count in `jobs`
 - [ ] 15.2.2 Spot-check 5–10 records across both tables to verify field mapping
 - [ ] 15.2.3 Confirm `jobs` table is unchanged after import
 
-### 15.3 Switch frontend to `applications`
+### [ ] 15.3 Switch frontend to `applications`
 
 - [ ] 15.3.1 Remove any remaining references to `/api/jobs` in the frontend
 - [ ] 15.3.2 Confirm the Applications tab loads data exclusively from `/api/applications`

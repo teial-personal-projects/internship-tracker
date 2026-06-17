@@ -110,7 +110,7 @@ See [docs/Deployment_Plan.md](docs/Deployment_Plan.md) for full step-by-step ins
 - Track status, deadlines, pay, location, cover letter links, and more
 - Smart alerts for upcoming deadlines and stale applications
 - Quick filters: Active, Not Started, Applied, Due Soon, Stale, Archived, Conference, All
-- Academic year filter (Aug–Jul cycle)
+- Date range filtering for application timelines
 - Paginated results (15 per page)
 - Sortable, draggable column headers
 - Responsive design — table on desktop, card view on mobile

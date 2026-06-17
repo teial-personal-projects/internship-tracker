@@ -27,6 +27,11 @@ const APPLICATION_TEXT_FIELDS = [
   'notes',
 ];
 
+const TASK_TEXT_FIELDS = [
+  'title',
+  'notes',
+];
+
 export function sanitizeJobInput(data: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = { ...data };
   for (const field of JOB_TEXT_FIELDS) {
@@ -40,6 +45,16 @@ export function sanitizeJobInput(data: Record<string, unknown>): Record<string, 
 export function sanitizeApplicationInput(data: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = { ...data };
   for (const field of APPLICATION_TEXT_FIELDS) {
+    if (typeof result[field] === 'string') {
+      result[field] = sanitizeText(result[field] as string);
+    }
+  }
+  return result;
+}
+
+export function sanitizeTaskInput(data: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...data };
+  for (const field of TASK_TEXT_FIELDS) {
     if (typeof result[field] === 'string') {
       result[field] = sanitizeText(result[field] as string);
     }
