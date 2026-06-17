@@ -535,28 +535,28 @@ File: `migrations/radar_001_job_radar.sql`
 
 ---
 
-## [ ] Phase 8. Manual ingestion
+## [x] Phase 8. Manual ingestion
 
-### [ ] 8.1 Refresh service
+### [x] 8.1 Refresh service
 
-- [ ] 8.1.1 Create `api/src/radar/refreshRadarSource.ts`
-- [ ] 8.1.2 Accept a single `company_watchlist` row where `radar_enabled = true`
-- [ ] 8.1.3 Resolve the adapter by `ats_type`, fetch, and normalize; return a clear error for a bad board token without affecting other sources
-- [ ] 8.1.4 Apply the match filter (Phase 9) to each normalized posting
-- [ ] 8.1.5 Upsert into `discovered_postings` on `(watchlist_id, external_job_id)`; insert with status `new` on first sighting, leave existing rows untouched
-- [ ] 8.1.6 Update `last_refreshed_at` on the watchlist row
-- [ ] 8.1.7 Unit test: a new `external_job_id` inserts one row with status `new`; a repeat refresh inserts nothing
-- [ ] 8.1.8 Unit test: a bad source returns an error and does not insert partial data
+- [x] 8.1.1 Create `api/src/radar/refreshRadarSource.ts`
+- [x] 8.1.2 Accept a single `company_watchlist` row where `radar_enabled = true`
+- [x] 8.1.3 Resolve the adapter by `ats_type`, fetch, and normalize; return a clear error for a bad board token without affecting other sources
+- [x] 8.1.4 Apply the match filter (Phase 9) to each normalized posting
+- [x] 8.1.5 Upsert into `discovered_postings` on `(watchlist_id, external_job_id)`; insert with status `new` on first sighting, leave existing rows untouched
+- [x] 8.1.6 Update `last_refreshed_at` on the watchlist row
+- [x] 8.1.7 Unit test: a new `external_job_id` inserts one row with status `new`; a repeat refresh inserts nothing
+- [x] 8.1.8 Unit test: a bad source returns an error and does not insert partial data
 
 ---
 
-## [ ] Phase 9. Match filter
+## [x] Phase 9. Match filter
 
-### [ ] 9.1 Filter logic
+### [x] 9.1 Filter logic
 
-- [ ] 9.1.1 Create `api/src/radar/match.ts` with `matches(posting, criteria): boolean`
-- [ ] 9.1.2 MVP criteria hardcoded: title contains a seniority term (senior, staff, principal) and excludes junior or intern, AND location reads remote US or LA
-- [ ] 9.1.3 Unit test: senior remote passes; junior remote fails; senior onsite outside LA fails
+- [x] 9.1.1 Create `api/src/radar/match.ts` with `matches(posting, criteria): boolean`
+- [x] 9.1.2 MVP criteria hardcoded: title contains a seniority term (senior, staff, principal) and excludes junior or intern, AND location reads remote US or LA
+- [x] 9.1.3 Unit test: senior remote passes; junior remote fails; senior onsite outside LA fails
 
 ### [ ] 9.2 Configurable criteria (after MVP)
 
