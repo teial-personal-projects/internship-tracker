@@ -422,15 +422,15 @@ Companies To Watch is a lightweight research watchlist for users who want to tra
 | website | Text | No | URL validated |
 | notes | Text | No | Research notes — engineering blog links, tech stack, notable team members |
 | priority | Enum | No | `high`, `medium`, `low` — reuses `task_priority_enum` |
-| target_apply_year | Integer | No | Four-digit year the user intends to apply, e.g. 2027 |
+| target_apply_date | Date | No | Target date or approximate planning date the user intends to apply |
 | added | Date | Auto | Date the entry was added |
 
 #### 8.3 List view
 
 - Search by company name
-- Filter by: priority, target apply year
-- Sort by: date added, company name, priority, target apply year
-- Each row: company name, industry badge, priority dot, target apply year, notes preview (truncated to one line)
+- Filter by: priority and target apply date range
+- Sort by: date added, company name, priority, target apply date
+- Each row: company name, industry badge, priority dot, target apply date, notes preview (truncated to one line)
 - Empty state with instructional text and an Add Company CTA
 
 #### 8.4 Promote to application
@@ -659,7 +659,7 @@ The app exposes authenticated API capabilities for Applications, Contacts, Actio
 
 - [ ] Companies To Watch page is accessible from the hamburger menu
 - [ ] User can add, edit, and delete watchlist entries
-- [ ] List is searchable by company name and filterable by priority and target apply year
+- [ ] List is searchable by company name and filterable by priority and target apply date range
 - [ ] "Start Application" button creates a new application pre-populated with company name and industry, removes the watchlist entry, and navigates to the new record
 - [ ] Watchlist entries are scoped to the authenticated user (403 on unauthorized access)
 

@@ -219,7 +219,7 @@ live on each watchlist entry.
 | `website` | TEXT | Nullable URL |
 | `notes` | TEXT | Nullable, max 5000 |
 | `priority` | `task_priority_enum` | Nullable |
-| `target_apply_year` | SMALLINT | Nullable |
+| `target_apply_date` | DATE | Nullable |
 | `added` | DATE | Defaults to current date |
 | `ats_type` | `ats_type_enum` | Nullable |
 | `ats_board_token` | TEXT | Nullable |

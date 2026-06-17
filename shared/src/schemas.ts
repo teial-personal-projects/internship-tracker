@@ -7,7 +7,7 @@ import {
   MAX_EMAIL_LENGTH, MAX_PHONE_LENGTH, MAX_AGENCY_LENGTH,
   MAX_TEMPLATE_NAME_LENGTH, MAX_TEMPLATE_BODY_LENGTH,
   MAX_INTERACTION_BODY_LENGTH, MAX_TASK_TITLE_LENGTH, MAX_TASK_NOTES_LENGTH,
-  MAX_INTERVIEWER_NAMES_LENGTH, TARGET_APPLY_YEAR_MIN, TARGET_APPLY_YEAR_MAX,
+  MAX_INTERVIEWER_NAMES_LENGTH,
 } from './constants';
 
 const minYearValues = [
@@ -302,11 +302,9 @@ export const CreateCompanyWatchlistEntrySchema = z.object({
     v => (v === '' ? null : v),
     TaskPrioritySchema.nullable().optional(),
   ),
-  target_apply_year: z
-    .number()
-    .int()
-    .min(TARGET_APPLY_YEAR_MIN)
-    .max(TARGET_APPLY_YEAR_MAX)
+  target_apply_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD')
     .nullable()
     .optional(),
   added: z

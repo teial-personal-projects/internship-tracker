@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS company_watchlist (
   website            TEXT CHECK (website IS NULL OR website LIKE 'http%'),
   notes              TEXT CHECK (char_length(notes) <= 5000),
   priority           task_priority_enum,
-  target_apply_year  SMALLINT CHECK (target_apply_year BETWEEN 2020 AND 2100),
+  target_apply_date  DATE,
   added              DATE NOT NULL DEFAULT CURRENT_DATE,
   created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()

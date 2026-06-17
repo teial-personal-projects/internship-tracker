@@ -29,5 +29,3 @@ export const MAX_INTERACTION_BODY_LENGTH  = 5000;
 export const MAX_TASK_TITLE_LENGTH        = 500;
 export const MAX_TASK_NOTES_LENGTH        = 2000;
 export const MAX_INTERVIEWER_NAMES_LENGTH = 500;
-export const TARGET_APPLY_YEAR_MIN        = 2020;
-export const TARGET_APPLY_YEAR_MAX        = 2100;

@@ -441,7 +441,7 @@ File: `migrations/v2_015_application_source.sql`
 ### [ ] 5.1 API — watchlist routes
 
 - [ ] 5.1.1 Create `api/src/routes/watchlist.ts`
-- [ ] 5.1.2 `GET /api/watchlist` — list with `?search`, `?priority`, `?target_apply_year` filters; ordered by `added DESC`
+- [ ] 5.1.2 `GET /api/watchlist` — list with `?search`, `?priority`, `?target_apply_date_from`, and `?target_apply_date_to` filters; ordered by `added DESC`
 - [ ] 5.1.3 `POST /api/watchlist` — create entry; validate with `CreateWatchlistEntrySchema`
 - [ ] 5.1.4 `GET /api/watchlist/:id` — ownership check
 - [ ] 5.1.5 `PATCH /api/watchlist/:id` — update fields
@@ -454,10 +454,10 @@ File: `migrations/v2_015_application_source.sql`
 ### [ ] 5.2 Companies To Watch UI
 
 - [ ] 5.2.1 Create `web/src/pages/WatchlistPage.tsx`
-- [ ] 5.2.2 List view: rows show company name, industry badge, priority dot, target apply year, one-line notes preview
+- [ ] 5.2.2 List view: rows show company name, industry badge, priority dot, target apply date, one-line notes preview
 - [ ] 5.2.3 Search bar: filter by company name as user types
-- [ ] 5.2.4 Filter controls: priority dropdown, target apply year input
-- [ ] 5.2.5 Sort controls: date added, company name, priority, target apply year
+- [ ] 5.2.4 Filter controls: priority dropdown, target apply date range inputs
+- [ ] 5.2.5 Sort controls: date added, company name, priority, target apply date
 - [ ] 5.2.6 Add Company button — opens modal with all watchlist entry fields
 - [ ] 5.2.7 Edit action on each row — opens prefilled modal
 - [ ] 5.2.8 Delete action — single confirmation prompt before removal
