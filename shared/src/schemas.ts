@@ -362,6 +362,20 @@ export const DiscoveredPostingSchema = z.object({
   updated_at: z.string().datetime(),
 });
 
+export const RadarCriteriaSchema = z.object({
+  user_id: z.string().uuid(),
+  include_keywords: z.array(z.string().max(100)),
+  exclude_keywords: z.array(z.string().max(100)),
+  seniority_terms: z.array(z.string().max(100)),
+  location_rules: z.array(z.enum(['remote_us', 'la', 'onsite', 'unknown'])),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+});
+
+export const UpdateRadarCriteriaSchema = RadarCriteriaSchema
+  .omit({ user_id: true, created_at: true, updated_at: true })
+  .partial();
+
 // ============================================================
 // V2 Inferred Types
 // ============================================================
@@ -405,6 +419,8 @@ export type UpdateCompanyWatchlistEntrySchemaType = z.infer<typeof UpdateCompany
 export type CreateApplicationEventSchemaType = z.infer<typeof CreateApplicationEventSchema>;
 export type RadarSource = z.infer<typeof RadarSourceSchema>;
 export type DiscoveredPosting = z.infer<typeof DiscoveredPostingSchema>;
+export type RadarCriteria = z.infer<typeof RadarCriteriaSchema>;
+export type UpdateRadarCriteriaSchemaType = z.infer<typeof UpdateRadarCriteriaSchema>;
 
 // ============================================================
 // V2 DB Entity Types

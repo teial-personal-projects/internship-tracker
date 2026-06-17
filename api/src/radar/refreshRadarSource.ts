@@ -1,7 +1,8 @@
 import type { AtsType } from '@internship-tracker/shared';
+import type { RadarCriteria } from '@internship-tracker/shared';
 import type { NormalizedPosting } from './adapters/types';
 import { getAtsAdapter } from './adapters/registry';
-import { matches } from './match';
+import { criteriaFromRow, matches } from './match';
 
 type RadarSourceRow = {
   id: string;
@@ -55,6 +56,28 @@ async function getExistingPostingIds(
   }
 
   return new Set((result.data ?? []).map((row) => row.external_job_id));
+}
+
+async function getRadarCriteria(
+  db: RadarRefreshDb,
+  userId: string,
+): Promise<ReturnType<typeof criteriaFromRow>> {
+  const query = toQuery<{
+    select(columns?: string): unknown;
+    eq(column: string, value: string): unknown;
+  }>(db.from('radar_criteria'));
+
+  const result = await toQuery<Promise<{ data: RadarCriteria[] | null; error: { message: string } | null }>>(
+    toQuery<{ eq(column: string, value: string): unknown }>(
+      query.select('user_id, include_keywords, exclude_keywords, seniority_terms, location_rules, created_at, updated_at'),
+    ).eq('user_id', userId),
+  );
+
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
+
+  return criteriaFromRow(result.data?.[0] ?? null);
 }
 
 async function insertPosting(
@@ -130,7 +153,8 @@ export async function refreshRadarSource(
     };
   }
 
-  const matchedPostings = postings.filter((posting) => matches(posting));
+  const criteria = await getRadarCriteria(db, source.user_id);
+  const matchedPostings = postings.filter((posting) => matches(posting, criteria));
   const existingIds = await getExistingPostingIds(db, source.id);
   let inserted = 0;
 

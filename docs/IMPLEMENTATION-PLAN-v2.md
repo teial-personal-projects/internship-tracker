@@ -558,10 +558,10 @@ File: `migrations/radar_001_job_radar.sql`
 - [x] 9.1.2 MVP criteria hardcoded: title contains a seniority term (senior, staff, principal) and excludes junior or intern, AND location reads remote US or LA
 - [x] 9.1.3 Unit test: senior remote passes; junior remote fails; senior onsite outside LA fails
 
-### [ ] 9.2 Configurable criteria (after MVP)
+### [x] 9.2 Configurable criteria (after MVP)
 
-- [ ] 9.2.1 Add a small `radar_criteria` table or a user profile column for include and exclude keywords, location rules, and seniority terms
-- [ ] 9.2.2 Read per-user criteria in the matcher; fall back to the MVP defaults when none are set
+- [x] 9.2.1 Add a small `radar_criteria` table or a user profile column for include and exclude keywords, location rules, and seniority terms
+- [x] 9.2.2 Read per-user criteria in the matcher; fall back to the MVP defaults when none are set
 
 ---
 
@@ -672,7 +672,7 @@ Run the `-- DOWN` block of the migration file in reverse order from where the fa
 
 ### Rolling back the full v2 schema
 
-Run DOWN blocks in reverse order: radar_001 → v2_016 → v2_015 → v2_014 → v2_013 → v2_012 → v2_011 → v2_010 → v2_008 → ... → v2_002 → v2_001. The `jobs` table is untouched throughout; the application can be reverted to v1 by updating the API routes to point back to `jobs`.
+Run DOWN blocks in reverse order: radar_002 → radar_001 → v2_016 → v2_015 → v2_014 → v2_013 → v2_012 → v2_011 → v2_010 → v2_008 → ... → v2_002 → v2_001. The `jobs` table is untouched throughout; the application can be reverted to v1 by updating the API routes to point back to `jobs`.
 
 ### Feature flag approach (optional for production)
 

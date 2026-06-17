@@ -104,6 +104,7 @@ describe('refreshRadarSource', () => {
     });
     const db = createMockDb({
       discovered_postings: [],
+      radar_criteria: [],
       company_watchlist: [{ id: source.id, last_refreshed_at: null }],
     });
 
@@ -129,6 +130,7 @@ describe('refreshRadarSource', () => {
     });
     const db = createMockDb({
       discovered_postings: [],
+      radar_criteria: [],
       company_watchlist: [{ id: source.id, last_refreshed_at: null }],
     });
 
@@ -137,5 +139,38 @@ describe('refreshRadarSource', () => {
     expect(result).toEqual({ inserted: 0, matched: 0, fetched: 0, error: 'Bad board token' });
     expect(db.rowsByTable.discovered_postings).toHaveLength(0);
     expect(db.rowsByTable.company_watchlist[0].last_refreshed_at).toBeNull();
+  });
+
+  it('uses per-user criteria when present', async () => {
+    vi.mocked(getAtsAdapter).mockReturnValue({
+      fetch: vi.fn().mockResolvedValue([{
+        ...matchedPosting,
+        externalId: 'job-2',
+        title: 'Lead Platform Engineer',
+        remoteStatus: 'onsite',
+        location: 'New York, NY',
+      }]),
+    });
+    const db = createMockDb({
+      discovered_postings: [],
+      radar_criteria: [{
+        user_id: source.user_id,
+        include_keywords: ['platform'],
+        exclude_keywords: [],
+        seniority_terms: ['lead'],
+        location_rules: ['onsite'],
+        created_at: '2026-06-01T00:00:00.000Z',
+        updated_at: '2026-06-01T00:00:00.000Z',
+      }],
+      company_watchlist: [{ id: source.id, last_refreshed_at: null }],
+    });
+
+    const result = await refreshRadarSource(db, source);
+
+    expect(result).toMatchObject({ inserted: 1, matched: 1, fetched: 1, error: null });
+    expect(db.rowsByTable.discovered_postings[0]).toMatchObject({
+      external_job_id: 'job-2',
+      remote_status: 'onsite',
+    });
   });
 });

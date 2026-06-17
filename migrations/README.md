@@ -45,6 +45,7 @@ Each file contains an `-- UP` block and a `-- DOWN` block.
 | `v2_015_application_source.sql` | Add application source fields |
 | `v2_016_company_watchlist_target_apply_date.sql` | Convert watchlist target apply year to target apply date |
 | `radar_001_job_radar.sql` | Add Job Radar source fields and discovered postings |
+| `radar_002_radar_criteria.sql` | Add per-user Job Radar match criteria |
 
 For existing v2 environments where some migrations were already applied before
 explicit Data API grants were added, run `../supabase-grants.sql` once after the
