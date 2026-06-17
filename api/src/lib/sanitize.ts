@@ -36,6 +36,7 @@ const WATCHLIST_TEXT_FIELDS = [
   'company_name',
   'industry',
   'notes',
+  'ats_board_token',
 ];
 
 export function sanitizeJobInput(data: Record<string, unknown>): Record<string, unknown> {

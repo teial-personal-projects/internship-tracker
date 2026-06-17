@@ -581,7 +581,7 @@ File: `migrations/radar_001_job_radar.sql`
 
 ---
 
-## [ ] Phase 11. Discover UI
+## [x] Phase 11. Discover UI
 
 ### [x] 11.1 Discover page
 
@@ -593,11 +593,11 @@ File: `migrations/radar_001_job_radar.sql`
 - [x] 11.1.6 Empty state explaining how to enable radar on a watchlist company and use manual refresh
 - [x] 11.1.7 Add the `/radar` route to `App.tsx` and a Discover entry to the primary `NavBar`
 
-### [ ] 11.2 Watchlist radar toggle
+### [x] 11.2 Watchlist radar toggle
 
-- [ ] 11.2.1 Extend the Companies To Watch modal with ATS type, board token, and an Enable radar toggle
-- [ ] 11.2.2 Helper text on where to find the board token, pointing at the careers URL
-- [ ] 11.2.3 Add a Refresh radar button on enabled watchlist entries; show last refreshed timestamp and inserted/matched count after completion
+- [x] 11.2.1 Extend the Companies To Watch modal with ATS type, board token, and an Enable radar toggle
+- [x] 11.2.2 Helper text on where to find the board token, pointing at the careers URL
+- [x] 11.2.3 Add a Refresh radar button on enabled watchlist entries; show last refreshed timestamp and inserted/matched count after completion
 
 ---
 

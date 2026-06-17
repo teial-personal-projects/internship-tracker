@@ -62,3 +62,14 @@ export function usePromoteWatchlistEntry() {
     },
   });
 }
+
+export function useRefreshWatchlistRadar() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => watchlistApi.refreshWatchlistRadar(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: watchlistKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['radar'] });
+    },
+  });
+}

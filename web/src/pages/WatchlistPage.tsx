@@ -1,6 +1,6 @@
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import * as Dialog from '@radix-ui/react-dialog';
-import { ArrowRight, ArrowUpDown, Building2, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
+import { ArrowRight, ArrowUpDown, Building2, Pencil, Plus, RefreshCw, Search, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -12,12 +12,13 @@ import {
   useCreateWatchlistEntry,
   useDeleteWatchlistEntry,
   usePromoteWatchlistEntry,
+  useRefreshWatchlistRadar,
   useUpdateWatchlistEntry,
   useWatchlist,
 } from '@/hooks/useWatchlist';
 import { formatDate, todayStr } from '@/lib/dateUtils';
-import type { WatchlistEntry } from '@/api/watchlist.api';
-import type { CreateCompanyWatchlistEntrySchemaType, TaskPriority } from '@shared/schemas';
+import type { WatchlistEntry, WatchlistRadarRefreshResult } from '@/api/watchlist.api';
+import type { AtsType, CreateCompanyWatchlistEntrySchemaType, TaskPriority } from '@shared/schemas';
 
 type SortKey = 'added' | 'company_name' | 'priority' | 'target_apply_date';
 
@@ -32,6 +33,16 @@ const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
   { value: 'company_name', label: 'Company name' },
   { value: 'priority', label: 'Priority' },
   { value: 'target_apply_date', label: 'Target apply date' },
+];
+
+const ATS_OPTIONS: Array<{ value: AtsType; label: string }> = [
+  { value: 'greenhouse', label: 'Greenhouse' },
+  { value: 'lever', label: 'Lever' },
+  { value: 'ashby', label: 'Ashby' },
+  { value: 'smartrecruiters', label: 'SmartRecruiters' },
+  { value: 'pinpoint', label: 'Pinpoint' },
+  { value: 'welcomekit', label: 'Welcome Kit' },
+  { value: 'custom', label: 'Custom careers page' },
 ];
 
 function priorityMeta(priority: TaskPriority | null | undefined) {
@@ -77,20 +88,43 @@ function apiErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
+function formatDateTime(value: string | null | undefined): string {
+  if (!value) return 'Never refreshed';
+  return new Date(value).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 interface WatchlistRowProps {
   entry: WatchlistEntry;
   onEdit: (entry: WatchlistEntry) => void;
   onDelete: (entry: WatchlistEntry) => void;
   onPromote: (entry: WatchlistEntry) => void;
+  onRefresh: (entry: WatchlistEntry) => void;
   isDeleting: boolean;
   isPromoting: boolean;
+  isRefreshing: boolean;
+  refreshResult: WatchlistRadarRefreshResult | undefined;
 }
 
-function WatchlistRow({ entry, onEdit, onDelete, onPromote, isDeleting, isPromoting }: WatchlistRowProps) {
+function WatchlistRow({
+  entry,
+  onEdit,
+  onDelete,
+  onPromote,
+  onRefresh,
+  isDeleting,
+  isPromoting,
+  isRefreshing,
+  refreshResult,
+}: WatchlistRowProps) {
   const priority = priorityMeta(entry.priority);
 
   return (
-    <div className="grid grid-cols-[minmax(220px,1.4fr)_140px_120px_140px_minmax(220px,1.2fr)_230px] items-center gap-3 border-b px-3 py-3 last:border-b-0" style={{ borderColor: 'var(--line)' }}>
+    <div className="grid min-w-[1380px] grid-cols-[minmax(220px,1.4fr)_140px_120px_140px_210px_minmax(220px,1.2fr)_250px] items-center gap-3 border-b px-3 py-3 last:border-b-0" style={{ borderColor: 'var(--line)' }}>
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <Building2 size={16} strokeWidth={1.75} style={{ color: 'var(--ink-3)' }} />
@@ -124,11 +158,36 @@ function WatchlistRow({ entry, onEdit, onDelete, onPromote, isDeleting, isPromot
         {formatDate(entry.target_apply_date)}
       </span>
 
+      <div className="min-w-0 text-sm">
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full" style={{ background: entry.radar_enabled ? 'var(--sage)' : 'var(--line)' }} />
+          <span className="font-medium" style={{ color: 'var(--ink-2)' }}>
+            {entry.radar_enabled ? 'Radar on' : 'Radar off'}
+          </span>
+        </div>
+        <p className="mt-1 truncate text-xs" style={{ color: 'var(--ink-3)' }}>
+          {refreshResult
+            ? `${refreshResult.inserted} new / ${refreshResult.matched} matched`
+            : formatDateTime(entry.last_refreshed_at)}
+        </p>
+      </div>
+
       <p className="truncate text-sm" style={{ color: entry.notes ? 'var(--ink-2)' : 'var(--ink-3)' }}>
         {notesPreview(entry.notes)}
       </p>
 
       <div className="flex items-center justify-end gap-1">
+        {entry.radar_enabled && (
+          <button
+            type="button"
+            onClick={() => onRefresh(entry)}
+            disabled={isRefreshing}
+            className="btn-outline flex h-8 items-center gap-1 px-2 text-xs"
+          >
+            {isRefreshing ? <Spinner size="sm" /> : <RefreshCw size={14} />}
+            Refresh
+          </button>
+        )}
         <button
           type="button"
           onClick={() => onPromote(entry)}
@@ -160,7 +219,17 @@ function WatchlistRow({ entry, onEdit, onDelete, onPromote, isDeleting, isPromot
   );
 }
 
-function WatchlistCard({ entry, onEdit, onDelete, onPromote, isDeleting, isPromoting }: WatchlistRowProps) {
+function WatchlistCard({
+  entry,
+  onEdit,
+  onDelete,
+  onPromote,
+  onRefresh,
+  isDeleting,
+  isPromoting,
+  isRefreshing,
+  refreshResult,
+}: WatchlistRowProps) {
   const priority = priorityMeta(entry.priority);
 
   return (
@@ -193,6 +262,19 @@ function WatchlistCard({ entry, onEdit, onDelete, onPromote, isDeleting, isPromo
           </p>
           <p className="mt-1" style={{ color: 'var(--ink-2)' }}>{formatDate(entry.added)}</p>
         </div>
+        <div className="col-span-2">
+          <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--ink-3)' }}>
+            Radar
+          </p>
+          <p className="mt-1" style={{ color: 'var(--ink-2)' }}>
+            {entry.radar_enabled ? 'Enabled' : 'Not enabled'}
+          </p>
+          <p className="mt-1 text-xs" style={{ color: 'var(--ink-3)' }}>
+            {refreshResult
+              ? `${refreshResult.inserted} new / ${refreshResult.matched} matched`
+              : formatDateTime(entry.last_refreshed_at)}
+          </p>
+        </div>
       </div>
 
       <p className="mt-3 line-clamp-2 text-sm" style={{ color: entry.notes ? 'var(--ink-2)' : 'var(--ink-3)' }}>
@@ -200,6 +282,17 @@ function WatchlistCard({ entry, onEdit, onDelete, onPromote, isDeleting, isPromo
       </p>
 
       <div className="mt-4 flex justify-end gap-2">
+        {entry.radar_enabled && (
+          <button
+            type="button"
+            className="btn-outline inline-flex items-center gap-1 text-sm"
+            onClick={() => onRefresh(entry)}
+            disabled={isRefreshing}
+          >
+            {isRefreshing ? <Spinner size="sm" /> : <RefreshCw size={14} />}
+            Refresh
+          </button>
+        )}
         <button
           type="button"
           className="btn-primary inline-flex items-center gap-1 text-sm"
@@ -241,6 +334,9 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
   const [targetApplyDate, setTargetApplyDate] = useState('');
   const [added, setAdded] = useState(todayStr());
   const [notes, setNotes] = useState('');
+  const [atsType, setAtsType] = useState<AtsType | ''>('');
+  const [atsBoardToken, setAtsBoardToken] = useState('');
+  const [radarEnabled, setRadarEnabled] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -251,6 +347,9 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
     setTargetApplyDate(entry?.target_apply_date ?? '');
     setAdded(entry?.added ?? todayStr());
     setNotes(entry?.notes ?? '');
+    setAtsType(entry?.ats_type ?? '');
+    setAtsBoardToken(entry?.ats_board_token ?? '');
+    setRadarEnabled(entry?.radar_enabled ?? false);
   }, [entry, isOpen]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -263,6 +362,9 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
       target_apply_date: targetApplyDate || null,
       added,
       notes: notes.trim() || null,
+      ats_type: atsType || null,
+      ats_board_token: atsBoardToken.trim() || null,
+      radar_enabled: radarEnabled,
     });
   }
 
@@ -317,6 +419,54 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
                 <span className="field-label">Notes</span>
                 <textarea className="field-textarea" rows={4} value={notes} onChange={(event) => setNotes(event.target.value)} />
               </label>
+              <div className="sm:col-span-2 rounded-lg border p-4" style={{ borderColor: 'var(--line)', background: 'var(--softer)' }}>
+                <label className="flex items-center justify-between gap-4">
+                  <span>
+                    <span className="block text-sm font-semibold" style={{ color: 'var(--ink)' }}>
+                      Enable Radar
+                    </span>
+                    <span className="mt-1 block text-xs" style={{ color: 'var(--ink-3)' }}>
+                      Pull matched postings for this company into Discover.
+                    </span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={radarEnabled}
+                    onChange={(event) => setRadarEnabled(event.target.checked)}
+                    className="h-5 w-5"
+                    style={{ accentColor: 'var(--accent)' }}
+                  />
+                </label>
+
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <label>
+                    <span className="field-label">ATS Type</span>
+                    <select
+                      className="field-select"
+                      value={atsType}
+                      onChange={(event) => setAtsType(event.target.value as AtsType | '')}
+                    >
+                      <option value="">Not set</option>
+                      {ATS_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="field-label">Board Token</span>
+                    <input
+                      className="field-input"
+                      value={atsBoardToken}
+                      onChange={(event) => setAtsBoardToken(event.target.value)}
+                      placeholder="company-slug"
+                    />
+                  </label>
+                </div>
+
+                <p className="mt-3 text-xs" style={{ color: 'var(--ink-3)' }}>
+                  Use the company careers URL to find the board token. For Greenhouse, it is usually the slug after `boards.greenhouse.io/`; for Lever, it is usually the slug after `jobs.lever.co/`.
+                </p>
+              </div>
             </div>
 
             <div className="flex justify-end gap-2 border-t bg-gray-50 px-6 py-4" style={{ borderColor: 'var(--line)' }}>
@@ -344,6 +494,8 @@ export function WatchlistPage() {
   const [confirmDeleteEntry, setConfirmDeleteEntry] = useState<WatchlistEntry | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [promotingId, setPromotingId] = useState<string | null>(null);
+  const [refreshingId, setRefreshingId] = useState<string | null>(null);
+  const [refreshResults, setRefreshResults] = useState<Record<string, WatchlistRadarRefreshResult>>({});
 
   const params = useMemo(() => ({
     ...(search.trim() && { search: search.trim() }),
@@ -358,6 +510,7 @@ export function WatchlistPage() {
   const updateEntry = useUpdateWatchlistEntry();
   const deleteEntry = useDeleteWatchlistEntry();
   const promoteEntry = usePromoteWatchlistEntry();
+  const refreshRadar = useRefreshWatchlistRadar();
 
   function openAddModal() {
     setEditingEntry(null);
@@ -409,6 +562,19 @@ export function WatchlistPage() {
       toast.error(apiErrorMessage(error, 'Could not start application'));
     } finally {
       setPromotingId(null);
+    }
+  }
+
+  async function handleRefresh(entry: WatchlistEntry) {
+    setRefreshingId(entry.id);
+    try {
+      const result = await refreshRadar.mutateAsync(entry.id);
+      setRefreshResults((current) => ({ ...current, [entry.id]: result }));
+      toast.success(`Radar refreshed: ${result.inserted} new, ${result.matched} matched`);
+    } catch (error) {
+      toast.error(apiErrorMessage(error, 'Could not refresh radar'));
+    } finally {
+      setRefreshingId(null);
     }
   }
 
@@ -518,11 +684,12 @@ export function WatchlistPage() {
         ) : (
           <>
             <section className="hidden overflow-x-auto rounded-lg border bg-white md:block" style={{ borderColor: 'var(--line)' }}>
-              <div className="grid min-w-[1130px] grid-cols-[minmax(220px,1.4fr)_140px_120px_140px_minmax(220px,1.2fr)_230px] gap-3 border-b px-3 py-2 text-xs font-bold uppercase tracking-wider" style={{ borderColor: 'var(--line)', color: 'var(--ink-3)' }}>
+              <div className="grid min-w-[1380px] grid-cols-[minmax(220px,1.4fr)_140px_120px_140px_210px_minmax(220px,1.2fr)_250px] gap-3 border-b px-3 py-2 text-xs font-bold uppercase tracking-wider" style={{ borderColor: 'var(--line)', color: 'var(--ink-3)' }}>
                 <span>Company</span>
                 <span>Industry</span>
                 <span>Priority</span>
                 <span>Target</span>
+                <span>Radar</span>
                 <span>Notes</span>
                 <span className="text-right">Actions</span>
               </div>
@@ -533,8 +700,11 @@ export function WatchlistPage() {
                   onEdit={openEditModal}
                   onDelete={setConfirmDeleteEntry}
                   onPromote={handlePromote}
+                  onRefresh={handleRefresh}
                   isDeleting={deletingId === entry.id}
                   isPromoting={promotingId === entry.id}
+                  isRefreshing={refreshingId === entry.id}
+                  refreshResult={refreshResults[entry.id]}
                 />
               ))}
             </section>
@@ -547,8 +717,11 @@ export function WatchlistPage() {
                   onEdit={openEditModal}
                   onDelete={setConfirmDeleteEntry}
                   onPromote={handlePromote}
+                  onRefresh={handleRefresh}
                   isDeleting={deletingId === entry.id}
                   isPromoting={promotingId === entry.id}
+                  isRefreshing={refreshingId === entry.id}
+                  refreshResult={refreshResults[entry.id]}
                 />
               ))}
             </section>

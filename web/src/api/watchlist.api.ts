@@ -1,5 +1,6 @@
 import { apiClient } from './client';
 import type {
+  AtsType,
   CreateCompanyWatchlistEntrySchemaType,
   TaskPriority,
   UpdateCompanyWatchlistEntrySchemaType,
@@ -14,6 +15,10 @@ export interface WatchlistEntry {
   notes?: string | null;
   priority?: TaskPriority | null;
   target_apply_date?: string | null;
+  ats_type?: AtsType | null;
+  ats_board_token?: string | null;
+  radar_enabled?: boolean;
+  last_refreshed_at?: string | null;
   added: string;
   created_at: string;
   updated_at: string;
@@ -52,5 +57,16 @@ export async function deleteWatchlistEntry(id: string): Promise<void> {
 
 export async function promoteWatchlistEntry(id: string): Promise<{ application_id: string }> {
   const { data } = await apiClient.post<{ data: { application_id: string } }>(`/watchlist/${id}/promote`);
+  return data.data;
+}
+
+export interface WatchlistRadarRefreshResult {
+  inserted: number;
+  matched: number;
+  fetched: number;
+}
+
+export async function refreshWatchlistRadar(id: string): Promise<WatchlistRadarRefreshResult> {
+  const { data } = await apiClient.post<{ data: WatchlistRadarRefreshResult }>(`/radar/sources/${id}/refresh`);
   return data.data;
 }

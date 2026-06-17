@@ -320,6 +320,9 @@ export const CreateCompanyWatchlistEntrySchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD')
     .default(() => new Date().toISOString().split('T')[0]),
+  ats_type: AtsTypeSchema.nullable().optional(),
+  ats_board_token: z.string().nullable().optional(),
+  radar_enabled: z.boolean().optional(),
 });
 
 export const UpdateCompanyWatchlistEntrySchema = CreateCompanyWatchlistEntrySchema
