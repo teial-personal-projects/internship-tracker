@@ -43,6 +43,7 @@ Each file contains an `-- UP` block and a `-- DOWN` block.
 | `v2_013_contacts_company.sql` | Add `company` column to `contacts` table |
 | `v2_014_default_application_type.sql` | Default application type to cold strategic |
 | `v2_015_application_source.sql` | Add application source fields |
+| `v2_016_company_watchlist_target_apply_date.sql` | Convert watchlist target apply year to target apply date |
 
 For existing v2 environments where some migrations were already applied before
 explicit Data API grants were added, run `../supabase-grants.sql` once after the

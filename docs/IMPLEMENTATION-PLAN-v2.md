@@ -217,6 +217,15 @@ File: `migrations/v2_015_application_source.sql`
 - [x] 0.15.5 Create index `idx_applications_source`
 - [x] 0.15.6 Write DOWN block: drop `source_metadata`, `source`, and `application_source_enum`
 
+### 0.16 Migration v2_016 — watchlist target apply date
+
+File: `migrations/v2_016_company_watchlist_target_apply_date.sql`
+
+- [x] 0.16.1 Add `company_watchlist.target_apply_date DATE`
+- [x] 0.16.2 Backfill existing `target_apply_year` values to January 1 of that year
+- [x] 0.16.3 Drop legacy `target_apply_year`
+- [x] 0.16.4 Write DOWN block: restore `target_apply_year` from `target_apply_date` year and drop `target_apply_date`
+
 ---
 
 ## [x] Phase 1 — Navigation & Layout Restructure
@@ -451,20 +460,20 @@ File: `migrations/v2_015_application_source.sql`
 - [x] 5.1.9 Unit test: `promote` returns the new application ID and the watchlist entry no longer exists after the call
 - [x] 5.1.10 Unit test: `promote` on a non-existent entry returns 404; on another user's entry returns 403
 
-### [ ] 5.2 Companies To Watch UI
+### [x] 5.2 Companies To Watch UI
 
-- [ ] 5.2.1 Create `web/src/pages/WatchlistPage.tsx`
-- [ ] 5.2.2 List view: rows show company name, industry badge, priority dot, target apply date, one-line notes preview
-- [ ] 5.2.3 Search bar: filter by company name as user types
-- [ ] 5.2.4 Filter controls: priority dropdown, target apply date range inputs
-- [ ] 5.2.5 Sort controls: date added, company name, priority, target apply date
-- [ ] 5.2.6 Add Company button — opens modal with all watchlist entry fields
-- [ ] 5.2.7 Edit action on each row — opens prefilled modal
-- [ ] 5.2.8 Delete action — single confirmation prompt before removal
-- [ ] 5.2.9 "Start Application" button on each row — calls `POST /api/watchlist/:id/promote`; on success, navigate to the new application in the Applications tab
-- [ ] 5.2.10 Empty state: instructional text explaining the purpose of the list with a primary "Add a Company" CTA
-- [ ] 5.2.11 Add `/watchlist` route to `web/src/App.tsx`
-- [ ] 5.2.12 Add "Companies To Watch" item to `HamburgerMenu.tsx` linking to `/watchlist`
+- [x] 5.2.1 Create `web/src/pages/WatchlistPage.tsx`
+- [x] 5.2.2 List view: rows show company name, industry badge, priority dot, target apply date, one-line notes preview
+- [x] 5.2.3 Search bar: filter by company name as user types
+- [x] 5.2.4 Filter controls: priority dropdown, target apply date range inputs
+- [x] 5.2.5 Sort controls: date added, company name, priority, target apply date
+- [x] 5.2.6 Add Company button — opens modal with all watchlist entry fields
+- [x] 5.2.7 Edit action on each row — opens prefilled modal
+- [x] 5.2.8 Delete action — single confirmation prompt before removal
+- [x] 5.2.9 "Start Application" button on each row — calls `POST /api/watchlist/:id/promote`; on success, navigate to the new application in the Applications tab
+- [x] 5.2.10 Empty state: instructional text explaining the purpose of the list with a primary "Add a Company" CTA
+- [x] 5.2.11 Add `/watchlist` route to `web/src/App.tsx`
+- [x] 5.2.12 Add "Companies To Watch" item to `HamburgerMenu.tsx` linking to `/watchlist`
 
 ---
 
@@ -663,7 +672,7 @@ Run the `-- DOWN` block of the migration file in reverse order from where the fa
 
 ### Rolling back the full v2 schema
 
-Run DOWN blocks in reverse order: radar_001 → v2_015 → v2_014 → v2_013 → v2_012 → v2_011 → v2_010 → v2_008 → ... → v2_002 → v2_001. The `jobs` table is untouched throughout; the application can be reverted to v1 by updating the API routes to point back to `jobs`.
+Run DOWN blocks in reverse order: radar_001 → v2_016 → v2_015 → v2_014 → v2_013 → v2_012 → v2_011 → v2_010 → v2_008 → ... → v2_002 → v2_001. The `jobs` table is untouched throughout; the application can be reverted to v1 by updating the API routes to point back to `jobs`.
 
 ### Feature flag approach (optional for production)
 
