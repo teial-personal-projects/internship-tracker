@@ -611,10 +611,10 @@ File: `migrations/radar_001_job_radar.sql`
 
 ---
 
-## [ ] Phase 13 — Mobile Polish & Cross-Browser QA
+## [x] Phase 13 — Mobile Polish & Cross-Browser QA
 
-- [ ] 13.1 Verify all pages render correctly on iPhone 14 viewport (390×844)
-- [ ] 13.2 Verify all pages render correctly on Android mid-range viewport (360×780)
+- [x] 13.1 Verify all pages render correctly on iPhone 14 viewport (390×844)
+- [x] 13.2 Verify all pages render correctly on Android mid-range viewport (360×780)
 - [x] 13.3 Bottom navigation bar is fixed and does not overlap content on any mobile viewport
 - [x] 13.4 Modals and drawers are full-screen on mobile
 - [x] 13.5 All form inputs are at least 44px tap target height
@@ -622,7 +622,7 @@ File: `migrations/radar_001_job_radar.sql`
 - [x] 13.7 Filter bars scroll horizontally on mobile without wrapping
 - [x] 13.8 Checklist checkboxes are tappable on mobile
 - [x] 13.9 Empty states display correctly on all viewports
-- [ ] 13.10 Test in Chrome, Firefox, and Safari (desktop)
+- [x] 13.10 Test in Chrome, Firefox, and Safari (desktop)
 - [x] 13.11 Verify no horizontal overflow on any page at 320px viewport width
 
 ---
