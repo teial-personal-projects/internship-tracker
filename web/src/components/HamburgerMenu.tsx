@@ -1,13 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Building2, LogOut, Menu, User, X } from 'lucide-react';
+import { LogOut, Menu, User, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClickOutside } from '@/hooks/useClickOutside';
 import { Spinner } from './Spinner';
-
-const MENU_ITEMS = [
-  { to: '/watchlist', label: 'Companies To Watch', Icon: Building2 },
-] as const;
 
 export function HamburgerMenu() {
   const { user, signOut } = useAuth();
@@ -90,24 +86,8 @@ export function HamburgerMenu() {
           </p>
         </div>
 
-        {/* Nav items */}
-        <nav className="p-2 grow" style={{ borderBottom: '1px solid var(--line)' }}>
-          {MENU_ITEMS.map(({ to, label, Icon }) => (
-            <Link
-              key={to}
-              to={to}
-              onClick={closeMenu}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-(--softer)"
-              style={{ color: 'var(--ink-2)' }}
-            >
-              <Icon size={17} strokeWidth={1.75} />
-              {label}
-            </Link>
-          ))}
-        </nav>
-
         {/* Profile + Sign out */}
-        <div className="p-2 shrink-0">
+        <div className="grow p-2 shrink-0">
           <Link
             to="/profile"
             onClick={closeMenu}

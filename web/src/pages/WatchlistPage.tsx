@@ -45,6 +45,80 @@ const ATS_OPTIONS: Array<{ value: AtsType; label: string }> = [
   { value: 'custom', label: 'Custom careers page' },
 ];
 
+interface CareersSource {
+  atsType: AtsType;
+  value: string;
+}
+
+function normalizeCareersUrlInput(input: string): URL | null {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  try {
+    return new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`);
+  } catch {
+    return null;
+  }
+}
+
+function firstPathSegment(url: URL): string | null {
+  const [segment] = url.pathname.split('/').filter(Boolean);
+  return segment ? decodeURIComponent(segment) : null;
+}
+
+function inferCareersSource(input: string): CareersSource | null {
+  const url = normalizeCareersUrlInput(input);
+  if (!url) return null;
+
+  const host = url.hostname.toLowerCase().replace(/^www\./, '');
+  const firstSegment = firstPathSegment(url);
+
+  if (host === 'boards.greenhouse.io' || host === 'job-boards.greenhouse.io') {
+    return firstSegment ? { atsType: 'greenhouse', value: firstSegment } : null;
+  }
+
+  if (host === 'jobs.lever.co') {
+    return firstSegment ? { atsType: 'lever', value: firstSegment } : null;
+  }
+
+  if (host === 'jobs.ashbyhq.com') {
+    return firstSegment ? { atsType: 'ashby', value: firstSegment } : null;
+  }
+
+  if (host.endsWith('smartrecruiters.com')) {
+    return firstSegment ? { atsType: 'smartrecruiters', value: firstSegment } : null;
+  }
+
+  if (host.endsWith('pinpointhq.com')) {
+    return { atsType: 'pinpoint', value: url.href };
+  }
+
+  if (host.endsWith('welcomekit.co') || host.endsWith('welcometothejungle.com')) {
+    return { atsType: 'welcomekit', value: url.href };
+  }
+
+  return { atsType: 'custom', value: url.href };
+}
+
+function sourceUrlFromEntry(entry: WatchlistEntry | null): string {
+  const sourceValue = entry?.ats_board_token?.trim();
+  if (!sourceValue) return '';
+  if (/^https?:\/\//i.test(sourceValue)) return sourceValue;
+
+  switch (entry?.ats_type) {
+    case 'greenhouse':
+      return `https://boards.greenhouse.io/${sourceValue}`;
+    case 'lever':
+      return `https://jobs.lever.co/${sourceValue}`;
+    case 'ashby':
+      return `https://jobs.ashbyhq.com/${sourceValue}`;
+    case 'smartrecruiters':
+      return `https://jobs.smartrecruiters.com/${sourceValue}`;
+    default:
+      return sourceValue;
+  }
+}
+
 function priorityMeta(priority: TaskPriority | null | undefined) {
   return PRIORITY_OPTIONS.find((option) => option.value === priority) ?? null;
 }
@@ -334,9 +408,13 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
   const [targetApplyDate, setTargetApplyDate] = useState('');
   const [added, setAdded] = useState(todayStr());
   const [notes, setNotes] = useState('');
+  const [careersUrl, setCareersUrl] = useState('');
   const [atsType, setAtsType] = useState<AtsType | ''>('');
   const [atsBoardToken, setAtsBoardToken] = useState('');
+  const [useManualSource, setUseManualSource] = useState(false);
   const [radarEnabled, setRadarEnabled] = useState(false);
+
+  const inferredSource = useMemo(() => inferCareersSource(careersUrl), [careersUrl]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -347,13 +425,25 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
     setTargetApplyDate(entry?.target_apply_date ?? '');
     setAdded(entry?.added ?? todayStr());
     setNotes(entry?.notes ?? '');
+    setCareersUrl(sourceUrlFromEntry(entry));
     setAtsType(entry?.ats_type ?? '');
     setAtsBoardToken(entry?.ats_board_token ?? '');
+    setUseManualSource(false);
     setRadarEnabled(entry?.radar_enabled ?? false);
   }, [entry, isOpen]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const source = useManualSource
+      ? {
+          atsType: atsType || null,
+          value: atsBoardToken.trim() || null,
+        }
+      : {
+          atsType: inferredSource?.atsType ?? null,
+          value: inferredSource?.value ?? null,
+        };
+
     onSubmit({
       company_name: companyName.trim(),
       industry: industry.trim() || null,
@@ -362,8 +452,8 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
       target_apply_date: targetApplyDate || null,
       added,
       notes: notes.trim() || null,
-      ats_type: atsType || null,
-      ats_board_token: atsBoardToken.trim() || null,
+      ats_type: source.atsType,
+      ats_board_token: source.value,
       radar_enabled: radarEnabled,
     });
   }
@@ -438,34 +528,63 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
                   />
                 </label>
 
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  <label>
-                    <span className="field-label">ATS Type</span>
-                    <select
-                      className="field-select"
-                      value={atsType}
-                      onChange={(event) => setAtsType(event.target.value as AtsType | '')}
-                    >
-                      <option value="">Not set</option>
-                      {ATS_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    <span className="field-label">Board Token</span>
-                    <input
-                      className="field-input"
-                      value={atsBoardToken}
-                      onChange={(event) => setAtsBoardToken(event.target.value)}
-                      placeholder="company-slug"
-                    />
-                  </label>
+                <label className="mt-4 block">
+                  <span className="field-label">Careers URL</span>
+                  <input
+                    className="field-input"
+                    type="url"
+                    placeholder="https://company.example.com/careers"
+                    value={careersUrl}
+                    onChange={(event) => setCareersUrl(event.target.value)}
+                  />
+                </label>
+
+                <div className="mt-3 rounded-lg border bg-white px-3 py-2 text-xs" style={{ borderColor: 'var(--line)', color: 'var(--ink-3)' }}>
+                  {inferredSource
+                    ? `Detected ${ATS_OPTIONS.find((option) => option.value === inferredSource.atsType)?.label ?? inferredSource.atsType} source.`
+                    : 'Paste a careers URL to detect the source automatically.'}
                 </div>
 
-                <p className="mt-3 text-xs" style={{ color: 'var(--ink-3)' }}>
-                  Use the company careers URL to find the board token. For Greenhouse, it is usually the slug after `boards.greenhouse.io/`; for Lever, it is usually the slug after `jobs.lever.co/`.
-                </p>
+                <details className="mt-4 rounded-lg border bg-white p-3" style={{ borderColor: 'var(--line)' }}>
+                  <summary className="cursor-pointer text-sm font-semibold" style={{ color: 'var(--ink)' }}>
+                    Advanced source settings
+                  </summary>
+                  <label className="mt-3 flex items-center gap-2 text-sm" style={{ color: 'var(--ink-2)' }}>
+                    <input
+                      type="checkbox"
+                      checked={useManualSource}
+                      onChange={(event) => setUseManualSource(event.target.checked)}
+                      style={{ accentColor: 'var(--accent)' }}
+                    />
+                    Use manual source settings
+                  </label>
+                  <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                    <label>
+                      <span className="field-label">Careers Source Type</span>
+                      <select
+                        className="field-select"
+                        value={useManualSource ? atsType : inferredSource?.atsType ?? ''}
+                        onChange={(event) => setAtsType(event.target.value as AtsType | '')}
+                        disabled={!useManualSource}
+                      >
+                        <option value="">Not set</option>
+                        {ATS_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      <span className="field-label">Careers Source</span>
+                      <input
+                        className="field-input"
+                        value={useManualSource ? atsBoardToken : inferredSource?.value ?? ''}
+                        onChange={(event) => setAtsBoardToken(event.target.value)}
+                        placeholder="company careers source"
+                        disabled={!useManualSource}
+                      />
+                    </label>
+                  </div>
+                </details>
               </div>
             </div>
 
@@ -482,7 +601,11 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
   );
 }
 
-export function WatchlistPage() {
+interface WatchlistWorkspaceProps {
+  embedded?: boolean;
+}
+
+export function WatchlistWorkspace({ embedded = false }: WatchlistWorkspaceProps) {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [priority, setPriority] = useState('');
@@ -579,16 +702,20 @@ export function WatchlistPage() {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden" style={{ background: 'var(--bg)' }}>
-      <AppHeader />
-      <main className="mobile-safe-bottom mx-auto flex max-w-7xl flex-col gap-5 px-4 py-6 sm:px-6 md:pb-8">
+    <>
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold" style={{ color: 'var(--ink)' }}>
-              Companies To Watch
-            </h1>
+            {embedded ? (
+              <h2 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>
+                Watched Companies
+              </h2>
+            ) : (
+              <h1 className="text-2xl font-bold" style={{ color: 'var(--ink)' }}>
+                Companies To Watch
+              </h1>
+            )}
             <p className="mt-1 text-sm" style={{ color: 'var(--ink-3)' }}>
-              Track target companies before you are ready to start an application.
+              Track target companies, configure careers sources, and refresh matched postings.
             </p>
           </div>
           <span className="text-sm font-semibold" style={{ color: 'var(--ink-3)' }}>
@@ -674,7 +801,7 @@ export function WatchlistPage() {
               No companies found
             </h2>
             <p className="mx-auto mt-1 max-w-md text-sm" style={{ color: 'var(--ink-3)' }}>
-              Build a target list for companies you want to research, track, and promote into applications later.
+              Add a company you want to watch, configure its careers source, then refresh it to discover matching postings.
             </p>
             <button type="button" onClick={openAddModal} className="btn-primary mt-5 inline-flex items-center gap-2 text-sm">
               <Plus size={16} />
@@ -727,8 +854,6 @@ export function WatchlistPage() {
             </section>
           </>
         )}
-      </main>
-
       <WatchlistModal
         entry={editingEntry}
         isOpen={isModalOpen}
@@ -768,6 +893,17 @@ export function WatchlistPage() {
           </AlertDialog.Content>
         </AlertDialog.Portal>
       </AlertDialog.Root>
+    </>
+  );
+}
+
+export function WatchlistPage() {
+  return (
+    <div className="min-h-screen overflow-x-hidden" style={{ background: 'var(--bg)' }}>
+      <AppHeader />
+      <main className="mobile-safe-bottom mx-auto flex max-w-7xl flex-col gap-5 px-4 py-6 sm:px-6 md:pb-8">
+        <WatchlistWorkspace />
+      </main>
     </div>
   );
 }

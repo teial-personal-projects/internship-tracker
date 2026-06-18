@@ -1,6 +1,6 @@
 # Track My Application v2.0 — Implementation Plan
 
-**Last updated:** June 16, 2026
+**Last updated:** June 18, 2026
 **Branch strategy:** Feature branches off `dev`, merged to `dev`, promoted to `main` per phase.
 **Migration strategy:** Numbered versioned SQL files in `migrations/`. Each file has an `-- UP` block and a `-- DOWN` block. Run UP sequentially; run DOWN in reverse to rollback.
 
@@ -10,6 +10,8 @@
 > - `[x]` complete
 
 **Scope (June 2026).** Interview Tracker, In-App Notifications, Playbook, email delivery, scheduled background jobs, overdue escalation, and scheduled Radar polling moved to `IMPLEMENTATION-PLAN-v3.md`. Discover is the fourth V2 primary tab, powered by a manual Job Radar refresh flow. The Job Radar is folded in here as Phases 6 through 12, directly after Companies To Watch (Phase 5), since it builds on the watchlist and the promote-to-application flow. Radar notification alerts and automated polling are specified in `IMPLEMENTATION-PLAN-v3.md` since they require V3 notification/background-job infrastructure.
+
+**UX correction (June 18, 2026).** The initial V2 split between a hidden Companies To Watch page and a separate Discover page is confusing. Phase 16 supersedes that layout by combining watchlist setup and discovered postings into one primary workflow. The implementation should treat source setup, refresh status, and discovered jobs as one page.
 
 ---
 
@@ -583,6 +585,8 @@ File: `migrations/radar_001_job_radar.sql`
 
 ## [x] Phase 11. Discover UI
 
+> **Superseded layout note:** Phase 11 shipped the first split-page implementation. Phase 16 revises this into a combined Discover/Watchlist page so users can configure watched companies and review discovered jobs in one place.
+
 ### [x] 11.1 Discover page
 
 - [x] 11.1.1 Create `web/src/pages/RadarPage.tsx`, labeled Discover in navigation
@@ -661,6 +665,47 @@ File: `migrations/v2_011_import_jobs.sql`
 - [x] 15.3.1 Remove any remaining references to `/api/jobs` in the frontend
 - [x] 15.3.2 Confirm the Applications tab loads data exclusively from `/api/applications`
 - [x] 15.3.3 Smoke-test existing records appear correctly in the new Applications tab UI
+
+---
+
+## [ ] Phase 16 — Unified Discover & Watchlist
+
+*Revision to the Phase 5/11 user experience. Keep the existing database model and Radar refresh service. The goal is to make job discovery understandable: watched companies, source setup, refresh state, and discovered postings all live together.*
+
+### [x] 16.1 Combined Discover page
+
+- [x] 16.1.1 Rename the primary `/radar` page experience to a combined Discover workspace; keep the route `/radar`
+- [x] 16.1.2 Move the Companies To Watch list into the Discover page as the top section
+- [x] 16.1.3 Show discovered postings below the watched-company section, grouped by company and newest first
+- [x] 16.1.4 Keep posting actions inline: open posting, add to tracker, dismiss
+- [x] 16.1.5 Replace the separate "Companies To Watch" hamburger destination with either a redirect to `/radar` or remove the menu item after the combined page is stable
+- [x] 16.1.6 Update empty states so they explain the single flow: add a company, configure a careers source, then refresh to discover matching postings
+
+### [x] 16.2 URL-first source setup
+
+- [x] 16.2.1 Replace the user-facing "board token" language with "Careers source"
+- [x] 16.2.2 Add a careers URL input on each watched company
+- [x] 16.2.3 Infer `ats_type` and `ats_board_token` from common URL patterns where possible: Greenhouse (`boards.greenhouse.io/<token>`), Lever (`jobs.lever.co/<token>`), Ashby, SmartRecruiters, Pinpoint, and WelcomeKit
+- [x] 16.2.4 Keep advanced/manual controls available for cases where inference fails
+- [x] 16.2.5 Use `ats_type = custom` with the pasted careers URL for unsupported careers pages
+- [x] 16.2.6 Do not add RSS as a primary concept in V2; add a future RSS adapter only if a target company actually requires RSS
+
+### [ ] 16.3 Auto-refresh behavior
+
+- [ ] 16.3.1 When `/radar` loads, automatically refresh enabled sources that have never refreshed
+- [ ] 16.3.2 Automatically refresh enabled sources whose `last_refreshed_at` is older than a conservative threshold, initially 30 minutes
+- [ ] 16.3.3 Do not refresh sources on every render; guard with component state and query status so one page load triggers at most one refresh per stale source
+- [ ] 16.3.4 Keep the manual Refresh button on each source
+- [ ] 16.3.5 Show per-source refresh state: idle, refreshing, last refreshed, inserted count, matched count, and error
+- [ ] 16.3.6 A failed source must not block other sources from refreshing
+
+### [ ] 16.4 Navigation and copy cleanup
+
+- [ ] 16.4.1 Add the combined Discover workflow to primary navigation with clear labeling
+- [ ] 16.4.2 Use "Watchlist" or "Watched Companies" inside the page, not hidden navigation
+- [ ] 16.4.3 Remove copy that implies Discover is independent from watched companies
+- [ ] 16.4.4 Update helper text to say users can paste a company careers URL instead of finding a technical board token first
+- [ ] 16.4.5 Confirm mobile layout keeps watched-company controls and discovered postings usable without horizontal page overflow
 
 ---
 

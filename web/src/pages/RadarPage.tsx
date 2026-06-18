@@ -8,6 +8,7 @@ import { ArrowRight, Building2, CalendarDays, ExternalLink, RefreshCw, Search, S
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { WatchlistWorkspace } from '@/pages/WatchlistPage';
 import type { DiscoveredPosting, PostingStatus } from '@shared/schemas';
 
 type StatusFilter = Extract<PostingStatus, 'new' | 'seen' | 'dismissed' | 'promoted'>;
@@ -184,10 +185,65 @@ export function RadarPage() {
       <main className="mobile-safe-bottom flex flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto p-3 sm:p-4 md:pb-6">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold" style={{ color: 'var(--ink)' }}>
-            Discover
+            Discover Workspace
           </h1>
           <p className="text-sm" style={{ color: 'var(--ink-3)' }}>
-            Matched postings from companies on your watchlist.
+            Manage watched companies and review matched roles from their careers pages.
+          </p>
+        </div>
+
+        <section className="grid gap-3 rounded-lg border bg-white p-4 shadow-sm md:grid-cols-3" style={{ borderColor: 'var(--line)' }}>
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ background: 'var(--soft)' }}>
+              <Building2 size={18} strokeWidth={1.75} style={{ color: 'var(--ink-3)' }} />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
+                Watched companies
+              </h2>
+              <p className="mt-1 text-xs leading-5" style={{ color: 'var(--ink-3)' }}>
+                Add target companies and connect their careers source.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ background: 'var(--soft)' }}>
+              <RefreshCw size={18} strokeWidth={1.75} style={{ color: 'var(--ink-3)' }} />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
+                Source refresh
+              </h2>
+              <p className="mt-1 text-xs leading-5" style={{ color: 'var(--ink-3)' }}>
+                Refresh company sources manually now; stale-source auto-refresh comes next.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ background: 'var(--soft)' }}>
+              <Search size={18} strokeWidth={1.75} style={{ color: 'var(--ink-3)' }} />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
+                Matched roles
+              </h2>
+              <p className="mt-1 text-xs leading-5" style={{ color: 'var(--ink-3)' }}>
+                Review discovered postings and add strong matches to Applications.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-lg border bg-white p-4 shadow-sm" style={{ borderColor: 'var(--line)' }}>
+          <WatchlistWorkspace embedded />
+        </section>
+
+        <div className="flex flex-col gap-1 pt-2">
+          <h2 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>
+            Discovered Postings
+          </h2>
+          <p className="text-sm" style={{ color: 'var(--ink-3)' }}>
+            Matched roles from watched companies, grouped by company with newest matches first.
           </p>
         </div>
 
@@ -253,7 +309,7 @@ export function RadarPage() {
 
         {error && (
           <div className="rounded-lg border p-3 text-sm" style={{ background: '#FEF2F2', borderColor: '#FECACA', color: '#B91C1C' }}>
-            Failed to load Discover postings. Please refresh.
+            Failed to load matched postings. Please refresh.
           </div>
         )}
 
@@ -301,10 +357,10 @@ export function RadarPage() {
               </div>
               <div>
                 <h2 className="text-base font-semibold" style={{ color: 'var(--ink)' }}>
-                  {hasFilters ? 'No postings match these filters' : 'No Discover postings yet'}
+                  {hasFilters ? 'No postings match these filters' : 'No matched postings yet'}
                 </h2>
                 <p className="mt-1 text-sm" style={{ color: 'var(--ink-3)' }}>
-                  Enable Radar for a company in Companies To Watch, add its ATS source, then use manual refresh to pull matched postings into Discover.
+                  Add a watched company, connect its careers source, then refresh that source to pull matching roles into this workspace.
                 </p>
               </div>
             </div>

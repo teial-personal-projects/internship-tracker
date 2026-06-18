@@ -6,7 +6,6 @@ import { ProfilePage } from '@/pages/ProfilePage';
 import { ContactsPage } from '@/pages/ContactsPage';
 import { ActionItemsPage } from '@/pages/ActionItemsPage';
 import { RadarPage } from '@/pages/RadarPage';
-import { WatchlistPage } from '@/pages/WatchlistPage';
 import { Spinner } from '@/components/Spinner';
 
 function AppRoutes() {
@@ -33,7 +32,6 @@ function AppRoutes() {
       <Route path="/action-items"  element={<ActionItemsPage />} />
 
       {/* Hamburger menu pages */}
-      <Route path="/watchlist"     element={<WatchlistPage />} />
       <Route path="/profile"       element={<ProfilePage />} />
 
       {/* Redirects from old routes */}
@@ -42,7 +40,8 @@ function AppRoutes() {
       <Route path="/interviews"    element={<Navigate to="/applications" replace />} />
       <Route path="/playbook"      element={<Navigate to="/applications" replace />} />
       <Route path="/notifications" element={<Navigate to="/applications" replace />} />
-      <Route path="/job-boards"    element={<Navigate to="/watchlist" replace />} />
+      <Route path="/watchlist"     element={<Navigate to="/radar" replace />} />
+      <Route path="/job-boards"    element={<Navigate to="/radar" replace />} />
 
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/applications" replace />} />
