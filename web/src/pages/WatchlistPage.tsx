@@ -1,7 +1,7 @@
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import * as Dialog from '@radix-ui/react-dialog';
 import { ArrowRight, ArrowUpDown, Building2, Pencil, Plus, RefreshCw, Search, Trash2, X } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -21,6 +21,8 @@ import type { WatchlistEntry, WatchlistRadarRefreshResult } from '@/api/watchlis
 import type { AtsType, CreateCompanyWatchlistEntrySchemaType, TaskPriority } from '@shared/schemas';
 
 type SortKey = 'added' | 'company_name' | 'priority' | 'target_apply_date';
+
+const AUTO_REFRESH_STALE_MS = 30 * 60 * 1000;
 
 const PRIORITY_OPTIONS: Array<{ value: TaskPriority; label: string; color: string; rank: number }> = [
   { value: 'high', label: 'High', color: 'var(--accent)', rank: 0 },
@@ -172,6 +174,18 @@ function formatDateTime(value: string | null | undefined): string {
   });
 }
 
+function canRefreshSource(entry: WatchlistEntry): boolean {
+  return Boolean(entry.radar_enabled && entry.ats_type && entry.ats_board_token);
+}
+
+function shouldAutoRefreshSource(entry: WatchlistEntry, now = Date.now()): boolean {
+  if (!canRefreshSource(entry)) return false;
+  if (!entry.last_refreshed_at) return true;
+
+  const refreshedAt = new Date(entry.last_refreshed_at).getTime();
+  return Number.isNaN(refreshedAt) || now - refreshedAt >= AUTO_REFRESH_STALE_MS;
+}
+
 interface WatchlistRowProps {
   entry: WatchlistEntry;
   onEdit: (entry: WatchlistEntry) => void;
@@ -182,6 +196,65 @@ interface WatchlistRowProps {
   isPromoting: boolean;
   isRefreshing: boolean;
   refreshResult: WatchlistRadarRefreshResult | undefined;
+  refreshError: string | undefined;
+}
+
+function RefreshStatus({
+  entry,
+  isRefreshing,
+  refreshResult,
+  refreshError,
+}: {
+  entry: WatchlistEntry;
+  isRefreshing: boolean;
+  refreshResult: WatchlistRadarRefreshResult | undefined;
+  refreshError: string | undefined;
+}) {
+  if (!entry.radar_enabled) {
+    return (
+      <p className="mt-1 truncate text-xs" style={{ color: 'var(--ink-3)' }}>
+        Idle
+      </p>
+    );
+  }
+
+  if (!canRefreshSource(entry)) {
+    return (
+      <p className="mt-1 truncate text-xs" style={{ color: '#B91C1C' }}>
+        Missing careers source
+      </p>
+    );
+  }
+
+  if (isRefreshing) {
+    return (
+      <p className="mt-1 truncate text-xs" style={{ color: 'var(--accent-dark)' }}>
+        Refreshing...
+      </p>
+    );
+  }
+
+  if (refreshError) {
+    return (
+      <p className="mt-1 truncate text-xs" title={refreshError} style={{ color: '#B91C1C' }}>
+        Error: {refreshError}
+      </p>
+    );
+  }
+
+  if (refreshResult) {
+    return (
+      <p className="mt-1 truncate text-xs" style={{ color: 'var(--ink-3)' }}>
+        {refreshResult.inserted} new / {refreshResult.matched} matched
+      </p>
+    );
+  }
+
+  return (
+    <p className="mt-1 truncate text-xs" style={{ color: 'var(--ink-3)' }}>
+      Last refreshed: {formatDateTime(entry.last_refreshed_at)}
+    </p>
+  );
 }
 
 function WatchlistRow({
@@ -194,6 +267,7 @@ function WatchlistRow({
   isPromoting,
   isRefreshing,
   refreshResult,
+  refreshError,
 }: WatchlistRowProps) {
   const priority = priorityMeta(entry.priority);
 
@@ -239,11 +313,7 @@ function WatchlistRow({
             {entry.radar_enabled ? 'Radar on' : 'Radar off'}
           </span>
         </div>
-        <p className="mt-1 truncate text-xs" style={{ color: 'var(--ink-3)' }}>
-          {refreshResult
-            ? `${refreshResult.inserted} new / ${refreshResult.matched} matched`
-            : formatDateTime(entry.last_refreshed_at)}
-        </p>
+        <RefreshStatus entry={entry} isRefreshing={isRefreshing} refreshResult={refreshResult} refreshError={refreshError} />
       </div>
 
       <p className="truncate text-sm" style={{ color: entry.notes ? 'var(--ink-2)' : 'var(--ink-3)' }}>
@@ -255,7 +325,7 @@ function WatchlistRow({
           <button
             type="button"
             onClick={() => onRefresh(entry)}
-            disabled={isRefreshing}
+            disabled={isRefreshing || !canRefreshSource(entry)}
             className="btn-outline flex h-8 items-center gap-1 px-2 text-xs"
           >
             {isRefreshing ? <Spinner size="sm" /> : <RefreshCw size={14} />}
@@ -303,6 +373,7 @@ function WatchlistCard({
   isPromoting,
   isRefreshing,
   refreshResult,
+  refreshError,
 }: WatchlistRowProps) {
   const priority = priorityMeta(entry.priority);
 
@@ -343,11 +414,7 @@ function WatchlistCard({
           <p className="mt-1" style={{ color: 'var(--ink-2)' }}>
             {entry.radar_enabled ? 'Enabled' : 'Not enabled'}
           </p>
-          <p className="mt-1 text-xs" style={{ color: 'var(--ink-3)' }}>
-            {refreshResult
-              ? `${refreshResult.inserted} new / ${refreshResult.matched} matched`
-              : formatDateTime(entry.last_refreshed_at)}
-          </p>
+          <RefreshStatus entry={entry} isRefreshing={isRefreshing} refreshResult={refreshResult} refreshError={refreshError} />
         </div>
       </div>
 
@@ -361,7 +428,7 @@ function WatchlistCard({
             type="button"
             className="btn-outline inline-flex items-center gap-1 text-sm"
             onClick={() => onRefresh(entry)}
-            disabled={isRefreshing}
+            disabled={isRefreshing || !canRefreshSource(entry)}
           >
             {isRefreshing ? <Spinner size="sm" /> : <RefreshCw size={14} />}
             Refresh
@@ -603,10 +670,12 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
 
 interface WatchlistWorkspaceProps {
   embedded?: boolean;
+  autoRefreshStaleSources?: boolean;
 }
 
-export function WatchlistWorkspace({ embedded = false }: WatchlistWorkspaceProps) {
+export function WatchlistWorkspace({ embedded = false, autoRefreshStaleSources = false }: WatchlistWorkspaceProps) {
   const navigate = useNavigate();
+  const autoRefreshedIds = useRef(new Set<string>());
   const [search, setSearch] = useState('');
   const [priority, setPriority] = useState('');
   const [targetFrom, setTargetFrom] = useState('');
@@ -617,8 +686,9 @@ export function WatchlistWorkspace({ embedded = false }: WatchlistWorkspaceProps
   const [confirmDeleteEntry, setConfirmDeleteEntry] = useState<WatchlistEntry | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [promotingId, setPromotingId] = useState<string | null>(null);
-  const [refreshingId, setRefreshingId] = useState<string | null>(null);
+  const [refreshingIds, setRefreshingIds] = useState<Set<string>>(() => new Set());
   const [refreshResults, setRefreshResults] = useState<Record<string, WatchlistRadarRefreshResult>>({});
+  const [refreshErrors, setRefreshErrors] = useState<Record<string, string>>({});
 
   const params = useMemo(() => ({
     ...(search.trim() && { search: search.trim() }),
@@ -627,7 +697,7 @@ export function WatchlistWorkspace({ embedded = false }: WatchlistWorkspaceProps
     ...(targetTo && { target_apply_date_to: targetTo }),
   }), [priority, search, targetFrom, targetTo]);
 
-  const { data: entries = [], isLoading, error } = useWatchlist(params);
+  const { data: entries = [], isLoading, isSuccess, error } = useWatchlist(params);
   const sortedEntries = useMemo(() => sortEntries(entries, sortKey), [entries, sortKey]);
   const createEntry = useCreateWatchlistEntry();
   const updateEntry = useUpdateWatchlistEntry();
@@ -688,18 +758,52 @@ export function WatchlistWorkspace({ embedded = false }: WatchlistWorkspaceProps
     }
   }
 
-  async function handleRefresh(entry: WatchlistEntry) {
-    setRefreshingId(entry.id);
+  const refreshEntry = useCallback(async (entry: WatchlistEntry, showToast: boolean) => {
+    setRefreshingIds((current) => new Set(current).add(entry.id));
+    setRefreshErrors((current) => {
+      const next = { ...current };
+      delete next[entry.id];
+      return next;
+    });
+
     try {
       const result = await refreshRadar.mutateAsync(entry.id);
       setRefreshResults((current) => ({ ...current, [entry.id]: result }));
-      toast.success(`Radar refreshed: ${result.inserted} new, ${result.matched} matched`);
+      if (showToast) {
+        toast.success(`Radar refreshed: ${result.inserted} new, ${result.matched} matched`);
+      }
     } catch (error) {
-      toast.error(apiErrorMessage(error, 'Could not refresh radar'));
+      const message = apiErrorMessage(error, 'Could not refresh radar');
+      setRefreshErrors((current) => ({ ...current, [entry.id]: message }));
+      if (showToast) {
+        toast.error(message);
+      }
     } finally {
-      setRefreshingId(null);
+      setRefreshingIds((current) => {
+        const next = new Set(current);
+        next.delete(entry.id);
+        return next;
+      });
     }
+  }, [refreshRadar]);
+
+  async function handleRefresh(entry: WatchlistEntry) {
+    await refreshEntry(entry, true);
   }
+
+  useEffect(() => {
+    if (!autoRefreshStaleSources || !isSuccess) return;
+
+    const now = Date.now();
+    const entriesToRefresh = entries.filter((entry) => (
+      shouldAutoRefreshSource(entry, now) && !autoRefreshedIds.current.has(entry.id)
+    ));
+
+    for (const entry of entriesToRefresh) {
+      autoRefreshedIds.current.add(entry.id);
+      void refreshEntry(entry, false);
+    }
+  }, [autoRefreshStaleSources, entries, isSuccess, refreshEntry]);
 
   return (
     <>
@@ -830,8 +934,9 @@ export function WatchlistWorkspace({ embedded = false }: WatchlistWorkspaceProps
                   onRefresh={handleRefresh}
                   isDeleting={deletingId === entry.id}
                   isPromoting={promotingId === entry.id}
-                  isRefreshing={refreshingId === entry.id}
+                  isRefreshing={refreshingIds.has(entry.id)}
                   refreshResult={refreshResults[entry.id]}
+                  refreshError={refreshErrors[entry.id]}
                 />
               ))}
             </section>
@@ -847,8 +952,9 @@ export function WatchlistWorkspace({ embedded = false }: WatchlistWorkspaceProps
                   onRefresh={handleRefresh}
                   isDeleting={deletingId === entry.id}
                   isPromoting={promotingId === entry.id}
-                  isRefreshing={refreshingId === entry.id}
+                  isRefreshing={refreshingIds.has(entry.id)}
                   refreshResult={refreshResults[entry.id]}
+                  refreshError={refreshErrors[entry.id]}
                 />
               ))}
             </section>

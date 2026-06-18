@@ -690,14 +690,14 @@ File: `migrations/v2_011_import_jobs.sql`
 - [x] 16.2.5 Use `ats_type = custom` with the pasted careers URL for unsupported careers pages
 - [x] 16.2.6 Do not add RSS as a primary concept in V2; add a future RSS adapter only if a target company actually requires RSS
 
-### [ ] 16.3 Auto-refresh behavior
+### [x] 16.3 Auto-refresh behavior
 
-- [ ] 16.3.1 When `/radar` loads, automatically refresh enabled sources that have never refreshed
-- [ ] 16.3.2 Automatically refresh enabled sources whose `last_refreshed_at` is older than a conservative threshold, initially 30 minutes
-- [ ] 16.3.3 Do not refresh sources on every render; guard with component state and query status so one page load triggers at most one refresh per stale source
-- [ ] 16.3.4 Keep the manual Refresh button on each source
-- [ ] 16.3.5 Show per-source refresh state: idle, refreshing, last refreshed, inserted count, matched count, and error
-- [ ] 16.3.6 A failed source must not block other sources from refreshing
+- [x] 16.3.1 When `/radar` loads, automatically refresh enabled sources that have never refreshed
+- [x] 16.3.2 Automatically refresh enabled sources whose `last_refreshed_at` is older than a conservative threshold, initially 30 minutes
+- [x] 16.3.3 Do not refresh sources on every render; guard with component state and query status so one page load triggers at most one refresh per stale source
+- [x] 16.3.4 Keep the manual Refresh button on each source
+- [x] 16.3.5 Show per-source refresh state: idle, refreshing, last refreshed, inserted count, matched count, and error
+- [x] 16.3.6 A failed source must not block other sources from refreshing
 
 ### [ ] 16.4 Navigation and copy cleanup
 

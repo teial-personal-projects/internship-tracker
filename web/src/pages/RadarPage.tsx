@@ -235,7 +235,7 @@ export function RadarPage() {
         </section>
 
         <section className="rounded-lg border bg-white p-4 shadow-sm" style={{ borderColor: 'var(--line)' }}>
-          <WatchlistWorkspace embedded />
+          <WatchlistWorkspace embedded autoRefreshStaleSources />
         </section>
 
         <div className="flex flex-col gap-1 pt-2">
