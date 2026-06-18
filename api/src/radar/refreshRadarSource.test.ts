@@ -141,6 +141,35 @@ describe('refreshRadarSource', () => {
     expect(db.rowsByTable.company_watchlist[0].last_refreshed_at).toBeNull();
   });
 
+  it('keeps a bad source isolated so a later source can still refresh', async () => {
+    vi.mocked(getAtsAdapter)
+      .mockReturnValueOnce({
+        fetch: vi.fn().mockRejectedValue(new Error('Bad board token')),
+      })
+      .mockReturnValueOnce({
+        fetch: vi.fn().mockResolvedValue([matchedPosting]),
+      });
+    const db = createMockDb({
+      discovered_postings: [],
+      radar_criteria: [],
+      company_watchlist: [
+        { id: 'bad-watchlist', last_refreshed_at: null },
+        { id: 'good-watchlist', last_refreshed_at: null },
+      ],
+    });
+
+    const bad = await refreshRadarSource(db, { ...source, id: 'bad-watchlist' });
+    const good = await refreshRadarSource(db, { ...source, id: 'good-watchlist' });
+
+    expect(bad).toEqual({ inserted: 0, matched: 0, fetched: 0, error: 'Bad board token' });
+    expect(good).toMatchObject({ inserted: 1, matched: 1, fetched: 1, error: null });
+    expect(db.rowsByTable.discovered_postings).toHaveLength(1);
+    expect(db.rowsByTable.discovered_postings[0]).toMatchObject({
+      watchlist_id: 'good-watchlist',
+      external_job_id: 'job-1',
+    });
+  });
+
   it('uses per-user criteria when present', async () => {
     vi.mocked(getAtsAdapter).mockReturnValue({
       fetch: vi.fn().mockResolvedValue([{

@@ -20,6 +20,14 @@ describe('radar match filter', () => {
     expect(matches(posting({ title: 'Senior Software Engineer', remoteStatus: 'remote_us' }))).toBe(true);
   });
 
+  it('allows senior Los Angeles roles', () => {
+    expect(matches(posting({
+      title: 'Staff Software Engineer',
+      remoteStatus: 'la',
+      location: 'Los Angeles, CA',
+    }))).toBe(true);
+  });
+
   it('rejects junior or intern roles even when remote', () => {
     expect(matches(posting({ title: 'Junior Software Engineer' }))).toBe(false);
     expect(matches(posting({ title: 'Senior Software Engineer Intern' }))).toBe(false);

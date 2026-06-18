@@ -601,13 +601,13 @@ File: `migrations/radar_001_job_radar.sql`
 
 ---
 
-## [ ] Phase 12. QA and verification
+## [x] Phase 12. QA and verification
 
-- [ ] 12.1 Run manual refresh against the seven Greenhouse boards and confirm real postings land in `discovered_postings`
-- [ ] 12.2 Confirm dedupe: a second manual refresh inserts no duplicate rows
-- [ ] 12.3 Confirm the match filter keeps only senior remote or LA roles
-- [ ] 12.4 Promote a discovered posting and confirm it appears in the Applications tab with `source = 'radar'`
-- [ ] 12.5 Confirm per-source error isolation: a deliberately bad board token does not abort the run
+- [x] 12.1 Run manual refresh against the seven Greenhouse boards and confirm real postings land in `discovered_postings`
+- [x] 12.2 Confirm dedupe: a second manual refresh inserts no duplicate rows
+- [x] 12.3 Confirm the match filter keeps only senior remote or LA roles
+- [x] 12.4 Promote a discovered posting and confirm it appears in the Applications tab with `source = 'radar'`
+- [x] 12.5 Confirm per-source error isolation: a deliberately bad board token does not abort the run
 
 ---
 

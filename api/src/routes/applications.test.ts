@@ -20,6 +20,8 @@ interface ApplicationRow {
   applied_date: string | null;
   status?: string;
   application_type?: string | null;
+  source?: string;
+  source_metadata?: Record<string, unknown>;
 }
 
 interface QueryCall {
@@ -141,6 +143,29 @@ describe('GET /api/applications', () => {
     expect(body.page).toBe(1);
     expect(body.totalPages).toBe(2);
     expect(query.calls).toContainEqual({ method: 'range', args: [0, 24] });
+  });
+
+  it('returns radar-sourced applications in the application list', async () => {
+    const query = new ApplicationsQuery([{
+      id: 'radar-app-1',
+      company: 'Acme',
+      applied_date: null,
+      source: 'radar',
+      source_metadata: { discovered_posting_id: 'posting-1' },
+    }]);
+    mockCreateUserClient.mockReturnValue(createMockDb(query));
+
+    const response = await request(app)
+      .get('/api/applications?limit=25')
+      .set('Authorization', 'Bearer test-token');
+    const body = response.body as { data: ApplicationRow[] };
+
+    expect(response.status).toBe(200);
+    expect(body.data[0]).toMatchObject({
+      id: 'radar-app-1',
+      source: 'radar',
+      source_metadata: { discovered_posting_id: 'posting-1' },
+    });
   });
 
   it('filters applied_date by inclusive date_from and date_to bounds', async () => {
