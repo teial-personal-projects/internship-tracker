@@ -627,12 +627,12 @@ File: `migrations/radar_001_job_radar.sql`
 
 ---
 
-## [ ] Phase 14 — Final Wiring & End-to-End Testing
+## [x] Phase 14 — Final Wiring & End-to-End Testing
 
-- [ ] 14.1 Final end-to-end test: add application → set type → add contact → update outreach status → verify task auto-created → mark task complete
-- [ ] 14.2 End-to-end test: add company to watchlist → promote to application → verify application appears in Applications tab and watchlist entry is removed
-- [ ] 14.3 Verify date range filter returns only records with applied_date within the specified range; verify empty result when no records match
-- [ ] 14.4 Verify pagination: 26 records return page 1 (25 records) and page 2 (1 record) with correct `totalPages`
+- [x] 14.1 Final end-to-end test: add application → set type → add contact → update outreach status → verify task auto-created → mark task complete
+- [x] 14.2 End-to-end test: add company to watchlist → promote to application → verify application appears in Applications tab and watchlist entry is removed
+- [x] 14.3 Verify date range filter returns only records with applied_date within the specified range; verify empty result when no records match
+- [x] 14.4 Verify pagination: 26 records return page 1 (25 records) and page 2 (1 record) with correct `totalPages`
 
 ---
 
