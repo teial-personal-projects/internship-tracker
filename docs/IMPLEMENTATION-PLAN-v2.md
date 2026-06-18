@@ -636,7 +636,7 @@ File: `migrations/radar_001_job_radar.sql`
 
 ---
 
-## [ ] Phase 15 — Data Import from `jobs` table
+## [x] Phase 15 — Data Import from `jobs` table
 
 *Run this phase only after all features are complete and tested. The `jobs` table is read-only during this step — no records are deleted or modified.*
 
@@ -656,11 +656,11 @@ File: `migrations/v2_011_import_jobs.sql`
 - [x] 15.2.2 Spot-check 5–10 records across both tables to verify field mapping
 - [x] 15.2.3 Confirm `jobs` table is unchanged after import
 
-### [ ] 15.3 Switch frontend to `applications`
+### [x] 15.3 Switch frontend to `applications`
 
-- [ ] 15.3.1 Remove any remaining references to `/api/jobs` in the frontend
-- [ ] 15.3.2 Confirm the Applications tab loads data exclusively from `/api/applications`
-- [ ] 15.3.3 Smoke-test existing records appear correctly in the new Applications tab UI
+- [x] 15.3.1 Remove any remaining references to `/api/jobs` in the frontend
+- [x] 15.3.2 Confirm the Applications tab loads data exclusively from `/api/applications`
+- [x] 15.3.3 Smoke-test existing records appear correctly in the new Applications tab UI
 
 ---
 
