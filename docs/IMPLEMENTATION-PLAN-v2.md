@@ -650,11 +650,11 @@ File: `migrations/v2_011_import_jobs.sql`
 - [x] 15.1.4 Set `checklist_state = '{}'` for all imported rows
 - [x] 15.1.5 Write DOWN block: `DELETE FROM applications WHERE id IN (SELECT id FROM jobs)` (idempotent rollback)
 
-### [ ] 15.2 Verify import
+### [x] 15.2 Verify import
 
-- [ ] 15.2.1 Confirm row count in `applications` matches row count in `jobs`
-- [ ] 15.2.2 Spot-check 5–10 records across both tables to verify field mapping
-- [ ] 15.2.3 Confirm `jobs` table is unchanged after import
+- [x] 15.2.1 Confirm row count in `applications` matches row count in `jobs`
+- [x] 15.2.2 Spot-check 5–10 records across both tables to verify field mapping
+- [x] 15.2.3 Confirm `jobs` table is unchanged after import
 
 ### [ ] 15.3 Switch frontend to `applications`
 
