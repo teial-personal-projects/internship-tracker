@@ -97,7 +97,7 @@ function PostingCard({ posting, onPromote, onDismiss, isPromoting, isDismissing 
             href={posting.url}
             target="_blank"
             rel="noreferrer"
-            className="btn-outline inline-flex h-9 items-center gap-1 px-3 text-sm"
+            className="btn-outline inline-flex min-h-11 items-center gap-1 px-3 text-sm"
           >
             <ExternalLink size={15} />
             Open
@@ -106,7 +106,7 @@ function PostingCard({ posting, onPromote, onDismiss, isPromoting, isDismissing 
             <>
               <button
                 type="button"
-                className="btn-primary inline-flex h-9 items-center gap-1 px-3 text-sm"
+                className="btn-primary inline-flex min-h-11 items-center gap-1 px-3 text-sm"
                 onClick={() => onPromote(posting)}
                 disabled={isPromoting}
               >
@@ -115,7 +115,7 @@ function PostingCard({ posting, onPromote, onDismiss, isPromoting, isDismissing 
               </button>
               <button
                 type="button"
-                className="btn-ghost h-9 px-3 text-sm"
+                className="btn-ghost min-h-11 px-3 text-sm"
                 onClick={() => onDismiss(posting)}
                 disabled={isDismissing}
                 style={{ color: 'var(--ink-3)' }}
@@ -181,7 +181,7 @@ export function RadarPage() {
   return (
     <div className="flex h-screen flex-col overflow-hidden" style={{ background: 'var(--bg)' }}>
       <AppHeader />
-      <main className="flex flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto p-3 pb-20 sm:p-4 md:pb-6">
+      <main className="mobile-safe-bottom flex flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto p-3 sm:p-4 md:pb-6">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold" style={{ color: 'var(--ink)' }}>
             Discover
@@ -192,8 +192,8 @@ export function RadarPage() {
         </div>
 
         <section className="rounded-lg border bg-white p-3 shadow-sm" style={{ borderColor: 'var(--line)' }}>
-          <div className="grid gap-2 md:grid-cols-[180px_minmax(180px,240px)_1fr_auto] md:items-center">
-            <label className="min-w-0">
+          <div className="mobile-filter-scroll md:grid md:grid-cols-[180px_minmax(180px,240px)_1fr_auto] md:items-center md:overflow-visible md:pb-0">
+            <label className="min-w-36 md:min-w-0">
               <span className="field-label">Status</span>
               <select
                 value={status}
@@ -206,7 +206,7 @@ export function RadarPage() {
               </select>
             </label>
 
-            <label className="min-w-0">
+            <label className="min-w-48 md:min-w-0">
               <span className="field-label">Company</span>
               <select
                 value={watchlistId}
@@ -220,7 +220,7 @@ export function RadarPage() {
               </select>
             </label>
 
-            <label className="min-w-0">
+            <label className="min-w-64 md:min-w-0">
               <span className="field-label">Search</span>
               <span className="relative block">
                 <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" size={16} style={{ color: 'var(--ink-4)' }} />
@@ -237,7 +237,7 @@ export function RadarPage() {
             {hasFilters && (
               <button
                 type="button"
-                className="btn-outline mt-4 inline-flex h-9 items-center gap-1 px-3 text-sm md:mt-5"
+                className="btn-outline mt-5 inline-flex min-h-11 items-center gap-1 px-3 text-sm"
                 onClick={() => {
                   setStatus('new');
                   setWatchlistId('');

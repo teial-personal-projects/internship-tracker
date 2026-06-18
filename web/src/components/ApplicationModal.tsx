@@ -63,7 +63,7 @@ export function ApplicationModal({ isOpen, onClose, onSubmit, isLoading, default
     <Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[85vh] bg-white rounded-xl shadow-2xl z-50 flex flex-col overflow-hidden">
+        <Dialog.Content className="app-modal-content">
           <div className="px-6 py-4 flex items-center justify-between border-b" style={{ background: 'var(--soft)', borderColor: 'var(--line)' }}>
             <Dialog.Title className="text-base font-bold" style={{ color: 'var(--ink)' }}>
               {title}

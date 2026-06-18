@@ -153,14 +153,14 @@ export function ApplicationsPage() {
     <div className="flex h-screen flex-col overflow-hidden" style={{ background: 'var(--bg)' }}>
       <AppHeader />
 
-      <main className="flex-1 flex flex-col gap-2 p-3 sm:p-4 pb-20 md:pb-6 overflow-x-hidden overflow-y-auto">
+      <main className="mobile-safe-bottom flex-1 flex flex-col gap-2 p-3 sm:p-4 md:pb-6 overflow-x-hidden overflow-y-auto">
         <p className="text-xs font-medium" style={{ color: 'var(--ink-3)' }}>
           Today: {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
         </p>
 
         {/* Search + date range + add */}
-        <div className="flex gap-2 items-center">
-          <div className="relative flex-1 min-w-40">
+        <div className="mobile-filter-scroll sm:flex sm:items-center sm:overflow-visible sm:pb-0">
+          <div className="relative min-w-64 flex-1 sm:min-w-40">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'var(--ink-4)' }} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
             </svg>
@@ -170,7 +170,7 @@ export function ApplicationsPage() {
               onChange={(e) => handleSearch(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
               placeholder="Search by company…"
-              className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border bg-white shadow-sm focus:outline-none focus:ring-2"
+              className="min-h-11 w-full rounded-xl border bg-white py-2 pl-9 pr-4 text-sm shadow-sm focus:outline-none focus:ring-2"
               style={{ borderColor: 'var(--line)', '--tw-ring-color': 'var(--accent)' } as React.CSSProperties}
             />
             {search && (
@@ -193,7 +193,7 @@ export function ApplicationsPage() {
           <select
             value={typeFilter}
             onChange={(e) => handleTypeFilter(e.target.value)}
-            className="hidden sm:block text-sm border rounded-xl px-3 py-2 bg-white shadow-sm focus:outline-none"
+            className="hidden min-h-11 rounded-xl border bg-white px-3 py-2 text-sm shadow-sm focus:outline-none sm:block"
             style={{ borderColor: 'var(--line)', color: 'var(--ink-2)' }}
           >
             <option value="">All Types</option>

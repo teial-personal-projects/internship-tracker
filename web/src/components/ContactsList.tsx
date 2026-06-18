@@ -229,7 +229,7 @@ export function ContactsList({
       >
         <AlertDialog.Portal>
           <AlertDialog.Overlay className="fixed inset-0 bg-black/50 z-40" />
-          <AlertDialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl z-50 w-full max-w-sm mx-4 p-6">
+          <AlertDialog.Content className="app-confirm-content">
             <AlertDialog.Title className="text-base font-bold mb-2" style={{ color: 'var(--ink)' }}>
               Delete Contact
             </AlertDialog.Title>

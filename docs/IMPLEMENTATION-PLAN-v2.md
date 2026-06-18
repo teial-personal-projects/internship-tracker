@@ -615,15 +615,15 @@ File: `migrations/radar_001_job_radar.sql`
 
 - [ ] 13.1 Verify all pages render correctly on iPhone 14 viewport (390×844)
 - [ ] 13.2 Verify all pages render correctly on Android mid-range viewport (360×780)
-- [ ] 13.3 Bottom navigation bar is fixed and does not overlap content on any mobile viewport
-- [ ] 13.4 Modals and drawers are full-screen on mobile
-- [ ] 13.5 All form inputs are at least 44px tap target height
-- [ ] 13.6 Touch scrolling works on all lists (application list, contact list, task list, watchlist, Discover postings)
-- [ ] 13.7 Filter bars scroll horizontally on mobile without wrapping
-- [ ] 13.8 Checklist checkboxes are tappable on mobile
-- [ ] 13.9 Empty states display correctly on all viewports
+- [x] 13.3 Bottom navigation bar is fixed and does not overlap content on any mobile viewport
+- [x] 13.4 Modals and drawers are full-screen on mobile
+- [x] 13.5 All form inputs are at least 44px tap target height
+- [x] 13.6 Touch scrolling works on all lists (application list, contact list, task list, watchlist, Discover postings)
+- [x] 13.7 Filter bars scroll horizontally on mobile without wrapping
+- [x] 13.8 Checklist checkboxes are tappable on mobile
+- [x] 13.9 Empty states display correctly on all viewports
 - [ ] 13.10 Test in Chrome, Firefox, and Safari (desktop)
-- [ ] 13.11 Verify no horizontal overflow on any page at 320px viewport width
+- [x] 13.11 Verify no horizontal overflow on any page at 320px viewport width
 
 ---
 

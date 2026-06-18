@@ -65,7 +65,7 @@ export function JobModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, 
     <Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[85vh] bg-white rounded-xl shadow-2xl z-50 flex flex-col overflow-hidden">
+        <Dialog.Content className="app-modal-content">
           {/* Header */}
           <div className="bg-brand-50 border-b-2 border-brand-200 px-6 py-4 flex items-center justify-between">
             <Dialog.Title className="text-lg font-bold text-brand-800">
@@ -195,7 +195,7 @@ export function JobModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, 
                     <label className="flex items-center gap-2 mt-2 cursor-pointer">
                       <input
                         type="checkbox"
-                        className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                        className="h-6 w-6 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                         {...register('review')}
                       />
                       <span className="text-sm text-gray-600">Ready for Review</span>

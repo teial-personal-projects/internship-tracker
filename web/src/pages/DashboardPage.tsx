@@ -213,7 +213,7 @@ export function DashboardPage() {
       <AppHeader />
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col gap-2 p-3 sm:p-4 pb-20 md:pb-6 overflow-x-hidden overflow-y-auto">
+      <main className="mobile-safe-bottom flex-1 flex flex-col gap-2 p-3 sm:p-4 md:pb-6 overflow-x-hidden overflow-y-auto">
 
         {/* Date */}
         <p className="text-xs font-medium" style={{ color: 'var(--ink-3)' }}>

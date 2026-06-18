@@ -152,7 +152,7 @@ export function Checklist({ application }: Props) {
               <label
                 key={step.id}
                 className={[
-                  'flex items-start gap-2.5 px-1.5 py-1 rounded select-none',
+                  'flex min-h-11 items-start gap-3 rounded px-2 py-2 select-none',
                   isNA
                     ? 'opacity-40 cursor-not-allowed'
                     : 'cursor-pointer hover:bg-gray-50',
@@ -163,7 +163,7 @@ export function Checklist({ application }: Props) {
                   checked={isChecked}
                   disabled={isNA || updateApp.isPending}
                   onChange={() => handleToggle(step.id)}
-                  className="mt-0.5 shrink-0"
+                  className="mt-0.5 h-6 w-6 shrink-0"
                   style={{ accentColor: 'var(--accent)' }}
                 />
                 <span

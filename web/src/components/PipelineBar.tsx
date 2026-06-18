@@ -71,7 +71,7 @@ export function PipelineBar({ statusCounts, activeStatus, onStatusClick }: Props
           · {total} total
         </span>
       </div>
-      <div className="flex flex-wrap gap-1.5">
+      <div className="mobile-filter-scroll sm:flex sm:flex-wrap sm:overflow-visible sm:pb-0">
         {PIPELINE_STAGES.map(s => (
           <StageChip
             key={s}

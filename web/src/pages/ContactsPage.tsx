@@ -130,7 +130,7 @@ export function ContactsPage() {
     return (
       <div className="flex h-screen flex-col" style={{ background: 'var(--bg)' }}>
         <AppHeader />
-        <main className="flex-1 overflow-y-auto p-4 pb-20 md:pb-6">
+        <main className="mobile-safe-bottom flex-1 overflow-y-auto p-4 md:pb-6">
           <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
             <Link
               to="/applications"
@@ -225,7 +225,7 @@ export function ContactsPage() {
   return (
     <div className="flex h-screen flex-col" style={{ background: 'var(--bg)' }}>
       <AppHeader />
-      <main className="flex-1 overflow-y-auto p-3 sm:p-4 pb-20 md:pb-6">
+      <main className="mobile-safe-bottom flex-1 overflow-y-auto p-3 sm:p-4 md:pb-6">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -253,7 +253,7 @@ export function ContactsPage() {
                   />
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="mobile-filter-scroll lg:flex lg:flex-wrap lg:overflow-visible lg:pb-0">
                   {[
                     ['', 'All'],
                     ['company_contact', 'Company'],
@@ -276,7 +276,7 @@ export function ContactsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <div className="mobile-filter-scroll sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0">
                 <select className="field-select" value={outreachFilter} onChange={(event) => setOutreachFilter(event.target.value)}>
                   <option value="">All outreach statuses</option>
                   {Object.entries(OUTREACH_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}

@@ -6,6 +6,8 @@
 }
 
 :root {
+  --mobile-nav-height: 64px;
+
   /* Surfaces */
   --bg:        #FBF5EC;
   --bg-warm:   #F6EEDB;
@@ -106,10 +108,22 @@
   .field-input,
   .field-select,
   .field-textarea {
-    @apply w-full rounded-md px-3 py-1.5 text-sm disabled:cursor-not-allowed;
+    @apply w-full rounded-md px-3 text-sm disabled:cursor-not-allowed;
+    min-height: 44px;
     border: 1px solid var(--line);
     color: var(--ink);
     background: var(--card);
+  }
+
+  .field-input,
+  .field-select {
+    padding-top: 9px;
+    padding-bottom: 9px;
+  }
+
+  .field-textarea {
+    padding-top: 10px;
+    padding-bottom: 10px;
   }
 
   .field-input:disabled,
@@ -133,6 +147,83 @@
 
   .field-textarea {
     resize: none;
+  }
+
+  .app-modal-content {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    flex-direction: column;
+    overflow: hidden;
+    background: #ffffff;
+  }
+
+  .app-confirm-content {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+    background: #ffffff;
+    padding: 1.5rem;
+  }
+
+  @media (min-width: 640px) {
+    .app-modal-content {
+      top: 50%;
+      left: 50%;
+      right: auto;
+      bottom: auto;
+      width: min(calc(100vw - 2rem), 42rem);
+      height: auto;
+      max-height: 85vh;
+      transform: translate(-50%, -50%);
+      border-radius: 0.75rem;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .app-confirm-content {
+      top: 50%;
+      left: 50%;
+      right: auto;
+      bottom: auto;
+      width: min(calc(100vw - 2rem), 28rem);
+      height: auto;
+      max-height: 85vh;
+      transform: translate(-50%, -50%);
+      border-radius: 0.75rem;
+      box-shadow: var(--shadow-lg);
+    }
+  }
+
+  .mobile-filter-scroll {
+    display: flex;
+    gap: 0.5rem;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 0.25rem;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-filter-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (max-width: 767px) {
+    .mobile-safe-bottom {
+      padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + 1rem);
+    }
   }
 
   .btn-primary {

@@ -51,7 +51,7 @@ export function NavBar() {
 
       {/* Mobile bottom bar — fixed, icon + label */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-30 flex"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-30 flex min-h-[var(--mobile-nav-height)]"
         style={{
           background: 'var(--card)',
           borderTop: '1px solid var(--line)',
@@ -63,7 +63,7 @@ export function NavBar() {
           <NavLink
             key={to}
             to={to}
-            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-h-13 transition-colors"
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-h-14 transition-colors"
             style={({ isActive }) => ({
               color: isActive ? 'var(--accent)' : 'var(--ink-3)',
             })}

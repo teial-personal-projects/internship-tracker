@@ -45,7 +45,7 @@ export function HamburgerMenu() {
         onClick={() => setIsOpen(v => !v)}
         aria-expanded={isOpen}
         aria-label={isOpen ? 'Close menu' : 'Open menu'}
-        className="flex items-center justify-center w-9 h-9 rounded-lg transition-colors"
+        className="flex h-11 w-11 items-center justify-center rounded-lg transition-colors"
         style={{ color: 'var(--ink-2)' }}
       >
         {isOpen ? <X size={20} /> : <Menu size={20} />}

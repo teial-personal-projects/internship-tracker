@@ -5,7 +5,7 @@ export function PlaybookPage() {
   return (
     <div className="flex h-screen flex-col" style={{ background: 'var(--bg)' }}>
       <AppHeader />
-      <main className="flex-1 flex flex-col items-center justify-center gap-3 p-6 pb-20 md:pb-6">
+      <main className="mobile-safe-bottom flex-1 flex flex-col items-center justify-center gap-3 p-6 md:pb-6">
         <div
           className="w-14 h-14 rounded-2xl flex items-center justify-center"
           style={{ background: 'var(--soft)' }}

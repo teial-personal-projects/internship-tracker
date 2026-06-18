@@ -261,7 +261,7 @@ function TaskModal({ isOpen, isLoading, applications, contacts, onClose, onSubmi
     <Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[85vh] w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+        <Dialog.Content className="app-modal-content">
           <div className="flex items-center justify-between border-b px-6 py-4" style={{ background: 'var(--soft)', borderColor: 'var(--line)' }}>
             <Dialog.Title className="text-base font-bold" style={{ color: 'var(--ink)' }}>Add Task</Dialog.Title>
             <Dialog.Close asChild>
@@ -403,7 +403,7 @@ export function ActionItemsPage() {
   return (
     <div className="flex h-screen flex-col overflow-hidden" style={{ background: 'var(--bg)' }}>
       <AppHeader />
-      <main className="flex-1 overflow-x-hidden overflow-y-auto p-3 pb-20 md:p-4 md:pb-6">
+      <main className="mobile-safe-bottom flex-1 overflow-x-hidden overflow-y-auto p-3 md:p-4 md:pb-6">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -416,22 +416,22 @@ export function ActionItemsPage() {
             </button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-white p-3" style={{ borderColor: 'var(--line)' }}>
-            <select className="field-select h-9 w-auto min-w-36 py-1 text-sm" value={category} onChange={(event) => setCategory(event.target.value)}>
+          <div className="mobile-filter-scroll rounded-lg border bg-white p-3 md:flex md:flex-wrap md:items-center md:overflow-visible md:pb-3" style={{ borderColor: 'var(--line)' }}>
+            <select className="field-select w-auto min-w-36 text-sm" value={category} onChange={(event) => setCategory(event.target.value)}>
               <option value="">All Categories</option>
               {CATEGORIES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
             </select>
-            <select className="field-select h-9 w-auto min-w-32 py-1 text-sm" value={priority} onChange={(event) => setPriority(event.target.value)}>
+            <select className="field-select w-auto min-w-32 text-sm" value={priority} onChange={(event) => setPriority(event.target.value)}>
               <option value="">All Priorities</option>
               {PRIORITIES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
             </select>
-            <select className="field-select h-9 w-auto min-w-28 py-1 text-sm" value={status} onChange={(event) => setStatus(event.target.value)}>
+            <select className="field-select w-auto min-w-28 text-sm" value={status} onChange={(event) => setStatus(event.target.value)}>
               <option value="">All Statuses</option>
               {STATUSES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
             </select>
-            <input type="date" className="field-input h-9 w-auto py-1 text-sm" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} />
+            <input type="date" className="field-input w-auto text-sm" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} />
             <span className="text-sm" style={{ color: 'var(--ink-4)' }}>to</span>
-            <input type="date" className="field-input h-9 w-auto py-1 text-sm" value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
+            <input type="date" className="field-input w-auto text-sm" value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
             {(dateFrom || dateTo) && (
               <button type="button" className="btn-ghost px-3 py-1.5 text-sm" onClick={clearDateFilters}>Clear dates</button>
             )}

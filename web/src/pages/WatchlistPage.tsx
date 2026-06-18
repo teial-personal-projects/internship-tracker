@@ -372,7 +372,7 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
     <Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[88vh] w-[calc(100vw-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+        <Dialog.Content className="app-modal-content">
           <div className="flex items-center justify-between border-b px-6 py-4" style={{ background: 'var(--soft)', borderColor: 'var(--line)' }}>
             <Dialog.Title className="text-base font-bold" style={{ color: 'var(--ink)' }}>
               {entry ? 'Edit Company' : 'Add Company'}
@@ -433,7 +433,7 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
                     type="checkbox"
                     checked={radarEnabled}
                     onChange={(event) => setRadarEnabled(event.target.checked)}
-                    className="h-5 w-5"
+                    className="h-6 w-6"
                     style={{ accentColor: 'var(--accent)' }}
                   />
                 </label>
@@ -581,7 +581,7 @@ export function WatchlistPage() {
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: 'var(--bg)' }}>
       <AppHeader />
-      <main className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-6 pb-24 sm:px-6 md:pb-8">
+      <main className="mobile-safe-bottom mx-auto flex max-w-7xl flex-col gap-5 px-4 py-6 sm:px-6 md:pb-8">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-2xl font-bold" style={{ color: 'var(--ink)' }}>
@@ -601,8 +601,8 @@ export function WatchlistPage() {
         </div>
 
         <section className="rounded-lg border bg-white p-3" style={{ borderColor: 'var(--line)' }}>
-          <div className="grid gap-3 lg:grid-cols-[minmax(260px,1fr)_160px_180px_180px_190px]">
-            <label className="relative block">
+          <div className="mobile-filter-scroll lg:grid lg:grid-cols-[minmax(260px,1fr)_160px_180px_180px_190px] lg:overflow-visible lg:pb-0">
+            <label className="relative block min-w-64 lg:min-w-0">
               <Search size={17} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ink-3)' }} />
               <input
                 type="search"
@@ -616,7 +616,7 @@ export function WatchlistPage() {
             <select
               value={priority}
               onChange={(event) => setPriority(event.target.value)}
-              className="field-select w-full"
+              className="field-select min-w-40 lg:w-full"
               aria-label="Priority filter"
             >
               <option value="">All priorities</option>
@@ -629,7 +629,7 @@ export function WatchlistPage() {
               type="date"
               value={targetFrom}
               onChange={(event) => setTargetFrom(event.target.value)}
-              className="field-input w-full"
+              className="field-input min-w-44 lg:w-full"
               aria-label="Target apply date from"
             />
 
@@ -637,11 +637,11 @@ export function WatchlistPage() {
               type="date"
               value={targetTo}
               onChange={(event) => setTargetTo(event.target.value)}
-              className="field-input w-full"
+              className="field-input min-w-44 lg:w-full"
               aria-label="Target apply date to"
             />
 
-            <label className="relative block">
+            <label className="relative block min-w-48 lg:min-w-0">
               <ArrowUpDown size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ink-3)' }} />
               <select
                 value={sortKey}
@@ -743,7 +743,7 @@ export function WatchlistPage() {
       <AlertDialog.Root open={Boolean(confirmDeleteEntry)} onOpenChange={(open) => { if (!open) setConfirmDeleteEntry(null); }}>
         <AlertDialog.Portal>
           <AlertDialog.Overlay className="fixed inset-0 z-40 bg-black/50" />
-          <AlertDialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-6 shadow-2xl">
+          <AlertDialog.Content className="app-confirm-content">
             <AlertDialog.Title className="text-lg font-bold" style={{ color: 'var(--ink)' }}>
               Delete company?
             </AlertDialog.Title>
