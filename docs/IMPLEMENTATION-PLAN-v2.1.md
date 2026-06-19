@@ -79,11 +79,11 @@ Production-only file: `migrations/v2_017_today_indexes_PROD_ONLY.sql`
 
 Build the read paths once so Today and Applications stay consistent.
 
-### [ ] 1.1 Theme Reuse
+### [x] 1.1 Theme Reuse
 
-- [ ] 1.1.1 Reuse `STATUS_COLORS` and `STATUS_LABELS` from `web/src/theme/index.ts`; do not create a second status color map.
-- [ ] 1.1.2 Fix priority color usage to support the real enum values `high`, `medium`, and `low`; avoid introducing `med` in new UI.
-- [ ] 1.1.3 Add a neutral avatar/initials variant for rail contacts if needed; do not use filled colored initial squares.
+- [x] 1.1.1 Reuse `STATUS_COLORS` and `STATUS_LABELS` from `web/src/theme/index.ts`; do not create a second status color map.
+- [x] 1.1.2 Fix priority color usage to support the real enum values `high`, `medium`, and `low`; avoid introducing `med` in new UI.
+- [x] 1.1.3 Add a neutral avatar/initials variant for rail contacts if needed; do not use filled colored initial squares.
 
 ### [ ] 1.2 Pipeline Counts Helper
 

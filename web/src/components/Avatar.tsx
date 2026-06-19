@@ -1,4 +1,7 @@
-const AVATAR_COLOR = { bg: '#F5E6C4', color: '#A36410' };
+const AVATAR_COLORS = {
+  warm: { bg: '#F5E6C4', color: '#A36410', border: 'transparent' },
+  neutral: { bg: '#F6F2EA', color: '#4E5775', border: '#E2D8C8' },
+} as const;
 
 export function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -11,17 +14,21 @@ export function getInitials(name: string): string {
 interface AvatarProps {
   name: string;
   size?: number;
+  variant?: keyof typeof AVATAR_COLORS;
 }
 
-export function Avatar({ name, size = 32 }: AvatarProps) {
+export function Avatar({ name, size = 32, variant = 'warm' }: AvatarProps) {
+  const colors = AVATAR_COLORS[variant];
+
   return (
     <div
       style={{
         width: size,
         height: size,
         borderRadius: 12,
-        background: AVATAR_COLOR.bg,
-        color: AVATAR_COLOR.color,
+        background: colors.bg,
+        border: `1px solid ${colors.border}`,
+        color: colors.color,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

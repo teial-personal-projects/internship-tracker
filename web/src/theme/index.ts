@@ -53,8 +53,14 @@ export const APPLICATION_TYPE_LABELS: Record<string, string> = {
   other:              'Other',
 };
 
-export const PRIORITY_COLORS: Record<string, { bg: string; color: string }> = {
-  high: { bg: '#F7D9CD', color: '#C85A3A' },
-  med:  { bg: '#F5E6C4', color: '#A36410' },
-  low:  { bg: '#F3E9D7', color: '#8A93AE' },
+export const PRIORITY_COLORS: Record<'high' | 'medium' | 'low', { bg: string; color: string }> = {
+  high:   { bg: '#F7D9CD', color: '#C85A3A' },
+  medium: { bg: '#F5E6C4', color: '#A36410' },
+  low:    { bg: '#F3E9D7', color: '#8A93AE' },
+};
+
+export const PRIORITY_LABELS: Record<'high' | 'medium' | 'low', string> = {
+  high: 'High',
+  medium: 'Medium',
+  low: 'Low',
 };
