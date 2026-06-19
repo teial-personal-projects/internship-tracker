@@ -38,12 +38,16 @@ describe('ApplicationInterviewLog', () => {
         ]}
         isLoading={false}
         isError={false}
+        onCreate={async () => undefined}
+        onUpdate={async () => undefined}
       />,
     );
 
+    expect(markup).toContain('Add interview');
     expect(markup).toContain('Screening');
     expect(markup).toContain('System Design');
     expect(markup).toContain('Technical');
+    expect(markup).toContain('Edit');
     expect(markup).toContain('Completed');
     expect(markup).toContain('With Jordan Lee');
     expect(markup).toContain('Outcome: Passed');

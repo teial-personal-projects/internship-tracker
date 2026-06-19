@@ -13,7 +13,13 @@ import {
   createFindEngineeringLeadTask,
   createReferralThankYouTask,
 } from '../services/taskAutoGeneration';
-import { CreateApplicationEventSchema, CreateApplicationSchema, UpdateApplicationSchema } from '@internship-tracker/shared';
+import {
+  CreateApplicationEventSchema,
+  CreateApplicationSchema,
+  CreateInterviewSchema,
+  UpdateApplicationSchema,
+  UpdateInterviewSchema,
+} from '@internship-tracker/shared';
 import type { ApplicationActivityItem } from '@internship-tracker/shared';
 import type { Request, Response } from 'express';
 
@@ -21,6 +27,8 @@ const router = Router();
 
 const PAGE_MAX = 100;
 const ACTIVITY_LIMIT = 6;
+const CreateScopedInterviewSchema = CreateInterviewSchema.omit({ application_id: true });
+const UpdateScopedInterviewSchema = UpdateInterviewSchema.omit({ application_id: true });
 const APPLICATION_SORTS = {
   added_desc: { column: 'added', ascending: false },
   added_asc: { column: 'added', ascending: true },
@@ -374,6 +382,79 @@ router.get('/:id/interviews', requireAuth, async (req: Request, res, next) => {
     }
 
     res.json({ data: data ?? [] });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/applications/:id/interviews
+router.post('/:id/interviews', requireAuth, validateBody(CreateScopedInterviewSchema), async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const { id } = req.params;
+
+    const ownership = await verifyApplicationOwnership(db, id, user.id);
+    if (ownership !== 'ok') {
+      sendOwnershipError(res, ownership);
+      return;
+    }
+
+    const payload = {
+      ...req.body,
+      application_id: id,
+      user_id: user.id,
+    };
+
+    const { data, error } = await db
+      .from('interviews')
+      .insert(payload)
+      .select()
+      .single();
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.status(201).json({ data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PATCH /api/applications/:id/interviews/:interviewId
+router.patch('/:id/interviews/:interviewId', requireAuth, validateBody(UpdateScopedInterviewSchema), async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const { id, interviewId } = req.params;
+
+    const ownership = await verifyApplicationOwnership(db, id, user.id);
+    if (ownership !== 'ok') {
+      sendOwnershipError(res, ownership);
+      return;
+    }
+
+    const { data, error } = await db
+      .from('interviews')
+      .update(req.body)
+      .eq('id', interviewId)
+      .eq('application_id', id)
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+    if (!data) {
+      res.status(404).json({ error: 'Interview not found' });
+      return;
+    }
+
+    res.json({ data });
   } catch (err) {
     next(err);
   }

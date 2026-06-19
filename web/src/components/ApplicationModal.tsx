@@ -8,7 +8,11 @@ import {
   MAX_LOCATION_LENGTH, MAX_PAY_LENGTH, MAX_NOTES_LENGTH,
 } from '@shared/constants';
 import { ApplicationInterviewLog } from '@/components/applications/ApplicationInterviewLog';
-import { useApplicationInterviews } from '@/hooks/useApplications';
+import {
+  useApplicationInterviews,
+  useCreateApplicationInterview,
+  useUpdateApplicationInterview,
+} from '@/hooks/useApplications';
 import { STATUS_LABELS, APPLICATION_TYPE_LABELS } from '@/theme';
 import { todayStr } from '@/lib/dateUtils';
 
@@ -51,6 +55,8 @@ interface Props {
 export function ApplicationModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, title = 'Add Application' }: Props) {
   const applicationId = defaultValues?.id ?? null;
   const interviewsQuery = useApplicationInterviews(isOpen ? applicationId : null);
+  const createInterview = useCreateApplicationInterview(applicationId);
+  const updateInterview = useUpdateApplicationInterview(applicationId);
   const { register, handleSubmit, formState: { errors }, reset } = useForm<ApplicationFormValues>({
     defaultValues: { added: TODAY, status: 'not_started', application_type: 'cold_strategic', ...defaultValues } as Partial<ApplicationFormValues>,
   });
@@ -168,6 +174,9 @@ export function ApplicationModal({ isOpen, onClose, onSubmit, isLoading, default
                   interviews={interviewsQuery.data ?? []}
                   isLoading={interviewsQuery.isLoading}
                   isError={interviewsQuery.isError}
+                  isSaving={createInterview.isPending || updateInterview.isPending}
+                  onCreate={(input) => createInterview.mutateAsync(input)}
+                  onUpdate={(interviewId, input) => updateInterview.mutateAsync({ interviewId, data: input })}
                 />
               )}
 

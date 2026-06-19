@@ -1,9 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as applicationsApi from '@/api/applications.api';
-import type { ApplicationsListParams } from '@/api/applications.api';
+import type {
+  ApplicationsListParams,
+  CreateApplicationInterviewInput,
+  UpdateApplicationInterviewInput,
+} from '@/api/applications.api';
 import type {
   CreateApplicationEventSchemaType,
   CreateApplicationSchemaType,
+  Interview,
   UpdateApplicationSchemaType,
 } from '@shared/schemas';
 
@@ -78,6 +83,40 @@ export function useApplicationInterviews(applicationId: string | null) {
     queryFn: () => applicationsApi.getApplicationInterviews(applicationId as string),
     enabled: Boolean(applicationId),
     staleTime: 30_000,
+  });
+}
+
+export function useCreateApplicationInterview(applicationId: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateApplicationInterviewInput) =>
+      applicationsApi.createApplicationInterview(applicationId as string, input),
+    onSuccess: (interview) => {
+      if (!applicationId) return;
+
+      qc.setQueryData<Interview[]>(
+        applicationKeys.interviews(applicationId),
+        (current) => [interview, ...(current ?? [])],
+      );
+      qc.invalidateQueries({ queryKey: ['today'] });
+    },
+  });
+}
+
+export function useUpdateApplicationInterview(applicationId: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ interviewId, data }: { interviewId: string; data: UpdateApplicationInterviewInput }) =>
+      applicationsApi.updateApplicationInterview(applicationId as string, interviewId, data),
+    onSuccess: (interview) => {
+      if (!applicationId) return;
+
+      qc.setQueryData<Interview[]>(
+        applicationKeys.interviews(applicationId),
+        (current) => (current ?? []).map((item) => (item.id === interview.id ? interview : item)),
+      );
+      qc.invalidateQueries({ queryKey: ['today'] });
+    },
   });
 }
 

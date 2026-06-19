@@ -6,7 +6,9 @@ import type {
   ApplicationEventType,
   CreateApplicationEventSchemaType,
   CreateApplicationSchemaType,
+  CreateInterviewSchemaType,
   UpdateApplicationSchemaType,
+  UpdateInterviewSchemaType,
 } from '@shared/schemas';
 
 export interface ApplicationsListParams {
@@ -66,6 +68,9 @@ export interface ApplicationContactLink {
   contacts?: Contact | null;
 }
 
+export type CreateApplicationInterviewInput = Omit<CreateInterviewSchemaType, 'application_id'>;
+export type UpdateApplicationInterviewInput = Omit<UpdateInterviewSchemaType, 'application_id'>;
+
 export async function getApplications(params: ApplicationsListParams = {}): Promise<ApplicationsListResponse> {
   const { data } = await apiClient.get<ApplicationsListResponse>('/applications', { params });
   return data;
@@ -121,5 +126,25 @@ export async function getApplicationContacts(applicationId: string): Promise<App
 
 export async function getApplicationInterviews(applicationId: string): Promise<Interview[]> {
   const { data } = await apiClient.get<{ data: Interview[] }>(`/applications/${applicationId}/interviews`);
+  return data.data;
+}
+
+export async function createApplicationInterview(
+  applicationId: string,
+  input: CreateApplicationInterviewInput,
+): Promise<Interview> {
+  const { data } = await apiClient.post<{ data: Interview }>(`/applications/${applicationId}/interviews`, input);
+  return data.data;
+}
+
+export async function updateApplicationInterview(
+  applicationId: string,
+  interviewId: string,
+  input: UpdateApplicationInterviewInput,
+): Promise<Interview> {
+  const { data } = await apiClient.patch<{ data: Interview }>(
+    `/applications/${applicationId}/interviews/${interviewId}`,
+    input,
+  );
   return data.data;
 }

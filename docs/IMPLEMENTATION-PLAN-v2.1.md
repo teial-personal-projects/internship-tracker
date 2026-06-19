@@ -347,12 +347,12 @@ Track interviews as a history under each application instead of overloading Kanb
 - [x] 6.2.2 Add any needed migration or enum update for persisted interview type values.
 - [x] 6.2.3 Keep old interview types readable during migration.
 
-### [ ] 6.3 Interview Create And Edit Flow
+### [x] 6.3 Interview Create And Edit Flow
 
-- [ ] 6.3.1 Add application-scoped create and edit interview UI.
-- [ ] 6.3.2 Allow multiple interview records per application.
-- [ ] 6.3.3 Support status, outcome, interviewer names, location link, scheduled time, and notes.
-- [ ] 6.3.4 Optionally show compact interview count or next interview summary on Kanban cards.
+- [x] 6.3.1 Add application-scoped create and edit interview UI.
+- [x] 6.3.2 Allow multiple interview records per application.
+- [x] 6.3.3 Support status, outcome, interviewer names, location link, scheduled time, and notes.
+- [x] 6.3.4 Keep compact Kanban interview summaries deferred until a board-level interview summary endpoint is defined.
 
 ---
 
