@@ -12,14 +12,13 @@ interface StatCardsProps {
 
 const STAT_CARDS: StatCardConfig[] = [
   { key: 'applications', label: 'Applications', emptyHint: 'No applications yet' },
-  { key: 'phone_screens', label: 'Phone screens', emptyHint: 'No screens scheduled' },
-  { key: 'open_tasks', label: 'Open tasks', emptyHint: 'No open tasks' },
+  { key: 'open_tasks', label: 'Action items', emptyHint: 'No open action items' },
   { key: 'interviews_this_week', label: 'Interviews this week', emptyHint: 'No interviews this week' },
 ];
 
 export function StatCards({ stats }: StatCardsProps) {
   return (
-    <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Today stats">
+    <section className="grid gap-3 sm:grid-cols-3" aria-label="Today stats">
       {STAT_CARDS.map(({ key, label, emptyHint }) => {
         const value = stats[key];
 

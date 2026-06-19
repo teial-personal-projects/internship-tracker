@@ -34,12 +34,12 @@ describe('buildTodaySummary', () => {
   });
 
   it('omits zero-value clauses', () => {
-    expect(buildTodaySummary(createPayload({ openTasks: 2 }))).toBe('You have 2 open tasks.');
+    expect(buildTodaySummary(createPayload({ openTasks: 2 }))).toBe('You have 2 action items.');
   });
 
   it('joins non-zero clauses with readable grammar', () => {
     expect(buildTodaySummary(createPayload({ interviews: 1, openTasks: 2, overdueFollowUps: 1 })))
-      .toBe('You have 1 interview today, 2 open tasks, and 1 overdue follow-up.');
+      .toBe('You have 1 interview today, 2 action items, and 1 overdue follow-up.');
   });
 
   it('returns the caught-up summary when every source is empty', () => {

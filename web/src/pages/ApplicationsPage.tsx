@@ -36,6 +36,7 @@ export function ApplicationsPage() {
   const [search, setSearch] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [sort, setSort] = useState<'newest' | 'oldest' | 'company_asc' | 'company_desc'>('newest');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingApp, setEditingApp] = useState<Application | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -46,9 +47,10 @@ export function ApplicationsPage() {
     search,
     dateFrom,
     dateTo,
+    sort,
     page,
     limit: PAGE_LIMIT,
-  }), [statusFilter, typeFilter, search, dateFrom, dateTo, page]);
+  }), [statusFilter, typeFilter, search, dateFrom, dateTo, sort, page]);
 
   const { data, isLoading, error } = useApplications(queryParams);
   const { data: stats } = useApplicationStats();
@@ -96,6 +98,7 @@ export function ApplicationsPage() {
   function handleTypeFilter(t: string) { setTypeFilter(t); resetPage(); }
   function handleDateFrom(d: string) { setDateFrom(d); resetPage(); }
   function handleDateTo(d: string) { setDateTo(d); resetPage(); }
+  function handleSort(nextSort: typeof sort) { setSort(nextSort); resetPage(); }
   function clearFilters() {
     setStatusFilter('');
     setTypeFilter('');
@@ -215,6 +218,19 @@ export function ApplicationsPage() {
             <option value="recruiter_assisted">Recruiter</option>
             <option value="referral">Referral</option>
             <option value="other">Other</option>
+          </select>
+
+          <select
+            value={sort}
+            onChange={(e) => handleSort(e.target.value as typeof sort)}
+            className="min-h-11 rounded-xl border bg-white px-3 py-2 text-sm shadow-sm focus:outline-none"
+            style={{ borderColor: 'var(--line)', color: 'var(--ink-2)' }}
+            aria-label="Sort applications"
+          >
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="company_asc">Company A-Z</option>
+            <option value="company_desc">Company Z-A</option>
           </select>
 
           <button type="button" onClick={openAdd} className="btn-primary text-sm px-4 py-2 shrink-0">

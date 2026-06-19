@@ -21,6 +21,20 @@ const router = Router();
 
 const PAGE_MAX = 100;
 const ACTIVITY_LIMIT = 6;
+const APPLICATION_SORTS = {
+  newest: { column: 'added', ascending: false },
+  oldest: { column: 'added', ascending: true },
+  company_asc: { column: 'company', ascending: true },
+  company_desc: { column: 'company', ascending: false },
+} as const;
+
+type ApplicationSort = keyof typeof APPLICATION_SORTS;
+
+function getApplicationSort(value: unknown): ApplicationSort {
+  return typeof value === 'string' && value in APPLICATION_SORTS
+    ? value as ApplicationSort
+    : 'newest';
+}
 
 interface ApplicationTaskTriggerState {
   status?: string | null;
@@ -36,11 +50,12 @@ router.get('/', requireAuth, async (req: Request, res, next) => {
     const page = Math.max(1, Number(req.query.page) || 1);
     const limit = Math.min(PAGE_MAX, Math.max(1, Number(req.query.limit) || 25));
     const { from, to } = computePageRange(page, limit);
+    const sort = APPLICATION_SORTS[getApplicationSort(req.query.sort)];
 
     const baseQuery = db
       .from('applications')
       .select('*', { count: 'exact' })
-      .order('added', { ascending: false });
+      .order(sort.column, { ascending: sort.ascending });
 
     const query = applyApplicationFilters(baseQuery, {
       status:           req.query.status as string | undefined,

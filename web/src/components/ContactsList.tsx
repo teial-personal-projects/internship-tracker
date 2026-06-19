@@ -2,9 +2,9 @@ import type { Contact } from '@/api/contacts.api';
 import type { ContactType } from '@shared/schemas';
 import { formatDate } from '@/lib/dateUtils';
 import { CONTACT_TYPE_LABELS, OUTREACH_LABELS, RECRUITER_LABELS, contactName } from '@/lib/contactDisplay';
-import { Users } from 'lucide-react';
+import { BriefcaseBusiness, Mail, Phone, Users } from 'lucide-react';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
-import { Fragment, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Spinner } from './Spinner';
 import { TrashIcon } from './icons/TrashIcon';
 
@@ -63,6 +63,29 @@ function StatusTag({ contact }: { contact: Contact }) {
   );
 }
 
+function initialsFor(contact: Contact): string {
+  return `${contact.first_name.charAt(0)}${contact.last_name.charAt(0)}`.toUpperCase();
+}
+
+function cardTintFor(contact: Contact): string {
+  if (contact.contact_type === 'recruiter') {
+    return contact.recruiter_status === 'active' ? '#F7D9CD' : '#F3E9D7';
+  }
+
+  return contact.outreach_status === 'replied' ? '#DDE8DF' : '#F3E9D7';
+}
+
+function contactSubtitle(contact: Contact): string {
+  if (contact.contact_type === 'recruiter') return contact.agency ?? 'External recruiter';
+  return contact.title ?? contact.company ?? 'Company contact';
+}
+
+function contactNote(contact: Contact): string {
+  if (contact.notes) return contact.notes;
+  if (contact.contact_type === 'recruiter') return 'Track roles, outreach, and recruiter preferences.';
+  return 'Track outreach, notes, and linked applications.';
+}
+
 interface Props {
   contacts: Contact[];
   applicationById: Map<string, { company: string; title: string }>;
@@ -117,111 +140,135 @@ export function ContactsList({
     );
   }
 
+  const selectedContact = selectedContactId
+    ? contacts.find((contact) => contact.id === selectedContactId)
+    : undefined;
+
   return (
-    <div className="overflow-x-auto rounded-xl border bg-white" style={{ borderColor: 'var(--line)' }}>
-      <table className="w-full min-w-[820px] border-collapse">
-        <thead>
-          <tr className="border-b text-left" style={{ borderColor: 'var(--line)' }}>
-            <th className="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--ink-3)' }}>Contact</th>
-            <th className="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--ink-3)' }}>Type</th>
-            <th className="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--ink-3)' }}>Company</th>
-            <th className="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--ink-3)' }}>Status</th>
-            <th className="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--ink-3)' }}>Last outreach</th>
-            {showQuickAction && (
-              <th className="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--ink-3)' }}>Action</th>
-            )}
-            {showActions && <th className="px-3 py-2" />}
-          </tr>
-        </thead>
-        <tbody>
-          {contacts.map((contact) => {
-            const app = contact.application_id ? applicationById.get(contact.application_id) : undefined;
-            return (
-              <Fragment key={contact.id}>
-                <tr
-                  className="border-b last:border-b-0 hover:bg-gray-50"
-                  style={{ borderColor: 'var(--line)' }}
-                >
-                  <td className="px-3 py-3">
-                    <button
-                      type="button"
-                      className="block text-left"
-                      onClick={() => onSelectContact?.(contact)}
-                    >
-                      <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>{contactName(contact)}</p>
-                      <p className="text-xs" style={{ color: 'var(--ink-3)' }}>
-                        {contact.contact_type === 'recruiter'
-                          ? contact.agency || contact.email || 'Recruiter'
-                          : contact.title || contact.email || 'Company contact'}
-                      </p>
-                    </button>
-                  </td>
-                  <td className="px-3 py-3">
-                    <ContactTypeBadge type={contact.contact_type} />
-                  </td>
-                  <td className="px-3 py-3">
-                    <p className="text-sm" style={{ color: (app || contact.company) ? 'var(--ink-2)' : 'var(--ink-4)' }}>
-                      {app?.company ?? contact.company ?? 'Not linked'}
+    <div className="flex flex-col gap-4">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {contacts.map((contact) => {
+          const app = contact.application_id ? applicationById.get(contact.application_id) : undefined;
+          const linkedRoleCount = app ? 1 : 0;
+
+          return (
+            <article
+              key={contact.id}
+              className="overflow-hidden rounded-xl border bg-white"
+              style={{ borderColor: selectedContactId === contact.id ? 'var(--accent)' : 'var(--line)' }}
+            >
+              <button
+                type="button"
+                className="flex w-full items-start gap-3 px-4 py-3 text-left"
+                style={{ background: cardTintFor(contact) }}
+                onClick={() => onSelectContact?.(contact)}
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-sm font-bold" style={{ color: 'var(--ink)' }}>
+                  {initialsFor(contact)}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-bold" style={{ color: 'var(--ink)' }}>
+                    {contactName(contact)}
+                  </span>
+                  <span className="block truncate text-xs font-medium" style={{ color: 'var(--ink-2)' }}>
+                    {contactSubtitle(contact)}
+                  </span>
+                </span>
+                <StatusTag contact={contact} />
+              </button>
+
+              <div className="flex flex-col gap-3 p-4">
+                <p className="line-clamp-2 min-h-10 text-sm italic leading-5" style={{ color: 'var(--ink-2)' }}>
+                  "{contactNote(contact)}"
+                </p>
+
+                <div className="flex flex-wrap gap-2">
+                  <ContactTypeBadge type={contact.contact_type} />
+                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: 'var(--soft)', color: 'var(--ink-2)' }}>
+                    <BriefcaseBusiness size={12} strokeWidth={1.75} />
+                    {app?.company ?? contact.company ?? 'Not linked'}
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-2 text-[11px] font-semibold" style={{ color: 'var(--ink-3)' }}>
+                  {contact.email && (
+                    <span className="inline-flex min-w-0 items-center gap-1 rounded-full px-2 py-1" style={{ background: 'var(--soft)' }}>
+                      <Mail size={12} strokeWidth={1.75} />
+                      <span className="max-w-44 truncate">{contact.email}</span>
+                    </span>
+                  )}
+                  {contact.phone && (
+                    <span className="inline-flex items-center gap-1 rounded-full px-2 py-1" style={{ background: 'var(--soft)' }}>
+                      <Phone size={12} strokeWidth={1.75} />
+                      {contact.phone}
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-lg p-3" style={{ background: 'var(--soft)' }}>
+                    <p className="text-2xl font-bold tabular-nums" style={{ color: 'var(--ink)' }}>
+                      {linkedRoleCount}
                     </p>
-                    {app && <p className="text-xs" style={{ color: 'var(--ink-3)' }}>{app.title}</p>}
-                  </td>
-                  <td className="px-3 py-3">
-                    <StatusTag contact={contact} />
-                  </td>
-                  <td className="px-3 py-3 text-sm" style={{ color: 'var(--ink-3)' }}>
-                    {formatDate(contact.date_of_last_outreach)}
-                  </td>
-                  {showQuickAction && (
-                    <td className="px-3 py-3">
+                    <p className="text-xs" style={{ color: 'var(--ink-3)' }}>
+                      Linked roles
+                    </p>
+                  </div>
+                  <div className="rounded-lg p-3" style={{ background: 'var(--soft)' }}>
+                    <p className="text-sm font-bold tabular-nums" style={{ color: 'var(--ink)' }}>
+                      {formatDate(contact.date_of_last_outreach)}
+                    </p>
+                    <p className="text-xs" style={{ color: 'var(--ink-3)' }}>
+                      Last outreach
+                    </p>
+                  </div>
+                </div>
+
+                {(showQuickAction || showActions) && (
+                  <div className="flex items-center justify-end gap-2">
+                    {showQuickAction && (
                       <button
                         type="button"
-                        className="btn-outline text-xs px-3 py-1"
+                        className="btn-outline px-3 py-1 text-xs"
                         onClick={() => onSelectContact?.(contact)}
                       >
                         {selectedContactId === contact.id ? 'Close' : 'Details'}
                       </button>
-                    </td>
-                  )}
-                  {showActions && (
-                    <td className="px-3 py-3 sticky right-0 bg-white" style={{ boxShadow: '-2px 0 6px rgba(0,0,0,0.05)' }}>
-                      <div className="flex items-center justify-end gap-1">
-                        {onEdit && (
-                          <button
-                            type="button"
-                            onClick={() => onEdit(contact)}
-                            className="btn-outline text-xs px-2 py-1"
-                            style={{ color: 'var(--accent-dark)', borderColor: 'var(--accent-soft)' }}
-                          >
-                            Edit
-                          </button>
-                        )}
-                        {onDelete && (
-                          <button
-                            type="button"
-                            disabled={deletingContactId === contact.id}
-                            onClick={() => setConfirmDeleteContact(contact)}
-                            className="btn-ghost text-red-600 hover:bg-red-50 px-2 py-1 text-xs"
-                            aria-label="Delete"
-                          >
-                            {deletingContactId === contact.id ? <Spinner size="sm" color="red" /> : <TrashIcon />}
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  )}
-                </tr>
-                {selectedContactId === contact.id && renderDetail && (
-                  <tr className="border-b" style={{ borderColor: 'var(--line)' }}>
-                    <td className="bg-gray-50 p-3" colSpan={(showQuickAction ? 6 : 5) + (showActions ? 1 : 0)}>
-                      {renderDetail(contact)}
-                    </td>
-                  </tr>
+                    )}
+                    {onEdit && (
+                      <button
+                        type="button"
+                        onClick={() => onEdit(contact)}
+                        className="btn-outline px-3 py-1 text-xs"
+                        style={{ color: 'var(--accent-dark)', borderColor: 'var(--accent-soft)' }}
+                      >
+                        Edit
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button
+                        type="button"
+                        disabled={deletingContactId === contact.id}
+                        onClick={() => setConfirmDeleteContact(contact)}
+                        className="btn-ghost px-2 py-1 text-xs text-red-600 hover:bg-red-50"
+                        aria-label="Delete"
+                      >
+                        {deletingContactId === contact.id ? <Spinner size="sm" color="red" /> : <TrashIcon />}
+                      </button>
+                    )}
+                  </div>
                 )}
-              </Fragment>
-            );
-          })}
-        </tbody>
-      </table>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      {selectedContact && renderDetail && (
+        <div>
+          {renderDetail(selectedContact)}
+        </div>
+      )}
 
       <AlertDialog.Root
         open={confirmDeleteContact !== null}

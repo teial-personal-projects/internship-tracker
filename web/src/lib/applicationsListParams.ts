@@ -6,6 +6,7 @@ interface BuildApplicationsListParamsInput {
   search: string;
   dateFrom: string;
   dateTo: string;
+  sort: NonNullable<ApplicationsListParams['sort']>;
   page: number;
   limit: number;
 }
@@ -16,6 +17,7 @@ export function buildApplicationsListParams({
   search,
   dateFrom,
   dateTo,
+  sort,
   page,
   limit,
 }: BuildApplicationsListParamsInput): ApplicationsListParams {
@@ -25,6 +27,7 @@ export function buildApplicationsListParams({
     ...(search.trim() && { search: search.trim() }),
     ...(dateFrom && { date_from: dateFrom }),
     ...(dateTo && { date_to: dateTo }),
+    sort,
     page,
     limit,
   };

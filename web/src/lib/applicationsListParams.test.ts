@@ -13,6 +13,7 @@ describe('buildApplicationsListParams', () => {
       search: '  acme  ',
       dateFrom: '2026-01-01',
       dateTo: '2026-06-30',
+      sort: 'company_asc',
       page: 3,
       limit: 25,
     })).toEqual({
@@ -21,6 +22,7 @@ describe('buildApplicationsListParams', () => {
       search: 'acme',
       date_from: '2026-01-01',
       date_to: '2026-06-30',
+      sort: 'company_asc',
       page: 3,
       limit: 25,
     });
@@ -33,9 +35,10 @@ describe('buildApplicationsListParams', () => {
       search: '',
       dateFrom: '',
       dateTo: '',
+      sort: 'newest',
       page: 1,
       limit: 25,
-    })).toEqual({ page: 1, limit: 25 });
+    })).toEqual({ sort: 'newest', page: 1, limit: 25 });
   });
 });
 

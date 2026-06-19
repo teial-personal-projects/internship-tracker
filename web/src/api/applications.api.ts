@@ -15,6 +15,7 @@ export interface ApplicationsListParams {
   search?: string;
   date_from?: string;
   date_to?: string;
+  sort?: 'newest' | 'oldest' | 'company_asc' | 'company_desc';
   page?: number;
   limit?: number;
 }

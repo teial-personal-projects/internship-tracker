@@ -25,7 +25,7 @@ export function buildTodaySummary(payload: SummaryInput): string {
   const interviewsToday = getInterviewsTodayCount(payload);
   const clauses = [
     interviewsToday > 0 ? pluralize(interviewsToday, 'interview') + ' today' : null,
-    payload.stats.open_tasks > 0 ? pluralize(payload.stats.open_tasks, 'open task') : null,
+    payload.stats.open_tasks > 0 ? pluralize(payload.stats.open_tasks, 'action item') : null,
     payload.overdue_follow_ups.length > 0
       ? pluralize(payload.overdue_follow_ups.length, 'overdue follow-up')
       : null,

@@ -1,7 +1,6 @@
 import { AppHeader } from '@/components/AppHeader';
 import { Spinner } from '@/components/Spinner';
 import { ActionItemsPanel } from '@/components/today/ActionItemsPanel';
-import { FunnelPanel } from '@/components/today/FunnelPanel';
 import { NeedAttentionPanel } from '@/components/today/NeedAttentionPanel';
 import { OverdueFollowupsPanel } from '@/components/today/OverdueFollowupsPanel';
 import { RecentContactsPanel } from '@/components/today/RecentContactsPanel';
@@ -91,8 +90,6 @@ export function TodayPage() {
               </div>
 
               <aside className="flex min-w-0 flex-col gap-5">
-                <FunnelPanel buckets={data.funnel} />
-
                 <OverdueFollowupsPanel contacts={data.overdue_follow_ups} />
 
                 <RecentContactsPanel contacts={data.recent_contacts} />

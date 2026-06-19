@@ -66,7 +66,7 @@ class ApplicationsQuery {
 
   async range(from: number, to: number) {
     this.calls.push({ method: 'range', args: [from, to] });
-    const filteredRows = this.applyFilters();
+    const filteredRows = this.applyOrdering(this.applyFilters());
     return {
       data: filteredRows.slice(from, to + 1),
       error: null,
@@ -97,6 +97,20 @@ class ApplicationsQuery {
         return true;
       }),
     );
+  }
+
+  private applyOrdering(rows: ApplicationRow[]): ApplicationRow[] {
+    const orderCall = this.calls.find((call) => call.method === 'order');
+    if (!orderCall) return rows;
+
+    const [column, options] = orderCall.args as [keyof ApplicationRow, { ascending: boolean }];
+    return [...rows].sort((left, right) => {
+      const leftValue = String(left[column] ?? '');
+      const rightValue = String(right[column] ?? '');
+      return options.ascending
+        ? leftValue.localeCompare(rightValue)
+        : rightValue.localeCompare(leftValue);
+    });
   }
 }
 
@@ -213,5 +227,23 @@ describe('GET /api/applications', () => {
       'no-date',
     ]);
     expect(query.calls.some((call) => call.method === 'gte' || call.method === 'lte')).toBe(false);
+  });
+
+  it('sorts by company name when requested', async () => {
+    const query = new ApplicationsQuery([
+      { id: 'charlie', company: 'Charlie Co', applied_date: '2026-01-03' },
+      { id: 'alpha', company: 'Alpha Co', applied_date: '2026-01-01' },
+      { id: 'bravo', company: 'Bravo Co', applied_date: '2026-01-02' },
+    ]);
+    mockCreateUserClient.mockReturnValue(createMockDb(query));
+
+    const response = await request(app)
+      .get('/api/applications?sort=company_asc&limit=25')
+      .set('Authorization', 'Bearer test-token');
+    const body = response.body as { data: ApplicationRow[] };
+
+    expect(response.status).toBe(200);
+    expect(body.data.map((row: ApplicationRow) => row.id)).toEqual(['alpha', 'bravo', 'charlie']);
+    expect(query.calls).toContainEqual({ method: 'order', args: ['company', { ascending: true }] });
   });
 });
