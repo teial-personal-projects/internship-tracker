@@ -1,5 +1,6 @@
 import { AppHeader } from '@/components/AppHeader';
 import { Spinner } from '@/components/Spinner';
+import { StatCards } from '@/components/today/StatCards';
 import { useToday } from '@/hooks/useToday';
 import { useAuth } from '@/contexts/AuthContext';
 import { buildTodaySummary } from '@/lib/todaySummary';
@@ -72,23 +73,7 @@ export function TodayPage() {
           {data && (
             <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_320px] lg:grid-cols-[minmax(0,1fr)_360px]">
               <div className="flex min-w-0 flex-col gap-5">
-                <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  {[
-                    ['Applications', data.stats.applications],
-                    ['Phone screens', data.stats.phone_screens],
-                    ['Open tasks', data.stats.open_tasks],
-                    ['Interviews this week', data.stats.interviews_this_week],
-                  ].map(([label, value]) => (
-                    <article key={label} className="rounded-lg border bg-white p-4" style={{ borderColor: 'var(--line)' }}>
-                      <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--ink-3)' }}>
-                        {label}
-                      </p>
-                      <p className="mt-2 text-3xl font-bold tabular-nums" style={{ color: 'var(--ink)' }}>
-                        {value}
-                      </p>
-                    </article>
-                  ))}
-                </section>
+                <StatCards stats={data.stats} />
 
                 <PanelShell title="Up next">
                   <EmptyLine>{data.up_next.length ? data.up_next[0].application_company : 'No interviews scheduled.'}</EmptyLine>

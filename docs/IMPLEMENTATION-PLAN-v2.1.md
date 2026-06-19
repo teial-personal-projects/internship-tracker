@@ -137,13 +137,13 @@ Create the new post-login landing page. Match the intended visual direction with
 - [x] 2.3.3 Omit zero-value clauses from the summary.
 - [x] 2.3.4 Empty summary: "You're all caught up. Nothing needs you today."
 
-### [ ] 2.4 Flat Stat Cards
+### [x] 2.4 Flat Stat Cards
 
-- [ ] 2.4.1 Create `web/src/components/today/StatCards.tsx`.
-- [ ] 2.4.2 Render four flat cards: Applications, Phone screens, Open tasks, and Interviews this week.
-- [ ] 2.4.3 Cards use a white surface, 1px `--line` border, muted label, and large number.
-- [ ] 2.4.4 Do not add corner color blocks, triangles, or decorative blobs.
-- [ ] 2.4.5 Show `0` and a muted hint for empty card values.
+- [x] 2.4.1 Create `web/src/components/today/StatCards.tsx`.
+- [x] 2.4.2 Render four flat cards: Applications, Phone screens, Open tasks, and Interviews this week.
+- [x] 2.4.3 Cards use a white surface, 1px `--line` border, muted label, and large number.
+- [x] 2.4.4 Do not add corner color blocks, triangles, or decorative blobs.
+- [x] 2.4.5 Show `0` and a muted hint for empty card values.
 
 ### [ ] 2.5 Up Next
 
