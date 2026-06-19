@@ -21,7 +21,7 @@ type ApplicationSort =
   | 'status_desc'
   | 'location_asc'
   | 'location_desc';
-type SortColumn = 'company' | 'status' | 'applied' | 'added' | 'location';
+export type SortColumn = 'company' | 'status' | 'applied' | 'added' | 'location';
 
 const HEADERS = [
   { key: 'application', label: 'Application', sortColumn: 'company' },
@@ -32,7 +32,7 @@ const HEADERS = [
   { key: 'actions',     label: '' },
 ] satisfies Array<{ key: string; label: string; sortColumn?: SortColumn }>;
 
-function sortForColumn(column: SortColumn, currentSort: ApplicationSort): ApplicationSort {
+export function sortForColumn(column: SortColumn, currentSort: ApplicationSort): ApplicationSort {
   if (column === 'company') return currentSort === 'company_asc' ? 'company_desc' : 'company_asc';
   if (column === 'status') return currentSort === 'status_asc' ? 'status_desc' : 'status_asc';
   if (column === 'applied') return currentSort === 'applied_desc' ? 'applied_asc' : 'applied_desc';

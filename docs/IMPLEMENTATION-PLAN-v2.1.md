@@ -280,12 +280,12 @@ Add a view toggle to keep the current sortable Applications grid while introduci
 - [x] 5.1.4 Preserve existing query params when switching views: search, type, status, date range, sort, page, and limit.
 - [x] 5.1.5 Direct links to `/applications?view=kanban` open the Kanban view without losing filters.
 
-### [ ] 5.2 Grid View Preservation
+### [x] 5.2 Grid View Preservation
 
-- [ ] 5.2.1 Keep the current desktop table/grid with sortable headers for Application, Status, Applied, Added, and Location.
-- [ ] 5.2.2 Keep the mobile card list for `Grid` view.
-- [ ] 5.2.3 Keep server-side sorting and pagination behavior unchanged in `Grid` view.
-- [ ] 5.2.4 Keep edit and delete actions available in each grid row/card.
+- [x] 5.2.1 Keep the current desktop table/grid with sortable headers for Application, Status, Applied, Added, and Location.
+- [x] 5.2.2 Keep the mobile card list for `Grid` view.
+- [x] 5.2.3 Keep server-side sorting and pagination behavior unchanged in `Grid` view.
+- [x] 5.2.4 Keep edit and delete actions available in each grid row/card.
 
 ### [ ] 5.3 Kanban Data And Columns
 
