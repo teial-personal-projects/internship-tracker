@@ -341,11 +341,11 @@ Track interviews as a history under each application instead of overloading Kanb
 - [x] 6.1.5 Show interview history in the application modal for existing applications.
 - [x] 6.1.6 Cover empty, loading, error, and populated interview log states.
 
-### [ ] 6.2 Interview Type Expansion
+### [x] 6.2 Interview Type Expansion
 
-- [ ] 6.2.1 Replace the current broad `technical` interview type with more specific types such as coding, system design, behavioral, recruiter screen, hiring manager, and final.
-- [ ] 6.2.2 Add any needed migration or enum update for persisted interview type values.
-- [ ] 6.2.3 Keep old interview types readable during migration.
+- [x] 6.2.1 Replace the current broad `technical` interview type with more specific types such as coding, system design, behavioral, recruiter screen, hiring manager, and final.
+- [x] 6.2.2 Add any needed migration or enum update for persisted interview type values.
+- [x] 6.2.3 Keep old interview types readable during migration.
 
 ### [ ] 6.3 Interview Create And Edit Flow
 

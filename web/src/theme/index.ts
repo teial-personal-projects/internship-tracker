@@ -39,6 +39,20 @@ export const STATUS_LABELS: Record<string, string> = {
   withdrawn:       'Withdrawn',
 };
 
+export const INTERVIEW_TYPE_LABELS: Record<string, string> = {
+  phone_screen:      'Phone Screen',
+  technical:         'Technical',
+  on_site:           'On Site',
+  final_round:       'Final Round',
+  screening:         'Screening',
+  coding:            'Coding',
+  system_design:     'System Design',
+  behavioral:        'Behavioral',
+  recruiter_screen:  'Recruiter Screen',
+  hiring_manager:    'Hiring Manager',
+  final:             'Final',
+};
+
 export const APPLICATION_TYPE_COLORS: Record<string, { bg: string; color: string; border?: string }> = {
   cold_strategic:     { bg: '#EFF6FF', color: '#1D4ED8' },
   recruiter_assisted: { bg: '#F5F3FF', color: '#6D28D9' },

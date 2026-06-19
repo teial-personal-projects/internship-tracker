@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { Clock, ExternalLink, FileText, Users } from 'lucide-react';
-import { STATUS_LABELS } from '@/theme';
+import { INTERVIEW_TYPE_LABELS } from '@/theme';
 import type { TodayInterview } from '@shared/schemas';
 
 interface UpNextCardProps {
@@ -25,7 +25,7 @@ export function UpNextCard({ interview }: UpNextCardProps) {
   }
 
   const timeLabel = format(new Date(interview.scheduled_at), 'EEE, MMM d, h:mm a');
-  const typeLabel = STATUS_LABELS[interview.interview_type] ?? interview.interview_type;
+  const typeLabel = INTERVIEW_TYPE_LABELS[interview.interview_type] ?? interview.interview_type;
 
   return (
     <div className="flex flex-col gap-3">

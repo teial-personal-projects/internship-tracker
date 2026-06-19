@@ -46,6 +46,7 @@ Each file contains an `-- UP` block and a `-- DOWN` block.
 | `v2_016_company_watchlist_target_apply_date.sql` | Convert watchlist target apply year to target apply date |
 | `v2_017_today_indexes.sql` | Add supporting indexes for v2.1 Today and Applications reads |
 | `v2_017_today_indexes_PROD_ONLY.sql` | Production-only concurrent variant of `v2_017_today_indexes.sql` |
+| `v2_018_interview_type_expansion.sql` | Add specific interview type enum values |
 | `radar_001_job_radar.sql` | Add Job Radar source fields and discovered postings |
 | `radar_002_radar_criteria.sql` | Add per-user Job Radar match criteria |
 

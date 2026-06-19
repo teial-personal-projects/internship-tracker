@@ -120,7 +120,17 @@ export const RecruiterStatusSchema = z.enum([
 ]);
 
 export const InterviewTypeSchema = z.enum([
-  'phone_screen', 'technical', 'on_site', 'final_round', 'screening',
+  'phone_screen',
+  'technical',
+  'on_site',
+  'final_round',
+  'screening',
+  'coding',
+  'system_design',
+  'behavioral',
+  'recruiter_screen',
+  'hiring_manager',
+  'final',
 ]);
 
 export const InterviewStatusSchema = z.enum([

@@ -1,7 +1,7 @@
 import type { Interview } from '@shared/schemas';
 import { Spinner } from '@/components/Spinner';
 import { formatDate } from '@/lib/dateUtils';
-import { STATUS_LABELS } from '@/theme';
+import { INTERVIEW_TYPE_LABELS } from '@/theme';
 
 const INTERVIEW_STATUS_LABELS: Record<string, string> = {
   scheduled: 'Scheduled',
@@ -58,7 +58,7 @@ export function ApplicationInterviewLog({ interviews, isLoading, isError }: Prop
 }
 
 function InterviewLogItem({ interview }: { interview: Interview }) {
-  const typeLabel = STATUS_LABELS[interview.interview_type] ?? interview.interview_type;
+  const typeLabel = INTERVIEW_TYPE_LABELS[interview.interview_type] ?? interview.interview_type;
   const statusLabel = INTERVIEW_STATUS_LABELS[interview.status] ?? interview.status;
   const outcomeLabel = interview.outcome ? INTERVIEW_OUTCOME_LABELS[interview.outcome] ?? interview.outcome : null;
 
