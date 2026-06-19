@@ -219,10 +219,10 @@ Replace the wide table/card split with a compact list plus a right rail. Preserv
 - [x] 3.1.4 Status bar color comes from `STATUS_COLORS`; avoid extra row color.
 - [x] 3.1.5 Keep Edit and delete controls without changing existing write paths.
 
-### [ ] 3.2 Remove Colored Initial Squares
+### [x] 3.2 Remove Colored Initial Squares
 
-- [ ] 3.2.1 Remove colored company/contact initial squares from Applications list surfaces.
-- [ ] 3.2.2 If a marker still helps in the rail, use a neutral outline avatar variant.
+- [x] 3.2.1 Remove colored company/contact initial squares from Applications list surfaces.
+- [x] 3.2.2 If a marker still helps in the rail, use a neutral outline avatar variant.
 
 ### [ ] 3.3 Right Rail
 

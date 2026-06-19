@@ -1,6 +1,6 @@
 const AVATAR_COLORS = {
   warm: { bg: '#F5E6C4', color: '#A36410', border: 'transparent' },
-  neutral: { bg: '#F6F2EA', color: '#4E5775', border: '#E2D8C8' },
+  neutral: { bg: 'transparent', color: 'var(--ink-3)', border: 'var(--line)' },
 } as const;
 
 export function getInitials(name: string): string {
@@ -25,7 +25,7 @@ export function Avatar({ name, size = 32, variant = 'warm' }: AvatarProps) {
       style={{
         width: size,
         height: size,
-        borderRadius: 12,
+        borderRadius: variant === 'neutral' ? 999 : 12,
         background: colors.bg,
         border: `1px solid ${colors.border}`,
         color: colors.color,
