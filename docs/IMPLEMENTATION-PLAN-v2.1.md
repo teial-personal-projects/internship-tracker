@@ -130,12 +130,12 @@ Create the new post-login landing page. Match the intended visual direction with
 - [x] 2.2.4 Show one page-level loading state and one page-level error state.
 - [x] 2.2.5 Preserve mobile bottom navigation spacing with `mobile-safe-bottom`.
 
-### [ ] 2.3 Greeting And Summary
+### [x] 2.3 Greeting And Summary
 
-- [ ] 2.3.1 Render "Good morning, {first name}." and accent the first name with the app accent color.
-- [ ] 2.3.2 Build the summary from interviews today, open tasks, and overdue contacts.
-- [ ] 2.3.3 Omit zero-value clauses from the summary.
-- [ ] 2.3.4 Empty summary: "You're all caught up. Nothing needs you today."
+- [x] 2.3.1 Render "Good morning, {first name}." and accent the first name with the app accent color.
+- [x] 2.3.2 Build the summary from interviews today, open tasks, and overdue contacts.
+- [x] 2.3.3 Omit zero-value clauses from the summary.
+- [x] 2.3.4 Empty summary: "You're all caught up. Nothing needs you today."
 
 ### [ ] 2.4 Flat Stat Cards
 

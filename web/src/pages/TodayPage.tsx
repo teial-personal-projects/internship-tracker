@@ -1,8 +1,11 @@
 import { AppHeader } from '@/components/AppHeader';
 import { Spinner } from '@/components/Spinner';
 import { useToday } from '@/hooks/useToday';
+import { useAuth } from '@/contexts/AuthContext';
+import { buildTodaySummary } from '@/lib/todaySummary';
+import type { ReactNode } from 'react';
 
-function PanelShell({ title, children }: { title: string; children: React.ReactNode }) {
+function PanelShell({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="rounded-lg border bg-white" style={{ borderColor: 'var(--line)' }}>
       <div className="border-b px-4 py-3" style={{ borderColor: 'var(--line)' }}>
@@ -15,7 +18,7 @@ function PanelShell({ title, children }: { title: string; children: React.ReactN
   );
 }
 
-function EmptyLine({ children }: { children: React.ReactNode }) {
+function EmptyLine({ children }: { children: ReactNode }) {
   return (
     <p className="text-sm" style={{ color: 'var(--ink-3)' }}>
       {children}
@@ -24,7 +27,11 @@ function EmptyLine({ children }: { children: React.ReactNode }) {
 }
 
 export function TodayPage() {
+  const { user } = useAuth();
   const { data, isLoading, error } = useToday();
+  const firstName = typeof user?.user_metadata?.first_name === 'string' && user.user_metadata.first_name.trim()
+    ? user.user_metadata.first_name.trim()
+    : 'there';
 
   return (
     <div className="flex h-screen flex-col overflow-hidden" style={{ background: 'var(--bg)' }}>
@@ -32,13 +39,22 @@ export function TodayPage() {
 
       <main className="mobile-safe-bottom flex-1 overflow-x-hidden overflow-y-auto px-4 py-6 sm:px-6 md:pb-8">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-5">
-          <header>
+          <header className="max-w-3xl">
             <h2
-              className="text-3xl font-bold tracking-tight"
+              className="text-3xl font-bold tracking-tight sm:text-4xl"
               style={{ color: 'var(--ink)', fontFamily: "'Fraunces', serif" }}
             >
-              Today
+              Good morning,{' '}
+              <span style={{ color: 'var(--accent)' }}>
+                {firstName}
+              </span>
+              .
             </h2>
+            {data && (
+              <p className="mt-2 text-base leading-7" style={{ color: 'var(--ink-2)' }}>
+                {buildTodaySummary(data)}
+              </p>
+            )}
           </header>
 
           {isLoading && (
