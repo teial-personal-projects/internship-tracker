@@ -18,7 +18,7 @@ import { ApplicationsTable } from '@/components/ApplicationsTable';
 import { ApplicationCardList } from '@/components/ApplicationCardList';
 import { ApplicationsRail } from '@/components/applications/ApplicationsRail';
 import { ApplicationModal, type ApplicationFormValues } from '@/components/ApplicationModal';
-import { buildApplicationsListParams, toggleStatusFilter } from '@/lib/applicationsListParams';
+import { buildApplicationsListParams, hasApplicationListFilters, toggleStatusFilter } from '@/lib/applicationsListParams';
 import { todayStr } from '@/lib/dateUtils';
 
 const PAGE_LIMIT = 25;
@@ -63,6 +63,13 @@ export function ApplicationsPage() {
   const totalPages = data?.totalPages ?? 1;
   const statusCounts = stats?.status_counts ?? {};
   const unsetTypeCount = stats?.unset_type_count ?? 0;
+  const hasFilters = hasApplicationListFilters({
+    statusFilter,
+    typeFilter,
+    search,
+    dateFrom,
+    dateTo,
+  });
 
   function setPage(newPage: number) {
     setSearchParams((prev) => {
@@ -89,6 +96,14 @@ export function ApplicationsPage() {
   function handleTypeFilter(t: string) { setTypeFilter(t); resetPage(); }
   function handleDateFrom(d: string) { setDateFrom(d); resetPage(); }
   function handleDateTo(d: string) { setDateTo(d); resetPage(); }
+  function clearFilters() {
+    setStatusFilter('');
+    setTypeFilter('');
+    setSearch('');
+    setDateFrom('');
+    setDateTo('');
+    resetPage();
+  }
 
   const modalDefaultValues = useMemo(
     () => editingApp ?? { added: TODAY },
@@ -226,6 +241,10 @@ export function ApplicationsPage() {
               <div className="flex items-center justify-center py-16">
                 <Spinner size="lg" />
               </div>
+            ) : total === 0 && !hasFilters ? (
+              <ApplicationOnboardingEmptyState onAdd={openAdd} />
+            ) : total === 0 ? (
+              <FilteredEmptyState onClearFilters={clearFilters} />
             ) : isMobile ? (
               <ApplicationCardList applications={applications} onEdit={handleEdit} onDelete={handleDelete} deletingId={deletingId} />
             ) : (
@@ -255,6 +274,38 @@ export function ApplicationsPage() {
         defaultValues={modalDefaultValues as Partial<Application>}
         title={editingApp ? 'Edit Application' : 'Add Application'}
       />
+    </div>
+  );
+}
+
+function ApplicationOnboardingEmptyState({ onAdd }: { onAdd: () => void }) {
+  return (
+    <div className="flex min-h-64 flex-col items-center justify-center rounded-lg border bg-white px-6 py-12 text-center" style={{ borderColor: 'var(--line)' }}>
+      <p className="text-base font-semibold" style={{ color: 'var(--ink)' }}>
+        Add your first application
+      </p>
+      <p className="mt-2 max-w-sm text-sm leading-6" style={{ color: 'var(--ink-3)' }}>
+        Start tracking companies, roles, follow-ups, and interview progress in one place.
+      </p>
+      <button type="button" onClick={onAdd} className="btn-primary mt-5 px-4 py-2 text-sm">
+        + Add application
+      </button>
+    </div>
+  );
+}
+
+function FilteredEmptyState({ onClearFilters }: { onClearFilters: () => void }) {
+  return (
+    <div className="flex min-h-64 flex-col items-center justify-center rounded-lg border bg-white px-6 py-12 text-center" style={{ borderColor: 'var(--line)' }}>
+      <p className="text-base font-semibold" style={{ color: 'var(--ink)' }}>
+        No applications match these filters
+      </p>
+      <p className="mt-2 max-w-sm text-sm leading-6" style={{ color: 'var(--ink-3)' }}>
+        Clear the active filters to return to your full applications list.
+      </p>
+      <button type="button" onClick={onClearFilters} className="btn-outline mt-5 px-4 py-2 text-sm">
+        Clear filters
+      </button>
     </div>
   );
 }

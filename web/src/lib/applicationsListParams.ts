@@ -33,3 +33,13 @@ export function buildApplicationsListParams({
 export function toggleStatusFilter(currentStatus: string, nextStatus: string): string {
   return currentStatus === nextStatus ? '' : nextStatus;
 }
+
+export function hasApplicationListFilters({
+  statusFilter,
+  typeFilter,
+  search,
+  dateFrom,
+  dateTo,
+}: Pick<BuildApplicationsListParamsInput, 'statusFilter' | 'typeFilter' | 'search' | 'dateFrom' | 'dateTo'>): boolean {
+  return Boolean(statusFilter || typeFilter || search.trim() || dateFrom || dateTo);
+}

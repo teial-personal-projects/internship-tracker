@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { buildApplicationsListParams, toggleStatusFilter } from './applicationsListParams';
+import {
+  buildApplicationsListParams,
+  hasApplicationListFilters,
+  toggleStatusFilter,
+} from './applicationsListParams';
 
 describe('buildApplicationsListParams', () => {
   it('keeps search, date range, type, status, page, and limit in the applications query params', () => {
@@ -39,5 +43,24 @@ describe('toggleStatusFilter', () => {
   it('sets a rail status when it is inactive and clears it when clicked again', () => {
     expect(toggleStatusFilter('', 'screening')).toBe('screening');
     expect(toggleStatusFilter('screening', 'screening')).toBe('');
+  });
+});
+
+describe('hasApplicationListFilters', () => {
+  it('detects search, date, type, and status filters without counting whitespace search', () => {
+    const emptyFilters = {
+      statusFilter: '',
+      typeFilter: '',
+      search: '   ',
+      dateFrom: '',
+      dateTo: '',
+    };
+
+    expect(hasApplicationListFilters(emptyFilters)).toBe(false);
+    expect(hasApplicationListFilters({ ...emptyFilters, statusFilter: 'applied' })).toBe(true);
+    expect(hasApplicationListFilters({ ...emptyFilters, typeFilter: 'referral' })).toBe(true);
+    expect(hasApplicationListFilters({ ...emptyFilters, search: 'acme' })).toBe(true);
+    expect(hasApplicationListFilters({ ...emptyFilters, dateFrom: '2026-01-01' })).toBe(true);
+    expect(hasApplicationListFilters({ ...emptyFilters, dateTo: '2026-06-30' })).toBe(true);
   });
 });

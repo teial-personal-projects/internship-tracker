@@ -241,11 +241,11 @@ Replace the wide table/card split with a compact list plus a right rail. Preserv
 - [x] 3.4.3 Pagination still shows the correct item range and reflects `?page=N`.
 - [x] 3.4.4 No year dropdown comes back.
 
-### [ ] 3.5 Empty States
+### [x] 3.5 Empty States
 
-- [ ] 3.5.1 No applications: list area shows onboarding prompt with Add button; rail shows zeros.
-- [ ] 3.5.2 Filtered empty state: show "No applications match these filters" and a Clear filters action.
-- [ ] 3.5.3 Pipeline statuses with zero count still render muted.
+- [x] 3.5.1 No applications: list area shows onboarding prompt with Add button; rail shows zeros.
+- [x] 3.5.2 Filtered empty state: show "No applications match these filters" and a Clear filters action.
+- [x] 3.5.3 Pipeline statuses with zero count still render muted.
 
 ### [ ] 3.6 Applications Tests
 
