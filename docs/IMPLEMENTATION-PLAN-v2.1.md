@@ -145,12 +145,12 @@ Create the new post-login landing page. Match the intended visual direction with
 - [x] 2.4.4 Do not add corner color blocks, triangles, or decorative blobs.
 - [x] 2.4.5 Show `0` and a muted hint for empty card values.
 
-### [ ] 2.5 Up Next
+### [x] 2.5 Up Next
 
-- [ ] 2.5.1 Create `web/src/components/today/UpNextCard.tsx`.
-- [ ] 2.5.2 Source the single next scheduled interview from `interviews`.
-- [ ] 2.5.3 Show time, interview type, company, title, interviewer names, Join button when `location_link` exists, and Prep notes when `notes` exists.
-- [ ] 2.5.4 Empty state: show a slim "No interviews scheduled." line.
+- [x] 2.5.1 Create `web/src/components/today/UpNextCard.tsx`.
+- [x] 2.5.2 Source the single next scheduled interview from `interviews`.
+- [x] 2.5.3 Show time, interview type, company, title, interviewer names, Join button when `location_link` exists, and Prep notes when `notes` exists.
+- [x] 2.5.4 Empty state: show a slim "No interviews scheduled." line.
 
 ### [ ] 2.6 Action Items
 

@@ -1,6 +1,7 @@
 import { AppHeader } from '@/components/AppHeader';
 import { Spinner } from '@/components/Spinner';
 import { StatCards } from '@/components/today/StatCards';
+import { UpNextCard } from '@/components/today/UpNextCard';
 import { useToday } from '@/hooks/useToday';
 import { useAuth } from '@/contexts/AuthContext';
 import { buildTodaySummary } from '@/lib/todaySummary';
@@ -76,7 +77,7 @@ export function TodayPage() {
                 <StatCards stats={data.stats} />
 
                 <PanelShell title="Up next">
-                  <EmptyLine>{data.up_next.length ? data.up_next[0].application_company : 'No interviews scheduled.'}</EmptyLine>
+                  <UpNextCard interview={data.up_next[0] ?? null} />
                 </PanelShell>
 
                 <PanelShell title="Action items">
