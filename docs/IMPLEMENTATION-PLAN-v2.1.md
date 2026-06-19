@@ -181,15 +181,15 @@ Purpose: show a compact conversion snapshot for the current application cycle. T
 - [x] 2.8.4 Render count and percentage for each row; percentages must be `0` when there is no Applied denominator.
 - [x] 2.8.5 Empty state: "No applications in this cycle yet."
 
-### [ ] 2.9 Overdue Follow-Ups
+### [x] 2.9 Overdue Follow-Ups
 
-- [ ] 2.9.1 Create `web/src/components/today/OverdueFollowupsPanel.tsx`.
-- [ ] 2.9.2 Use contacts with `outreach_status IN ('applied_msg_sent', 'double_down_sent', 'follow_up_sent')`.
-- [ ] 2.9.3 Treat contacts as overdue when `date_of_last_outreach` is older than 7 days.
-- [ ] 2.9.4 Put the 7-day threshold in one constant.
-- [ ] 2.9.5 Use thin monochrome initials circles, not colored squares.
-- [ ] 2.9.6 Empty state: "You're current on follow-ups."
-- [ ] 2.9.7 Leave a short code comment noting exact recency can later use `MAX(contact_interactions.occurred_at)`.
+- [x] 2.9.1 Create `web/src/components/today/OverdueFollowupsPanel.tsx`.
+- [x] 2.9.2 Use contacts with `outreach_status IN ('applied_msg_sent', 'double_down_sent', 'follow_up_sent')`.
+- [x] 2.9.3 Treat contacts as overdue when `date_of_last_outreach` is older than 7 days.
+- [x] 2.9.4 Put the 7-day threshold in one constant.
+- [x] 2.9.5 Use thin monochrome initials circles, not colored squares.
+- [x] 2.9.6 Empty state: "You're current on follow-ups."
+- [x] 2.9.7 Leave a short code comment noting exact recency can later use `MAX(contact_interactions.occurred_at)`.
 
 ### [ ] 2.10 Recent Contacts
 

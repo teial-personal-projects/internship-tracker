@@ -3,6 +3,7 @@ import { Spinner } from '@/components/Spinner';
 import { ActionItemsPanel } from '@/components/today/ActionItemsPanel';
 import { FunnelPanel } from '@/components/today/FunnelPanel';
 import { NeedAttentionPanel } from '@/components/today/NeedAttentionPanel';
+import { OverdueFollowupsPanel } from '@/components/today/OverdueFollowupsPanel';
 import { StatCards } from '@/components/today/StatCards';
 import { UpNextCard } from '@/components/today/UpNextCard';
 import { useToday } from '@/hooks/useToday';
@@ -91,9 +92,7 @@ export function TodayPage() {
               <aside className="flex min-w-0 flex-col gap-5">
                 <FunnelPanel buckets={data.funnel} />
 
-                <PanelShell title="Overdue follow-ups">
-                  <EmptyLine>{data.overdue_follow_ups.length ? `${data.overdue_follow_ups.length} overdue` : "You're current on follow-ups."}</EmptyLine>
-                </PanelShell>
+                <OverdueFollowupsPanel contacts={data.overdue_follow_ups} />
 
                 <PanelShell title="Recent contacts">
                   <EmptyLine>{data.recent_contacts.length ? `${data.recent_contacts.length} recent` : 'No contacts yet.'}</EmptyLine>

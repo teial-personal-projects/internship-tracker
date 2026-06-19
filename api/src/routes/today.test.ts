@@ -152,6 +152,11 @@ describe('GET /api/today', () => {
     expect(actionItems.calls).toContainEqual({ method: 'eq', args: ['user_id', 'user-1'] });
     expect(needAttention.calls).toContainEqual({ method: 'eq', args: ['user_id', 'user-1'] });
     expect(overdueFollowUps.calls).toContainEqual({ method: 'eq', args: ['user_id', 'user-1'] });
+    expect(overdueFollowUps.calls).toContainEqual({
+      method: 'in',
+      args: ['outreach_status', ['applied_msg_sent', 'double_down_sent', 'follow_up_sent']],
+    });
+    expect(overdueFollowUps.calls).toContainEqual({ method: 'lt', args: ['date_of_last_outreach', '2026-06-11'] });
     expect(recentContacts.calls).toContainEqual({ method: 'eq', args: ['user_id', 'user-1'] });
     expect(upNext.calls).toContainEqual({ method: 'range', args: [0, 0] });
     expect(actionItems.calls).toContainEqual({ method: 'range', args: [0, 5] });

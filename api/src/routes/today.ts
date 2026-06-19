@@ -182,7 +182,8 @@ router.get('/', requireAuth, async (req: Request, res, next) => {
         .select('*')
         .eq('user_id', user.id)
         .in('outreach_status', FOLLOW_UP_OUTREACH_STATUSES)
-        .lte('date_of_last_outreach', overdueBefore)
+        // Exact recency can later use MAX(contact_interactions.occurred_at).
+        .lt('date_of_last_outreach', overdueBefore)
         .order('date_of_last_outreach', { ascending: true, nullsFirst: false })
         .range(0, OVERDUE_FOLLOW_UPS_LIMIT - 1),
       db
