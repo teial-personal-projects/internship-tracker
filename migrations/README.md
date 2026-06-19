@@ -44,6 +44,7 @@ Each file contains an `-- UP` block and a `-- DOWN` block.
 | `v2_014_default_application_type.sql` | Default application type to cold strategic |
 | `v2_015_application_source.sql` | Add application source fields |
 | `v2_016_company_watchlist_target_apply_date.sql` | Convert watchlist target apply year to target apply date |
+| `v2_017_today_indexes.sql` | Add supporting indexes for v2.1 Today and Applications reads |
 | `radar_001_job_radar.sql` | Add Job Radar source fields and discovered postings |
 | `radar_002_radar_criteria.sql` | Add per-user Job Radar match criteria |
 
