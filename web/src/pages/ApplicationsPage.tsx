@@ -20,6 +20,7 @@ import { ApplicationCardList } from '@/components/ApplicationCardList';
 import { ApplicationsKanbanBoard } from '@/components/applications/ApplicationsKanbanBoard';
 import { ApplicationsRail } from '@/components/applications/ApplicationsRail';
 import { ApplicationModal, type ApplicationFormValues } from '@/components/ApplicationModal';
+import { getApplicationsContentState } from '@/lib/applicationsContentState';
 import { buildApplicationsListParams, hasApplicationListFilters, toggleStatusFilter } from '@/lib/applicationsListParams';
 import { getApplicationsPaging, GRID_PAGE_LIMIT, KANBAN_PAGE_LIMIT, shouldShowKanbanLimitHint } from '@/lib/applicationsLoading';
 import {
@@ -102,6 +103,7 @@ export function ApplicationsPage() {
   });
   const isKanbanView = view === 'kanban';
   const showKanbanLimitHint = shouldShowKanbanLimitHint(view, total);
+  const contentState = getApplicationsContentState({ isLoading, total, hasFilters });
 
   function setPage(newPage: number) {
     setSearchParams((prev) => {
@@ -305,13 +307,13 @@ export function ApplicationsPage() {
             )}
 
             {/* List */}
-            {isLoading ? (
+            {contentState === 'loading' ? (
               <div className="flex items-center justify-center py-16">
                 <Spinner size="lg" />
               </div>
-            ) : total === 0 && !hasFilters ? (
+            ) : contentState === 'onboarding-empty' ? (
               <ApplicationOnboardingEmptyState onAdd={openAdd} />
-            ) : total === 0 ? (
+            ) : contentState === 'filtered-empty' ? (
               <FilteredEmptyState onClearFilters={clearFilters} />
             ) : view === 'kanban' ? (
               <ApplicationsKanbanBoard

@@ -97,7 +97,7 @@ export function ApplicationsKanbanBoard({
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <div className="min-w-0 overflow-x-auto pb-2">
+      <div className="w-full max-w-full min-w-0 overflow-x-auto overflow-y-hidden pb-2">
         <div className="flex min-w-max gap-3">
           {APPLICATION_KANBAN_STATUSES.map((status) => {
             const laneApplications = grouped[status];
@@ -138,7 +138,7 @@ function KanbanLane({
     <section
       ref={setNodeRef}
       aria-label={STATUS_LABELS[status] ?? status}
-      className="flex max-h-[68vh] w-72 shrink-0 flex-col rounded-lg border"
+      className="flex max-h-[68vh] w-[min(18rem,calc(100vw-2rem))] shrink-0 flex-col rounded-lg border sm:w-72"
       style={{
         background: isOver ? 'var(--accent-tint)' : 'var(--softer)',
         borderColor: isOver ? 'var(--accent)' : 'var(--line)',
@@ -208,7 +208,7 @@ function KanbanCard({
   return (
     <article
       ref={setNodeRef}
-      className="overflow-hidden rounded-md border bg-white shadow-sm"
+      className="w-full min-w-0 overflow-hidden rounded-md border bg-white shadow-sm"
       style={{
         ...dragStyle,
         borderColor: 'var(--line)',

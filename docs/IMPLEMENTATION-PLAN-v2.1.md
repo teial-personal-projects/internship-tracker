@@ -313,12 +313,12 @@ Add a view toggle to keep the current sortable Applications grid while introduci
 - [x] 5.5.4 Keep grid pagination unchanged when switching back to Grid.
 - [x] 5.5.5 Do not reset filters when switching between views.
 
-### [ ] 5.6 Kanban Responsive Layout
+### [x] 5.6 Kanban Responsive Layout
 
-- [ ] 5.6.1 Desktop Kanban scrolls horizontally with fixed-width columns.
-- [ ] 5.6.2 Mobile Kanban uses horizontal lane scrolling and cards sized to avoid page-level horizontal overflow.
-- [ ] 5.6.3 The Applications rail stacks below the board on narrow screens.
-- [ ] 5.6.4 Empty board state reuses the existing no-applications and filtered-empty messaging.
+- [x] 5.6.1 Desktop Kanban scrolls horizontally with fixed-width columns.
+- [x] 5.6.2 Mobile Kanban uses horizontal lane scrolling and cards sized to avoid page-level horizontal overflow.
+- [x] 5.6.3 The Applications rail stacks below the board on narrow screens.
+- [x] 5.6.4 Empty board state reuses the existing no-applications and filtered-empty messaging.
 
 ### [ ] 5.7 Kanban Tests
 

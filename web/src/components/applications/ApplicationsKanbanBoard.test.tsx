@@ -96,6 +96,23 @@ describe('ApplicationsKanbanBoard', () => {
     expect(markup).toContain('aria-label="Delete"');
   });
 
+  it('keeps Kanban lanes horizontally scrollable without page-level overflow', () => {
+    const markup = renderToStaticMarkup(
+      <ApplicationsKanbanBoard
+        applications={[makeApplication()]}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onStatusChange={vi.fn()}
+        deletingId={null}
+      />,
+    );
+
+    expect(markup).toContain('w-full max-w-full min-w-0 overflow-x-auto overflow-y-hidden');
+    expect(markup).toContain('w-[min(18rem,calc(100vw-2rem))] shrink-0');
+    expect(markup).toContain('sm:w-72');
+    expect(markup).toContain('w-full min-w-0 overflow-hidden');
+  });
+
   it('resolves status moves and treats current-status drops as no-ops', () => {
     const app = makeApplication({ status: 'applied' });
 
