@@ -92,14 +92,14 @@ Build the read paths once so Today and Applications stay consistent.
 - [x] 1.2.3 Applications rail shows full status granularity.
 - [x] 1.2.4 Unit test: counts are scoped to the requesting user and sum to that user's total applications.
 
-### [ ] 1.3 Today Aggregate Endpoint
+### [x] 1.3 Today Aggregate Endpoint
 
-- [ ] 1.3.1 Create `api/src/routes/today.ts` with `GET /api/today`.
-- [ ] 1.3.2 Register the route in `api/src/app.ts` with `app.use('/api/today', todayRouter)`.
-- [ ] 1.3.3 Return one `TodayPayload` containing stats, up next, action items, need attention, funnel, overdue follow-ups, and recent contacts.
-- [ ] 1.3.4 Scope every query by `user_id`; joined application and contact records must also belong to the current user.
-- [ ] 1.3.5 Cap panel lists with explicit limits.
-- [ ] 1.3.6 Unit test: a user with no data gets zero counts and empty arrays, never null panel objects.
+- [x] 1.3.1 Create `api/src/routes/today.ts` with `GET /api/today`.
+- [x] 1.3.2 Register the route in `api/src/app.ts` with `app.use('/api/today', todayRouter)`.
+- [x] 1.3.3 Return one `TodayPayload` containing stats, up next, action items, need attention, funnel, overdue follow-ups, and recent contacts.
+- [x] 1.3.4 Scope every query by `user_id`; joined application and contact records must also belong to the current user.
+- [x] 1.3.5 Cap panel lists with explicit limits.
+- [x] 1.3.6 Unit test: a user with no data gets zero counts and empty arrays, never null panel objects.
 
 ### [ ] 1.4 Applications Activity Endpoint
 

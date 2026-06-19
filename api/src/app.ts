@@ -5,6 +5,7 @@ import jobsRouter from './routes/jobs';
 import applicationsRouter from './routes/applications';
 import contactsRouter from './routes/contacts';
 import tasksRouter from './routes/tasks';
+import todayRouter from './routes/today';
 import watchlistRouter from './routes/watchlist';
 import radarRouter from './routes/radar';
 import profileRouter from './routes/profile';
@@ -29,6 +30,7 @@ export function createApp(version: string) {
   app.use('/api/applications', applicationsRouter);
   app.use('/api/contacts', contactsRouter);
   app.use('/api/tasks', tasksRouter);
+  app.use('/api/today', todayRouter);
   app.use('/api/watchlist', watchlistRouter);
   app.use('/api/radar', radarRouter);
   app.use('/api/profile', profileRouter);
