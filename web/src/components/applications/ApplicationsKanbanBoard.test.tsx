@@ -44,7 +44,7 @@ describe('ApplicationsKanbanBoard', () => {
 
     expect(Object.keys(grouped)).toEqual(APPLICATION_KANBAN_STATUSES);
     expect(grouped.applied).toHaveLength(1);
-    expect(grouped.technical).toHaveLength(1);
+    expect(grouped.interviewing).toHaveLength(1);
     expect(grouped.not_started).toEqual([]);
     expect(grouped.archive).toEqual([]);
   });
@@ -65,7 +65,7 @@ describe('ApplicationsKanbanBoard', () => {
     expect(markup).toContain('Applied');
     expect(markup).toContain('Screening');
     expect(markup).toContain('Interviewing');
-    expect(markup).toContain('Technical');
+    expect(markup).not.toContain('Technical');
     expect(markup).toContain('On Site');
     expect(markup).toContain('Final Round');
     expect(markup).toContain('Offered');
@@ -110,15 +110,16 @@ describe('ApplicationsKanbanBoard', () => {
     expect(markup).toContain('w-full max-w-full min-w-0 overflow-x-auto overflow-y-hidden');
     expect(markup).toContain('w-[min(18rem,calc(100vw-2rem))] shrink-0');
     expect(markup).toContain('sm:w-72');
-    expect(markup).toContain('w-full min-w-0 overflow-hidden');
+    expect(markup).toContain('w-full min-w-0 cursor-grab touch-none overflow-hidden');
   });
 
   it('resolves status moves and treats current-status drops as no-ops', () => {
     const app = makeApplication({ status: 'applied' });
 
-    expect(getKanbanStatusMove(app, 'technical')).toEqual({ app, status: 'technical' });
+    expect(getKanbanStatusMove(app, 'interviewing')).toEqual({ app, status: 'interviewing' });
     expect(getKanbanStatusMove(app, 'applied')).toBeNull();
+    expect(getKanbanStatusMove(app, 'technical')).toBeNull();
     expect(getKanbanStatusMove(app, 'unknown')).toBeNull();
-    expect(getKanbanStatusMove(undefined, 'technical')).toBeNull();
+    expect(getKanbanStatusMove(undefined, 'interviewing')).toBeNull();
   });
 });

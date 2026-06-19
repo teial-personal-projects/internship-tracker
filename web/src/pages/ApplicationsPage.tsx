@@ -24,6 +24,12 @@ import { getApplicationsContentState } from '@/lib/applicationsContentState';
 import { buildApplicationsListParams, hasApplicationListFilters, toggleStatusFilter } from '@/lib/applicationsListParams';
 import { getApplicationsPaging, GRID_PAGE_LIMIT, KANBAN_PAGE_LIMIT, shouldShowKanbanLimitHint } from '@/lib/applicationsLoading';
 import {
+  applyOptimisticStatus,
+  applyOptimisticStatuses,
+  reconcileOptimisticStatuses,
+  rollbackOptimisticStatus,
+} from '@/lib/applicationsOptimisticStatus';
+import {
   getApplicationsView,
   setApplicationsViewParam,
   type ApplicationsView,
@@ -84,10 +90,7 @@ export function ApplicationsPage() {
 
   const applications = data?.data ?? [];
   const visibleApplications = useMemo(
-    () => applications.map((app) => {
-      const status = optimisticStatuses[app.id];
-      return status ? { ...app, status } : app;
-    }),
+    () => applyOptimisticStatuses(applications, optimisticStatuses),
     [applications, optimisticStatuses],
   );
   const total = data?.total ?? 0;
@@ -190,15 +193,11 @@ export function ApplicationsPage() {
   async function handleKanbanStatusChange(app: Application, nextStatus: ApplicationStatus) {
     if (app.status === nextStatus) return;
 
-    setOptimisticStatuses((current) => ({ ...current, [app.id]: nextStatus }));
+    setOptimisticStatuses((current) => applyOptimisticStatus(current, app.id, nextStatus));
     try {
       await updateApp.mutateAsync({ id: app.id, data: { status: nextStatus } });
     } catch {
-      setOptimisticStatuses((current) => {
-        const next = { ...current };
-        delete next[app.id];
-        return next;
-      });
+      setOptimisticStatuses((current) => rollbackOptimisticStatus(current, app.id));
       toast.error('Status update failed');
     }
   }
@@ -218,17 +217,7 @@ export function ApplicationsPage() {
   }, [editingApp, isModalOpen, routedApplication, setSearchParams]);
 
   useEffect(() => {
-    setOptimisticStatuses((current) => {
-      let changed = false;
-      const next = { ...current };
-      for (const app of applications) {
-        if (next[app.id] && next[app.id] === app.status) {
-          delete next[app.id];
-          changed = true;
-        }
-      }
-      return changed ? next : current;
-    });
+    setOptimisticStatuses((current) => reconcileOptimisticStatuses(current, applications));
   }, [applications]);
 
   return (

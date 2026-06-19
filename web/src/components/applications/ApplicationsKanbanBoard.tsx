@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import {
-  closestCenter,
   DndContext,
   KeyboardSensor,
   PointerSensor,
+  pointerWithin,
+  rectIntersection,
   useDraggable,
   useDroppable,
   useSensor,
   useSensors,
+  type CollisionDetection,
   type DragEndEvent,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
@@ -26,7 +28,6 @@ export const APPLICATION_KANBAN_STATUSES = [
   'applied',
   'screening',
   'interviewing',
-  'technical',
   'on_site',
   'final_round',
   'offered',
@@ -35,7 +36,22 @@ export const APPLICATION_KANBAN_STATUSES = [
   'archive',
 ] satisfies ApplicationStatus[];
 
-export type ApplicationsByStatus = Record<ApplicationStatus, Application[]>;
+export type ApplicationKanbanStatus = (typeof APPLICATION_KANBAN_STATUSES)[number];
+export type ApplicationsByStatus = Record<ApplicationKanbanStatus, Application[]>;
+const KANBAN_STATUS_BY_APPLICATION_STATUS: Record<ApplicationStatus, ApplicationKanbanStatus> = {
+  not_started: 'not_started',
+  in_progress: 'in_progress',
+  applied: 'applied',
+  screening: 'screening',
+  interviewing: 'interviewing',
+  technical: 'interviewing',
+  on_site: 'on_site',
+  final_round: 'final_round',
+  offered: 'offered',
+  rejected: 'rejected',
+  withdrawn: 'withdrawn',
+  archive: 'archive',
+};
 
 export function groupApplicationsByStatus(applications: Application[]): ApplicationsByStatus {
   const grouped = APPLICATION_KANBAN_STATUSES.reduce((acc, status) => {
@@ -44,7 +60,7 @@ export function groupApplicationsByStatus(applications: Application[]): Applicat
   }, {} as ApplicationsByStatus);
 
   for (const app of applications) {
-    grouped[app.status].push(app);
+    grouped[KANBAN_STATUS_BY_APPLICATION_STATUS[app.status]].push(app);
   }
 
   return grouped;
@@ -61,9 +77,14 @@ export function getKanbanStatusMove(
   return { app, status: targetStatus };
 }
 
-function isApplicationKanbanStatus(status: string): status is ApplicationStatus {
-  return APPLICATION_KANBAN_STATUSES.includes(status as ApplicationStatus);
+function isApplicationKanbanStatus(status: string): status is ApplicationKanbanStatus {
+  return APPLICATION_KANBAN_STATUSES.includes(status as ApplicationKanbanStatus);
 }
+
+const kanbanCollisionDetection: CollisionDetection = (args) => {
+  const pointerCollisions = pointerWithin(args);
+  return pointerCollisions.length > 0 ? pointerCollisions : rectIntersection(args);
+};
 
 interface Props {
   applications: Application[];
@@ -96,7 +117,7 @@ export function ApplicationsKanbanBoard({
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} collisionDetection={kanbanCollisionDetection} onDragEnd={handleDragEnd}>
       <div className="w-full max-w-full min-w-0 overflow-x-auto overflow-y-hidden pb-2">
         <div className="flex min-w-max gap-3">
           {APPLICATION_KANBAN_STATUSES.map((status) => {
@@ -208,7 +229,7 @@ function KanbanCard({
   return (
     <article
       ref={setNodeRef}
-      className="w-full min-w-0 overflow-hidden rounded-md border bg-white shadow-sm"
+      className="w-full min-w-0 cursor-grab touch-none overflow-hidden rounded-md border bg-white shadow-sm active:cursor-grabbing"
       style={{
         ...dragStyle,
         borderColor: 'var(--line)',
@@ -216,6 +237,8 @@ function KanbanCard({
         position: 'relative',
         zIndex: isDragging ? 20 : 'auto',
       }}
+      {...attributes}
+      {...listeners}
     >
       <div className="h-1" style={{ background: colors.dot }} aria-hidden="true" />
       <div className="p-3">
@@ -225,8 +248,7 @@ function KanbanCard({
             className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-xs hover:bg-gray-50 focus:outline-none focus:ring-2"
             style={{ color: 'var(--ink-4)', '--tw-ring-color': 'var(--accent)' } as React.CSSProperties}
             aria-label={`Move ${app.company}`}
-            {...attributes}
-            {...listeners}
+            tabIndex={-1}
           >
             <GripVertical className="h-4 w-4" aria-hidden="true" />
           </button>

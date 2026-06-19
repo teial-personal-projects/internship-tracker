@@ -22,11 +22,12 @@ describe('applications view query helpers', () => {
     expect(next.get('sort')).toBe('company_asc');
   });
 
-  it('stores grid explicitly instead of dropping the view query param', () => {
-    const params = new URLSearchParams('view=kanban&page=2');
+  it('stores grid explicitly while preserving page and sort after Kanban', () => {
+    const params = new URLSearchParams('view=kanban&page=2&sort=location_desc');
     const next = setApplicationsViewParam(params, 'grid');
 
     expect(next.get('view')).toBe('grid');
     expect(next.get('page')).toBe('2');
+    expect(next.get('sort')).toBe('location_desc');
   });
 });

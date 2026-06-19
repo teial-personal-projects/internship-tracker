@@ -290,7 +290,7 @@ Add a view toggle to keep the current sortable Applications grid while introduci
 ### [x] 5.3 Kanban Data And Columns
 
 - [x] 5.3.1 Create `web/src/components/applications/ApplicationsKanbanBoard.tsx`.
-- [x] 5.3.2 Columns map to application statuses: Not Started, In Progress, Applied, Screening, Interviewing, Technical, On Site, Final Round, Offered, Rejected, Withdrawn, and Archive.
+- [x] 5.3.2 Columns map to application statuses: Not Started, In Progress, Applied, Screening, Interviewing, On Site, Final Round, Offered, Rejected, Withdrawn, and Archive. Existing `technical` applications display in Interviewing.
 - [x] 5.3.3 Render zero-count columns as muted empty lanes so users can drag into them.
 - [x] 5.3.4 Each column header shows status label and visible-card count.
 - [x] 5.3.5 Cards show company, title, applied date or "Not applied", date added, location, and type badge.
@@ -320,13 +320,13 @@ Add a view toggle to keep the current sortable Applications grid while introduci
 - [x] 5.6.3 The Applications rail stacks below the board on narrow screens.
 - [x] 5.6.4 Empty board state reuses the existing no-applications and filtered-empty messaging.
 
-### [ ] 5.7 Kanban Tests
+### [x] 5.7 Kanban Tests
 
-- [ ] 5.7.1 Unit test grouping applications into status columns.
-- [ ] 5.7.2 Unit test that filters are preserved when toggling `view`.
-- [ ] 5.7.3 Component or integration test: dropping a card into a new column calls update with the new `status`.
-- [ ] 5.7.4 Component or integration test: failed status update rolls back optimistic movement.
-- [ ] 5.7.5 Regression test: Grid header sorting still sends the selected server sort after switching back from Kanban.
+- [x] 5.7.1 Unit test grouping applications into status columns.
+- [x] 5.7.2 Unit test that filters are preserved when toggling `view`.
+- [x] 5.7.3 Component or integration test: dropping a card into a new column calls update with the new `status`.
+- [x] 5.7.4 Component or integration test: failed status update rolls back optimistic movement.
+- [x] 5.7.5 Regression test: Grid header sorting still sends the selected server sort after switching back from Kanban.
 
 ---
 
