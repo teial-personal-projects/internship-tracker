@@ -122,13 +122,13 @@ Create the new post-login landing page. Match the intended visual direction with
 - [x] 2.1.4 Keep `/applications` directly reachable.
 - [x] 2.1.5 Keep `/interviews`, `/playbook`, and `/notifications` redirected; do not add screenshot-only tabs in v2.1.
 
-### [ ] 2.2 Page Scaffold
+### [x] 2.2 Page Scaffold
 
-- [ ] 2.2.1 Create `web/src/pages/TodayPage.tsx`.
-- [ ] 2.2.2 Fetch `GET /api/today` once on load using the existing React Query pattern.
-- [ ] 2.2.3 Use a two-column layout: main content and a right rail; stack the rail below the main column under 768px.
-- [ ] 2.2.4 Show one page-level loading state and one page-level error state.
-- [ ] 2.2.5 Preserve mobile bottom navigation spacing with `mobile-safe-bottom`.
+- [x] 2.2.1 Create `web/src/pages/TodayPage.tsx`.
+- [x] 2.2.2 Fetch `GET /api/today` once on load using the existing React Query pattern.
+- [x] 2.2.3 Use a two-column layout: main content and a right rail; stack the rail below the main column under 768px.
+- [x] 2.2.4 Show one page-level loading state and one page-level error state.
+- [x] 2.2.5 Preserve mobile bottom navigation spacing with `mobile-safe-bottom`.
 
 ### [ ] 2.3 Greeting And Summary
 
