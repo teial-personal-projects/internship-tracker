@@ -305,13 +305,13 @@ Add a view toggle to keep the current sortable Applications grid while introduci
 - [x] 5.4.5 Moving a card to its current status is a no-op and does not call the API.
 - [x] 5.4.6 Keep keyboard drag support available through the chosen DnD library.
 
-### [ ] 5.5 Pagination And Loading Strategy
+### [x] 5.5 Pagination And Loading Strategy
 
-- [ ] 5.5.1 Hide page-number pagination in Kanban view.
-- [ ] 5.5.2 Fetch enough rows for board use with an explicit Kanban limit, capped by the API maximum.
-- [ ] 5.5.3 Show a muted hint if filters match more records than the Kanban fetch limit.
-- [ ] 5.5.4 Keep grid pagination unchanged when switching back to Grid.
-- [ ] 5.5.5 Do not reset filters when switching between views.
+- [x] 5.5.1 Hide page-number pagination in Kanban view.
+- [x] 5.5.2 Fetch enough rows for board use with an explicit Kanban limit, capped by the API maximum.
+- [x] 5.5.3 Show a muted hint if filters match more records than the Kanban fetch limit.
+- [x] 5.5.4 Keep grid pagination unchanged when switching back to Grid.
+- [x] 5.5.5 Do not reset filters when switching between views.
 
 ### [ ] 5.6 Kanban Responsive Layout
 

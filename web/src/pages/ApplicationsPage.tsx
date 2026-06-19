@@ -21,6 +21,7 @@ import { ApplicationsKanbanBoard } from '@/components/applications/ApplicationsK
 import { ApplicationsRail } from '@/components/applications/ApplicationsRail';
 import { ApplicationModal, type ApplicationFormValues } from '@/components/ApplicationModal';
 import { buildApplicationsListParams, hasApplicationListFilters, toggleStatusFilter } from '@/lib/applicationsListParams';
+import { getApplicationsPaging, GRID_PAGE_LIMIT, KANBAN_PAGE_LIMIT, shouldShowKanbanLimitHint } from '@/lib/applicationsLoading';
 import {
   getApplicationsView,
   setApplicationsViewParam,
@@ -28,7 +29,6 @@ import {
 } from '@/lib/applicationsView';
 import { todayStr } from '@/lib/dateUtils';
 
-const PAGE_LIMIT = 25;
 const TODAY = todayStr();
 type ApplicationSort =
   | 'added_desc'
@@ -60,6 +60,7 @@ export function ApplicationsPage() {
   const [editingApp, setEditingApp] = useState<Application | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, ApplicationStatus>>({});
+  const paging = useMemo(() => getApplicationsPaging(view, page), [page, view]);
 
   const queryParams = useMemo(() => buildApplicationsListParams({
     statusFilter,
@@ -68,9 +69,9 @@ export function ApplicationsPage() {
     dateFrom,
     dateTo,
     sort,
-    page,
-    limit: PAGE_LIMIT,
-  }), [statusFilter, typeFilter, search, dateFrom, dateTo, sort, page]);
+    page: paging.page,
+    limit: paging.limit,
+  }), [statusFilter, typeFilter, search, dateFrom, dateTo, sort, paging]);
 
   const { data, isLoading, error } = useApplications(queryParams);
   const { data: stats } = useApplicationStats();
@@ -99,6 +100,8 @@ export function ApplicationsPage() {
     dateFrom,
     dateTo,
   });
+  const isKanbanView = view === 'kanban';
+  const showKanbanLimitHint = shouldShowKanbanLimitHint(view, total);
 
   function setPage(newPage: number) {
     setSearchParams((prev) => {
@@ -297,8 +300,8 @@ export function ApplicationsPage() {
         <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_320px] lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-2">
             {/* Pagination (top) */}
-            {!isLoading && totalPages > 1 && (
-              <Pagination page={page} totalPages={totalPages} total={total} limit={PAGE_LIMIT} onPageChange={setPage} />
+            {!isKanbanView && !isLoading && totalPages > 1 && (
+              <Pagination page={page} totalPages={totalPages} total={total} limit={GRID_PAGE_LIMIT} onPageChange={setPage} />
             )}
 
             {/* List */}
@@ -331,9 +334,15 @@ export function ApplicationsPage() {
               />
             )}
 
+            {showKanbanLimitHint && (
+              <p className="rounded-lg border bg-white px-3 py-2 text-xs" style={{ borderColor: 'var(--line)', color: 'var(--ink-3)' }}>
+                Showing the first {KANBAN_PAGE_LIMIT} matching applications. Refine filters to narrow the board.
+              </p>
+            )}
+
             {/* Pagination (bottom) */}
-            {!isLoading && totalPages > 1 && (
-              <Pagination page={page} totalPages={totalPages} total={total} limit={PAGE_LIMIT} onPageChange={setPage} />
+            {!isKanbanView && !isLoading && totalPages > 1 && (
+              <Pagination page={page} totalPages={totalPages} total={total} limit={GRID_PAGE_LIMIT} onPageChange={setPage} />
             )}
           </div>
 
