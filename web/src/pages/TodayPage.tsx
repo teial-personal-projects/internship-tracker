@@ -1,6 +1,7 @@
 import { AppHeader } from '@/components/AppHeader';
 import { Spinner } from '@/components/Spinner';
 import { ActionItemsPanel } from '@/components/today/ActionItemsPanel';
+import { FunnelPanel } from '@/components/today/FunnelPanel';
 import { NeedAttentionPanel } from '@/components/today/NeedAttentionPanel';
 import { StatCards } from '@/components/today/StatCards';
 import { UpNextCard } from '@/components/today/UpNextCard';
@@ -88,9 +89,7 @@ export function TodayPage() {
               </div>
 
               <aside className="flex min-w-0 flex-col gap-5">
-                <PanelShell title="Funnel">
-                  <EmptyLine>{data.funnel.some((bucket) => bucket.count > 0) ? `${data.funnel.length} stages` : 'No applications in this cycle yet.'}</EmptyLine>
-                </PanelShell>
+                <FunnelPanel buckets={data.funnel} />
 
                 <PanelShell title="Overdue follow-ups">
                   <EmptyLine>{data.overdue_follow_ups.length ? `${data.overdue_follow_ups.length} overdue` : "You're current on follow-ups."}</EmptyLine>

@@ -171,15 +171,15 @@ Purpose: show the user's most recently updated active applications so the Today 
 - [x] 2.7.4 Add a no-type nudge only if the schema or data allows `application_type IS NULL`; current v2.0 defaults it to `cold_strategic`, so this may be zero forever.
 - [x] 2.7.5 Empty state: "Nothing in active stages right now."
 
-### [ ] 2.8 Funnel
+### [x] 2.8 Funnel
 
 Purpose: show a compact conversion snapshot for the current application cycle. The rows are cumulative stage-reached counts, so a final-round application also counts toward Applied, Phone screen, and Technical. Percentages use Applied as the denominator to answer "how far is the pipeline progressing?"
 
-- [ ] 2.8.1 Create `web/src/components/today/FunnelPanel.tsx`.
-- [ ] 2.8.2 Bucket status counts into cumulative rows: Applied, Phone screen, Technical, and Final/offer.
-- [ ] 2.8.3 Use Applied as the denominator and guard divide-by-zero.
-- [ ] 2.8.4 Render count and percentage for each row; percentages must be `0` when there is no Applied denominator.
-- [ ] 2.8.5 Empty state: "No applications in this cycle yet."
+- [x] 2.8.1 Create `web/src/components/today/FunnelPanel.tsx`.
+- [x] 2.8.2 Bucket status counts into cumulative rows: Applied, Phone screen, Technical, and Final/offer.
+- [x] 2.8.3 Use Applied as the denominator and guard divide-by-zero.
+- [x] 2.8.4 Render count and percentage for each row; percentages must be `0` when there is no Applied denominator.
+- [x] 2.8.5 Empty state: "No applications in this cycle yet."
 
 ### [ ] 2.9 Overdue Follow-Ups
 

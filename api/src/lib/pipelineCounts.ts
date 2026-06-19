@@ -39,9 +39,17 @@ const TODAY_BUCKETS: Array<{
   label: string;
   statuses: ApplicationStatus[];
 }> = [
-  { key: 'applied', label: 'Applied', statuses: ['applied'] },
-  { key: 'screening', label: 'Phone screen', statuses: ['screening'] },
-  { key: 'technical', label: 'Technical', statuses: ['technical'] },
+  {
+    key: 'applied',
+    label: 'Applied',
+    statuses: ['applied', 'screening', 'interviewing', 'technical', 'on_site', 'final_round', 'offered'],
+  },
+  {
+    key: 'screening',
+    label: 'Phone screen',
+    statuses: ['screening', 'interviewing', 'technical', 'on_site', 'final_round', 'offered'],
+  },
+  { key: 'technical', label: 'Technical', statuses: ['technical', 'on_site', 'final_round', 'offered'] },
   { key: 'final_offer', label: 'Final / Offer', statuses: ['final_round', 'offered'] },
 ];
 
@@ -75,7 +83,9 @@ export async function getPipelineCounts(
   };
 }
 
-export function getTodayPipelineBuckets({ counts, total }: PipelineCountsResult): TodayFunnelBucket[] {
+export function getTodayPipelineBuckets({ counts }: PipelineCountsResult): TodayFunnelBucket[] {
+  const appliedDenominator = TODAY_BUCKETS[0].statuses.reduce((sum, status) => sum + counts[status], 0);
+
   return TODAY_BUCKETS.map((bucket) => {
     const count = bucket.statuses.reduce((sum, status) => sum + counts[status], 0);
 
@@ -83,7 +93,7 @@ export function getTodayPipelineBuckets({ counts, total }: PipelineCountsResult)
       key: bucket.key,
       label: bucket.label,
       count,
-      percent: total === 0 ? 0 : Math.round((count / total) * 1000) / 10,
+      percent: appliedDenominator === 0 ? 0 : Math.round((count / appliedDenominator) * 1000) / 10,
     };
   });
 }

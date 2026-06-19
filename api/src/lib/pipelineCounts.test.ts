@@ -88,7 +88,7 @@ describe('getPipelineCounts', () => {
 });
 
 describe('getTodayPipelineBuckets', () => {
-  it('buckets Applied, Phone screen, Technical, and Final / Offer for Today', async () => {
+  it('returns cumulative Applied-denominator funnel buckets for Today', async () => {
     const result = await getPipelineCounts(
       createDb(new PipelineQuery([
         { user_id: 'user-1', status: 'applied' },
@@ -101,10 +101,27 @@ describe('getTodayPipelineBuckets', () => {
     );
 
     expect(getTodayPipelineBuckets(result)).toEqual([
-      { key: 'applied', label: 'Applied', count: 1, percent: 20 },
-      { key: 'screening', label: 'Phone screen', count: 1, percent: 20 },
-      { key: 'technical', label: 'Technical', count: 1, percent: 20 },
+      { key: 'applied', label: 'Applied', count: 5, percent: 100 },
+      { key: 'screening', label: 'Phone screen', count: 4, percent: 80 },
+      { key: 'technical', label: 'Technical', count: 3, percent: 60 },
       { key: 'final_offer', label: 'Final / Offer', count: 2, percent: 40 },
+    ]);
+  });
+
+  it('uses zero percentages when there is no Applied denominator', async () => {
+    const result = await getPipelineCounts(
+      createDb(new PipelineQuery([
+        { user_id: 'user-1', status: 'not_started' },
+        { user_id: 'user-1', status: 'in_progress' },
+      ])),
+      'user-1',
+    );
+
+    expect(getTodayPipelineBuckets(result)).toEqual([
+      { key: 'applied', label: 'Applied', count: 0, percent: 0 },
+      { key: 'screening', label: 'Phone screen', count: 0, percent: 0 },
+      { key: 'technical', label: 'Technical', count: 0, percent: 0 },
+      { key: 'final_offer', label: 'Final / Offer', count: 0, percent: 0 },
     ]);
   });
 });
