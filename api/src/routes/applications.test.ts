@@ -18,6 +18,8 @@ interface ApplicationRow {
   id: string;
   company: string;
   applied_date: string | null;
+  added?: string | null;
+  location?: string | null;
   status?: string;
   application_type?: string | null;
   source?: string;
@@ -245,5 +247,77 @@ describe('GET /api/applications', () => {
     expect(response.status).toBe(200);
     expect(body.data.map((row: ApplicationRow) => row.id)).toEqual(['alpha', 'bravo', 'charlie']);
     expect(query.calls).toContainEqual({ method: 'order', args: ['company', { ascending: true }] });
+  });
+
+  it('sorts by applied date when requested', async () => {
+    const query = new ApplicationsQuery([
+      { id: 'first', company: 'First Co', applied_date: '2026-01-01' },
+      { id: 'third', company: 'Third Co', applied_date: '2026-03-01' },
+      { id: 'second', company: 'Second Co', applied_date: '2026-02-01' },
+    ]);
+    mockCreateUserClient.mockReturnValue(createMockDb(query));
+
+    const response = await request(app)
+      .get('/api/applications?sort=applied_desc&limit=25')
+      .set('Authorization', 'Bearer test-token');
+    const body = response.body as { data: ApplicationRow[] };
+
+    expect(response.status).toBe(200);
+    expect(body.data.map((row: ApplicationRow) => row.id)).toEqual(['third', 'second', 'first']);
+    expect(query.calls).toContainEqual({ method: 'order', args: ['applied_date', { ascending: false }] });
+  });
+
+  it('sorts by date added when requested', async () => {
+    const query = new ApplicationsQuery([
+      { id: 'older', company: 'Older Co', applied_date: null, added: '2026-01-01' },
+      { id: 'newer', company: 'Newer Co', applied_date: null, added: '2026-03-01' },
+      { id: 'middle', company: 'Middle Co', applied_date: null, added: '2026-02-01' },
+    ]);
+    mockCreateUserClient.mockReturnValue(createMockDb(query));
+
+    const response = await request(app)
+      .get('/api/applications?sort=added_asc&limit=25')
+      .set('Authorization', 'Bearer test-token');
+    const body = response.body as { data: ApplicationRow[] };
+
+    expect(response.status).toBe(200);
+    expect(body.data.map((row: ApplicationRow) => row.id)).toEqual(['older', 'middle', 'newer']);
+    expect(query.calls).toContainEqual({ method: 'order', args: ['added', { ascending: true }] });
+  });
+
+  it('sorts by status when requested', async () => {
+    const query = new ApplicationsQuery([
+      { id: 'screening', company: 'Screening Co', applied_date: null, status: 'screening' },
+      { id: 'applied', company: 'Applied Co', applied_date: null, status: 'applied' },
+      { id: 'offered', company: 'Offered Co', applied_date: null, status: 'offered' },
+    ]);
+    mockCreateUserClient.mockReturnValue(createMockDb(query));
+
+    const response = await request(app)
+      .get('/api/applications?sort=status_asc&limit=25')
+      .set('Authorization', 'Bearer test-token');
+    const body = response.body as { data: ApplicationRow[] };
+
+    expect(response.status).toBe(200);
+    expect(body.data.map((row: ApplicationRow) => row.id)).toEqual(['applied', 'offered', 'screening']);
+    expect(query.calls).toContainEqual({ method: 'order', args: ['status', { ascending: true }] });
+  });
+
+  it('sorts by location when requested', async () => {
+    const query = new ApplicationsQuery([
+      { id: 'sf', company: 'SF Co', applied_date: null, location: 'San Francisco, CA' },
+      { id: 'la', company: 'LA Co', applied_date: null, location: 'Los Angeles, CA' },
+      { id: 'ny', company: 'NY Co', applied_date: null, location: 'New York, NY' },
+    ]);
+    mockCreateUserClient.mockReturnValue(createMockDb(query));
+
+    const response = await request(app)
+      .get('/api/applications?sort=location_desc&limit=25')
+      .set('Authorization', 'Bearer test-token');
+    const body = response.body as { data: ApplicationRow[] };
+
+    expect(response.status).toBe(200);
+    expect(body.data.map((row: ApplicationRow) => row.id)).toEqual(['sf', 'ny', 'la']);
+    expect(query.calls).toContainEqual({ method: 'order', args: ['location', { ascending: false }] });
   });
 });

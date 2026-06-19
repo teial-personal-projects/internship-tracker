@@ -35,10 +35,10 @@ describe('buildApplicationsListParams', () => {
       search: '',
       dateFrom: '',
       dateTo: '',
-      sort: 'newest',
+      sort: 'added_desc',
       page: 1,
       limit: 25,
-    })).toEqual({ sort: 'newest', page: 1, limit: 25 });
+    })).toEqual({ sort: 'added_desc', page: 1, limit: 25 });
   });
 });
 

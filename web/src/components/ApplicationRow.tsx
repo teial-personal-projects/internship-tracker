@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import type { Application } from '@shared/schemas';
 import { StatusBadge } from './StatusBadge';
@@ -8,17 +7,12 @@ import { Spinner } from './Spinner';
 import { formatDate } from '@/lib/dateUtils';
 import { STATUS_COLORS } from '@/theme';
 
-const CHECKLIST_TOTAL = 18;
-
-function checklistColor(done: number): string {
-  if (done === 0) return 'var(--ink-4)';
-  if (done >= 15) return '#15803D';
-  if (done >= 5)  return '#A36410';
-  return '#B5394A';
-}
-
 export function getAppliedDateLabel(appliedDate: string | null | undefined): string {
   return formatDate(appliedDate, 'Not applied');
+}
+
+export function getAddedDateLabel(addedDate: string | null | undefined): string {
+  return formatDate(addedDate, 'Not set');
 }
 
 interface Props {
@@ -30,10 +24,6 @@ interface Props {
 
 export function ApplicationRow({ app, onEdit, onDelete, isDeleting }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const navigate = useNavigate();
-
-  const doneTasks = Object.values(app.checklist_state ?? {}).filter((v) => v === true).length;
-  const progressColor = checklistColor(doneTasks);
   const statusColor = STATUS_COLORS[app.status]?.dot ?? 'var(--ink-4)';
 
   return (
@@ -43,34 +33,30 @@ export function ApplicationRow({ app, onEdit, onDelete, isDeleting }: Props) {
           <div className="grid min-h-12 grid-cols-[4px_minmax(0,1fr)] gap-3">
             <div className="rounded-r-full" style={{ background: statusColor }} aria-hidden="true" />
             <div className="min-w-0 py-0.5">
-              <div className="flex min-w-0 items-baseline gap-2">
-                <span className="truncate text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-                  {app.company}
-                </span>
-                <span className="truncate text-xs" style={{ color: 'var(--ink-3)' }}>
-                  {app.title}
-                </span>
-              </div>
-              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs" style={{ color: 'var(--ink-3)' }}>
-                <StatusBadge status={app.status} />
-                <span aria-hidden="true">·</span>
-                <span>{getAppliedDateLabel(app.applied_date)}</span>
-                <span aria-hidden="true">·</span>
-                <span>{app.location ?? 'No location'}</span>
-              </div>
+              <p className="truncate text-sm font-semibold" style={{ color: 'var(--ink)' }}>
+                {app.company}
+              </p>
+              <p className="mt-0.5 truncate text-xs" style={{ color: 'var(--ink-3)' }}>
+                {app.title}
+              </p>
             </div>
           </div>
         </td>
 
         <td className="px-2 py-2 whitespace-nowrap">
-          <button
-            type="button"
-            onClick={() => navigate(`/contacts?application_id=${app.id}`)}
-            className="text-sm font-semibold tabular-nums hover:underline"
-            style={{ color: progressColor }}
-          >
-            {doneTasks}/{CHECKLIST_TOTAL}
-          </button>
+          <StatusBadge status={app.status} />
+        </td>
+
+        <td className="px-2 py-2 whitespace-nowrap text-sm" style={{ color: app.applied_date ? 'var(--ink-2)' : 'var(--ink-4)' }}>
+          {getAppliedDateLabel(app.applied_date)}
+        </td>
+
+        <td className="px-2 py-2 whitespace-nowrap text-sm" style={{ color: 'var(--ink-2)' }}>
+          {getAddedDateLabel(app.added)}
+        </td>
+
+        <td className="max-w-48 px-2 py-2 text-sm" style={{ color: app.location ? 'var(--ink-2)' : 'var(--ink-4)' }}>
+          <span className="block truncate">{app.location ?? 'No location'}</span>
         </td>
 
         <td className="sticky right-0 bg-white px-2 py-2" style={{ boxShadow: '-2px 0 6px rgba(0,0,0,0.05)' }}>

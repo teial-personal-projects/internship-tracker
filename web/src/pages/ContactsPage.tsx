@@ -9,12 +9,6 @@ import { useApplication, useApplicationContacts, useApplications } from '@/hooks
 import { useContacts, useCreateContact, useUpdateContact, useDeleteContact } from '@/hooks/useContacts';
 import type { Contact } from '@/api/contacts.api';
 import type { ApplicationContactLink } from '@/api/applications.api';
-import {
-  CHECKLIST_TOTAL,
-  checklistDoneCount,
-  checklistProgressColor,
-  checklistProgressPercent,
-} from '@/lib/checklistProgress';
 import { OUTREACH_LABELS, RECRUITER_LABELS, contactName } from '@/lib/contactDisplay';
 import type { Application, CreateContactSchemaType } from '@shared/schemas';
 import { ArrowLeft, Plus, Search } from 'lucide-react';
@@ -164,7 +158,6 @@ export function ContactsPage() {
                     </div>
                     <ApplicationTypeBadge type={application.application_type} />
                   </div>
-                  <ChecklistProgress application={application} />
                 </section>
 
                 <section className="rounded-xl border bg-white p-5" style={{ borderColor: 'var(--line)' }}>
@@ -324,29 +317,6 @@ export function ContactsPage() {
         onClose={() => { setIsModalOpen(false); setEditingContact(null); }}
         onSubmit={handleSubmitContact}
       />
-    </div>
-  );
-}
-
-function ChecklistProgress({ application }: { application: Application }) {
-  const done = checklistDoneCount(application);
-  const percent = checklistProgressPercent(application);
-  const color = checklistProgressColor(done);
-
-  return (
-    <div className="mt-4 flex flex-col gap-1.5">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-sm font-semibold" style={{ color }}>
-          Checklist: {done}/{CHECKLIST_TOTAL}
-        </span>
-        <span className="text-xs" style={{ color: 'var(--ink-4)' }}>{percent}%</span>
-      </div>
-      <div className="h-2 overflow-hidden rounded-full" style={{ background: 'var(--soft)' }}>
-        <div
-          className="h-full rounded-full transition-all duration-300"
-          style={{ width: `${percent}%`, background: color }}
-        />
-      </div>
     </div>
   );
 }

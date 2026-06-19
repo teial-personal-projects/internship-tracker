@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import type { Application } from '@shared/schemas';
 import { StatusBadge } from './StatusBadge';
@@ -7,8 +6,6 @@ import { ApplicationTypeBadge } from './ApplicationTypeBadge';
 import { TrashIcon } from './icons/TrashIcon';
 import { Spinner } from './Spinner';
 import { formatDate } from '@/lib/dateUtils';
-
-const CHECKLIST_TOTAL = 18;
 
 interface Props {
   applications: Application[];
@@ -50,8 +47,6 @@ interface ApplicationCardProps {
 
 function ApplicationCard({ app, onEdit, onDelete, isDeleting }: ApplicationCardProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const navigate = useNavigate();
-  const done = Object.values(app.checklist_state ?? {}).filter((v) => v === true).length;
 
   return (
     <div
@@ -84,27 +79,17 @@ function ApplicationCard({ app, onEdit, onDelete, isDeleting }: ApplicationCardP
         )}
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-end gap-1">
+        <button type="button" onClick={() => onEdit(app)} className="btn-outline text-xs px-3 py-1">Edit</button>
         <button
           type="button"
-          onClick={() => navigate(`/contacts?application_id=${app.id}`)}
-          className="text-xs font-semibold hover:underline"
-          style={{ color: done >= 15 ? '#15803D' : done >= 5 ? '#A36410' : done > 0 ? '#B5394A' : 'var(--ink-4)' }}
+          disabled={isDeleting}
+          onClick={() => setConfirmOpen(true)}
+          className="btn-ghost text-red-600 hover:bg-red-50 px-2 py-1"
+          aria-label="Delete"
         >
-          Checklist: {done}/{CHECKLIST_TOTAL}
+          {isDeleting ? <Spinner size="sm" color="red" /> : <TrashIcon />}
         </button>
-        <div className="flex items-center gap-1">
-          <button type="button" onClick={() => onEdit(app)} className="btn-outline text-xs px-3 py-1">Edit</button>
-          <button
-            type="button"
-            disabled={isDeleting}
-            onClick={() => setConfirmOpen(true)}
-            className="btn-ghost text-red-600 hover:bg-red-50 px-2 py-1"
-            aria-label="Delete"
-          >
-            {isDeleting ? <Spinner size="sm" color="red" /> : <TrashIcon />}
-          </button>
-        </div>
       </div>
 
       <AlertDialog.Root open={confirmOpen} onOpenChange={setConfirmOpen}>

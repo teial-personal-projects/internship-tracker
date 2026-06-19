@@ -15,7 +15,17 @@ export interface ApplicationsListParams {
   search?: string;
   date_from?: string;
   date_to?: string;
-  sort?: 'newest' | 'oldest' | 'company_asc' | 'company_desc';
+  sort?:
+    | 'added_desc'
+    | 'added_asc'
+    | 'applied_desc'
+    | 'applied_asc'
+    | 'company_asc'
+    | 'company_desc'
+    | 'status_asc'
+    | 'status_desc'
+    | 'location_asc'
+    | 'location_desc';
   page?: number;
   limit?: number;
 }

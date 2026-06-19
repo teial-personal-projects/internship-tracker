@@ -22,10 +22,16 @@ const router = Router();
 const PAGE_MAX = 100;
 const ACTIVITY_LIMIT = 6;
 const APPLICATION_SORTS = {
-  newest: { column: 'added', ascending: false },
-  oldest: { column: 'added', ascending: true },
+  added_desc: { column: 'added', ascending: false },
+  added_asc: { column: 'added', ascending: true },
+  applied_desc: { column: 'applied_date', ascending: false },
+  applied_asc: { column: 'applied_date', ascending: true },
   company_asc: { column: 'company', ascending: true },
   company_desc: { column: 'company', ascending: false },
+  status_asc: { column: 'status', ascending: true },
+  status_desc: { column: 'status', ascending: false },
+  location_asc: { column: 'location', ascending: true },
+  location_desc: { column: 'location', ascending: false },
 } as const;
 
 type ApplicationSort = keyof typeof APPLICATION_SORTS;
@@ -33,7 +39,7 @@ type ApplicationSort = keyof typeof APPLICATION_SORTS;
 function getApplicationSort(value: unknown): ApplicationSort {
   return typeof value === 'string' && value in APPLICATION_SORTS
     ? value as ApplicationSort
-    : 'newest';
+    : 'added_desc';
 }
 
 interface ApplicationTaskTriggerState {
