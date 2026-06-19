@@ -209,7 +209,7 @@ describe('application event routes', () => {
       applications: {
         company: `Company ${index + 1}`,
         title: `Role ${index + 1}`,
-        user_id: index === 0 ? 'other-user' : 'user-1',
+        user_id: index === 6 ? 'other-user' : 'user-1',
       },
     }));
     const db = createMockDb({
@@ -223,7 +223,6 @@ describe('application event routes', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.data.map((event: TableRow) => event.id)).toEqual([
-      'event-7',
       'event-6',
       'event-5',
       'event-4',
@@ -232,11 +231,11 @@ describe('application event routes', () => {
     ]);
     expect(response.body.data[0]).toMatchObject({
       event_type: 'note',
-      occurred_at: '2026-02-07T00:00:00.000Z',
-      body: 'Activity 7',
-      application_id: 'app-7',
-      company: 'Company 7',
-      title: 'Role 7',
+      occurred_at: '2026-02-06T00:00:00.000Z',
+      body: 'Activity 6',
+      application_id: 'app-6',
+      company: 'Company 6',
+      title: 'Role 6',
     });
     expect(db.queries.application_events[0].calls).toContainEqual({
       method: 'eq',

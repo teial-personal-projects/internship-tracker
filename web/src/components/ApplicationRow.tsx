@@ -17,6 +17,10 @@ function checklistColor(done: number): string {
   return '#B5394A';
 }
 
+export function getAppliedDateLabel(appliedDate: string | null | undefined): string {
+  return formatDate(appliedDate, 'Not applied');
+}
+
 interface Props {
   app: Application;
   onEdit: (app: Application) => void;
@@ -50,7 +54,7 @@ export function ApplicationRow({ app, onEdit, onDelete, isDeleting }: Props) {
               <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs" style={{ color: 'var(--ink-3)' }}>
                 <StatusBadge status={app.status} />
                 <span aria-hidden="true">·</span>
-                <span>{formatDate(app.applied_date, 'Not applied')}</span>
+                <span>{getAppliedDateLabel(app.applied_date)}</span>
                 <span aria-hidden="true">·</span>
                 <span>{app.location ?? 'No location'}</span>
               </div>

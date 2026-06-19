@@ -247,11 +247,11 @@ Replace the wide table/card split with a compact list plus a right rail. Preserv
 - [x] 3.5.2 Filtered empty state: show "No applications match these filters" and a Clear filters action.
 - [x] 3.5.3 Pipeline statuses with zero count still render muted.
 
-### [ ] 3.6 Applications Tests
+### [x] 3.6 Applications Tests
 
-- [ ] 3.6.1 Clicking a pipeline row sets the status filter; clicking it again clears it.
-- [ ] 3.6.2 Activity rail shows only events for owned applications.
-- [ ] 3.6.3 Compact row renders "Not applied" for null `applied_date`.
+- [x] 3.6.1 Clicking a pipeline row sets the status filter; clicking it again clears it.
+- [x] 3.6.2 Activity rail shows only events for owned applications.
+- [x] 3.6.3 Compact row renders "Not applied" for null `applied_date`.
 
 ---
 
