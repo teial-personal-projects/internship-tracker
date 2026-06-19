@@ -161,20 +161,25 @@ Create the new post-login landing page. Match the intended visual direction with
 - [x] 2.6.5 Header count is total open tasks, not just the rendered limit.
 - [x] 2.6.6 Empty state: "No open action items."
 
-### [ ] 2.7 Need Attention
+### [x] 2.7 show the user's most recently updated active applications
 
-- [ ] 2.7.1 Create `web/src/components/today/NeedAttentionPanel.tsx`.
-- [ ] 2.7.2 Source active applications ordered by `updated_at DESC`.
-- [ ] 2.7.3 Include applications in `in_progress`, `applied`, `screening`, `interviewing`, `technical`, `on_site`, and `final_round`.
-- [ ] 2.7.4 Add a no-type nudge only if the schema or data allows `application_type IS NULL`; current v2.0 defaults it to `cold_strategic`, so this may be zero forever.
-- [ ] 2.7.5 Empty state: "Nothing in active stages right now."
+Purpose: show the user's most recently updated active applications so the Today page surfaces work already in motion. This is not an alert system; it is a compact "what is currently active" panel, ordered by recency, with enough context to decide what to open next.
+
+- [x] 2.7.1 Create `web/src/components/today/NeedAttentionPanel.tsx`.
+- [x] 2.7.2 Source active applications ordered by `updated_at DESC`.
+- [x] 2.7.3 Include applications in `in_progress`, `applied`, `screening`, `interviewing`, `technical`, `on_site`, and `final_round`.
+- [x] 2.7.4 Add a no-type nudge only if the schema or data allows `application_type IS NULL`; current v2.0 defaults it to `cold_strategic`, so this may be zero forever.
+- [x] 2.7.5 Empty state: "Nothing in active stages right now."
 
 ### [ ] 2.8 Funnel
 
+Purpose: show a compact conversion snapshot for the current application cycle. The rows are cumulative stage-reached counts, so a final-round application also counts toward Applied, Phone screen, and Technical. Percentages use Applied as the denominator to answer "how far is the pipeline progressing?"
+
 - [ ] 2.8.1 Create `web/src/components/today/FunnelPanel.tsx`.
-- [ ] 2.8.2 Bucket status counts into Applied, Phone screen, Technical, and Final/offer.
+- [ ] 2.8.2 Bucket status counts into cumulative rows: Applied, Phone screen, Technical, and Final/offer.
 - [ ] 2.8.3 Use Applied as the denominator and guard divide-by-zero.
-- [ ] 2.8.4 Empty state: "No applications in this cycle yet."
+- [ ] 2.8.4 Render count and percentage for each row; percentages must be `0` when there is no Applied denominator.
+- [ ] 2.8.5 Empty state: "No applications in this cycle yet."
 
 ### [ ] 2.9 Overdue Follow-Ups
 

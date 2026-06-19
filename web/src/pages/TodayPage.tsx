@@ -1,6 +1,7 @@
 import { AppHeader } from '@/components/AppHeader';
 import { Spinner } from '@/components/Spinner';
 import { ActionItemsPanel } from '@/components/today/ActionItemsPanel';
+import { NeedAttentionPanel } from '@/components/today/NeedAttentionPanel';
 import { StatCards } from '@/components/today/StatCards';
 import { UpNextCard } from '@/components/today/UpNextCard';
 import { useToday } from '@/hooks/useToday';
@@ -83,9 +84,7 @@ export function TodayPage() {
 
                 <ActionItemsPanel actionItems={data.action_items} totalOpenTasks={data.stats.open_tasks} />
 
-                <PanelShell title="Need attention">
-                  <EmptyLine>{data.need_attention.length ? `${data.need_attention.length} active` : 'Nothing in active stages right now.'}</EmptyLine>
-                </PanelShell>
+                <NeedAttentionPanel applications={data.need_attention} />
               </div>
 
               <aside className="flex min-w-0 flex-col gap-5">
