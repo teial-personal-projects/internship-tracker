@@ -6,6 +6,8 @@ import { sanitizeApplicationInput } from '../lib/sanitize';
 import { recalculateChecklist } from '../lib/checklist';
 import { computePageRange, computeTotalPages } from '../lib/pagination';
 import { applyApplicationFilters } from '../lib/applicationFilters';
+import { getPipelineCounts } from '../lib/pipelineCounts';
+import type { PipelineCountsDb } from '../lib/pipelineCounts';
 import {
   createApplicationDoubleDownTask,
   createFindEngineeringLeadTask,
@@ -104,10 +106,11 @@ router.post('/', requireAuth, validateBody(CreateApplicationSchema), async (req:
 router.get('/stats', requireAuth, async (req: Request, res, next) => {
   try {
     const db = createUserClient(req);
-
-    const { data, error } = await db
-      .from('applications')
-      .select('status, application_type');
+    const user = (req as AuthRequest).user;
+    const [{ counts: status_counts }, { data, error }] = await Promise.all([
+      getPipelineCounts(db as unknown as PipelineCountsDb, user.id),
+      db.from('applications').select('application_type').eq('user_id', user.id),
+    ]);
 
     if (error) {
       res.status(500).json({ error: error.message });
@@ -115,12 +118,9 @@ router.get('/stats', requireAuth, async (req: Request, res, next) => {
     }
 
     // unset_type_count: total across all pages, for the prompt banner in the Applications tab
-    const status_counts: Record<string, number> = {};
     let unset_type_count = 0;
     for (const row of data ?? []) {
-      const app = row as { status: string; application_type: string | null };
-      const s = app.status;
-      status_counts[s] = (status_counts[s] ?? 0) + 1;
+      const app = row as { application_type: string | null };
       if (!app.application_type) {
         unset_type_count += 1;
       }

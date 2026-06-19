@@ -85,12 +85,12 @@ Build the read paths once so Today and Applications stay consistent.
 - [x] 1.1.2 Fix priority color usage to support the real enum values `high`, `medium`, and `low`; avoid introducing `med` in new UI.
 - [x] 1.1.3 Add a neutral avatar/initials variant for rail contacts if needed; do not use filled colored initial squares.
 
-### [ ] 1.2 Pipeline Counts Helper
+### [x] 1.2 Pipeline Counts Helper
 
-- [ ] 1.2.1 Add one API helper, `getPipelineCounts(db, userId)`, that returns status counts from `applications`.
-- [ ] 1.2.2 Today buckets the counts into Applied, Phone screen, Technical, and Final/offer.
-- [ ] 1.2.3 Applications rail shows full status granularity.
-- [ ] 1.2.4 Unit test: counts are scoped to the requesting user and sum to that user's total applications.
+- [x] 1.2.1 Add one API helper, `getPipelineCounts(db, userId)`, that returns status counts from `applications`.
+- [x] 1.2.2 Today buckets the counts into Applied, Phone screen, Technical, and Final/offer.
+- [x] 1.2.3 Applications rail shows full status granularity.
+- [x] 1.2.4 Unit test: counts are scoped to the requesting user and sum to that user's total applications.
 
 ### [ ] 1.3 Today Aggregate Endpoint
 
