@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Briefcase, ClipboardList, Search, Users } from 'lucide-react';
+import { Briefcase, CalendarDays, ClipboardList, Search, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface TabConfig {
@@ -10,6 +10,7 @@ interface TabConfig {
 }
 
 const TABS: TabConfig[] = [
+  { to: '/today',        label: 'Today',        mobileLabel: 'Today',    Icon: CalendarDays },
   { to: '/applications', label: 'Applications', mobileLabel: 'Apps',      Icon: Briefcase     },
   { to: '/contacts',     label: 'Contacts',      mobileLabel: 'Contacts',  Icon: Users         },
   { to: '/radar',        label: 'Discover & Watchlist', mobileLabel: 'Discover',  Icon: Search        },

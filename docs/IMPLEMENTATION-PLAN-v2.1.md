@@ -114,13 +114,13 @@ Build the read paths once so Today and Applications stay consistent.
 
 Create the new post-login landing page. Match the intended visual direction without adding the deferred tabs.
 
-### [ ] 2.1 Route And Default Landing
+### [x] 2.1 Route And Default Landing
 
-- [ ] 2.1.1 Add `Today` as the first primary tab in `web/src/components/NavBar.tsx`.
-- [ ] 2.1.2 Add `/today` route in `web/src/App.tsx`.
-- [ ] 2.1.3 Change `/` and the authenticated default redirect from `/applications` to `/today`.
-- [ ] 2.1.4 Keep `/applications` directly reachable.
-- [ ] 2.1.5 Keep `/interviews`, `/playbook`, and `/notifications` redirected; do not add screenshot-only tabs in v2.1.
+- [x] 2.1.1 Add `Today` as the first primary tab in `web/src/components/NavBar.tsx`.
+- [x] 2.1.2 Add `/today` route in `web/src/App.tsx`.
+- [x] 2.1.3 Change `/` and the authenticated default redirect from `/applications` to `/today`.
+- [x] 2.1.4 Keep `/applications` directly reachable.
+- [x] 2.1.5 Keep `/interviews`, `/playbook`, and `/notifications` redirected; do not add screenshot-only tabs in v2.1.
 
 ### [ ] 2.2 Page Scaffold
 

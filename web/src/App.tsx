@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoginPage } from '@/pages/LoginPage';
+import { TodayPage } from '@/pages/TodayPage';
 import { ApplicationsPage } from '@/pages/ApplicationsPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { ContactsPage } from '@/pages/ContactsPage';
@@ -26,6 +27,7 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Primary tabs */}
+      <Route path="/today"         element={<TodayPage />} />
       <Route path="/applications"  element={<ApplicationsPage />} />
       <Route path="/contacts"      element={<ContactsPage />} />
       <Route path="/radar"         element={<RadarPage />} />
@@ -35,16 +37,16 @@ function AppRoutes() {
       <Route path="/profile"       element={<ProfilePage />} />
 
       {/* Redirects from old routes */}
-      <Route path="/"              element={<Navigate to="/applications" replace />} />
-      <Route path="/dashboard"     element={<Navigate to="/applications" replace />} />
-      <Route path="/interviews"    element={<Navigate to="/applications" replace />} />
-      <Route path="/playbook"      element={<Navigate to="/applications" replace />} />
-      <Route path="/notifications" element={<Navigate to="/applications" replace />} />
+      <Route path="/"              element={<Navigate to="/today" replace />} />
+      <Route path="/dashboard"     element={<Navigate to="/today" replace />} />
+      <Route path="/interviews"    element={<Navigate to="/today" replace />} />
+      <Route path="/playbook"      element={<Navigate to="/today" replace />} />
+      <Route path="/notifications" element={<Navigate to="/today" replace />} />
       <Route path="/watchlist"     element={<Navigate to="/radar" replace />} />
       <Route path="/job-boards"    element={<Navigate to="/radar" replace />} />
 
       {/* Catch-all */}
-      <Route path="*" element={<Navigate to="/applications" replace />} />
+      <Route path="*" element={<Navigate to="/today" replace />} />
     </Routes>
   );
 }
