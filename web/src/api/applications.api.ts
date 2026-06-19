@@ -2,6 +2,7 @@ import { apiClient } from './client';
 import type { Contact } from './contacts.api';
 import type { Application } from '@shared/schemas';
 import type {
+  ApplicationActivityItem,
   ApplicationEventType,
   CreateApplicationEventSchemaType,
   CreateApplicationSchemaType,
@@ -67,6 +68,11 @@ export async function getApplication(id: string): Promise<Application> {
 export async function getApplicationStats(): Promise<ApplicationStats> {
   const { data } = await apiClient.get<ApplicationStats>('/applications/stats');
   return data;
+}
+
+export async function getApplicationActivity(): Promise<ApplicationActivityItem[]> {
+  const { data } = await apiClient.get<{ data: ApplicationActivityItem[] }>('/applications/activity');
+  return data.data;
 }
 
 export async function createApplication(input: CreateApplicationSchemaType): Promise<Application> {

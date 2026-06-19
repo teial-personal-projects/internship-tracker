@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { CircleAlert } from 'lucide-react';
 import type { Application, CreateApplicationSchemaType } from '@shared/schemas';
 import {
   useApplication,
@@ -15,11 +14,10 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { AppHeader } from '@/components/AppHeader';
 import { Spinner } from '@/components/Spinner';
 import { Pagination } from '@/components/Pagination';
-import { PipelineBar } from '@/components/PipelineBar';
 import { ApplicationsTable } from '@/components/ApplicationsTable';
 import { ApplicationCardList } from '@/components/ApplicationCardList';
+import { ApplicationsRail } from '@/components/applications/ApplicationsRail';
 import { ApplicationModal, type ApplicationFormValues } from '@/components/ApplicationModal';
-import { UrgentTasksWidget } from '@/components/UrgentTasksWidget';
 import { todayStr } from '@/lib/dateUtils';
 
 const PAGE_LIMIT = 25;
@@ -82,7 +80,7 @@ export function ApplicationsPage() {
   }
 
   function handleStatusClick(status: string) {
-    setStatusFilter(status);
+    setStatusFilter((current) => current === status ? '' : status);
     resetPage();
   }
 
@@ -208,23 +206,6 @@ export function ApplicationsPage() {
           </button>
         </div>
 
-        {/* Pipeline bar */}
-        {Object.keys(statusCounts).length > 0 && (
-          <PipelineBar
-            statusCounts={statusCounts}
-            activeStatus={statusFilter}
-            onStatusClick={handleStatusClick}
-          />
-        )}
-
-        {/* Unset type prompt */}
-        {!isLoading && unsetTypeCount > 0 && (
-          <div className="flex items-center gap-2 p-3 rounded-lg text-sm" style={{ background: 'var(--sun-soft)', color: '#92400E', border: '1px solid #FDE68A' }}>
-            <CircleAlert size={15} className="shrink-0" />
-            {unsetTypeCount} application{unsetTypeCount > 1 ? 's' : ''} {unsetTypeCount > 1 ? 'have' : 'has'} no type set — edit {unsetTypeCount > 1 ? 'them' : 'it'} to set an Application Type and unlock checklist tracking.
-          </div>
-        )}
-
         {/* Error */}
         {error && (
           <div className="flex items-center gap-2 p-3 rounded-lg text-sm" style={{ background: '#FEF2F2', color: '#B91C1C', border: '1px solid #FECACA' }}>
@@ -232,29 +213,37 @@ export function ApplicationsPage() {
           </div>
         )}
 
-        {/* Pagination (top) */}
-        {!isLoading && totalPages > 1 && (
-          <Pagination page={page} totalPages={totalPages} total={total} limit={PAGE_LIMIT} onPageChange={setPage} />
-        )}
+        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_320px] lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="flex min-w-0 flex-col gap-2">
+            {/* Pagination (top) */}
+            {!isLoading && totalPages > 1 && (
+              <Pagination page={page} totalPages={totalPages} total={total} limit={PAGE_LIMIT} onPageChange={setPage} />
+            )}
 
-        {/* List */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Spinner size="lg" />
+            {/* List */}
+            {isLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Spinner size="lg" />
+              </div>
+            ) : isMobile ? (
+              <ApplicationCardList applications={applications} onEdit={handleEdit} onDelete={handleDelete} deletingId={deletingId} />
+            ) : (
+              <ApplicationsTable applications={applications} onEdit={handleEdit} onDelete={handleDelete} deletingId={deletingId} />
+            )}
+
+            {/* Pagination (bottom) */}
+            {!isLoading && totalPages > 1 && (
+              <Pagination page={page} totalPages={totalPages} total={total} limit={PAGE_LIMIT} onPageChange={setPage} />
+            )}
           </div>
-        ) : isMobile ? (
-          <ApplicationCardList applications={applications} onEdit={handleEdit} onDelete={handleDelete} deletingId={deletingId} />
-        ) : (
-          <ApplicationsTable applications={applications} onEdit={handleEdit} onDelete={handleDelete} deletingId={deletingId} />
-        )}
 
-        {/* Pagination (bottom) */}
-        {!isLoading && totalPages > 1 && (
-          <Pagination page={page} totalPages={totalPages} total={total} limit={PAGE_LIMIT} onPageChange={setPage} />
-        )}
-
-        {/* Urgent tasks widget */}
-        <UrgentTasksWidget />
+          <ApplicationsRail
+            statusCounts={statusCounts}
+            activeStatus={statusFilter}
+            unsetTypeCount={unsetTypeCount}
+            onStatusClick={handleStatusClick}
+          />
+        </div>
       </main>
 
       <ApplicationModal

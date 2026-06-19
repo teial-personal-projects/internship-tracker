@@ -5,29 +5,8 @@ import { toast } from 'sonner';
 import type { ApplicationEventType, CreateApplicationEventSchemaType } from '@shared/schemas';
 import type { ApplicationEvent } from '@/api/applications.api';
 import { useApplicationEvents, useCreateApplicationEvent } from '@/hooks/useApplications';
+import { EVENT_LABELS, EVENT_TYPES } from '@/lib/applicationEvents';
 import { Spinner } from './Spinner';
-
-const EVENT_TYPES: ApplicationEventType[] = [
-  'status_change',
-  'company_reached_out',
-  'info_requested',
-  'document_submitted',
-  'offer_received',
-  'interview_scheduled',
-  'rejection',
-  'note',
-];
-
-const EVENT_LABELS: Record<ApplicationEventType, string> = {
-  status_change: 'Status change',
-  company_reached_out: 'Company reached out',
-  info_requested: 'Info requested',
-  document_submitted: 'Document submitted',
-  offer_received: 'Offer received',
-  interview_scheduled: 'Interview scheduled',
-  rejection: 'Rejection',
-  note: 'Note',
-};
 
 function toDatetimeLocal(value: Date): string {
   const offsetMs = value.getTimezoneOffset() * 60_000;

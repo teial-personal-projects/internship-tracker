@@ -12,6 +12,7 @@ export const applicationKeys = {
   list: (params: ApplicationsListParams) => ['applications', 'list', params] as const,
   detail: (id: string) => ['applications', 'detail', id] as const,
   stats: () => ['applications', 'stats'] as const,
+  activity: () => ['applications', 'activity'] as const,
   events: (id: string) => ['applications', 'events', id] as const,
   contacts: (id: string) => ['applications', 'contacts', id] as const,
 };
@@ -41,6 +42,14 @@ export function useApplicationStats() {
     queryKey: applicationKeys.stats(),
     queryFn: () => applicationsApi.getApplicationStats(),
     staleTime: 60_000,
+  });
+}
+
+export function useApplicationActivity() {
+  return useQuery({
+    queryKey: applicationKeys.activity(),
+    queryFn: applicationsApi.getApplicationActivity,
+    staleTime: 30_000,
   });
 }
 
@@ -103,6 +112,7 @@ export function useCreateApplicationEvent(applicationId: string) {
         applicationKeys.events(applicationId),
         (current) => [event, ...(current ?? [])],
       );
+      qc.invalidateQueries({ queryKey: applicationKeys.activity() });
     },
   });
 }

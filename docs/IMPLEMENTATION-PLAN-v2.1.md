@@ -224,15 +224,15 @@ Replace the wide table/card split with a compact list plus a right rail. Preserv
 - [x] 3.2.1 Remove colored company/contact initial squares from Applications list surfaces.
 - [x] 3.2.2 If a marker still helps in the rail, use a neutral outline avatar variant.
 
-### [ ] 3.3 Right Rail
+### [x] 3.3 Right Rail
 
-- [ ] 3.3.1 Add `web/src/components/applications/ApplicationsRail.tsx`.
-- [ ] 3.3.2 Rail stacks below the list under 768px.
-- [ ] 3.3.3 Mini pipeline card shows status label, color dot, and count from shared pipeline counts.
-- [ ] 3.3.4 Clicking a pipeline row sets the `status` filter; clicking the active row clears it.
-- [ ] 3.3.5 Recent activity card uses `GET /api/applications/activity`.
-- [ ] 3.3.6 Activity lines show company, event label, optional body snippet, and relative time.
-- [ ] 3.3.7 Keep an "applications have no type set" nudge only if the count is greater than zero.
+- [x] 3.3.1 Add `web/src/components/applications/ApplicationsRail.tsx`.
+- [x] 3.3.2 Rail stacks below the list under 768px.
+- [x] 3.3.3 Mini pipeline card shows status label, color dot, and count from shared pipeline counts.
+- [x] 3.3.4 Clicking a pipeline row sets the `status` filter; clicking the active row clears it.
+- [x] 3.3.5 Recent activity card uses `GET /api/applications/activity`.
+- [x] 3.3.6 Activity lines show company, event label, optional body snippet, and relative time.
+- [x] 3.3.7 Keep an "applications have no type set" nudge only if the count is greater than zero.
 
 ### [ ] 3.4 Preserve Filters, Search, And Pagination
 
