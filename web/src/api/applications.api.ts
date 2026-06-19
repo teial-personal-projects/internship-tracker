@@ -1,6 +1,6 @@
 import { apiClient } from './client';
 import type { Contact } from './contacts.api';
-import type { Application } from '@shared/schemas';
+import type { Application, Interview } from '@shared/schemas';
 import type {
   ApplicationActivityItem,
   ApplicationEventType,
@@ -116,5 +116,10 @@ export async function createApplicationEvent(
 
 export async function getApplicationContacts(applicationId: string): Promise<ApplicationContactLink[]> {
   const { data } = await apiClient.get<{ data: ApplicationContactLink[] }>(`/applications/${applicationId}/contacts`);
+  return data.data;
+}
+
+export async function getApplicationInterviews(applicationId: string): Promise<Interview[]> {
+  const { data } = await apiClient.get<{ data: Interview[] }>(`/applications/${applicationId}/interviews`);
   return data.data;
 }

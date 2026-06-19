@@ -4,6 +4,7 @@ import type { Application } from '@shared/schemas';
 import {
   APPLICATION_KANBAN_STATUSES,
   ApplicationsKanbanBoard,
+  MAX_VISIBLE_KANBAN_CARDS,
   getKanbanStatusMove,
   groupApplicationsByStatus,
 } from './ApplicationsKanbanBoard';
@@ -40,13 +41,17 @@ describe('ApplicationsKanbanBoard', () => {
     const grouped = groupApplicationsByStatus([
       makeApplication({ id: '11111111-1111-4111-8111-111111111111', status: 'applied' }),
       makeApplication({ id: '33333333-3333-4333-8333-333333333333', status: 'technical' }),
+      makeApplication({ id: '44444444-4444-4444-8444-444444444444', status: 'screening' }),
+      makeApplication({ id: '55555555-5555-4555-8555-555555555555', status: 'final_round' }),
+      makeApplication({ id: '66666666-6666-4666-8666-666666666666', status: 'withdrawn' }),
+      makeApplication({ id: '77777777-7777-4777-8777-777777777777', status: 'archive' }),
     ]);
 
     expect(Object.keys(grouped)).toEqual(APPLICATION_KANBAN_STATUSES);
     expect(grouped.applied).toHaveLength(1);
-    expect(grouped.interviewing).toHaveLength(1);
+    expect(grouped.interviewing).toHaveLength(3);
+    expect(grouped.rejected).toHaveLength(2);
     expect(grouped.not_started).toEqual([]);
-    expect(grouped.archive).toEqual([]);
   });
 
   it('renders all lanes with visible counts and muted empty lanes', () => {
@@ -63,15 +68,15 @@ describe('ApplicationsKanbanBoard', () => {
     expect(markup).toContain('Not Started');
     expect(markup).toContain('In Progress');
     expect(markup).toContain('Applied');
-    expect(markup).toContain('Screening');
+    expect(markup).not.toContain('Screening');
     expect(markup).toContain('Interviewing');
     expect(markup).not.toContain('Technical');
     expect(markup).toContain('On Site');
-    expect(markup).toContain('Final Round');
+    expect(markup).not.toContain('Final Round');
     expect(markup).toContain('Offered');
     expect(markup).toContain('Rejected');
-    expect(markup).toContain('Withdrawn');
-    expect(markup).toContain('Archive');
+    expect(markup).not.toContain('Withdrawn');
+    expect(markup).not.toContain('Archive');
     expect(markup).toContain('No applications');
   });
 
@@ -115,11 +120,37 @@ describe('ApplicationsKanbanBoard', () => {
 
   it('resolves status moves and treats current-status drops as no-ops', () => {
     const app = makeApplication({ status: 'applied' });
+    const finalRoundApp = makeApplication({ status: 'final_round' });
 
     expect(getKanbanStatusMove(app, 'interviewing')).toEqual({ app, status: 'interviewing' });
     expect(getKanbanStatusMove(app, 'applied')).toBeNull();
     expect(getKanbanStatusMove(app, 'technical')).toBeNull();
+    expect(getKanbanStatusMove(finalRoundApp, 'interviewing')).toBeNull();
     expect(getKanbanStatusMove(app, 'unknown')).toBeNull();
     expect(getKanbanStatusMove(undefined, 'interviewing')).toBeNull();
+  });
+
+  it('limits visible cards per lane and shows the hidden-card count', () => {
+    const applications = Array.from({ length: MAX_VISIBLE_KANBAN_CARDS + 2 }, (_, index) => (
+      makeApplication({
+        id: `11111111-1111-4111-8111-${String(index).padStart(12, '0')}`,
+        company: `Company ${index + 1}`,
+        status: 'applied',
+      })
+    ));
+    const markup = renderToStaticMarkup(
+      <ApplicationsKanbanBoard
+        applications={applications}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onStatusChange={vi.fn()}
+        deletingId={null}
+      />,
+    );
+
+    expect(markup).toContain('Company 1');
+    expect(markup).toContain('Company 5');
+    expect(markup).not.toContain('Company 6');
+    expect(markup).toContain('2 more hidden');
   });
 });

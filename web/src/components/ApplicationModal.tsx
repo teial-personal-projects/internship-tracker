@@ -7,6 +7,8 @@ import {
   MAX_COMPANY_LENGTH, MAX_TITLE_LENGTH, MAX_INDUSTRY_LENGTH,
   MAX_LOCATION_LENGTH, MAX_PAY_LENGTH, MAX_NOTES_LENGTH,
 } from '@shared/constants';
+import { ApplicationInterviewLog } from '@/components/applications/ApplicationInterviewLog';
+import { useApplicationInterviews } from '@/hooks/useApplications';
 import { STATUS_LABELS, APPLICATION_TYPE_LABELS } from '@/theme';
 import { todayStr } from '@/lib/dateUtils';
 
@@ -47,6 +49,8 @@ interface Props {
 }
 
 export function ApplicationModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, title = 'Add Application' }: Props) {
+  const applicationId = defaultValues?.id ?? null;
+  const interviewsQuery = useApplicationInterviews(isOpen ? applicationId : null);
   const { register, handleSubmit, formState: { errors }, reset } = useForm<ApplicationFormValues>({
     defaultValues: { added: TODAY, status: 'not_started', application_type: 'cold_strategic', ...defaultValues } as Partial<ApplicationFormValues>,
   });
@@ -158,6 +162,14 @@ export function ApplicationModal({ isOpen, onClose, onSubmit, isLoading, default
                 <textarea className="field-textarea" rows={3} {...register('notes', { maxLength: { value: MAX_NOTES_LENGTH, message: `Max ${MAX_NOTES_LENGTH} chars` } })} />
                 {errors.notes && <p className="mt-1 text-xs text-red-600">{errors.notes.message}</p>}
               </div>
+
+              {applicationId && (
+                <ApplicationInterviewLog
+                  interviews={interviewsQuery.data ?? []}
+                  isLoading={interviewsQuery.isLoading}
+                  isError={interviewsQuery.isError}
+                />
+              )}
 
             </div>
 

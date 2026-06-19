@@ -26,31 +26,28 @@ export const APPLICATION_KANBAN_STATUSES = [
   'not_started',
   'in_progress',
   'applied',
-  'screening',
   'interviewing',
   'on_site',
-  'final_round',
   'offered',
   'rejected',
-  'withdrawn',
-  'archive',
 ] satisfies ApplicationStatus[];
 
+export const MAX_VISIBLE_KANBAN_CARDS = 5;
 export type ApplicationKanbanStatus = (typeof APPLICATION_KANBAN_STATUSES)[number];
 export type ApplicationsByStatus = Record<ApplicationKanbanStatus, Application[]>;
 const KANBAN_STATUS_BY_APPLICATION_STATUS: Record<ApplicationStatus, ApplicationKanbanStatus> = {
   not_started: 'not_started',
   in_progress: 'in_progress',
   applied: 'applied',
-  screening: 'screening',
+  screening: 'interviewing',
   interviewing: 'interviewing',
   technical: 'interviewing',
   on_site: 'on_site',
-  final_round: 'final_round',
+  final_round: 'interviewing',
   offered: 'offered',
   rejected: 'rejected',
-  withdrawn: 'withdrawn',
-  archive: 'archive',
+  withdrawn: 'rejected',
+  archive: 'rejected',
 };
 
 export function groupApplicationsByStatus(applications: Application[]): ApplicationsByStatus {
@@ -70,7 +67,12 @@ export function getKanbanStatusMove(
   app: Application | undefined,
   targetStatus: string | undefined,
 ): { app: Application; status: ApplicationStatus } | null {
-  if (!app || !targetStatus || !isApplicationKanbanStatus(targetStatus) || app.status === targetStatus) {
+  if (
+    !app
+    || !targetStatus
+    || !isApplicationKanbanStatus(targetStatus)
+    || KANBAN_STATUS_BY_APPLICATION_STATUS[app.status] === targetStatus
+  ) {
     return null;
   }
 
@@ -154,6 +156,8 @@ function KanbanLane({
 }) {
   const colors = STATUS_COLORS[status] ?? { bg: 'var(--soft)', color: 'var(--ink-3)', dot: 'var(--ink-4)' };
   const { isOver, setNodeRef } = useDroppable({ id: status });
+  const visibleApplications = applications.slice(0, MAX_VISIBLE_KANBAN_CARDS);
+  const hiddenCount = Math.max(0, applications.length - visibleApplications.length);
 
   return (
     <section
@@ -185,15 +189,27 @@ function KanbanLane({
           >
             No applications
           </div>
-        ) : applications.map((app) => (
-          <KanbanCard
-            key={app.id}
-            app={app}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            isDeleting={deletingId === app.id}
-          />
-        ))}
+        ) : (
+          <>
+            {visibleApplications.map((app) => (
+              <KanbanCard
+                key={app.id}
+                app={app}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                isDeleting={deletingId === app.id}
+              />
+            ))}
+            {hiddenCount > 0 && (
+              <div
+                className="rounded-md border border-dashed px-3 py-2 text-center text-xs"
+                style={{ borderColor: 'var(--line)', color: 'var(--ink-3)' }}
+              >
+                {hiddenCount} more hidden
+              </div>
+            )}
+          </>
+        )}
       </div>
     </section>
   );

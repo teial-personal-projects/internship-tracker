@@ -290,7 +290,7 @@ Add a view toggle to keep the current sortable Applications grid while introduci
 ### [x] 5.3 Kanban Data And Columns
 
 - [x] 5.3.1 Create `web/src/components/applications/ApplicationsKanbanBoard.tsx`.
-- [x] 5.3.2 Columns map to application statuses: Not Started, In Progress, Applied, Screening, Interviewing, On Site, Final Round, Offered, Rejected, Withdrawn, and Archive. Existing `technical` applications display in Interviewing.
+- [x] 5.3.2 Columns map to top-level workflow statuses: Not Started, In Progress, Applied, Interviewing, On Site, Offered, and Rejected. Existing `screening`, `technical`, and `final_round` applications display in Interviewing; existing `withdrawn` and `archive` applications display in Rejected.
 - [x] 5.3.3 Render zero-count columns as muted empty lanes so users can drag into them.
 - [x] 5.3.4 Each column header shows status label and visible-card count.
 - [x] 5.3.5 Cards show company, title, applied date or "Not applied", date added, location, and type badge.
@@ -327,6 +327,32 @@ Add a view toggle to keep the current sortable Applications grid while introduci
 - [x] 5.7.3 Component or integration test: dropping a card into a new column calls update with the new `status`.
 - [x] 5.7.4 Component or integration test: failed status update rolls back optimistic movement.
 - [x] 5.7.5 Regression test: Grid header sorting still sends the selected server sort after switching back from Kanban.
+
+## [ ] Phase 6 — Interview History
+
+Track interviews as a history under each application instead of overloading Kanban workflow columns with every interview stage.
+
+### [x] 6.1 Read-Only Application Interview Log
+
+- [x] 6.1.1 Add `GET /api/applications/:id/interviews`.
+- [x] 6.1.2 Scope interview lookup to the current user and owned application.
+- [x] 6.1.3 Sort interviews by `scheduled_at DESC`.
+- [x] 6.1.4 Add a web API function and React Query hook for application interviews.
+- [x] 6.1.5 Show interview history in the application modal for existing applications.
+- [x] 6.1.6 Cover empty, loading, error, and populated interview log states.
+
+### [ ] 6.2 Interview Type Expansion
+
+- [ ] 6.2.1 Replace the current broad `technical` interview type with more specific types such as coding, system design, behavioral, recruiter screen, hiring manager, and final.
+- [ ] 6.2.2 Add any needed migration or enum update for persisted interview type values.
+- [ ] 6.2.3 Keep old interview types readable during migration.
+
+### [ ] 6.3 Interview Create And Edit Flow
+
+- [ ] 6.3.1 Add application-scoped create and edit interview UI.
+- [ ] 6.3.2 Allow multiple interview records per application.
+- [ ] 6.3.3 Support status, outcome, interviewer names, location link, scheduled time, and notes.
+- [ ] 6.3.4 Optionally show compact interview count or next interview summary on Kanban cards.
 
 ---
 

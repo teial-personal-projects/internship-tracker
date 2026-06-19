@@ -15,6 +15,7 @@ export const applicationKeys = {
   activity: () => ['applications', 'activity'] as const,
   events: (id: string) => ['applications', 'events', id] as const,
   contacts: (id: string) => ['applications', 'contacts', id] as const,
+  interviews: (id: string) => ['applications', 'interviews', id] as const,
 };
 // Query keys define the cache buckets for application data. Mutations invalidate
 // applicationKeys.all so lists, stats, and other application queries refetch.
@@ -66,6 +67,15 @@ export function useApplicationContacts(applicationId: string | null) {
   return useQuery({
     queryKey: applicationId ? applicationKeys.contacts(applicationId) : ['applications', 'contacts', 'none'],
     queryFn: () => applicationsApi.getApplicationContacts(applicationId as string),
+    enabled: Boolean(applicationId),
+    staleTime: 30_000,
+  });
+}
+
+export function useApplicationInterviews(applicationId: string | null) {
+  return useQuery({
+    queryKey: applicationId ? applicationKeys.interviews(applicationId) : ['applications', 'interviews', 'none'],
+    queryFn: () => applicationsApi.getApplicationInterviews(applicationId as string),
     enabled: Boolean(applicationId),
     staleTime: 30_000,
   });

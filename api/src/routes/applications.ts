@@ -348,6 +348,37 @@ router.get('/:id/contacts', requireAuth, async (req: Request, res, next) => {
   }
 });
 
+// GET /api/applications/:id/interviews
+router.get('/:id/interviews', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const { id } = req.params;
+
+    const ownership = await verifyApplicationOwnership(db, id, user.id);
+    if (ownership !== 'ok') {
+      sendOwnershipError(res, ownership);
+      return;
+    }
+
+    const { data, error } = await db
+      .from('interviews')
+      .select('*')
+      .eq('application_id', id)
+      .eq('user_id', user.id)
+      .order('scheduled_at', { ascending: false });
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.json({ data: data ?? [] });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // POST /api/applications/:id/contacts
 router.post('/:id/contacts', requireAuth, async (req: Request, res, next) => {
   try {
