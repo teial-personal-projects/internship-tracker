@@ -31,13 +31,13 @@ export function NavBar() {
           style={{ scrollbarWidth: 'none' }}
           aria-label="Primary navigation"
         >
-          {TABS.map(({ to, label }) => (
+          {TABS.map(({ to, label, Icon }) => (
             <NavLink
               key={to}
               to={to}
               className={({ isActive }) =>
                 [
-                  'shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
+                  'flex shrink-0 items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
                   isActive ? 'border-(--accent)' : 'border-transparent hover:border-(--line)',
                 ].join(' ')
               }
@@ -45,7 +45,16 @@ export function NavBar() {
                 color: isActive ? 'var(--ink)' : 'var(--ink-3)',
               })}
             >
-              {label}
+              {({ isActive }) => (
+                <>
+                  <Icon
+                    size={15}
+                    strokeWidth={isActive ? 2.25 : 1.75}
+                    style={{ color: isActive ? 'var(--accent)' : 'currentColor' }}
+                  />
+                  <span>{label}</span>
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
