@@ -2,6 +2,12 @@
 -- Supporting indexes for the v2.1 Today tab and Applications rail rebuild.
 -- Additive only: no tables, columns, or rows are changed.
 -- Requires: v2_016_company_watchlist_target_apply_date.sql
+--
+-- Production note:
+--   For a live production database, use
+--   migrations/v2_017_today_indexes_PROD_ONLY.sql instead. The statements
+--   below are the standard dev/local form and are fine to run before
+--   production is involved.
 
 -- ============================================================
 -- UP

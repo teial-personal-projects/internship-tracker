@@ -386,6 +386,139 @@ export const UpdateRadarCriteriaSchema = RadarCriteriaSchema
   .partial();
 
 // ============================================================
+// V2 Read Schemas
+// ============================================================
+
+export const ApplicationSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  company: z.string().min(1).max(MAX_COMPANY_LENGTH),
+  title: z.string().min(1).max(MAX_TITLE_LENGTH),
+  industry: z.string().max(MAX_INDUSTRY_LENGTH).nullable(),
+  location: z.string().max(MAX_LOCATION_LENGTH).nullable(),
+  job_link: z.string().max(MAX_URL_LENGTH).nullable(),
+  app_link: z.string().max(MAX_URL_LENGTH).nullable(),
+  status: ApplicationStatusSchema,
+  application_type: ApplicationTypeSchema,
+  checklist_state: z.record(z.unknown()),
+  source: ApplicationSourceSchema,
+  source_metadata: z.record(z.unknown()),
+  cover_letter: z.string().max(MAX_COVER_LETTER_LENGTH).nullable(),
+  notes: z.string().max(MAX_NOTES_LENGTH).nullable(),
+  pay: z.string().max(MAX_PAY_LENGTH).nullable(),
+  added: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  applied_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+  deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+});
+
+export const ContactSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  contact_type: ContactTypeSchema,
+  application_id: z.string().uuid().nullable(),
+  company: z.string().max(MAX_COMPANY_LENGTH).nullable(),
+  first_name: z.string().min(1).max(MAX_FIRST_NAME_LENGTH),
+  last_name: z.string().min(1).max(MAX_LAST_NAME_LENGTH),
+  title: z.string().max(MAX_TITLE_LENGTH).nullable(),
+  email: z.string().max(MAX_EMAIL_LENGTH).nullable(),
+  phone: z.string().max(MAX_PHONE_LENGTH).nullable(),
+  linkedin_url: z.string().max(MAX_URL_LENGTH).nullable(),
+  agency: z.string().max(MAX_AGENCY_LENGTH).nullable(),
+  preferred_contact_method: PreferredContactMethodSchema.nullable(),
+  how_found: HowFoundSchema.nullable(),
+  outreach_status: OutreachStatusSchema.nullable(),
+  recruiter_status: RecruiterStatusSchema.nullable(),
+  notes: z.string().max(MAX_NOTES_LENGTH).nullable(),
+  date_of_last_outreach: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+});
+
+export const TaskSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  title: z.string().min(1).max(MAX_TASK_TITLE_LENGTH),
+  category: TaskCategorySchema,
+  priority: TaskPrioritySchema,
+  status: TaskStatusSchema,
+  due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+  application_id: z.string().uuid().nullable(),
+  contact_id: z.string().uuid().nullable(),
+  notes: z.string().max(MAX_TASK_NOTES_LENGTH).nullable(),
+  is_auto_generated: z.boolean(),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+});
+
+export const InterviewSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  application_id: z.string().uuid(),
+  interview_type: InterviewTypeSchema,
+  scheduled_at: z.string().datetime(),
+  interviewer_names: z.string().max(MAX_INTERVIEWER_NAMES_LENGTH).nullable(),
+  location_link: z.string().max(MAX_URL_LENGTH).nullable(),
+  notes: z.string().max(MAX_NOTES_LENGTH).nullable(),
+  status: InterviewStatusSchema,
+  outcome: InterviewOutcomeSchema.nullable(),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+});
+
+export const ApplicationEventSchema = z.object({
+  id: z.string().uuid(),
+  application_id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  event_type: ApplicationEventTypeSchema,
+  body: z.string().max(MAX_INTERACTION_BODY_LENGTH).nullable(),
+  contact_id: z.string().uuid().nullable(),
+  occurred_at: z.string().datetime(),
+  created_at: z.string().datetime(),
+});
+
+export const TodayStatsSchema = z.object({
+  applications: z.number().int().nonnegative(),
+  phone_screens: z.number().int().nonnegative(),
+  open_tasks: z.number().int().nonnegative(),
+  interviews_this_week: z.number().int().nonnegative(),
+});
+
+export const TodayFunnelBucketSchema = z.object({
+  key: z.string().min(1),
+  label: z.string().min(1),
+  count: z.number().int().nonnegative(),
+  percent: z.number().min(0).max(100),
+});
+
+export const TodayInterviewSchema = InterviewSchema.extend({
+  application_company: z.string().max(MAX_COMPANY_LENGTH),
+  application_title: z.string().max(MAX_TITLE_LENGTH),
+});
+
+export const TodayTaskSchema = TaskSchema.extend({
+  application_company: z.string().max(MAX_COMPANY_LENGTH).nullable(),
+  application_title: z.string().max(MAX_TITLE_LENGTH).nullable(),
+  contact_name: z.string().max(MAX_FIRST_NAME_LENGTH + MAX_LAST_NAME_LENGTH + 1).nullable(),
+});
+
+export const ApplicationActivityItemSchema = ApplicationEventSchema.extend({
+  company: z.string().max(MAX_COMPANY_LENGTH),
+  title: z.string().max(MAX_TITLE_LENGTH),
+});
+
+export const TodayPayloadSchema = z.object({
+  stats: TodayStatsSchema,
+  up_next: z.array(TodayInterviewSchema),
+  action_items: z.array(TodayTaskSchema),
+  need_attention: z.array(ApplicationSchema),
+  funnel: z.array(TodayFunnelBucketSchema),
+  overdue_follow_ups: z.array(ContactSchema),
+  recent_contacts: z.array(ContactSchema),
+});
+
+// ============================================================
 // V2 Inferred Types
 // ============================================================
 
@@ -430,34 +563,21 @@ export type RadarSource = z.infer<typeof RadarSourceSchema>;
 export type DiscoveredPosting = z.infer<typeof DiscoveredPostingSchema>;
 export type RadarCriteria = z.infer<typeof RadarCriteriaSchema>;
 export type UpdateRadarCriteriaSchemaType = z.infer<typeof UpdateRadarCriteriaSchema>;
+export type Application = z.infer<typeof ApplicationSchema>;
+export type Contact = z.infer<typeof ContactSchema>;
+export type Task = z.infer<typeof TaskSchema>;
+export type Interview = z.infer<typeof InterviewSchema>;
+export type ApplicationEvent = z.infer<typeof ApplicationEventSchema>;
+export type TodayStats = z.infer<typeof TodayStatsSchema>;
+export type TodayFunnelBucket = z.infer<typeof TodayFunnelBucketSchema>;
+export type TodayInterview = z.infer<typeof TodayInterviewSchema>;
+export type TodayTask = z.infer<typeof TodayTaskSchema>;
+export type ApplicationActivityItem = z.infer<typeof ApplicationActivityItemSchema>;
+export type TodayPayload = z.infer<typeof TodayPayloadSchema>;
 
 // ============================================================
 // V2 DB Entity Types
 // ============================================================
-
-export interface Application {
-  id: string;
-  user_id: string;
-  company: string;
-  title: string;
-  industry?: string | null;
-  location?: string | null;
-  job_link?: string | null;
-  app_link?: string | null;
-  status: ApplicationStatus;
-  application_type: ApplicationType;
-  checklist_state: Record<string, unknown>;
-  source: ApplicationSource;
-  source_metadata: Record<string, unknown>;
-  cover_letter?: string | null;
-  notes?: string | null;
-  pay?: string | null;
-  added: string;
-  applied_date?: string | null;
-  deadline?: string | null;
-  created_at: string;
-  updated_at: string;
-}
 
 export type CreateApplicationInput = Omit<Application, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
 export type UpdateApplicationInput = Partial<CreateApplicationInput>;

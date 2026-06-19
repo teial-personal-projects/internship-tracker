@@ -45,12 +45,23 @@ Each file contains an `-- UP` block and a `-- DOWN` block.
 | `v2_015_application_source.sql` | Add application source fields |
 | `v2_016_company_watchlist_target_apply_date.sql` | Convert watchlist target apply year to target apply date |
 | `v2_017_today_indexes.sql` | Add supporting indexes for v2.1 Today and Applications reads |
+| `v2_017_today_indexes_PROD_ONLY.sql` | Production-only concurrent variant of `v2_017_today_indexes.sql` |
 | `radar_001_job_radar.sql` | Add Job Radar source fields and discovered postings |
 | `radar_002_radar_criteria.sql` | Add per-user Job Radar match criteria |
 
 For existing v2 environments where some migrations were already applied before
 explicit Data API grants were added, run `../supabase-grants.sql` once after the
 latest migration.
+
+## Production-only index migrations
+
+Use the regular numbered migration file for local and dev environments. For
+`v2_017`, use `v2_017_today_indexes_PROD_ONLY.sql` only when applying the same
+indexes to a live production database where `CREATE INDEX CONCURRENTLY` is
+needed to avoid long write locks.
+
+Run each statement from the production-only file one at a time. Do not run the
+whole file inside a transaction.
 
 ## Important rules
 

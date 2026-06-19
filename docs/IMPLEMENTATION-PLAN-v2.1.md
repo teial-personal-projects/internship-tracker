@@ -56,21 +56,22 @@ v2.1 adds only supporting indexes. Apply this before feature code so the new rea
 | Applications rail: pipeline | `applications` | `status` |
 | Applications rail: activity | `application_events` joined to `applications` | `user_id`, `occurred_at`, `event_type`, `application_id`, `company`, `title` |
 
-### [ ] 0.2 Migration v2_017 — Supporting Indexes
+### [x] 0.2 Migration v2_017 — Supporting Indexes
 
-File: `migrations/v2_017_today_indexes.sql`
+Dev/local file: `migrations/v2_017_today_indexes.sql`
+Production-only file: `migrations/v2_017_today_indexes_PROD_ONLY.sql`
 
-- [ ] 0.2.1 Create the migration file with `-- UP` and `-- DOWN` blocks.
-- [ ] 0.2.2 Use `CREATE INDEX IF NOT EXISTS` for idempotency.
-- [ ] 0.2.3 For production, run each `CREATE INDEX CONCURRENTLY` one statement at a time outside a transaction.
-- [ ] 0.2.4 Apply UP to dev and confirm the Today and Applications queries are covered by indexes.
-- [ ] 0.2.5 Confirm DOWN drops only indexes created by this file and touches no data.
+- [x] 0.2.1 Create the migration file with `-- UP` and `-- DOWN` blocks.
+- [x] 0.2.2 Use `CREATE INDEX IF NOT EXISTS` for idempotency.
+- [x] 0.2.3 Create a production-only companion file that uses `CREATE INDEX CONCURRENTLY`; run each statement one at a time outside a transaction.
+- [x] 0.2.4 Apply UP to dev and confirm the Today and Applications queries are covered by indexes.
+- [x] 0.2.5 Confirm DOWN drops only indexes created by this file and touches no data.
 
-### [ ] 0.3 Shared Read Model Types
+### [x] 0.3 Shared Read Model Types
 
-- [ ] 0.3.1 Add `TodayPayloadSchema` to `shared/src/schemas.ts` and export its TypeScript type.
-- [ ] 0.3.2 Reuse existing `Application`, `Task`, `Contact`, and `ApplicationEvent` schemas for nested records where practical.
-- [ ] 0.3.3 Add focused nested DTO schemas only where the API returns joined display fields such as `application_company`, `application_title`, or `contact_name`.
+- [x] 0.3.1 Add `TodayPayloadSchema` to `shared/src/schemas.ts` and export its TypeScript type.
+- [x] 0.3.2 Reuse existing `Application`, `Task`, `Contact`, and `ApplicationEvent` schemas for nested records where practical.
+- [x] 0.3.3 Add focused nested DTO schemas only where the API returns joined display fields such as `application_company`, `application_title`, or `contact_name`.
 
 ---
 
@@ -393,7 +394,7 @@ LIMIT 6;
 
 ## Deploy Order
 
-1. Apply `v2_017` UP to production. Use `CONCURRENTLY` for live production if you need to avoid table locks.
+1. Apply `v2_017` UP to dev with `migrations/v2_017_today_indexes.sql`. For live production, use `migrations/v2_017_today_indexes_PROD_ONLY.sql` and run each statement one at a time outside a transaction.
 2. Ship the read API routes.
 3. Ship the Today tab and Applications UI rebuild.
 4. If anything regresses, revert the API/UI deploy. The index migration can remain safely or be rolled back with its DOWN block.
@@ -402,7 +403,7 @@ LIMIT 6;
 
 ### Schema
 
-Run the DOWN block of `migrations/v2_017_today_indexes.sql`. It drops only indexes created by v2.1 and modifies no rows.
+Run the DOWN block of `migrations/v2_017_today_indexes.sql`. For live production, use the DOWN statements in `migrations/v2_017_today_indexes_PROD_ONLY.sql` one at a time outside a transaction. Both files drop only indexes created by v2.1 and modify no rows.
 
 ### UI And API
 
