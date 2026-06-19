@@ -152,14 +152,14 @@ Create the new post-login landing page. Match the intended visual direction with
 - [x] 2.5.3 Show time, interview type, company, title, interviewer names, Join button when `location_link` exists, and Prep notes when `notes` exists.
 - [x] 2.5.4 Empty state: show a slim "No interviews scheduled." line.
 
-### [ ] 2.6 Action Items
+### [x] 2.6 Action Items
 
-- [ ] 2.6.1 Create `web/src/components/today/ActionItemsPanel.tsx`.
-- [ ] 2.6.2 Source open `tasks`, sorted by priority then due date.
-- [ ] 2.6.3 Each row shows a checkbox, task title, linked company/contact context, due label, and priority pill.
-- [ ] 2.6.4 Checking a task calls the existing task PATCH with `status = 'complete'` and removes it from the list.
-- [ ] 2.6.5 Header count is total open tasks, not just the rendered limit.
-- [ ] 2.6.6 Empty state: "No open action items."
+- [x] 2.6.1 Create `web/src/components/today/ActionItemsPanel.tsx`.
+- [x] 2.6.2 Source open `tasks`, sorted by priority then due date.
+- [x] 2.6.3 Each row shows a checkbox, task title, linked company/contact context, due label, and priority pill.
+- [x] 2.6.4 Checking a task calls the existing task PATCH with `status = 'complete'` and removes it from the list.
+- [x] 2.6.5 Header count is total open tasks, not just the rendered limit.
+- [x] 2.6.6 Empty state: "No open action items."
 
 ### [ ] 2.7 Need Attention
 

@@ -1,5 +1,6 @@
 import { AppHeader } from '@/components/AppHeader';
 import { Spinner } from '@/components/Spinner';
+import { ActionItemsPanel } from '@/components/today/ActionItemsPanel';
 import { StatCards } from '@/components/today/StatCards';
 import { UpNextCard } from '@/components/today/UpNextCard';
 import { useToday } from '@/hooks/useToday';
@@ -80,9 +81,7 @@ export function TodayPage() {
                   <UpNextCard interview={data.up_next[0] ?? null} />
                 </PanelShell>
 
-                <PanelShell title="Action items">
-                  <EmptyLine>{data.action_items.length ? `${data.action_items.length} open` : 'No open action items.'}</EmptyLine>
-                </PanelShell>
+                <ActionItemsPanel actionItems={data.action_items} totalOpenTasks={data.stats.open_tasks} />
 
                 <PanelShell title="Need attention">
                   <EmptyLine>{data.need_attention.length ? `${data.need_attention.length} active` : 'Nothing in active stages right now.'}</EmptyLine>
