@@ -12,6 +12,7 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+const AUTH_INIT_TIMEOUT_MS = 8_000;
 
 export function useAuth() {
   const context = useContext(AuthContext);
@@ -25,8 +26,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+    const timeoutId = window.setTimeout(() => {
+      if (!isMounted) return;
+
+      setError('Authentication took too long to initialize. Please sign in again.');
+      setUser(null);
+      setLoading(false);
+    }, AUTH_INIT_TIMEOUT_MS);
+
     // Check active session on mount
     supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (!isMounted) return;
+
+      window.clearTimeout(timeoutId);
       if (error) {
         console.error('Error getting session:', error);
         setError(error.message);
@@ -37,12 +50,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) return;
+
+      window.clearTimeout(timeoutId);
       const confirmedUser = session?.user?.email_confirmed_at ? session.user : null;
       setUser(confirmedUser);
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      window.clearTimeout(timeoutId);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
@@ -86,4 +106,3 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     </AuthContext.Provider>
   );
 }
-

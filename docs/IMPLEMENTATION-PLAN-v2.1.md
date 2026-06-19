@@ -255,16 +255,16 @@ Replace the wide table/card split with a compact list plus a right rail. Preserv
 
 ---
 
-## [ ] Phase 4 — QA And Cross-Browser
+## [x] Phase 4 — QA And Cross-Browser
 
-- [ ] 4.1 Today and Applications render correctly at 390x844 and 360x780; rails stack below content.
-- [ ] 4.2 No horizontal page overflow at 320px on either tab.
-- [ ] 4.3 Test Chrome, Firefox, and Safari desktop.
-- [ ] 4.4 All-zero account shows empty states and no null text.
-- [ ] 4.5 `/today` is the post-login default and `/applications` still loads directly.
-- [ ] 4.6 No colored initial squares remain in Today or rebuilt Applications.
-- [ ] 4.7 Stat cards render flat with no corner accents.
-- [ ] 4.8 Re-run Applications regression checks: pagination math, inclusive date range, multi-year results with no date filter.
+- [x] 4.1 Today and Applications render correctly at 390x844 and 360x780; rails stack below content.
+- [x] 4.2 No horizontal page overflow at 320px on either tab.
+- [x] 4.3 Test Chrome, Firefox, and Safari desktop.
+- [x] 4.4 All-zero account shows empty states and no null text.
+- [x] 4.5 `/today` is the post-login default and `/applications` still loads directly.
+- [x] 4.6 No colored initial squares remain in Today or rebuilt Applications.
+- [x] 4.7 Stat cards render flat with no corner accents.
+- [x] 4.8 Re-run Applications regression checks: pagination math, inclusive date range, multi-year results with no date filter.
 
 ---
 
