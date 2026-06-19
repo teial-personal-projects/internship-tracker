@@ -18,13 +18,12 @@ v2.1 is a focused visual and information-architecture update:
 - Keep the existing **Discover & Watchlist** tab from Phase 16 intact.
 - Add only read-oriented API support and supporting indexes.
 
-The intended look is warmer, denser, and more executive-dashboard-like than v2.0: cream page background, compact top navigation, large greeting, flat stat cards, structured panels, and quiet right rails. The screenshot’s Recruitments, Interviews, and Playbook nav items are visual direction only. They remain deferred to v3 unless separately pulled forward.
+The intended look is warmer, denser, and more executive-dashboard-like than v2.0: cream page background, compact top navigation, large greeting, flat stat cards, structured panels, and quiet right rails. The screenshot’s Recruitments and Interviews nav items are visual direction only. Playbook is pulled forward in Phase 7 as a read-only primary tab.
 
 ## Non-Goals
 
 - No new write workflows for interviews.
 - No Recruitments tab.
-- No Playbook tab.
 - No notifications or email preference work.
 - No new tables or columns.
 - No colored initial squares in the Today or rebuilt Applications surfaces.
@@ -120,7 +119,7 @@ Create the new post-login landing page. Match the intended visual direction with
 - [x] 2.1.2 Add `/today` route in `web/src/App.tsx`.
 - [x] 2.1.3 Change `/` and the authenticated default redirect from `/applications` to `/today`.
 - [x] 2.1.4 Keep `/applications` directly reachable.
-- [x] 2.1.5 Keep `/interviews`, `/playbook`, and `/notifications` redirected; do not add screenshot-only tabs in v2.1.
+- [x] 2.1.5 Keep `/interviews` and `/notifications` redirected; Playbook is pulled forward in Phase 7.
 
 ### [x] 2.2 Page Scaffold
 
@@ -354,6 +353,31 @@ Track interviews as a history under each application instead of overloading Kanb
 - [x] 6.3.3 Support status, outcome, interviewer names, location link, scheduled time, and notes.
 - [x] 6.3.4 Keep compact Kanban interview summaries deferred until a board-level interview summary endpoint is defined.
 
+## [x] Phase 7 — Playbook Tab
+
+Add a primary Playbook tab as a read-only application strategy reference. This pulls the v3 Playbook concept forward while avoiding new database tables or write workflows.
+
+### [x] 7.1 Route And Navigation
+
+- [x] 7.1.1 Add `/playbook` as an authenticated route.
+- [x] 7.1.2 Add Playbook to the primary desktop navigation.
+- [x] 7.1.3 Add Playbook to the mobile bottom navigation with a compact mobile label.
+- [x] 7.1.4 Keep `/interviews` and `/notifications` redirected to Today.
+
+### [x] 7.2 Read-Only Playbook Content
+
+- [x] 7.2.1 Replace the placeholder with a complete reference page.
+- [x] 7.2.2 Render the 4-step application process.
+- [x] 7.2.3 Render the cover letter guide and explicitly label the personalized “in” as the cover letter differentiator.
+- [x] 7.2.4 Render where-to-apply, double-down email, follow-up email, and template guidance.
+- [x] 7.2.5 Link template management to the Contacts tab.
+- [x] 7.2.6 Render the per-application checklist as a numbered read-only reference with no checkboxes.
+
+### [x] 7.3 Playbook Tests
+
+- [x] 7.3.1 Add a Playbook render test for the core sections.
+- [x] 7.3.2 Add a regression assertion that the checklist does not render checkbox inputs.
+
 ---
 
 ## Appendix A — Query Reference
@@ -491,7 +515,8 @@ LIMIT 6;
 2. Ship the read API routes.
 3. Ship the Today tab and Applications UI rebuild.
 4. Ship the Applications Grid/Kanban view toggle.
-5. If anything regresses, revert the API/UI deploy. The index migration can remain safely or be rolled back with its DOWN block.
+5. Ship the Playbook primary tab.
+6. If anything regresses, revert the API/UI deploy. The index migration can remain safely or be rolled back with its DOWN block.
 
 ## Rollback
 
@@ -501,4 +526,4 @@ Run the DOWN block of `migrations/v2_017_today_indexes.sql`. For live production
 
 ### UI And API
 
-Remove `/today`, restore `/` to redirect to `/applications`, remove `api/src/routes/today.ts`, remove the applications activity endpoint, remove the Applications Kanban view toggle, and restore the previous Applications layout. No data is affected.
+Remove `/today`, restore `/` to redirect to `/applications`, remove `api/src/routes/today.ts`, remove the applications activity endpoint, remove the Applications Kanban view toggle, remove the Playbook primary tab, and restore the previous Applications layout. No data is affected.
