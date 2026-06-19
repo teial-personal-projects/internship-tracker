@@ -12,7 +12,7 @@ interface TabConfig {
 const TABS: TabConfig[] = [
   { to: '/applications', label: 'Applications', mobileLabel: 'Apps',      Icon: Briefcase     },
   { to: '/contacts',     label: 'Contacts',      mobileLabel: 'Contacts',  Icon: Users         },
-  { to: '/radar',        label: 'Discover',      mobileLabel: 'Discover',  Icon: Search        },
+  { to: '/radar',        label: 'Discover & Watchlist', mobileLabel: 'Discover',  Icon: Search        },
   { to: '/action-items', label: 'Action Items',  mobileLabel: 'Actions',   Icon: ClipboardList },
 ];
 

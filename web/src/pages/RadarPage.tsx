@@ -185,7 +185,7 @@ export function RadarPage() {
       <main className="mobile-safe-bottom flex flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto p-3 sm:p-4 md:pb-6">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold" style={{ color: 'var(--ink)' }}>
-            Discover Workspace
+            Discover & Watchlist
           </h1>
           <p className="text-sm" style={{ color: 'var(--ink-3)' }}>
             Manage watched companies and review matched roles from their careers pages.
@@ -215,7 +215,7 @@ export function RadarPage() {
                 Source refresh
               </h2>
               <p className="mt-1 text-xs leading-5" style={{ color: 'var(--ink-3)' }}>
-                Refresh company sources manually now; stale-source auto-refresh comes next.
+                Auto-refresh runs for stale sources; refresh manually anytime.
               </p>
             </div>
           </div>

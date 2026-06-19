@@ -64,6 +64,7 @@ export interface WatchlistRadarRefreshResult {
   inserted: number;
   matched: number;
   fetched: number;
+  error?: string | null;
 }
 
 export async function refreshWatchlistRadar(id: string): Promise<WatchlistRadarRefreshResult> {

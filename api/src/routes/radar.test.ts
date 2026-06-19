@@ -203,4 +203,36 @@ describe('radar routes', () => {
     expect(response.status).toBe(403);
     expect(mockRefreshRadarSource).not.toHaveBeenCalled();
   });
+
+  it('POST /api/radar/sources/:watchlistId/refresh returns source errors as response data', async () => {
+    const db = createMockDb({
+      company_watchlist: [{
+        id: WATCHLIST_ID,
+        user_id: USER_ID,
+        company_name: 'Acme',
+        ats_type: 'custom',
+        ats_board_token: 'https://example.com/careers',
+        radar_enabled: true,
+      }],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+    mockRefreshRadarSource.mockResolvedValue({
+      inserted: 0,
+      matched: 0,
+      fetched: 0,
+      error: 'HTML fallback request failed with status 500',
+    });
+
+    const response = await request(app)
+      .post(`/api/radar/sources/${WATCHLIST_ID}/refresh`)
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toEqual({
+      inserted: 0,
+      matched: 0,
+      fetched: 0,
+      error: 'HTML fallback request failed with status 500',
+    });
+  });
 });

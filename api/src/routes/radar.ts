@@ -211,12 +211,14 @@ router.post('/sources/:watchlistId/refresh', requireAuth, async (req: Request, r
 
     const result = await refreshRadarSource(db as unknown as RadarRefreshDb, source);
 
-    if (result.error) {
-      res.status(400).json({ error: result.error });
-      return;
-    }
-
-    res.json({ data: { inserted: result.inserted, matched: result.matched, fetched: result.fetched } });
+    res.json({
+      data: {
+        inserted: result.inserted,
+        matched: result.matched,
+        fetched: result.fetched,
+        error: result.error,
+      },
+    });
   } catch (err) {
     next(err);
   }

@@ -36,6 +36,12 @@ function toQuery<T>(value: unknown): T {
   return value as T;
 }
 
+function isMissingRadarCriteriaTable(error: { message: string } | null): boolean {
+  if (!error) return false;
+  const message = error.message.toLowerCase();
+  return message.includes('radar_criteria') && message.includes('schema');
+}
+
 async function getExistingPostingIds(
   db: RadarRefreshDb,
   watchlistId: string,
@@ -74,6 +80,9 @@ async function getRadarCriteria(
   );
 
   if (result.error) {
+    if (isMissingRadarCriteriaTable(result.error)) {
+      return criteriaFromRow(null);
+    }
     throw new Error(result.error.message);
   }
 
@@ -153,19 +162,30 @@ export async function refreshRadarSource(
     };
   }
 
-  const criteria = await getRadarCriteria(db, source.user_id);
-  const matchedPostings = postings.filter((posting) => matches(posting, criteria));
-  const existingIds = await getExistingPostingIds(db, source.id);
   let inserted = 0;
+  let matchedPostings: NormalizedPosting[] = [];
 
-  for (const posting of matchedPostings) {
-    if (existingIds.has(posting.externalId)) continue;
-    await insertPosting(db, source, posting);
-    existingIds.add(posting.externalId);
-    inserted += 1;
+  try {
+    const criteria = await getRadarCriteria(db, source.user_id);
+    matchedPostings = postings.filter((posting) => matches(posting, criteria));
+    const existingIds = await getExistingPostingIds(db, source.id);
+
+    for (const posting of matchedPostings) {
+      if (existingIds.has(posting.externalId)) continue;
+      await insertPosting(db, source, posting);
+      existingIds.add(posting.externalId);
+      inserted += 1;
+    }
+
+    await updateLastRefreshedAt(db, source.id);
+  } catch (error) {
+    return {
+      inserted,
+      matched: matchedPostings.length,
+      fetched: postings.length,
+      error: error instanceof Error ? error.message : 'Failed to refresh radar source',
+    };
   }
-
-  await updateLastRefreshedAt(db, source.id);
 
   return {
     inserted,

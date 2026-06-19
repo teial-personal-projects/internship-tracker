@@ -310,7 +310,7 @@ function WatchlistRow({
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full" style={{ background: entry.radar_enabled ? 'var(--sage)' : 'var(--line)' }} />
           <span className="font-medium" style={{ color: 'var(--ink-2)' }}>
-            {entry.radar_enabled ? 'Radar on' : 'Radar off'}
+            {entry.radar_enabled ? 'Source on' : 'Source off'}
           </span>
         </div>
         <RefreshStatus entry={entry} isRefreshing={isRefreshing} refreshResult={refreshResult} refreshError={refreshError} />
@@ -409,7 +409,7 @@ function WatchlistCard({
         </div>
         <div className="col-span-2">
           <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--ink-3)' }}>
-            Radar
+            Source
           </p>
           <p className="mt-1" style={{ color: 'var(--ink-2)' }}>
             {entry.radar_enabled ? 'Enabled' : 'Not enabled'}
@@ -580,7 +580,7 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
                 <label className="flex items-center justify-between gap-4">
                   <span>
                     <span className="block text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-                      Enable Radar
+                      Enable discovery
                     </span>
                     <span className="mt-1 block text-xs" style={{ color: 'var(--ink-3)' }}>
                       Pull matched postings for this company into Discover.
@@ -768,12 +768,20 @@ export function WatchlistWorkspace({ embedded = false, autoRefreshStaleSources =
 
     try {
       const result = await refreshRadar.mutateAsync(entry.id);
+      if (result.error) {
+        setRefreshErrors((current) => ({ ...current, [entry.id]: result.error ?? 'Could not refresh source' }));
+        if (showToast) {
+          toast.error(result.error);
+        }
+        return;
+      }
+
       setRefreshResults((current) => ({ ...current, [entry.id]: result }));
       if (showToast) {
-        toast.success(`Radar refreshed: ${result.inserted} new, ${result.matched} matched`);
+        toast.success(`Source refreshed: ${result.inserted} new, ${result.matched} matched`);
       }
     } catch (error) {
-      const message = apiErrorMessage(error, 'Could not refresh radar');
+      const message = apiErrorMessage(error, 'Could not refresh source');
       setRefreshErrors((current) => ({ ...current, [entry.id]: message }));
       if (showToast) {
         toast.error(message);
@@ -815,7 +823,7 @@ export function WatchlistWorkspace({ embedded = false, autoRefreshStaleSources =
               </h2>
             ) : (
               <h1 className="text-2xl font-bold" style={{ color: 'var(--ink)' }}>
-                Companies To Watch
+                Watched Companies
               </h1>
             )}
             <p className="mt-1 text-sm" style={{ color: 'var(--ink-3)' }}>
@@ -920,7 +928,7 @@ export function WatchlistWorkspace({ embedded = false, autoRefreshStaleSources =
                 <span>Industry</span>
                 <span>Priority</span>
                 <span>Target</span>
-                <span>Radar</span>
+                <span>Source</span>
                 <span>Notes</span>
                 <span className="text-right">Actions</span>
               </div>
@@ -979,7 +987,7 @@ export function WatchlistWorkspace({ embedded = false, autoRefreshStaleSources =
               Delete company?
             </AlertDialog.Title>
             <AlertDialog.Description className="mt-2 text-sm" style={{ color: 'var(--ink-3)' }}>
-              This removes {confirmDeleteEntry?.company_name ?? 'this company'} from Companies To Watch.
+              This removes {confirmDeleteEntry?.company_name ?? 'this company'} from watched companies.
             </AlertDialog.Description>
             <div className="mt-5 flex justify-end gap-2">
               <AlertDialog.Cancel asChild>

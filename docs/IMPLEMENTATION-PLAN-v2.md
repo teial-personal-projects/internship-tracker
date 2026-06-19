@@ -668,7 +668,7 @@ File: `migrations/v2_011_import_jobs.sql`
 
 ---
 
-## [ ] Phase 16 — Unified Discover & Watchlist
+## [x] Phase 16 — Unified Discover & Watchlist
 
 *Revision to the Phase 5/11 user experience. Keep the existing database model and Radar refresh service. The goal is to make job discovery understandable: watched companies, source setup, refresh state, and discovered postings all live together.*
 
@@ -699,13 +699,13 @@ File: `migrations/v2_011_import_jobs.sql`
 - [x] 16.3.5 Show per-source refresh state: idle, refreshing, last refreshed, inserted count, matched count, and error
 - [x] 16.3.6 A failed source must not block other sources from refreshing
 
-### [ ] 16.4 Navigation and copy cleanup
+### [x] 16.4 Navigation and copy cleanup
 
-- [ ] 16.4.1 Add the combined Discover workflow to primary navigation with clear labeling
-- [ ] 16.4.2 Use "Watchlist" or "Watched Companies" inside the page, not hidden navigation
-- [ ] 16.4.3 Remove copy that implies Discover is independent from watched companies
-- [ ] 16.4.4 Update helper text to say users can paste a company careers URL instead of finding a technical board token first
-- [ ] 16.4.5 Confirm mobile layout keeps watched-company controls and discovered postings usable without horizontal page overflow
+- [x] 16.4.1 Add the combined Discover workflow to primary navigation with clear labeling
+- [x] 16.4.2 Use "Watchlist" or "Watched Companies" inside the page, not hidden navigation
+- [x] 16.4.3 Remove copy that implies Discover is independent from watched companies
+- [x] 16.4.4 Update helper text to say users can paste a company careers URL instead of finding a technical board token first
+- [x] 16.4.5 Confirm mobile layout keeps watched-company controls and discovered postings usable without horizontal page overflow
 
 ---
 

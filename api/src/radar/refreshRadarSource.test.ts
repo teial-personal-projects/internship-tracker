@@ -17,6 +17,8 @@ class Query {
   constructor(
     private readonly table: string,
     private readonly rowsByTable: Record<string, Row[]>,
+    private readonly insertErrors: Record<string, string> = {},
+    private readonly selectErrors: Record<string, string> = {},
   ) {}
 
   select() {
@@ -30,7 +32,9 @@ class Query {
 
   insert(payload: Row) {
     this.insertPayload = payload;
-    this.rowsByTable[this.table] = [...(this.rowsByTable[this.table] ?? []), payload];
+    if (!this.insertErrors[this.table]) {
+      this.rowsByTable[this.table] = [...(this.rowsByTable[this.table] ?? []), payload];
+    }
     return this;
   }
 
@@ -40,11 +44,15 @@ class Query {
   }
 
   then(
-    resolve: (value: { data: Row[] | null; error: null }) => void,
+    resolve: (value: { data: Row[] | null; error: { message: string } | null }) => void,
     reject?: (reason: unknown) => void,
   ) {
     if (this.insertPayload) {
-      return Promise.resolve({ data: [this.insertPayload], error: null }).then(resolve, reject);
+      const insertError = this.insertErrors[this.table];
+      return Promise.resolve({
+        data: insertError ? null : [this.insertPayload],
+        error: insertError ? { message: insertError } : null,
+      }).then(resolve, reject);
     }
 
     if (this.updatePayload) {
@@ -55,7 +63,11 @@ class Query {
       return Promise.resolve({ data: matched, error: null }).then(resolve, reject);
     }
 
-    return Promise.resolve({ data: this.filterRows(), error: null }).then(resolve, reject);
+    const selectError = this.selectErrors[this.table];
+    return Promise.resolve({
+      data: selectError ? null : this.filterRows(),
+      error: selectError ? { message: selectError } : null,
+    }).then(resolve, reject);
   }
 
   private filterRows(): Row[] {
@@ -65,11 +77,15 @@ class Query {
   }
 }
 
-function createMockDb(rowsByTable: Record<string, Row[]>) {
+function createMockDb(
+  rowsByTable: Record<string, Row[]>,
+  insertErrors: Record<string, string> = {},
+  selectErrors: Record<string, string> = {},
+) {
   return {
     rowsByTable,
     from(table: string) {
-      return new Query(table, rowsByTable);
+      return new Query(table, rowsByTable, insertErrors, selectErrors);
     },
   };
 }
@@ -139,6 +155,43 @@ describe('refreshRadarSource', () => {
     expect(result).toEqual({ inserted: 0, matched: 0, fetched: 0, error: 'Bad board token' });
     expect(db.rowsByTable.discovered_postings).toHaveLength(0);
     expect(db.rowsByTable.company_watchlist[0].last_refreshed_at).toBeNull();
+  });
+
+  it('returns a source error instead of throwing when inserting a posting fails', async () => {
+    vi.mocked(getAtsAdapter).mockReturnValue({
+      fetch: vi.fn().mockResolvedValue([matchedPosting]),
+    });
+    const db = createMockDb({
+      discovered_postings: [],
+      radar_criteria: [],
+      company_watchlist: [{ id: source.id, last_refreshed_at: null }],
+    }, {
+      discovered_postings: 'insert failed',
+    });
+
+    const result = await refreshRadarSource(db, source);
+
+    expect(result).toEqual({ inserted: 0, matched: 1, fetched: 1, error: 'insert failed' });
+    expect(db.rowsByTable.discovered_postings).toHaveLength(0);
+    expect(db.rowsByTable.company_watchlist[0].last_refreshed_at).toBeNull();
+  });
+
+  it('uses default criteria when the optional radar_criteria table is missing', async () => {
+    vi.mocked(getAtsAdapter).mockReturnValue({
+      fetch: vi.fn().mockResolvedValue([matchedPosting]),
+    });
+    const db = createMockDb({
+      discovered_postings: [],
+      company_watchlist: [{ id: source.id, last_refreshed_at: null }],
+    }, {}, {
+      radar_criteria: "Could not find the table 'public.radar_criteria' in the schema cache",
+    });
+
+    const result = await refreshRadarSource(db, source);
+
+    expect(result).toMatchObject({ inserted: 1, matched: 1, fetched: 1, error: null });
+    expect(db.rowsByTable.discovered_postings).toHaveLength(1);
+    expect(db.rowsByTable.company_watchlist[0].last_refreshed_at).toEqual(expect.any(String));
   });
 
   it('keeps a bad source isolated so a later source can still refresh', async () => {
