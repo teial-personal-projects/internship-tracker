@@ -268,6 +268,68 @@ Replace the wide table/card split with a compact list plus a right rail. Preserv
 
 ---
 
+## [ ] Phase 5 — Applications Grid And Kanban Views
+
+Add a view toggle to keep the current sortable Applications grid while introducing a Kanban board for workflow movement. The two views must share filters, search, status rail behavior, edit/delete actions, and application status persistence.
+
+### [x] 5.1 View Toggle
+
+- [x] 5.1.1 Add a segmented control in the Applications toolbar with `Grid` and `Kanban`.
+- [x] 5.1.2 Default to `Grid` so the current sortable table remains the primary view.
+- [x] 5.1.3 Persist the selected view in the URL query string as `view=grid|kanban`.
+- [x] 5.1.4 Preserve existing query params when switching views: search, type, status, date range, sort, page, and limit.
+- [x] 5.1.5 Direct links to `/applications?view=kanban` open the Kanban view without losing filters.
+
+### [ ] 5.2 Grid View Preservation
+
+- [ ] 5.2.1 Keep the current desktop table/grid with sortable headers for Application, Status, Applied, Added, and Location.
+- [ ] 5.2.2 Keep the mobile card list for `Grid` view.
+- [ ] 5.2.3 Keep server-side sorting and pagination behavior unchanged in `Grid` view.
+- [ ] 5.2.4 Keep edit and delete actions available in each grid row/card.
+
+### [ ] 5.3 Kanban Data And Columns
+
+- [ ] 5.3.1 Create `web/src/components/applications/ApplicationsKanbanBoard.tsx`.
+- [ ] 5.3.2 Columns map to application statuses: Not Started, In Progress, Applied, Screening, Interviewing, Technical, On Site, Final Round, Offered, Rejected, Withdrawn, and Archive.
+- [ ] 5.3.3 Render zero-count columns as muted empty lanes so users can drag into them.
+- [ ] 5.3.4 Each column header shows status label and visible-card count.
+- [ ] 5.3.5 Cards show company, title, applied date or "Not applied", date added, location, and type badge.
+- [ ] 5.3.6 Kanban uses the same filtered application result set as the grid; search/date/type/status filters apply before grouping.
+
+### [ ] 5.4 Drag And Drop
+
+- [ ] 5.4.1 Add `@dnd-kit` for accessible drag-and-drop; do not hand-roll pointer math.
+- [ ] 5.4.2 Dragging a card to a different status column updates `applications.status`.
+- [ ] 5.4.3 Use optimistic UI updates so the card moves immediately.
+- [ ] 5.4.4 Roll back the card to its prior column and show an error toast if the update fails.
+- [ ] 5.4.5 Moving a card to its current status is a no-op and does not call the API.
+- [ ] 5.4.6 Keep keyboard drag support available through the chosen DnD library.
+
+### [ ] 5.5 Pagination And Loading Strategy
+
+- [ ] 5.5.1 Hide page-number pagination in Kanban view.
+- [ ] 5.5.2 Fetch enough rows for board use with an explicit Kanban limit, capped by the API maximum.
+- [ ] 5.5.3 Show a muted hint if filters match more records than the Kanban fetch limit.
+- [ ] 5.5.4 Keep grid pagination unchanged when switching back to Grid.
+- [ ] 5.5.5 Do not reset filters when switching between views.
+
+### [ ] 5.6 Kanban Responsive Layout
+
+- [ ] 5.6.1 Desktop Kanban scrolls horizontally with fixed-width columns.
+- [ ] 5.6.2 Mobile Kanban uses horizontal lane scrolling and cards sized to avoid page-level horizontal overflow.
+- [ ] 5.6.3 The Applications rail stacks below the board on narrow screens.
+- [ ] 5.6.4 Empty board state reuses the existing no-applications and filtered-empty messaging.
+
+### [ ] 5.7 Kanban Tests
+
+- [ ] 5.7.1 Unit test grouping applications into status columns.
+- [ ] 5.7.2 Unit test that filters are preserved when toggling `view`.
+- [ ] 5.7.3 Component or integration test: dropping a card into a new column calls update with the new `status`.
+- [ ] 5.7.4 Component or integration test: failed status update rolls back optimistic movement.
+- [ ] 5.7.5 Regression test: Grid header sorting still sends the selected server sort after switching back from Kanban.
+
+---
+
 ## Appendix A — Query Reference
 
 All queries are scoped by `user_id = :uid`. These are references for implementation; prefer typed query helpers in API code.
@@ -402,7 +464,8 @@ LIMIT 6;
 1. Apply `v2_017` UP to dev with `migrations/v2_017_today_indexes.sql`. For live production, use `migrations/v2_017_today_indexes_PROD_ONLY.sql` and run each statement one at a time outside a transaction.
 2. Ship the read API routes.
 3. Ship the Today tab and Applications UI rebuild.
-4. If anything regresses, revert the API/UI deploy. The index migration can remain safely or be rolled back with its DOWN block.
+4. Ship the Applications Grid/Kanban view toggle.
+5. If anything regresses, revert the API/UI deploy. The index migration can remain safely or be rolled back with its DOWN block.
 
 ## Rollback
 
@@ -412,4 +475,4 @@ Run the DOWN block of `migrations/v2_017_today_indexes.sql`. For live production
 
 ### UI And API
 
-Remove `/today`, restore `/` to redirect to `/applications`, remove `api/src/routes/today.ts`, remove the applications activity endpoint, and restore the previous Applications layout. No data is affected.
+Remove `/today`, restore `/` to redirect to `/applications`, remove `api/src/routes/today.ts`, remove the applications activity endpoint, remove the Applications Kanban view toggle, and restore the previous Applications layout. No data is affected.

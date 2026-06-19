@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Columns3, Table2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Application, CreateApplicationSchemaType } from '@shared/schemas';
 import {
@@ -19,6 +20,11 @@ import { ApplicationCardList } from '@/components/ApplicationCardList';
 import { ApplicationsRail } from '@/components/applications/ApplicationsRail';
 import { ApplicationModal, type ApplicationFormValues } from '@/components/ApplicationModal';
 import { buildApplicationsListParams, hasApplicationListFilters, toggleStatusFilter } from '@/lib/applicationsListParams';
+import {
+  getApplicationsView,
+  setApplicationsViewParam,
+  type ApplicationsView,
+} from '@/lib/applicationsView';
 import { todayStr } from '@/lib/dateUtils';
 
 const PAGE_LIMIT = 25;
@@ -41,6 +47,7 @@ export function ApplicationsPage() {
 
   const page = Math.max(1, Number(searchParams.get('page') ?? '1'));
   const applicationIdParam = searchParams.get('application_id');
+  const view = getApplicationsView(searchParams.get('view'));
 
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
@@ -110,6 +117,9 @@ export function ApplicationsPage() {
   function handleDateFrom(d: string) { setDateFrom(d); resetPage(); }
   function handleDateTo(d: string) { setDateTo(d); resetPage(); }
   function handleSort(nextSort: ApplicationSort) { setSort(nextSort); resetPage(); }
+  function handleViewChange(nextView: ApplicationsView) {
+    setSearchParams((prev) => setApplicationsViewParam(prev, nextView));
+  }
   function clearFilters() {
     setStatusFilter('');
     setTypeFilter('');
@@ -231,6 +241,8 @@ export function ApplicationsPage() {
             <option value="other">Other</option>
           </select>
 
+          <ApplicationsViewToggle view={view} onChange={handleViewChange} />
+
           <button type="button" onClick={openAdd} className="btn-primary text-sm px-4 py-2 shrink-0">
             + Add
           </button>
@@ -259,6 +271,8 @@ export function ApplicationsPage() {
               <ApplicationOnboardingEmptyState onAdd={openAdd} />
             ) : total === 0 ? (
               <FilteredEmptyState onClearFilters={clearFilters} />
+            ) : view === 'kanban' ? (
+              <ApplicationsKanbanPlaceholder />
             ) : isMobile ? (
               <ApplicationCardList applications={applications} onEdit={handleEdit} onDelete={handleDelete} deletingId={deletingId} />
             ) : (
@@ -295,6 +309,61 @@ export function ApplicationsPage() {
         defaultValues={modalDefaultValues as Partial<Application>}
         title={editingApp ? 'Edit Application' : 'Add Application'}
       />
+    </div>
+  );
+}
+
+function ApplicationsViewToggle({
+  view,
+  onChange,
+}: {
+  view: ApplicationsView;
+  onChange: (view: ApplicationsView) => void;
+}) {
+  const options: Array<{ value: ApplicationsView; label: string; Icon: typeof Table2 }> = [
+    { value: 'grid', label: 'Grid', Icon: Table2 },
+    { value: 'kanban', label: 'Kanban', Icon: Columns3 },
+  ];
+
+  return (
+    <div
+      aria-label="Applications view"
+      className="inline-flex min-h-11 shrink-0 items-center rounded-xl border bg-white p-1 shadow-sm"
+      role="group"
+      style={{ borderColor: 'var(--line)' }}
+    >
+      {options.map(({ value, label, Icon }) => {
+        const isActive = view === value;
+        return (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={isActive}
+            onClick={() => onChange(value)}
+            className="inline-flex min-h-9 items-center gap-2 rounded-lg px-3 text-sm font-semibold transition"
+            style={{
+              background: isActive ? 'var(--accent)' : 'transparent',
+              color: isActive ? 'white' : 'var(--ink-3)',
+            }}
+          >
+            <Icon className="h-4 w-4" aria-hidden="true" />
+            <span>{label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function ApplicationsKanbanPlaceholder() {
+  return (
+    <div className="flex min-h-64 flex-col items-center justify-center rounded-lg border bg-white px-6 py-12 text-center" style={{ borderColor: 'var(--line)' }}>
+      <p className="text-base font-semibold" style={{ color: 'var(--ink)' }}>
+        Kanban view
+      </p>
+      <p className="mt-2 max-w-sm text-sm leading-6" style={{ color: 'var(--ink-3)' }}>
+        Board layout will be added in Phase 5.3.
+      </p>
     </div>
   );
 }
