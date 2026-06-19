@@ -124,4 +124,37 @@ describe('getTodayPipelineBuckets', () => {
       { key: 'final_offer', label: 'Final / Offer', count: 0, percent: 0 },
     ]);
   });
+
+  it('returns monotonically non-increasing funnel rows across status distributions', async () => {
+    const distributions: ApplicationRow[][] = [
+      [
+        { user_id: 'user-1', status: 'applied' },
+        { user_id: 'user-1', status: 'screening' },
+        { user_id: 'user-1', status: 'technical' },
+        { user_id: 'user-1', status: 'final_round' },
+      ],
+      [
+        { user_id: 'user-1', status: 'screening' },
+        { user_id: 'user-1', status: 'screening' },
+        { user_id: 'user-1', status: 'on_site' },
+        { user_id: 'user-1', status: 'offered' },
+      ],
+      [
+        { user_id: 'user-1', status: 'not_started' },
+        { user_id: 'user-1', status: 'in_progress' },
+        { user_id: 'user-1', status: 'rejected' },
+        { user_id: 'user-1', status: 'withdrawn' },
+      ],
+    ];
+
+    for (const rows of distributions) {
+      const result = await getPipelineCounts(createDb(new PipelineQuery(rows)), 'user-1');
+      const buckets = getTodayPipelineBuckets(result);
+
+      for (let index = 1; index < buckets.length; index += 1) {
+        expect(buckets[index].count).toBeLessThanOrEqual(buckets[index - 1].count);
+        expect(buckets[index].percent).toBeLessThanOrEqual(buckets[index - 1].percent);
+      }
+    }
+  });
 });

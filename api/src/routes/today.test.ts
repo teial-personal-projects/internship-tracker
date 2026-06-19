@@ -70,7 +70,54 @@ class TodayQuery {
     resolve: (value: { data: Row[]; error: null; count: number }) => void,
     reject?: (reason: unknown) => void,
   ) {
-    return Promise.resolve({ data: this.rows, error: null, count: this.rows.length }).then(resolve, reject);
+    const filtered = this.applyFilters();
+    const data = this.applyRange(this.applyOrdering(filtered));
+    return Promise.resolve({ data, error: null, count: filtered.length }).then(resolve, reject);
+  }
+
+  private applyFilters(): Row[] {
+    return this.rows.filter((row) =>
+      this.calls.every((call) => {
+        const [column, value] = call.args as [string, unknown];
+        const rowValue = row[column];
+
+        if (call.method === 'eq') return rowValue === value;
+        if (call.method === 'gte') return typeof rowValue === 'string' && typeof value === 'string' && rowValue >= value;
+        if (call.method === 'lt') return typeof rowValue === 'string' && typeof value === 'string' && rowValue < value;
+        if (call.method === 'lte') return typeof rowValue === 'string' && typeof value === 'string' && rowValue <= value;
+        if (call.method === 'in') return Array.isArray(value) && value.includes(rowValue);
+        return true;
+      }),
+    );
+  }
+
+  private applyOrdering(rows: Row[]): Row[] {
+    const orderCalls = this.calls.filter((call) => call.method === 'order');
+
+    return [...rows].sort((left, right) => {
+      for (const call of orderCalls) {
+        const [column, options] = call.args as [string, { ascending?: boolean; nullsFirst?: boolean }];
+        const leftValue = left[column] as string | null | undefined;
+        const rightValue = right[column] as string | null | undefined;
+
+        if (leftValue == null && rightValue == null) continue;
+        if (leftValue == null) return options.nullsFirst ? -1 : 1;
+        if (rightValue == null) return options.nullsFirst ? 1 : -1;
+
+        const comparison = leftValue.localeCompare(rightValue);
+        if (comparison !== 0) return options.ascending === false ? -comparison : comparison;
+      }
+
+      return 0;
+    });
+  }
+
+  private applyRange(rows: Row[]): Row[] {
+    const rangeCall = this.calls.find((call) => call.method === 'range');
+    if (!rangeCall) return rows;
+
+    const [from, to] = rangeCall.args as [number, number];
+    return rows.slice(from, to + 1);
   }
 }
 
@@ -163,5 +210,104 @@ describe('GET /api/today', () => {
     expect(needAttention.calls).toContainEqual({ method: 'range', args: [0, 4] });
     expect(overdueFollowUps.calls).toContainEqual({ method: 'range', args: [0, 4] });
     expect(recentContacts.calls).toContainEqual({ method: 'range', args: [0, 4] });
+  });
+
+  it('returns the soonest future scheduled interview and excludes past interviews', async () => {
+    const interviews = [
+      {
+        id: 'past-interview',
+        user_id: 'user-1',
+        application_id: 'app-1',
+        status: 'scheduled',
+        scheduled_at: '2026-06-18T15:00:00.000Z',
+        applications: { company: 'Past Co', title: 'Past Role', user_id: 'user-1' },
+      },
+      {
+        id: 'later-interview',
+        user_id: 'user-1',
+        application_id: 'app-2',
+        status: 'scheduled',
+        scheduled_at: '2026-06-19T19:00:00.000Z',
+        applications: { company: 'Later Co', title: 'Later Role', user_id: 'user-1' },
+      },
+      {
+        id: 'next-interview',
+        user_id: 'user-1',
+        application_id: 'app-3',
+        status: 'scheduled',
+        scheduled_at: '2026-06-18T18:00:00.000Z',
+        applications: { company: 'Next Co', title: 'Next Role', user_id: 'user-1' },
+      },
+      {
+        id: 'cancelled-interview',
+        user_id: 'user-1',
+        application_id: 'app-4',
+        status: 'cancelled',
+        scheduled_at: '2026-06-18T17:00:00.000Z',
+        applications: { company: 'Cancelled Co', title: 'Cancelled Role', user_id: 'user-1' },
+      },
+    ];
+
+    mockCreateUserClient.mockReturnValue(createMockDb({
+      applications: [new TodayQuery([]), new TodayQuery([])],
+      interviews: [new TodayQuery(interviews), new TodayQuery(interviews)],
+      tasks: [new TodayQuery([])],
+      contacts: [new TodayQuery([]), new TodayQuery([])],
+    }));
+
+    const response = await request(app)
+      .get('/api/today')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.up_next).toHaveLength(1);
+    expect(response.body.data.up_next[0]).toMatchObject({
+      id: 'next-interview',
+      application_company: 'Next Co',
+      application_title: 'Next Role',
+    });
+  });
+
+  it('excludes follow-ups inside the threshold and closed outreach statuses', async () => {
+    const contacts = [
+      {
+        id: 'overdue-contact',
+        user_id: 'user-1',
+        outreach_status: 'follow_up_sent',
+        date_of_last_outreach: '2026-06-10',
+        first_name: 'Ada',
+        last_name: 'Lovelace',
+      },
+      {
+        id: 'inside-threshold',
+        user_id: 'user-1',
+        outreach_status: 'follow_up_sent',
+        date_of_last_outreach: '2026-06-12',
+        first_name: 'Grace',
+        last_name: 'Hopper',
+      },
+      {
+        id: 'closed-status',
+        user_id: 'user-1',
+        outreach_status: 'replied',
+        date_of_last_outreach: '2026-06-01',
+        first_name: 'Katherine',
+        last_name: 'Johnson',
+      },
+    ];
+
+    mockCreateUserClient.mockReturnValue(createMockDb({
+      applications: [new TodayQuery([]), new TodayQuery([])],
+      interviews: [new TodayQuery([]), new TodayQuery([])],
+      tasks: [new TodayQuery([])],
+      contacts: [new TodayQuery(contacts), new TodayQuery([])],
+    }));
+
+    const response = await request(app)
+      .get('/api/today')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.overdue_follow_ups.map((contact: Row) => contact.id)).toEqual(['overdue-contact']);
   });
 });

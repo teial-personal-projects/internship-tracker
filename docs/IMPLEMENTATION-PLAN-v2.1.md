@@ -198,12 +198,12 @@ Purpose: show a compact conversion snapshot for the current application cycle. T
 - [x] 2.10.3 Each row shows neutral initials, name, title, company or agency, and outreach/recruiter status.
 - [x] 2.10.4 Empty state: "No contacts yet."
 
-### [ ] 2.11 Today Tests
+### [x] 2.11 Today Tests
 
-- [ ] 2.11.1 Summary line omits zero-valued clauses.
-- [ ] 2.11.2 Funnel rows are monotonically non-increasing for any status distribution.
-- [ ] 2.11.3 Overdue follow-ups exclude contacts inside the threshold and closed statuses.
-- [ ] 2.11.4 Up-next returns the soonest future scheduled interview and excludes past interviews.
+- [x] 2.11.1 Summary line omits zero-valued clauses.
+- [x] 2.11.2 Funnel rows are monotonically non-increasing for any status distribution.
+- [x] 2.11.3 Overdue follow-ups exclude contacts inside the threshold and closed statuses.
+- [x] 2.11.4 Up-next returns the soonest future scheduled interview and excludes past interviews.
 
 ---
 
