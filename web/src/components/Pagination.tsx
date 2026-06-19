@@ -6,9 +6,15 @@ interface Props {
   onPageChange: (page: number) => void;
 }
 
+export function getPaginationRange(page: number, total: number, limit: number) {
+  return {
+    start: total > 0 ? (page - 1) * limit + 1 : 0,
+    end: Math.min(page * limit, total),
+  };
+}
+
 export function Pagination({ page, totalPages, total, limit, onPageChange }: Props) {
-  const start = total > 0 ? (page - 1) * limit + 1 : 0;
-  const end = Math.min(page * limit, total);
+  const { start, end } = getPaginationRange(page, total, limit);
 
   return (
     <div className="flex items-center justify-between rounded-lg px-4 py-2 bg-white border border-gray-200">

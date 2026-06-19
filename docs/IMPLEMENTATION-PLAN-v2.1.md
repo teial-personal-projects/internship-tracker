@@ -234,12 +234,12 @@ Replace the wide table/card split with a compact list plus a right rail. Preserv
 - [x] 3.3.6 Activity lines show company, event label, optional body snippet, and relative time.
 - [x] 3.3.7 Keep an "applications have no type set" nudge only if the count is greater than zero.
 
-### [ ] 3.4 Preserve Filters, Search, And Pagination
+### [x] 3.4 Preserve Filters, Search, And Pagination
 
-- [ ] 3.4.1 Existing search, date range, type filter, status filter, page, and limit query params continue to drive `GET /api/applications`.
-- [ ] 3.4.2 Status filtering is also wired to rail clicks.
-- [ ] 3.4.3 Pagination still shows the correct item range and reflects `?page=N`.
-- [ ] 3.4.4 No year dropdown comes back.
+- [x] 3.4.1 Existing search, date range, type filter, status filter, page, and limit query params continue to drive `GET /api/applications`.
+- [x] 3.4.2 Status filtering is also wired to rail clicks.
+- [x] 3.4.3 Pagination still shows the correct item range and reflects `?page=N`.
+- [x] 3.4.4 No year dropdown comes back.
 
 ### [ ] 3.5 Empty States
 

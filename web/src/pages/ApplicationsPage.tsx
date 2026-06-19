@@ -18,6 +18,7 @@ import { ApplicationsTable } from '@/components/ApplicationsTable';
 import { ApplicationCardList } from '@/components/ApplicationCardList';
 import { ApplicationsRail } from '@/components/applications/ApplicationsRail';
 import { ApplicationModal, type ApplicationFormValues } from '@/components/ApplicationModal';
+import { buildApplicationsListParams, toggleStatusFilter } from '@/lib/applicationsListParams';
 import { todayStr } from '@/lib/dateUtils';
 
 const PAGE_LIMIT = 25;
@@ -39,12 +40,12 @@ export function ApplicationsPage() {
   const [editingApp, setEditingApp] = useState<Application | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const queryParams = useMemo(() => ({
-    ...(statusFilter && { status: statusFilter }),
-    ...(typeFilter && { application_type: typeFilter }),
-    ...(search.trim() && { search: search.trim() }),
-    ...(dateFrom && { date_from: dateFrom }),
-    ...(dateTo && { date_to: dateTo }),
+  const queryParams = useMemo(() => buildApplicationsListParams({
+    statusFilter,
+    typeFilter,
+    search,
+    dateFrom,
+    dateTo,
     page,
     limit: PAGE_LIMIT,
   }), [statusFilter, typeFilter, search, dateFrom, dateTo, page]);
@@ -80,7 +81,7 @@ export function ApplicationsPage() {
   }
 
   function handleStatusClick(status: string) {
-    setStatusFilter((current) => current === status ? '' : status);
+    setStatusFilter((current) => toggleStatusFilter(current, status));
     resetPage();
   }
 
