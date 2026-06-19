@@ -101,12 +101,12 @@ Build the read paths once so Today and Applications stay consistent.
 - [x] 1.3.5 Cap panel lists with explicit limits.
 - [x] 1.3.6 Unit test: a user with no data gets zero counts and empty arrays, never null panel objects.
 
-### [ ] 1.4 Applications Activity Endpoint
+### [x] 1.4 Applications Activity Endpoint
 
-- [ ] 1.4.1 Add `GET /api/applications/activity` returning recent `application_events` joined to owned `applications`.
-- [ ] 1.4.2 Sort by `application_events.occurred_at DESC` and cap at 6.
-- [ ] 1.4.3 Return `event_type`, `occurred_at`, `body`, `application_id`, `company`, and `title`.
-- [ ] 1.4.4 Unit test: activity only includes events for applications owned by the requesting user.
+- [x] 1.4.1 Add `GET /api/applications/activity` returning recent `application_events` joined to owned `applications`.
+- [x] 1.4.2 Sort by `application_events.occurred_at DESC` and cap at 6.
+- [x] 1.4.3 Return `event_type`, `occurred_at`, `body`, `application_id`, `company`, and `title`.
+- [x] 1.4.4 Unit test: activity only includes events for applications owned by the requesting user.
 
 ---
 

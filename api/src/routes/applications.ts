@@ -14,11 +14,13 @@ import {
   createReferralThankYouTask,
 } from '../services/taskAutoGeneration';
 import { CreateApplicationEventSchema, CreateApplicationSchema, UpdateApplicationSchema } from '@internship-tracker/shared';
+import type { ApplicationActivityItem } from '@internship-tracker/shared';
 import type { Request, Response } from 'express';
 
 const router = Router();
 
 const PAGE_MAX = 100;
+const ACTIVITY_LIMIT = 6;
 
 interface ApplicationTaskTriggerState {
   status?: string | null;
@@ -160,6 +162,53 @@ function sendOwnershipError(
   }
   res.status(404).json({ error: 'Application not found' });
 }
+
+type ActivityRow = Omit<ApplicationActivityItem, 'company' | 'title'> & {
+  applications: {
+    company: string;
+    title: string;
+    user_id: string;
+  } | null;
+};
+
+function toApplicationActivityItem(row: ActivityRow, userId: string): ApplicationActivityItem | null {
+  if (row.applications?.user_id !== userId) return null;
+
+  const { applications, ...event } = row;
+  return {
+    ...event,
+    company: applications.company,
+    title: applications.title,
+  };
+}
+
+// GET /api/applications/activity
+router.get('/activity', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+
+    const { data, error } = await db
+      .from('application_events')
+      .select('*, applications(company, title, user_id)')
+      .eq('user_id', user.id)
+      .order('occurred_at', { ascending: false })
+      .range(0, ACTIVITY_LIMIT - 1);
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    const activity = ((data ?? []) as ActivityRow[])
+      .map((row) => toApplicationActivityItem(row, user.id))
+      .filter((row): row is ApplicationActivityItem => row !== null);
+
+    res.json({ data: activity });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // GET /api/applications/:id/events
 router.get('/:id/events', requireAuth, async (req: Request, res, next) => {

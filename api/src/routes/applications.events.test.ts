@@ -22,6 +22,11 @@ interface TableRow {
   event_type?: string;
   body?: string | null;
   contact_id?: string | null;
+  applications?: {
+    company: string;
+    title: string;
+    user_id: string;
+  } | null;
   first_name?: string;
   last_name?: string;
 }
@@ -56,6 +61,11 @@ class TableQuery {
     return this;
   }
 
+  range(...args: [number, number]) {
+    this.calls.push({ method: 'range', args });
+    return this;
+  }
+
   insert(payload: TableRow) {
     this.calls.push({ method: 'insert', args: [payload] });
     this.insertedRows[this.table] = [...(this.insertedRows[this.table] ?? []), payload];
@@ -70,7 +80,7 @@ class TableQuery {
     resolve: (value: { data: TableRow[]; error: null }) => void,
     reject?: (reason: unknown) => void,
   ) {
-    const rows = this.applyOrdering(this.applyFilters());
+    const rows = this.applyRange(this.applyOrdering(this.applyFilters()));
     return Promise.resolve({ data: rows, error: null }).then(resolve, reject);
   }
 
@@ -96,6 +106,14 @@ class TableQuery {
         ? leftValue.localeCompare(rightValue)
         : rightValue.localeCompare(leftValue);
     });
+  }
+
+  private applyRange(rows: TableRow[]): TableRow[] {
+    const rangeCall = this.calls.find((call) => call.method === 'range');
+    if (!rangeCall) return rows;
+
+    const [from, to] = rangeCall.args as [number, number];
+    return rows.slice(from, to + 1);
   }
 }
 
@@ -175,6 +193,62 @@ describe('application event routes', () => {
     expect(db.queries.application_events[0].calls).toContainEqual({
       method: 'order',
       args: ['occurred_at', { ascending: false }],
+    });
+  });
+
+  it('GET /api/applications/activity lists recent owned application events capped at 6', async () => {
+    const eventRows = Array.from({ length: 7 }, (_, index) => ({
+      id: `event-${index + 1}`,
+      application_id: `app-${index + 1}`,
+      user_id: 'user-1',
+      event_type: 'note',
+      body: `Activity ${index + 1}`,
+      contact_id: null,
+      occurred_at: `2026-02-0${index + 1}T00:00:00.000Z`,
+      created_at: `2026-02-0${index + 1}T00:00:00.000Z`,
+      applications: {
+        company: `Company ${index + 1}`,
+        title: `Role ${index + 1}`,
+        user_id: index === 0 ? 'other-user' : 'user-1',
+      },
+    }));
+    const db = createMockDb({
+      application_events: eventRows,
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .get('/api/applications/activity')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.map((event: TableRow) => event.id)).toEqual([
+      'event-7',
+      'event-6',
+      'event-5',
+      'event-4',
+      'event-3',
+      'event-2',
+    ]);
+    expect(response.body.data[0]).toMatchObject({
+      event_type: 'note',
+      occurred_at: '2026-02-07T00:00:00.000Z',
+      body: 'Activity 7',
+      application_id: 'app-7',
+      company: 'Company 7',
+      title: 'Role 7',
+    });
+    expect(db.queries.application_events[0].calls).toContainEqual({
+      method: 'eq',
+      args: ['user_id', 'user-1'],
+    });
+    expect(db.queries.application_events[0].calls).toContainEqual({
+      method: 'order',
+      args: ['occurred_at', { ascending: false }],
+    });
+    expect(db.queries.application_events[0].calls).toContainEqual({
+      method: 'range',
+      args: [0, 5],
     });
   });
 
