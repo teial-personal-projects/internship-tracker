@@ -446,7 +446,7 @@ ORDER BY CASE t.priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END,
 LIMIT 5;
 ```
 
-### A.4 Need Attention
+### A.4 Needs Attention
 
 ```sql
 SELECT *

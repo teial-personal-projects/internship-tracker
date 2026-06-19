@@ -26,7 +26,7 @@ export function NeedAttentionPanel({ applications }: NeedAttentionPanelProps) {
     <section className="rounded-lg border bg-white" style={{ borderColor: 'var(--line)' }}>
       <div className="flex items-center justify-between gap-3 border-b px-4 py-3" style={{ borderColor: 'var(--line)' }}>
         <h3 className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-          Need attention
+          Needs attention
         </h3>
         <span className="text-xs font-semibold tabular-nums" style={{ color: 'var(--ink-3)' }}>
           {activeApplications.length}
