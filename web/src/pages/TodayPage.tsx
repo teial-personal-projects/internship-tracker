@@ -4,6 +4,7 @@ import { ActionItemsPanel } from '@/components/today/ActionItemsPanel';
 import { FunnelPanel } from '@/components/today/FunnelPanel';
 import { NeedAttentionPanel } from '@/components/today/NeedAttentionPanel';
 import { OverdueFollowupsPanel } from '@/components/today/OverdueFollowupsPanel';
+import { RecentContactsPanel } from '@/components/today/RecentContactsPanel';
 import { StatCards } from '@/components/today/StatCards';
 import { UpNextCard } from '@/components/today/UpNextCard';
 import { useToday } from '@/hooks/useToday';
@@ -94,9 +95,7 @@ export function TodayPage() {
 
                 <OverdueFollowupsPanel contacts={data.overdue_follow_ups} />
 
-                <PanelShell title="Recent contacts">
-                  <EmptyLine>{data.recent_contacts.length ? `${data.recent_contacts.length} recent` : 'No contacts yet.'}</EmptyLine>
-                </PanelShell>
+                <RecentContactsPanel contacts={data.recent_contacts} />
               </aside>
             </div>
           )}

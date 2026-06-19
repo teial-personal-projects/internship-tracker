@@ -191,12 +191,12 @@ Purpose: show a compact conversion snapshot for the current application cycle. T
 - [x] 2.9.6 Empty state: "You're current on follow-ups."
 - [x] 2.9.7 Leave a short code comment noting exact recency can later use `MAX(contact_interactions.occurred_at)`.
 
-### [ ] 2.10 Recent Contacts
+### [x] 2.10 Recent Contacts
 
-- [ ] 2.10.1 Create `web/src/components/today/RecentContactsPanel.tsx`.
-- [ ] 2.10.2 Order contacts by `date_of_last_outreach DESC NULLS LAST`.
-- [ ] 2.10.3 Each row shows neutral initials, name, title, company or agency, and outreach/recruiter status.
-- [ ] 2.10.4 Empty state: "No contacts yet."
+- [x] 2.10.1 Create `web/src/components/today/RecentContactsPanel.tsx`.
+- [x] 2.10.2 Order contacts by `date_of_last_outreach DESC NULLS LAST`.
+- [x] 2.10.3 Each row shows neutral initials, name, title, company or agency, and outreach/recruiter status.
+- [x] 2.10.4 Empty state: "No contacts yet."
 
 ### [ ] 2.11 Today Tests
 
