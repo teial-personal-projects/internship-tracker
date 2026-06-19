@@ -287,14 +287,14 @@ Add a view toggle to keep the current sortable Applications grid while introduci
 - [x] 5.2.3 Keep server-side sorting and pagination behavior unchanged in `Grid` view.
 - [x] 5.2.4 Keep edit and delete actions available in each grid row/card.
 
-### [ ] 5.3 Kanban Data And Columns
+### [x] 5.3 Kanban Data And Columns
 
-- [ ] 5.3.1 Create `web/src/components/applications/ApplicationsKanbanBoard.tsx`.
-- [ ] 5.3.2 Columns map to application statuses: Not Started, In Progress, Applied, Screening, Interviewing, Technical, On Site, Final Round, Offered, Rejected, Withdrawn, and Archive.
-- [ ] 5.3.3 Render zero-count columns as muted empty lanes so users can drag into them.
-- [ ] 5.3.4 Each column header shows status label and visible-card count.
-- [ ] 5.3.5 Cards show company, title, applied date or "Not applied", date added, location, and type badge.
-- [ ] 5.3.6 Kanban uses the same filtered application result set as the grid; search/date/type/status filters apply before grouping.
+- [x] 5.3.1 Create `web/src/components/applications/ApplicationsKanbanBoard.tsx`.
+- [x] 5.3.2 Columns map to application statuses: Not Started, In Progress, Applied, Screening, Interviewing, Technical, On Site, Final Round, Offered, Rejected, Withdrawn, and Archive.
+- [x] 5.3.3 Render zero-count columns as muted empty lanes so users can drag into them.
+- [x] 5.3.4 Each column header shows status label and visible-card count.
+- [x] 5.3.5 Cards show company, title, applied date or "Not applied", date added, location, and type badge.
+- [x] 5.3.6 Kanban uses the same filtered application result set as the grid; search/date/type/status filters apply before grouping.
 
 ### [ ] 5.4 Drag And Drop
 

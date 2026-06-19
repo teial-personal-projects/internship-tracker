@@ -17,6 +17,7 @@ import { Spinner } from '@/components/Spinner';
 import { Pagination } from '@/components/Pagination';
 import { ApplicationsTable } from '@/components/ApplicationsTable';
 import { ApplicationCardList } from '@/components/ApplicationCardList';
+import { ApplicationsKanbanBoard } from '@/components/applications/ApplicationsKanbanBoard';
 import { ApplicationsRail } from '@/components/applications/ApplicationsRail';
 import { ApplicationModal, type ApplicationFormValues } from '@/components/ApplicationModal';
 import { buildApplicationsListParams, hasApplicationListFilters, toggleStatusFilter } from '@/lib/applicationsListParams';
@@ -272,7 +273,12 @@ export function ApplicationsPage() {
             ) : total === 0 ? (
               <FilteredEmptyState onClearFilters={clearFilters} />
             ) : view === 'kanban' ? (
-              <ApplicationsKanbanPlaceholder />
+              <ApplicationsKanbanBoard
+                applications={applications}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                deletingId={deletingId}
+              />
             ) : isMobile ? (
               <ApplicationCardList applications={applications} onEdit={handleEdit} onDelete={handleDelete} deletingId={deletingId} />
             ) : (
@@ -351,19 +357,6 @@ function ApplicationsViewToggle({
           </button>
         );
       })}
-    </div>
-  );
-}
-
-function ApplicationsKanbanPlaceholder() {
-  return (
-    <div className="flex min-h-64 flex-col items-center justify-center rounded-lg border bg-white px-6 py-12 text-center" style={{ borderColor: 'var(--line)' }}>
-      <p className="text-base font-semibold" style={{ color: 'var(--ink)' }}>
-        Kanban view
-      </p>
-      <p className="mt-2 max-w-sm text-sm leading-6" style={{ color: 'var(--ink-3)' }}>
-        Board layout will be added in Phase 5.3.
-      </p>
     </div>
   );
 }
