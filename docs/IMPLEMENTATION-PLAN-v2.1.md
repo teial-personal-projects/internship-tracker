@@ -296,14 +296,14 @@ Add a view toggle to keep the current sortable Applications grid while introduci
 - [x] 5.3.5 Cards show company, title, applied date or "Not applied", date added, location, and type badge.
 - [x] 5.3.6 Kanban uses the same filtered application result set as the grid; search/date/type/status filters apply before grouping.
 
-### [ ] 5.4 Drag And Drop
+### [x] 5.4 Drag And Drop
 
-- [ ] 5.4.1 Add `@dnd-kit` for accessible drag-and-drop; do not hand-roll pointer math.
-- [ ] 5.4.2 Dragging a card to a different status column updates `applications.status`.
-- [ ] 5.4.3 Use optimistic UI updates so the card moves immediately.
-- [ ] 5.4.4 Roll back the card to its prior column and show an error toast if the update fails.
-- [ ] 5.4.5 Moving a card to its current status is a no-op and does not call the API.
-- [ ] 5.4.6 Keep keyboard drag support available through the chosen DnD library.
+- [x] 5.4.1 Add `@dnd-kit` for accessible drag-and-drop; do not hand-roll pointer math.
+- [x] 5.4.2 Dragging a card to a different status column updates `applications.status`.
+- [x] 5.4.3 Use optimistic UI updates so the card moves immediately.
+- [x] 5.4.4 Roll back the card to its prior column and show an error toast if the update fails.
+- [x] 5.4.5 Moving a card to its current status is a no-op and does not call the API.
+- [x] 5.4.6 Keep keyboard drag support available through the chosen DnD library.
 
 ### [ ] 5.5 Pagination And Loading Strategy
 

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Columns3, Table2 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Application, CreateApplicationSchemaType } from '@shared/schemas';
+import type { Application, ApplicationStatus, CreateApplicationSchemaType } from '@shared/schemas';
 import {
   useApplication,
   useApplications,
@@ -59,6 +59,7 @@ export function ApplicationsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingApp, setEditingApp] = useState<Application | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, ApplicationStatus>>({});
 
   const queryParams = useMemo(() => buildApplicationsListParams({
     statusFilter,
@@ -80,6 +81,13 @@ export function ApplicationsPage() {
   const deleteApp = useDeleteApplication();
 
   const applications = data?.data ?? [];
+  const visibleApplications = useMemo(
+    () => applications.map((app) => {
+      const status = optimisticStatuses[app.id];
+      return status ? { ...app, status } : app;
+    }),
+    [applications, optimisticStatuses],
+  );
   const total = data?.total ?? 0;
   const totalPages = data?.totalPages ?? 1;
   const statusCounts = stats?.status_counts ?? {};
@@ -174,6 +182,22 @@ export function ApplicationsPage() {
     }
   }
 
+  async function handleKanbanStatusChange(app: Application, nextStatus: ApplicationStatus) {
+    if (app.status === nextStatus) return;
+
+    setOptimisticStatuses((current) => ({ ...current, [app.id]: nextStatus }));
+    try {
+      await updateApp.mutateAsync({ id: app.id, data: { status: nextStatus } });
+    } catch {
+      setOptimisticStatuses((current) => {
+        const next = { ...current };
+        delete next[app.id];
+        return next;
+      });
+      toast.error('Status update failed');
+    }
+  }
+
   const hasDateFilter = dateFrom || dateTo;
 
   useEffect(() => {
@@ -187,6 +211,20 @@ export function ApplicationsPage() {
       return next;
     }, { replace: true });
   }, [editingApp, isModalOpen, routedApplication, setSearchParams]);
+
+  useEffect(() => {
+    setOptimisticStatuses((current) => {
+      let changed = false;
+      const next = { ...current };
+      for (const app of applications) {
+        if (next[app.id] && next[app.id] === app.status) {
+          delete next[app.id];
+          changed = true;
+        }
+      }
+      return changed ? next : current;
+    });
+  }, [applications]);
 
   return (
     <div className="flex h-screen flex-col overflow-hidden" style={{ background: 'var(--bg)' }}>
@@ -274,16 +312,17 @@ export function ApplicationsPage() {
               <FilteredEmptyState onClearFilters={clearFilters} />
             ) : view === 'kanban' ? (
               <ApplicationsKanbanBoard
-                applications={applications}
+                applications={visibleApplications}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onStatusChange={handleKanbanStatusChange}
                 deletingId={deletingId}
               />
             ) : isMobile ? (
-              <ApplicationCardList applications={applications} onEdit={handleEdit} onDelete={handleDelete} deletingId={deletingId} />
+              <ApplicationCardList applications={visibleApplications} onEdit={handleEdit} onDelete={handleDelete} deletingId={deletingId} />
             ) : (
               <ApplicationsTable
-                applications={applications}
+                applications={visibleApplications}
                 sort={sort}
                 onSort={handleSort}
                 onEdit={handleEdit}

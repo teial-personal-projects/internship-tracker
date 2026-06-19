@@ -1,6 +1,19 @@
 import { useState } from 'react';
+import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import type { Application, ApplicationStatus } from '@shared/schemas';
+import { GripVertical } from 'lucide-react';
 import { ApplicationTypeBadge } from '@/components/ApplicationTypeBadge';
 import { Spinner } from '@/components/Spinner';
 import { TrashIcon } from '@/components/icons/TrashIcon';
@@ -37,34 +50,71 @@ export function groupApplicationsByStatus(applications: Application[]): Applicat
   return grouped;
 }
 
+export function getKanbanStatusMove(
+  app: Application | undefined,
+  targetStatus: string | undefined,
+): { app: Application; status: ApplicationStatus } | null {
+  if (!app || !targetStatus || !isApplicationKanbanStatus(targetStatus) || app.status === targetStatus) {
+    return null;
+  }
+
+  return { app, status: targetStatus };
+}
+
+function isApplicationKanbanStatus(status: string): status is ApplicationStatus {
+  return APPLICATION_KANBAN_STATUSES.includes(status as ApplicationStatus);
+}
+
 interface Props {
   applications: Application[];
   onEdit: (app: Application) => void;
   onDelete: (id: string) => void;
+  onStatusChange: (app: Application, status: ApplicationStatus) => void;
   deletingId: string | null;
 }
 
-export function ApplicationsKanbanBoard({ applications, onEdit, onDelete, deletingId }: Props) {
+export function ApplicationsKanbanBoard({
+  applications,
+  onEdit,
+  onDelete,
+  onStatusChange,
+  deletingId,
+}: Props) {
   const grouped = groupApplicationsByStatus(applications);
+  const appById = new Map(applications.map((app) => [app.id, app]));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const app = appById.get(String(event.active.id));
+    const move = getKanbanStatusMove(app, event.over?.id ? String(event.over.id) : undefined);
+    if (!move) return;
+
+    onStatusChange(move.app, move.status);
+  }
 
   return (
-    <div className="min-w-0 overflow-x-auto pb-2">
-      <div className="flex min-w-max gap-3">
-        {APPLICATION_KANBAN_STATUSES.map((status) => {
-          const laneApplications = grouped[status];
-          return (
-            <KanbanLane
-              key={status}
-              status={status}
-              applications={laneApplications}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              deletingId={deletingId}
-            />
-          );
-        })}
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <div className="min-w-0 overflow-x-auto pb-2">
+        <div className="flex min-w-max gap-3">
+          {APPLICATION_KANBAN_STATUSES.map((status) => {
+            const laneApplications = grouped[status];
+            return (
+              <KanbanLane
+                key={status}
+                status={status}
+                applications={laneApplications}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                deletingId={deletingId}
+              />
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </DndContext>
   );
 }
 
@@ -82,12 +132,17 @@ function KanbanLane({
   deletingId: string | null;
 }) {
   const colors = STATUS_COLORS[status] ?? { bg: 'var(--soft)', color: 'var(--ink-3)', dot: 'var(--ink-4)' };
+  const { isOver, setNodeRef } = useDroppable({ id: status });
 
   return (
     <section
+      ref={setNodeRef}
       aria-label={STATUS_LABELS[status] ?? status}
       className="flex max-h-[68vh] w-72 shrink-0 flex-col rounded-lg border"
-      style={{ background: 'var(--softer)', borderColor: 'var(--line)' }}
+      style={{
+        background: isOver ? 'var(--accent-tint)' : 'var(--softer)',
+        borderColor: isOver ? 'var(--accent)' : 'var(--line)',
+      }}
     >
       <div className="flex items-center justify-between gap-2 border-b px-3 py-3" style={{ borderColor: 'var(--line)' }}>
         <div className="flex min-w-0 items-center gap-2">
@@ -136,18 +191,53 @@ function KanbanCard({
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const colors = STATUS_COLORS[app.status] ?? { dot: 'var(--ink-4)' };
+  const {
+    attributes,
+    isDragging,
+    listeners,
+    setNodeRef,
+    transform,
+  } = useDraggable({
+    id: app.id,
+    data: { status: app.status },
+  });
+  const dragStyle = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+    : undefined;
 
   return (
-    <article className="overflow-hidden rounded-md border bg-white shadow-sm" style={{ borderColor: 'var(--line)' }}>
+    <article
+      ref={setNodeRef}
+      className="overflow-hidden rounded-md border bg-white shadow-sm"
+      style={{
+        ...dragStyle,
+        borderColor: 'var(--line)',
+        opacity: isDragging ? 0.7 : 1,
+        position: 'relative',
+        zIndex: isDragging ? 20 : 'auto',
+      }}
+    >
       <div className="h-1" style={{ background: colors.dot }} aria-hidden="true" />
       <div className="p-3">
-        <div className="min-w-0">
-          <h3 className="truncate text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-            {app.company}
-          </h3>
-          <p className="mt-0.5 line-clamp-2 text-xs leading-5" style={{ color: 'var(--ink-3)' }}>
-            {app.title}
-          </p>
+        <div className="flex items-start gap-2">
+          <button
+            type="button"
+            className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-xs hover:bg-gray-50 focus:outline-none focus:ring-2"
+            style={{ color: 'var(--ink-4)', '--tw-ring-color': 'var(--accent)' } as React.CSSProperties}
+            aria-label={`Move ${app.company}`}
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-4 w-4" aria-hidden="true" />
+          </button>
+          <div className="min-w-0">
+            <h3 className="truncate text-sm font-semibold" style={{ color: 'var(--ink)' }}>
+              {app.company}
+            </h3>
+            <p className="mt-0.5 line-clamp-2 text-xs leading-5" style={{ color: 'var(--ink-3)' }}>
+              {app.title}
+            </p>
+          </div>
         </div>
 
         <div className="mt-3 flex flex-wrap gap-1.5">

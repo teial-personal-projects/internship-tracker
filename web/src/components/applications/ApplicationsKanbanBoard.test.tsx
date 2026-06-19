@@ -4,6 +4,7 @@ import type { Application } from '@shared/schemas';
 import {
   APPLICATION_KANBAN_STATUSES,
   ApplicationsKanbanBoard,
+  getKanbanStatusMove,
   groupApplicationsByStatus,
 } from './ApplicationsKanbanBoard';
 
@@ -54,6 +55,7 @@ describe('ApplicationsKanbanBoard', () => {
         applications={[makeApplication()]}
         onEdit={vi.fn()}
         onDelete={vi.fn()}
+        onStatusChange={vi.fn()}
         deletingId={null}
       />,
     );
@@ -79,6 +81,7 @@ describe('ApplicationsKanbanBoard', () => {
         applications={[makeApplication({ applied_date: null })]}
         onEdit={vi.fn()}
         onDelete={vi.fn()}
+        onStatusChange={vi.fn()}
         deletingId={null}
       />,
     );
@@ -91,5 +94,14 @@ describe('ApplicationsKanbanBoard', () => {
     expect(markup).toContain('Referral');
     expect(markup).toContain('Edit');
     expect(markup).toContain('aria-label="Delete"');
+  });
+
+  it('resolves status moves and treats current-status drops as no-ops', () => {
+    const app = makeApplication({ status: 'applied' });
+
+    expect(getKanbanStatusMove(app, 'technical')).toEqual({ app, status: 'technical' });
+    expect(getKanbanStatusMove(app, 'applied')).toBeNull();
+    expect(getKanbanStatusMove(app, 'unknown')).toBeNull();
+    expect(getKanbanStatusMove(undefined, 'technical')).toBeNull();
   });
 });
