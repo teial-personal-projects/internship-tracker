@@ -211,13 +211,13 @@ Purpose: show a compact conversion snapshot for the current application cycle. T
 
 Replace the wide table/card split with a compact list plus a right rail. Preserve existing filters, actions, pagination, and write paths.
 
-### [ ] 3.1 Compact List Rows
+### [x] 3.1 Compact List Rows
 
-- [ ] 3.1.1 Rebuild the Applications list row at roughly 48px height.
-- [ ] 3.1.2 Row content: thin status-colored left bar, company as primary text, title as muted secondary text.
-- [ ] 3.1.3 Sub-line: status badge, `applied_date` or "Not applied", and location separated by middots.
-- [ ] 3.1.4 Status bar color comes from `STATUS_COLORS`; avoid extra row color.
-- [ ] 3.1.5 Keep Edit and delete controls without changing existing write paths.
+- [x] 3.1.1 Rebuild the Applications list row at roughly 48px height.
+- [x] 3.1.2 Row content: thin status-colored left bar, company as primary text, title as muted secondary text.
+- [x] 3.1.3 Sub-line: status badge, `applied_date` or "Not applied", and location separated by middots.
+- [x] 3.1.4 Status bar color comes from `STATUS_COLORS`; avoid extra row color.
+- [x] 3.1.5 Keep Edit and delete controls without changing existing write paths.
 
 ### [ ] 3.2 Remove Colored Initial Squares
 

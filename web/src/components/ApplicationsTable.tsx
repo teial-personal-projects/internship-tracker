@@ -9,11 +9,7 @@ interface Props {
 }
 
 const HEADERS = [
-  { key: 'company',    label: 'Company / Role' },
-  { key: 'location',   label: 'Location' },
-  { key: 'applied',    label: 'Applied' },
-  { key: 'status',     label: 'Status' },
-  { key: 'type',       label: 'Type' },
+  { key: 'application', label: 'Application' },
   { key: 'checklist',  label: 'Checklist' },
   { key: 'actions',    label: '' },
 ];

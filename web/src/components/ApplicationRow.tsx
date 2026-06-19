@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import type { Application } from '@shared/schemas';
 import { StatusBadge } from './StatusBadge';
-import { ApplicationTypeBadge } from './ApplicationTypeBadge';
 import { TrashIcon } from './icons/TrashIcon';
 import { Spinner } from './Spinner';
 import { formatDate } from '@/lib/dateUtils';
+import { STATUS_COLORS } from '@/theme';
 
 const CHECKLIST_TOTAL = 18;
 
@@ -30,36 +30,35 @@ export function ApplicationRow({ app, onEdit, onDelete, isDeleting }: Props) {
 
   const doneTasks = Object.values(app.checklist_state ?? {}).filter((v) => v === true).length;
   const progressColor = checklistColor(doneTasks);
+  const statusColor = STATUS_COLORS[app.status]?.dot ?? 'var(--ink-4)';
 
   return (
     <>
-      <tr className="hover:bg-gray-50 transition-colors border-b border-gray-100">
-        <td className="px-2 py-2.5">
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{app.company}</span>
+      <tr className="border-b transition-colors hover:bg-gray-50" style={{ borderColor: 'var(--line-soft)' }}>
+        <td className="w-full py-2 pl-0 pr-3">
+          <div className="grid min-h-12 grid-cols-[4px_minmax(0,1fr)] gap-3">
+            <div className="rounded-r-full" style={{ background: statusColor }} aria-hidden="true" />
+            <div className="min-w-0 py-0.5">
+              <div className="flex min-w-0 items-baseline gap-2">
+                <span className="truncate text-sm font-semibold" style={{ color: 'var(--ink)' }}>
+                  {app.company}
+                </span>
+                <span className="truncate text-xs" style={{ color: 'var(--ink-3)' }}>
+                  {app.title}
+                </span>
+              </div>
+              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs" style={{ color: 'var(--ink-3)' }}>
+                <StatusBadge status={app.status} />
+                <span aria-hidden="true">·</span>
+                <span>{formatDate(app.applied_date, 'Not applied')}</span>
+                <span aria-hidden="true">·</span>
+                <span>{app.location ?? 'No location'}</span>
+              </div>
+            </div>
           </div>
-          <div className="text-xs mt-0.5" style={{ color: 'var(--ink-3)' }}>
-            {app.title}{app.pay ? ` · ${app.pay}` : ''}
-          </div>
         </td>
 
-        <td className="px-2 py-2.5 text-sm whitespace-nowrap" style={{ color: 'var(--ink-3)' }}>
-          {app.location ?? '—'}
-        </td>
-
-        <td className="px-2 py-2.5 text-sm whitespace-nowrap" style={{ color: 'var(--ink-3)' }}>
-          {formatDate(app.applied_date)}
-        </td>
-
-        <td className="px-2 py-2.5">
-          <StatusBadge status={app.status} />
-        </td>
-
-        <td className="px-2 py-2.5">
-          <ApplicationTypeBadge type={app.application_type} />
-        </td>
-
-        <td className="px-2 py-2.5">
+        <td className="px-2 py-2 whitespace-nowrap">
           <button
             type="button"
             onClick={() => navigate(`/contacts?application_id=${app.id}`)}
@@ -70,7 +69,7 @@ export function ApplicationRow({ app, onEdit, onDelete, isDeleting }: Props) {
           </button>
         </td>
 
-        <td className="px-2 py-2.5 sticky right-0 bg-white" style={{ boxShadow: '-2px 0 6px rgba(0,0,0,0.05)' }}>
+        <td className="sticky right-0 bg-white px-2 py-2" style={{ boxShadow: '-2px 0 6px rgba(0,0,0,0.05)' }}>
           <div className="flex items-center justify-end gap-1">
             <button
               type="button"
