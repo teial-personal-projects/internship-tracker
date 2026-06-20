@@ -239,7 +239,7 @@ export function ApplicationsPage() {
         </p>
 
         {/* Search + date range + actions */}
-        <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_300px]">
           <div className="mobile-filter-scroll sm:flex sm:items-center sm:gap-2 sm:overflow-visible sm:pb-0">
             <div className="relative min-w-56 shrink-0 sm:w-[32rem] lg:w-[34rem]">
               <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'var(--ink-4)' }} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -303,7 +303,7 @@ export function ApplicationsPage() {
           </div>
         )}
 
-        <div className="grid min-h-0 gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="grid min-h-0 gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
           <section className="flex min-w-0 flex-col gap-2">
             {/* Pagination (top) */}
             {!isKanbanView && !isLoading && totalPages > 1 && (
