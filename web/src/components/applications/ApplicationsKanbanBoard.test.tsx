@@ -4,7 +4,6 @@ import type { Application } from '@shared/schemas';
 import {
   APPLICATION_KANBAN_STATUSES,
   ApplicationsKanbanBoard,
-  MAX_VISIBLE_KANBAN_CARDS,
   getKanbanStatusMove,
   groupApplicationsByStatus,
 } from './ApplicationsKanbanBoard';
@@ -129,8 +128,8 @@ describe('ApplicationsKanbanBoard', () => {
     expect(getKanbanStatusMove(undefined, 'interviewing')).toBeNull();
   });
 
-  it('limits visible cards per lane and shows the hidden-card count', () => {
-    const applications = Array.from({ length: MAX_VISIBLE_KANBAN_CARDS + 2 }, (_, index) => (
+  it('shows all cards in a lane via scroll rather than hiding them', () => {
+    const applications = Array.from({ length: 7 }, (_, index) => (
       makeApplication({
         id: `11111111-1111-4111-8111-${String(index).padStart(12, '0')}`,
         company: `Company ${index + 1}`,
@@ -148,8 +147,7 @@ describe('ApplicationsKanbanBoard', () => {
     );
 
     expect(markup).toContain('Company 1');
-    expect(markup).toContain('Company 5');
-    expect(markup).not.toContain('Company 6');
-    expect(markup).toContain('2 more hidden');
+    expect(markup).toContain('Company 7');
+    expect(markup).not.toContain('more hidden');
   });
 });
