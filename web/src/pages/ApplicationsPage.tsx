@@ -277,8 +277,6 @@ export function ApplicationsPage() {
             )}
           </div>
 
-          {!isMobile && <ApplicationsViewToggle view={effectiveView} onChange={handleViewChange} />}
-
           <button
             type="button"
             onClick={() => setShowArchived((v) => !v)}
@@ -320,11 +318,15 @@ export function ApplicationsPage() {
               total={total}
               limit={GRID_PAGE_LIMIT}
               onPageChange={setPage}
+              action={!isMobile ? <ApplicationsViewToggle view={effectiveView} onChange={handleViewChange} compact /> : undefined}
             />
           )}
 
           {(isKanbanView || totalPages <= 1 || isLoading) && (
-            <ApplicationsListHeader total={total} />
+            <ApplicationsListHeader
+              total={total}
+              action={!isMobile ? <ApplicationsViewToggle view={effectiveView} onChange={handleViewChange} compact /> : undefined}
+            />
           )}
 
           {/* List */}
@@ -429,12 +431,13 @@ function ApplicationsStatsStrip({
   );
 }
 
-function ApplicationsListHeader({ total }: { total: number }) {
+function ApplicationsListHeader({ total, action }: { total: number; action?: React.ReactNode }) {
   return (
-    <div className="flex items-center rounded-lg border bg-white px-4 py-2" style={{ borderColor: 'var(--line)' }}>
+    <div className="flex items-center justify-between rounded-lg border bg-white px-4 py-2" style={{ borderColor: 'var(--line)' }}>
       <span className="text-sm" style={{ color: 'var(--ink-3)' }}>
         {total > 0 ? `${total} applications` : '0 applications'}
       </span>
+      {action}
     </div>
   );
 }
@@ -471,9 +474,11 @@ function applyOptimisticStatusCounts(
 function ApplicationsViewToggle({
   view,
   onChange,
+  compact = false,
 }: {
   view: ApplicationsView;
   onChange: (view: ApplicationsView) => void;
+  compact?: boolean;
 }) {
   const options: Array<{ value: ApplicationsView; label: string; Icon: typeof Table2 }> = [
     { value: 'grid', label: 'Grid', Icon: Table2 },
@@ -483,7 +488,10 @@ function ApplicationsViewToggle({
   return (
     <div
       aria-label="Applications view"
-      className="inline-flex min-h-11 shrink-0 items-center rounded-xl border bg-white p-1 shadow-sm"
+      className={[
+        'inline-flex shrink-0 items-center rounded-xl border bg-white p-1 shadow-sm',
+        compact ? 'min-h-9' : 'min-h-11',
+      ].join(' ')}
       role="group"
       style={{ borderColor: 'var(--line)' }}
     >
@@ -495,7 +503,10 @@ function ApplicationsViewToggle({
             type="button"
             aria-pressed={isActive}
             onClick={() => onChange(value)}
-            className="inline-flex min-h-9 items-center gap-2 rounded-lg px-3 text-sm font-semibold transition"
+            className={[
+              'inline-flex items-center gap-2 rounded-lg font-semibold transition',
+              compact ? 'min-h-7 px-2 text-xs' : 'min-h-9 px-3 text-sm',
+            ].join(' ')}
             style={{
               background: isActive ? 'var(--accent)' : 'transparent',
               color: isActive ? 'white' : 'var(--ink-3)',
