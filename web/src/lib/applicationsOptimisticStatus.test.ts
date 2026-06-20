@@ -18,7 +18,6 @@ const application: Application = {
   app_link: null,
   status: 'applied',
   application_type: 'referral',
-  checklist_state: {},
   source: 'manual',
   source_metadata: {},
   cover_letter: null,

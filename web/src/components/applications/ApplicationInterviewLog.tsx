@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import type { Interview } from '@shared/schemas';
 import type { CreateApplicationInterviewInput, UpdateApplicationInterviewInput } from '@/api/applications.api';
 import { Spinner } from '@/components/Spinner';
@@ -49,6 +50,7 @@ interface Props {
   isError: boolean;
   onCreate?: (input: CreateApplicationInterviewInput) => Promise<unknown> | unknown;
   onUpdate?: (interviewId: string, input: UpdateApplicationInterviewInput) => Promise<unknown> | unknown;
+  onDelete?: (interviewId: string) => Promise<unknown> | unknown;
   isSaving?: boolean;
   onEditorOpenChange?: (open: boolean) => void;
 }
@@ -69,6 +71,7 @@ export function ApplicationInterviewLog({
   isError,
   onCreate,
   onUpdate,
+  onDelete,
   isSaving = false,
   onEditorOpenChange,
 }: Props) {
@@ -78,6 +81,7 @@ export function ApplicationInterviewLog({
   const [formError, setFormError] = useState('');
   const activeInterview = editingId ? interviews.find((interview) => interview.id === editingId) : null;
   const canEdit = Boolean(onCreate && onUpdate);
+  const canDelete = Boolean(onDelete);
 
   function openCreate() {
     setDraft(createEmptyDraft());
@@ -109,8 +113,8 @@ export function ApplicationInterviewLog({
       return;
     }
 
-    const payload = toInterviewInput(draft);
     try {
+      const payload = toInterviewInput(draft);
       if (editingId) {
         await onUpdate?.(editingId, payload);
       } else {
@@ -168,7 +172,13 @@ export function ApplicationInterviewLog({
       ) : (
         <ol className="flex flex-col gap-2">
           {interviews.map((interview) => (
-            <InterviewLogItem key={interview.id} interview={interview} onEdit={canEdit ? openEdit : undefined} />
+            <InterviewLogItem
+              key={interview.id}
+              interview={interview}
+              isSaving={isSaving}
+              onEdit={canEdit ? openEdit : undefined}
+              onDelete={canDelete ? onDelete : undefined}
+            />
           ))}
         </ol>
       )}
@@ -196,12 +206,26 @@ function InterviewEditor({
   onSave: () => void;
 }) {
   return (
-    <div className="mb-3 rounded-md border p-3" style={{ borderColor: 'var(--line)', background: 'var(--softer)' }}>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <div className="mb-3 rounded-md border p-2.5" style={{ borderColor: 'var(--line)', background: 'var(--softer)' }}>
+      <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <h4 className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--ink-3)' }}>
+          {mode === 'edit' ? 'Edit interview' : 'New interview'}
+        </h4>
+        <div className="flex justify-end gap-2">
+          <button type="button" className="btn-ghost px-2 py-1 text-xs text-gray-600" onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="button" className="btn-primary px-2.5 py-1 text-xs" disabled={isSaving} onClick={onSave}>
+            {isSaving ? <span className="flex items-center gap-1.5"><Spinner color="white" size="sm" /> Saving</span> : mode === 'edit' ? 'Update interview' : 'Save interview'}
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <label className="block">
           <span className="field-label">Type</span>
           <select
-            className="field-select"
+            className="field-select min-h-9 py-1 text-sm"
             value={draft.interview_type}
             onChange={(event) => onChange({ interview_type: event.target.value })}
           >
@@ -215,7 +239,7 @@ function InterviewEditor({
           <span className="field-label">Scheduled</span>
           <input
             type="datetime-local"
-            className="field-input"
+            className="field-input min-h-9 py-1 text-sm"
             value={draft.scheduled_at}
             onChange={(event) => onChange({ scheduled_at: event.target.value })}
           />
@@ -224,7 +248,7 @@ function InterviewEditor({
         <label className="block">
           <span className="field-label">Status</span>
           <select
-            className="field-select"
+            className="field-select min-h-9 py-1 text-sm"
             value={draft.status}
             onChange={(event) => onChange({ status: event.target.value })}
           >
@@ -237,7 +261,7 @@ function InterviewEditor({
         <label className="block">
           <span className="field-label">Outcome</span>
           <select
-            className="field-select"
+            className="field-select min-h-9 py-1 text-sm"
             value={draft.outcome}
             onChange={(event) => onChange({ outcome: event.target.value })}
           >
@@ -247,13 +271,10 @@ function InterviewEditor({
             ))}
           </select>
         </label>
-      </div>
-
-      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="block">
           <span className="field-label">Interviewers</span>
           <input
-            className="field-input"
+            className="field-input min-h-9 py-1 text-sm"
             maxLength={MAX_INTERVIEWER_NAMES_LENGTH}
             value={draft.interviewer_names}
             onChange={(event) => onChange({ interviewer_names: event.target.value })}
@@ -264,7 +285,7 @@ function InterviewEditor({
           <span className="field-label">Location Link</span>
           <input
             type="url"
-            className="field-input"
+            className="field-input min-h-9 py-1 text-sm"
             maxLength={MAX_URL_LENGTH}
             placeholder="https://"
             value={draft.location_link}
@@ -273,11 +294,11 @@ function InterviewEditor({
         </label>
       </div>
 
-      <label className="mt-3 block">
+      <label className="mt-2 block">
         <span className="field-label">Notes</span>
         <textarea
-          className="field-textarea"
-          rows={2}
+          className="field-textarea min-h-16 py-1 text-sm"
+          rows={1}
           maxLength={MAX_NOTES_LENGTH}
           value={draft.notes}
           onChange={(event) => onChange({ notes: event.target.value })}
@@ -285,23 +306,30 @@ function InterviewEditor({
       </label>
 
       {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
-
-      <div className="mt-3 flex justify-end gap-2">
-        <button type="button" className="btn-ghost text-sm text-gray-600" onClick={onCancel}>
-          Cancel
-        </button>
-        <button type="button" className="btn-primary px-3 py-1.5 text-sm" disabled={isSaving} onClick={onSave}>
-          {isSaving ? <span className="flex items-center gap-2"><Spinner color="white" size="sm" /> Saving</span> : mode === 'edit' ? 'Update interview' : 'Save interview'}
-        </button>
-      </div>
     </div>
   );
 }
 
-function InterviewLogItem({ interview, onEdit }: { interview: Interview; onEdit?: (interview: Interview) => void }) {
+function InterviewLogItem({
+  interview,
+  isSaving,
+  onEdit,
+  onDelete,
+}: {
+  interview: Interview;
+  isSaving: boolean;
+  onEdit?: (interview: Interview) => void;
+  onDelete?: (interviewId: string) => Promise<unknown> | unknown;
+}) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const typeLabel = INTERVIEW_TYPE_LABELS[interview.interview_type] ?? interview.interview_type;
   const statusLabel = INTERVIEW_STATUS_LABELS[interview.status] ?? interview.status;
   const outcomeLabel = interview.outcome ? INTERVIEW_OUTCOME_LABELS[interview.outcome] ?? interview.outcome : null;
+
+  async function handleDelete() {
+    await onDelete?.(interview.id);
+    setConfirmOpen(false);
+  }
 
   return (
     <li className="rounded-md border px-3 py-2" style={{ borderColor: 'var(--line-soft)', background: 'var(--softer)' }}>
@@ -322,6 +350,44 @@ function InterviewLogItem({ interview, onEdit }: { interview: Interview; onEdit?
             <button type="button" className="btn-ghost px-2 py-1 text-xs" onClick={() => onEdit(interview)}>
               Edit
             </button>
+          )}
+          {onDelete && (
+            <AlertDialog.Root open={confirmOpen} onOpenChange={setConfirmOpen}>
+              <AlertDialog.Trigger asChild>
+                <button type="button" className="btn-ghost px-2 py-1 text-xs text-red-600 hover:bg-red-50">
+                  Delete
+                </button>
+              </AlertDialog.Trigger>
+              <AlertDialog.Portal>
+                <AlertDialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
+                <AlertDialog.Content
+                  className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border bg-white p-6 shadow-xl"
+                  style={{ borderColor: 'var(--line)' }}
+                >
+                  <AlertDialog.Title className="text-base font-bold" style={{ color: 'var(--ink)' }}>
+                    Delete Interview
+                  </AlertDialog.Title>
+                  <AlertDialog.Description className="mt-2 text-sm" style={{ color: 'var(--ink-3)' }}>
+                    Delete this {typeLabel.toLowerCase()} interview record? This cannot be undone.
+                  </AlertDialog.Description>
+                  <div className="mt-5 flex justify-end gap-2">
+                    <AlertDialog.Cancel asChild>
+                      <button type="button" className="btn-ghost text-sm text-gray-600">Cancel</button>
+                    </AlertDialog.Cancel>
+                    <AlertDialog.Action asChild>
+                      <button
+                        type="button"
+                        disabled={isSaving}
+                        onClick={handleDelete}
+                        className="btn-danger px-4 py-2 text-sm"
+                      >
+                        {isSaving ? 'Deleting...' : 'Delete'}
+                      </button>
+                    </AlertDialog.Action>
+                  </div>
+                </AlertDialog.Content>
+              </AlertDialog.Portal>
+            </AlertDialog.Root>
           )}
         </div>
       </div>

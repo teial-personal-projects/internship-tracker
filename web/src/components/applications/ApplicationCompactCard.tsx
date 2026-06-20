@@ -26,9 +26,14 @@ export function ApplicationCompactCard({ app, onEdit, onDelete, isDeleting = fal
       <div className="h-1" style={{ background: dot }} aria-hidden="true" />
 
       <div className="flex items-center justify-between gap-2 px-3 py-2">
-        <h3 className="min-w-0 truncate text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-          {app.company}
-        </h3>
+        <div className="min-w-0">
+          <h3 className="truncate text-sm font-semibold" style={{ color: 'var(--ink)' }}>
+            {app.company}
+          </h3>
+          <p className="mt-0.5 truncate text-xs" style={{ color: 'var(--ink-3)' }}>
+            {app.title}
+          </p>
+        </div>
         <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
@@ -56,6 +61,14 @@ export function ApplicationCompactCard({ app, onEdit, onDelete, isDeleting = fal
         <span className="text-xs" style={{ color: 'var(--ink-3)' }}>
           {formatDate(app.applied_date, 'Not applied')}
         </span>
+        <span className="text-xs" style={{ color: 'var(--ink-3)' }}>
+          Added {formatDate(app.added)}
+        </span>
+        {app.location && (
+          <span className="min-w-0 truncate text-xs" style={{ color: 'var(--ink-3)' }}>
+            {app.location}
+          </span>
+        )}
       </div>
 
       {onDelete && (

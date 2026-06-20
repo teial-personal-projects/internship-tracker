@@ -219,7 +219,6 @@ router.post('/:id/promote', requireAuth, async (req: Request, res, next) => {
         industry: watchlistEntry.industry ?? null,
         status: 'not_started',
         application_type: 'cold_strategic',
-        checklist_state: {},
         source: 'watchlist',
         source_metadata: { watchlist_id: id },
       })

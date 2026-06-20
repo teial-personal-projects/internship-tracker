@@ -40,6 +40,7 @@ describe('ApplicationInterviewLog', () => {
         isError={false}
         onCreate={async () => undefined}
         onUpdate={async () => undefined}
+        onDelete={async () => undefined}
       />,
     );
 
@@ -48,6 +49,7 @@ describe('ApplicationInterviewLog', () => {
     expect(markup).toContain('System Design');
     expect(markup).toContain('Technical');
     expect(markup).toContain('Edit');
+    expect(markup).toContain('Delete');
     expect(markup).toContain('Completed');
     expect(markup).toContain('With Jordan Lee');
     expect(markup).toContain('Outcome: Passed');

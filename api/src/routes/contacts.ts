@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { requireAuth, type AuthRequest } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
 import { createUserClient } from '../lib/supabase';
-import { createDoubleDownFollowUpTask, createReferralThankYouTask } from '../services/taskAutoGeneration';
 import {
   CreateContactInteractionSchema,
   CreateContactSchema,
@@ -121,17 +120,6 @@ router.post('/', requireAuth, validateBody(CreateContactSchema), async (req: Req
     if (error) {
       res.status(500).json({ error: error.message });
       return;
-    }
-
-    const applicationId = (data as { application_id?: string | null }).application_id ?? null;
-    const contactId = (data as { id: string }).id;
-    const howFound = (data as { how_found?: string | null }).how_found ?? null;
-    if (applicationId && howFound === 'referral') {
-      const { error: taskError } = await createReferralThankYouTask(db, applicationId, contactId, user.id);
-      if (taskError) {
-        res.status(500).json({ error: taskError.message });
-        return;
-      }
     }
 
     res.status(201).json({ data });
@@ -386,30 +374,6 @@ router.patch('/:id', requireAuth, validateBody(UpdateContactSchema), async (req:
     if (error) {
       res.status(500).json({ error: error.message });
       return;
-    }
-
-    const previousStatus = (contact as { outreach_status?: string | null }).outreach_status;
-    if (previousStatus !== 'double_down_sent' && body.outreach_status === 'double_down_sent') {
-      const { error: taskError } = await createDoubleDownFollowUpTask(
-        db,
-        id,
-        user.id,
-        ((data as { application_id?: string | null }).application_id ?? null),
-      );
-      if (taskError) {
-        res.status(500).json({ error: taskError.message });
-        return;
-      }
-    }
-
-    const applicationId = (data as { application_id?: string | null }).application_id ?? null;
-    const howFound = (data as { how_found?: string | null }).how_found ?? null;
-    if (applicationId && howFound === 'referral') {
-      const { error: taskError } = await createReferralThankYouTask(db, applicationId, id, user.id);
-      if (taskError) {
-        res.status(500).json({ error: taskError.message });
-        return;
-      }
     }
 
     res.json({ data });

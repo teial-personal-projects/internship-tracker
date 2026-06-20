@@ -148,7 +148,6 @@ router.post('/postings/:id/promote', requireAuth, async (req: Request, res, next
         title: p.title,
         job_link: p.url,
         status: 'not_started',
-        checklist_state: {},
         applied_date: null,
         source: 'radar',
         source_metadata: { discovered_posting_id: id },

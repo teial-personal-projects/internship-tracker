@@ -3,16 +3,10 @@ import { requireAuth, type AuthRequest } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
 import { createUserClient } from '../lib/supabase';
 import { sanitizeApplicationInput } from '../lib/sanitize';
-import { recalculateChecklist } from '../lib/checklist';
 import { computePageRange, computeTotalPages } from '../lib/pagination';
 import { applyApplicationFilters } from '../lib/applicationFilters';
 import { getPipelineCounts } from '../lib/pipelineCounts';
 import type { PipelineCountsDb } from '../lib/pipelineCounts';
-import {
-  createApplicationDoubleDownTask,
-  createFindEngineeringLeadTask,
-  createReferralThankYouTask,
-} from '../services/taskAutoGeneration';
 import {
   CreateApplicationEventSchema,
   CreateApplicationSchema,
@@ -48,12 +42,6 @@ function getApplicationSort(value: unknown): ApplicationSort {
   return typeof value === 'string' && value in APPLICATION_SORTS
     ? value as ApplicationSort
     : 'added_desc';
-}
-
-interface ApplicationTaskTriggerState {
-  status?: string | null;
-  application_type?: string | null;
-  checklist_state?: unknown;
 }
 
 // GET /api/applications
@@ -109,22 +97,6 @@ router.post('/', requireAuth, validateBody(CreateApplicationSchema), async (req:
     if (error) {
       res.status(500).json({ error: error.message });
       return;
-    }
-
-    if (data?.status === 'applied' && data?.application_type === 'cold_strategic') {
-      const { error: taskError } = await createApplicationDoubleDownTask(db, data.id, user.id);
-      if (taskError) {
-        res.status(500).json({ error: taskError.message });
-        return;
-      }
-    }
-
-    if (data?.application_type === 'cold_strategic') {
-      const { error: taskError } = await createFindEngineeringLeadTask(db, data.id, user.id);
-      if (taskError) {
-        res.status(500).json({ error: taskError.message });
-        return;
-      }
     }
 
     res.status(201).json({ data });
@@ -443,6 +415,37 @@ router.patch('/:id/interviews/:interviewId', requireAuth, validateBody(UpdateSco
   }
 });
 
+// DELETE /api/applications/:id/interviews/:interviewId
+router.delete('/:id/interviews/:interviewId', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const { id, interviewId } = req.params;
+
+    const ownership = await verifyApplicationOwnership(db, id, user.id);
+    if (ownership !== 'ok') {
+      sendOwnershipError(res, ownership);
+      return;
+    }
+
+    const { error } = await db
+      .from('interviews')
+      .delete()
+      .eq('id', interviewId)
+      .eq('application_id', id)
+      .eq('user_id', user.id);
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.json({ data: null });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // POST /api/applications/:id/contacts
 router.post('/:id/contacts', requireAuth, async (req: Request, res, next) => {
   try {
@@ -560,33 +563,7 @@ router.patch('/:id', requireAuth, validateBody(UpdateApplicationSchema), async (
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { user_id, created_at, updated_at, ...rest } = req.body as Record<string, unknown>;
-    let payload = sanitizeApplicationInput(rest);
-
-    let currentApplication: ApplicationTaskTriggerState | null = null;
-    let applicationTypeChanged = false;
-
-    if ('application_type' in rest || 'status' in rest) {
-      const { data: current } = await db
-        .from('applications')
-        .select('status, application_type, checklist_state')
-        .eq('id', id)
-        .single();
-
-      currentApplication = current as ApplicationTaskTriggerState | null;
-      const newType = (rest.application_type as string | null) ?? null;
-      const oldType = (current?.application_type as string | null) ?? null;
-
-      if ('application_type' in rest && current && newType !== oldType) {
-        applicationTypeChanged = true;
-        payload = {
-          ...payload,
-          checklist_state: recalculateChecklist(
-            (current.checklist_state ?? {}) as Record<string, boolean>,
-            newType,
-          ),
-        };
-      }
-    }
+    const payload = sanitizeApplicationInput(rest);
 
     const { data, error } = await db
       .from('applications')
@@ -602,71 +579,6 @@ router.patch('/:id', requireAuth, validateBody(UpdateApplicationSchema), async (
     if (!data) {
       res.status(404).json({ error: 'Application not found' });
       return;
-    }
-
-    const wasApplied = currentApplication?.status === 'applied';
-    const isApplied = data.status === 'applied';
-    const isColdStrategic = data.application_type === 'cold_strategic';
-    const becameApplied = 'status' in rest && !wasApplied && isApplied;
-    const becameColdApplied = 'application_type' in rest
-      && currentApplication?.application_type !== 'cold_strategic'
-      && isApplied
-      && isColdStrategic;
-
-    if (applicationTypeChanged) {
-      const { error: taskError } = await db.from('tasks').update({ status: 'skipped' })
-        .eq('application_id', id)
-        .eq('user_id', (req as AuthRequest).user.id)
-        .eq('is_auto_generated', true)
-        .eq('status', 'open');
-
-      if (taskError) {
-        res.status(500).json({ error: taskError.message });
-        return;
-      }
-    }
-
-    if (isColdStrategic && (becameApplied || becameColdApplied)) {
-      const { error: taskError } = await createApplicationDoubleDownTask(db, data.id, (req as AuthRequest).user.id);
-      if (taskError) {
-        res.status(500).json({ error: taskError.message });
-        return;
-      }
-    }
-
-    if ('application_type' in rest && currentApplication?.application_type !== 'cold_strategic' && isColdStrategic) {
-      const { error: taskError } = await createFindEngineeringLeadTask(db, data.id, (req as AuthRequest).user.id);
-      if (taskError) {
-        res.status(500).json({ error: taskError.message });
-        return;
-      }
-    }
-
-    if ('application_type' in rest && currentApplication?.application_type !== 'referral' && data.application_type === 'referral') {
-      const { data: referralContacts, error: contactsError } = await db
-        .from('contacts')
-        .select('id')
-        .eq('application_id', id)
-        .eq('user_id', (req as AuthRequest).user.id)
-        .eq('how_found', 'referral');
-
-      if (contactsError) {
-        res.status(500).json({ error: contactsError.message });
-        return;
-      }
-
-      for (const contact of referralContacts ?? []) {
-        const { error: taskError } = await createReferralThankYouTask(
-          db,
-          data.id,
-          (contact as { id: string }).id,
-          (req as AuthRequest).user.id,
-        );
-        if (taskError) {
-          res.status(500).json({ error: taskError.message });
-          return;
-        }
-      }
     }
 
     res.json({ data });

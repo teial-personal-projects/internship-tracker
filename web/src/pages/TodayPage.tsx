@@ -50,7 +50,6 @@ export function TodayPage() {
     const payload = {
       ...formData,
       application_type: formData.application_type || 'cold_strategic',
-      checklist_state: editingApp.checklist_state,
       source: editingApp.source,
       source_metadata: editingApp.source_metadata,
     };

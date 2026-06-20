@@ -229,7 +229,6 @@ interface TaskModalProps {
     application_id: string | null;
     contact_id: string | null;
     notes: string | null;
-    is_auto_generated: boolean;
   }) => void;
 }
 
@@ -253,7 +252,6 @@ function TaskModal({ isOpen, isLoading, applications, contacts, onClose, onSubmi
       application_id: applicationId || null,
       contact_id: contactId || null,
       notes: notes.trim() || null,
-      is_auto_generated: false,
     });
   }
 

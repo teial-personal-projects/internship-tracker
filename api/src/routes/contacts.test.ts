@@ -214,9 +214,7 @@ describe('contacts routes', () => {
     expect(db.rowsByTable.contacts).toHaveLength(0);
   });
 
-  it('PATCH /api/contacts/:id creates a follow-up task when outreach becomes double_down_sent', async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-05-11T12:00:00.000Z'));
+  it('PATCH /api/contacts/:id updates outreach_status', async () => {
     const db = createMockDb({
       contacts: [{
         id: CONTACT_ID,
@@ -226,7 +224,6 @@ describe('contacts routes', () => {
         application_id: APPLICATION_ID,
         outreach_status: 'applied_msg_sent',
       }],
-      tasks: [],
     });
     mockCreateUserClient.mockReturnValue(db.client);
 
@@ -236,18 +233,7 @@ describe('contacts routes', () => {
       .send({ outreach_status: 'double_down_sent' });
 
     expect(response.status).toBe(200);
-    expect(db.rowsByTable.tasks).toHaveLength(1);
-    expect(db.rowsByTable.tasks[0]).toMatchObject({
-      user_id: USER_ID,
-      title: 'Send follow-up to Ada Lovelace',
-      category: 'outreach',
-      priority: 'high',
-      status: 'open',
-      due_date: '2026-05-15',
-      application_id: APPLICATION_ID,
-      contact_id: CONTACT_ID,
-      is_auto_generated: true,
-    });
+    expect(response.body.data).toMatchObject({ outreach_status: 'double_down_sent' });
   });
 
   it('POST and GET /api/contacts/:id/interactions append and list interactions newest first', async () => {

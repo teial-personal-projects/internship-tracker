@@ -19,8 +19,6 @@ const APPLICATION_ID = '11111111-1111-4111-8111-111111111111';
 const SECOND_APPLICATION_ID = '11111111-1111-4111-8111-111111111112';
 const CONTACT_ID = '22222222-2222-4222-8222-222222222222';
 const WATCHLIST_ID = '33333333-3333-4333-8333-333333333333';
-const LEAD_TASK_ID = '44444444-4444-4444-8444-444444444441';
-const FOLLOW_UP_TASK_ID = '44444444-4444-4444-8444-444444444442';
 
 type Row = Record<string, unknown> & { id?: string };
 
@@ -184,7 +182,7 @@ function createMockDb(rowsByTable: Record<string, Row[]> = {}) {
     applications: [APPLICATION_ID, SECOND_APPLICATION_ID],
     contacts: [CONTACT_ID],
     company_watchlist: [WATCHLIST_ID],
-    tasks: [LEAD_TASK_ID, FOLLOW_UP_TASK_ID],
+    tasks: [],
   };
   const queries: Record<string, Query[]> = {};
 
@@ -215,12 +213,11 @@ describe('phase 14 final wiring', () => {
     vi.clearAllMocks();
   });
 
-  it('creates an application, sets type, adds contact, creates follow-up task, and completes it', async () => {
+  it('creates an application, updates its type, and links a contact', async () => {
     const db = createMockDb({
       applications: [],
       contacts: [],
       application_contacts: [],
-      tasks: [],
     });
     mockCreateUserClient.mockReturnValue(db.client);
 
@@ -233,9 +230,6 @@ describe('phase 14 final wiring', () => {
         status: 'not_started',
         application_type: 'other',
         added: '2026-06-18',
-        checklist_state: {},
-        source: 'manual',
-        source_metadata: {},
       });
 
     expect(createApplication.status).toBe(201);
@@ -269,28 +263,7 @@ describe('phase 14 final wiring', () => {
       .send({ outreach_status: 'double_down_sent' });
 
     expect(updateContact.status).toBe(200);
-
-    const followUpTask = db.rowsByTable.tasks.find((task) =>
-      task.title === 'Send follow-up to Jamie Rivera',
-    );
-    expect(followUpTask).toMatchObject({
-      id: FOLLOW_UP_TASK_ID,
-      user_id: USER_ID,
-      application_id: APPLICATION_ID,
-      contact_id: CONTACT_ID,
-      is_auto_generated: true,
-      status: 'open',
-    });
-
-    const completeTask = await request(app)
-      .patch(`/api/tasks/${FOLLOW_UP_TASK_ID}`)
-      .set('Authorization', 'Bearer test-token')
-      .send({ status: 'complete' });
-
-    expect(completeTask.status).toBe(200);
-    expect(db.rowsByTable.tasks.find((task) => task.id === FOLLOW_UP_TASK_ID)).toMatchObject({
-      status: 'complete',
-    });
+    expect(updateContact.body.data).toMatchObject({ outreach_status: 'double_down_sent' });
   });
 
   it('promotes a watchlist company and returns the created application in the applications list', async () => {
@@ -324,6 +297,36 @@ describe('phase 14 final wiring', () => {
       source: 'watchlist',
       source_metadata: { watchlist_id: WATCHLIST_ID },
     }));
+  });
+
+  it('deletes an interview record scoped to the application owner', async () => {
+    const interviewId = '44444444-4444-4444-8444-444444444444';
+    const db = createMockDb({
+      applications: [{
+        id: APPLICATION_ID,
+        user_id: USER_ID,
+        company: 'Interview Co',
+      }],
+      interviews: [{
+        id: interviewId,
+        user_id: USER_ID,
+        application_id: APPLICATION_ID,
+        interview_type: 'coding',
+      }],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .delete(`/api/applications/${APPLICATION_ID}/interviews/${interviewId}`)
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ data: null });
+    expect(db.rowsByTable.interviews).toEqual([]);
+    expect(db.queries.interviews.at(-1)?.calls).toContainEqual({ method: 'delete', args: [] });
+    expect(db.queries.interviews.at(-1)?.calls).toContainEqual({ method: 'eq', args: ['id', interviewId] });
+    expect(db.queries.interviews.at(-1)?.calls).toContainEqual({ method: 'eq', args: ['application_id', APPLICATION_ID] });
+    expect(db.queries.interviews.at(-1)?.calls).toContainEqual({ method: 'eq', args: ['user_id', USER_ID] });
   });
 
   it('filters applications by applied_date range and returns an empty result when none match', async () => {

@@ -200,7 +200,6 @@ export const CreateApplicationSchema = z.object({
     v => (v === '' || v == null ? 'cold_strategic' : v),
     ApplicationTypeSchema.default('cold_strategic'),
   ),
-  checklist_state: z.record(z.unknown()).default({}),
   source: ApplicationSourceSchema.default('manual'),
   source_metadata: z.record(z.unknown()).default({}),
   cover_letter: z.string().max(MAX_COVER_LETTER_LENGTH).nullable().optional(),
@@ -281,7 +280,6 @@ export const CreateTaskSchema = z.object({
   application_id: z.string().uuid().nullable().optional(),
   contact_id: z.string().uuid().nullable().optional(),
   notes: z.string().max(MAX_TASK_NOTES_LENGTH).nullable().optional(),
-  is_auto_generated: z.boolean().default(false),
 });
 
 export const UpdateTaskSchema = CreateTaskSchema.partial();
@@ -408,7 +406,6 @@ export const ApplicationSchema = z.object({
   app_link: z.string().max(MAX_URL_LENGTH).nullable(),
   status: ApplicationStatusSchema,
   application_type: ApplicationTypeSchema,
-  checklist_state: z.record(z.unknown()),
   source: ApplicationSourceSchema,
   source_metadata: z.record(z.unknown()),
   cover_letter: z.string().max(MAX_COVER_LETTER_LENGTH).nullable(),

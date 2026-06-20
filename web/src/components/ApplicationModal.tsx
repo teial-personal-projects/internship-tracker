@@ -12,6 +12,7 @@ import { ApplicationInterviewLog } from '@/components/applications/ApplicationIn
 import {
   useApplicationInterviews,
   useCreateApplicationInterview,
+  useDeleteApplicationInterview,
   useUpdateApplicationInterview,
 } from '@/hooks/useApplications';
 import { STATUS_LABELS, APPLICATION_TYPE_LABELS } from '@/theme';
@@ -52,6 +53,16 @@ interface Props {
   title?: string;
 }
 
+export function shouldWarnBeforeClosing({
+  isDirty,
+  isInterviewEditorOpen,
+}: {
+  isDirty: boolean;
+  isInterviewEditorOpen: boolean;
+}): boolean {
+  return isDirty || isInterviewEditorOpen;
+}
+
 export function ApplicationModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, title = 'Add Application' }: Props) {
   const [showDiscardWarning, setShowDiscardWarning] = useState(false);
   const [isInterviewEditorOpen, setIsInterviewEditorOpen] = useState(false);
@@ -59,6 +70,7 @@ export function ApplicationModal({ isOpen, onClose, onSubmit, isLoading, default
   const interviewsQuery = useApplicationInterviews(isOpen ? applicationId : null);
   const createInterview = useCreateApplicationInterview(applicationId);
   const updateInterview = useUpdateApplicationInterview(applicationId);
+  const deleteInterview = useDeleteApplicationInterview(applicationId);
   const { register, handleSubmit, formState: { errors, isDirty }, reset } = useForm<ApplicationFormValues>({
     defaultValues: { added: TODAY, status: 'not_started', application_type: 'cold_strategic', ...defaultValues } as Partial<ApplicationFormValues>,
   });
@@ -66,11 +78,16 @@ export function ApplicationModal({ isOpen, onClose, onSubmit, isLoading, default
   useEffect(() => {
     if (isOpen) {
       reset({ added: TODAY, status: 'not_started', application_type: 'cold_strategic', ...defaultValues } as Partial<ApplicationFormValues>);
+    } else {
+      setIsInterviewEditorOpen(false);
     }
   }, [isOpen, defaultValues, reset]);
 
   function handleClose() {
-    if (isDirty || isInterviewEditorOpen) { setShowDiscardWarning(true); return; }
+    if (shouldWarnBeforeClosing({ isDirty, isInterviewEditorOpen })) {
+      setShowDiscardWarning(true);
+      return;
+    }
     reset();
     onClose();
   }
@@ -186,9 +203,10 @@ export function ApplicationModal({ isOpen, onClose, onSubmit, isLoading, default
                   interviews={interviewsQuery.data ?? []}
                   isLoading={interviewsQuery.isLoading}
                   isError={interviewsQuery.isError}
-                  isSaving={createInterview.isPending || updateInterview.isPending}
+                  isSaving={createInterview.isPending || updateInterview.isPending || deleteInterview.isPending}
                   onCreate={(input) => createInterview.mutateAsync(input)}
                   onUpdate={(interviewId, input) => updateInterview.mutateAsync({ interviewId, data: input })}
+                  onDelete={(interviewId) => deleteInterview.mutateAsync(interviewId)}
                   onEditorOpenChange={setIsInterviewEditorOpen}
                 />
               )}
@@ -196,8 +214,13 @@ export function ApplicationModal({ isOpen, onClose, onSubmit, isLoading, default
             </div>
 
             <div className="px-6 py-4 flex justify-end gap-2 border-t bg-gray-50" style={{ borderColor: 'var(--line)' }}>
+              {isInterviewEditorOpen && (
+                <p className="text-xs self-center mr-auto" style={{ color: 'var(--amber, #b45309)' }}>
+                  Save or cancel the interview first.
+                </p>
+              )}
               <button type="button" onClick={handleClose} className="btn-ghost text-sm text-gray-600">Cancel</button>
-              <button type="submit" disabled={isLoading} className="btn-primary text-sm px-6">
+              <button type="submit" disabled={isLoading || isInterviewEditorOpen} className="btn-primary text-sm px-6">
                 {isLoading ? <span className="flex items-center gap-2"><Spinner color="white" /> Saving…</span> : 'Save'}
               </button>
             </div>

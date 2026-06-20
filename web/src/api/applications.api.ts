@@ -147,3 +147,10 @@ export async function updateApplicationInterview(
   );
   return data.data;
 }
+
+export async function deleteApplicationInterview(
+  applicationId: string,
+  interviewId: string,
+): Promise<void> {
+  await apiClient.delete(`/applications/${applicationId}/interviews/${interviewId}`);
+}

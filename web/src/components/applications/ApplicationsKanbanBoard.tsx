@@ -214,7 +214,7 @@ function KanbanCard({
   return (
     <div
       ref={setNodeRef}
-      className="cursor-grab touch-none active:cursor-grabbing"
+      className="w-full min-w-0 cursor-grab touch-none overflow-hidden active:cursor-grabbing"
       style={{ ...dragStyle, opacity: isDragging ? 0.7 : 1, zIndex: isDragging ? 20 : undefined, position: 'relative' }}
       {...attributes}
       {...listeners}

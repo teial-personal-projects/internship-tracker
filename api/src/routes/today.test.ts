@@ -176,7 +176,6 @@ describe('GET /api/today', () => {
       data: {
         stats: {
           applications: 0,
-          phone_screens: 0,
           open_tasks: 0,
           interviews_this_week: 0,
         },
@@ -185,9 +184,8 @@ describe('GET /api/today', () => {
         need_attention: [],
         funnel: [
           { key: 'applied', label: 'Applied', count: 0, percent: 0 },
-          { key: 'screening', label: 'Phone screen', count: 0, percent: 0 },
-          { key: 'technical', label: 'Technical', count: 0, percent: 0 },
-          { key: 'final_offer', label: 'Final / Offer', count: 0, percent: 0 },
+          { key: 'interviewing', label: 'Interviewing', count: 0, percent: 0 },
+          { key: 'offered', label: 'Offered', count: 0, percent: 0 },
         ],
         overdue_follow_ups: [],
         recent_contacts: [],

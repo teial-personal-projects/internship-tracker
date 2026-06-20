@@ -11,6 +11,7 @@ import type {
   Interview,
   UpdateApplicationSchemaType,
 } from '@shared/schemas';
+import { todayKeys } from './useToday';
 
 export const applicationKeys = {
   all: ['applications'] as const,
@@ -120,12 +121,30 @@ export function useUpdateApplicationInterview(applicationId: string | null) {
   });
 }
 
+export function useDeleteApplicationInterview(applicationId: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (interviewId: string) =>
+      applicationsApi.deleteApplicationInterview(applicationId as string, interviewId),
+    onSuccess: (_, interviewId) => {
+      if (!applicationId) return;
+
+      qc.setQueryData<Interview[]>(
+        applicationKeys.interviews(applicationId),
+        (current) => (current ?? []).filter((item) => item.id !== interviewId),
+      );
+      qc.invalidateQueries({ queryKey: ['today'] });
+    },
+  });
+}
+
 export function useCreateApplication() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: CreateApplicationSchemaType) => applicationsApi.createApplication(input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: applicationKeys.all });
+      qc.invalidateQueries({ queryKey: todayKeys.all });
     },
   });
 }
@@ -137,6 +156,7 @@ export function useUpdateApplication() {
       applicationsApi.updateApplication(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: applicationKeys.all });
+      qc.invalidateQueries({ queryKey: todayKeys.all });
     },
   });
 }
@@ -147,6 +167,7 @@ export function useDeleteApplication() {
     mutationFn: (id: string) => applicationsApi.deleteApplication(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: applicationKeys.all });
+      qc.invalidateQueries({ queryKey: todayKeys.all });
     },
   });
 }
