@@ -30,9 +30,6 @@ export function ApplicationCompactCard({ app, onEdit, onDelete, isDeleting = fal
           <h3 className="truncate text-sm font-semibold" style={{ color: 'var(--ink)' }}>
             {app.company}
           </h3>
-          <p className="mt-0.5 truncate text-xs" style={{ color: 'var(--ink-3)' }}>
-            {app.title}
-          </p>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <button
@@ -64,9 +61,12 @@ export function ApplicationCompactCard({ app, onEdit, onDelete, isDeleting = fal
         <span className="text-xs" style={{ color: 'var(--ink-3)' }}>
           Added {formatDate(app.added)}
         </span>
-        {app.location && (
-          <span className="min-w-0 truncate text-xs" style={{ color: 'var(--ink-3)' }}>
-            {app.location}
+        {app.deadline && (
+          <span
+            className="rounded-full border px-2 py-0.5 text-xs font-bold"
+            style={{ background: '#FFF7ED', borderColor: '#FDBA74', color: '#C2410C' }}
+          >
+            Deadline {formatDate(app.deadline)}
           </span>
         )}
       </div>

@@ -1,13 +1,22 @@
 import type { Application, ApplicationStatus } from '@shared/schemas';
 
-export type OptimisticStatuses = Record<string, ApplicationStatus>;
+export type OptimisticApplicationPatch = Partial<Pick<Application, 'status' | 'applied_date' | 'updated_at'>>;
+export type OptimisticStatuses = Record<string, OptimisticApplicationPatch>;
 
 export function applyOptimisticStatus(
   current: OptimisticStatuses,
   applicationId: string,
   status: ApplicationStatus,
 ): OptimisticStatuses {
-  return { ...current, [applicationId]: status };
+  return applyOptimisticApplicationPatch(current, applicationId, { status });
+}
+
+export function applyOptimisticApplicationPatch(
+  current: OptimisticStatuses,
+  applicationId: string,
+  patch: OptimisticApplicationPatch,
+): OptimisticStatuses {
+  return { ...current, [applicationId]: { ...current[applicationId], ...patch } };
 }
 
 export function rollbackOptimisticStatus(
@@ -27,7 +36,8 @@ export function reconcileOptimisticStatuses(
   const next = { ...current };
 
   for (const app of applications) {
-    if (next[app.id] && next[app.id] === app.status) {
+    const patch = next[app.id];
+    if (patch && isOptimisticPatchConfirmed(app, patch)) {
       delete next[app.id];
       changed = true;
     }
@@ -41,7 +51,14 @@ export function applyOptimisticStatuses(
   optimisticStatuses: OptimisticStatuses,
 ): Application[] {
   return applications.map((app) => {
-    const status = optimisticStatuses[app.id];
-    return status ? { ...app, status } : app;
+    const patch = optimisticStatuses[app.id];
+    return patch ? { ...app, ...patch } : app;
   });
+}
+
+function isOptimisticPatchConfirmed(app: Application, patch: OptimisticApplicationPatch): boolean {
+  if (patch.status && app.status !== patch.status) return false;
+  if (patch.applied_date !== undefined && app.applied_date !== patch.applied_date) return false;
+
+  return true;
 }

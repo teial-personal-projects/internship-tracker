@@ -25,10 +25,11 @@ import { getApplicationsContentState } from '@/lib/applicationsContentState';
 import { buildApplicationsListParams, hasApplicationListFilters, toggleStatusFilter } from '@/lib/applicationsListParams';
 import { getApplicationsPaging, GRID_PAGE_LIMIT, KANBAN_PAGE_LIMIT, shouldShowKanbanLimitHint } from '@/lib/applicationsLoading';
 import {
-  applyOptimisticStatus,
+  applyOptimisticApplicationPatch,
   applyOptimisticStatuses,
   reconcileOptimisticStatuses,
   rollbackOptimisticStatus,
+  type OptimisticStatuses,
 } from '@/lib/applicationsOptimisticStatus';
 import {
   getApplicationsView,
@@ -68,7 +69,7 @@ export function ApplicationsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingApp, setEditingApp] = useState<Application | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, ApplicationStatus>>({});
+  const [optimisticStatuses, setOptimisticStatuses] = useState<OptimisticStatuses>({});
   const [showArchived, setShowArchived] = useState(false);
   const paging = useMemo(() => getApplicationsPaging(effectiveView, page), [page, effectiveView]);
 
@@ -190,9 +191,21 @@ export function ApplicationsPage() {
   async function handleKanbanStatusChange(app: Application, nextStatus: ApplicationStatus) {
     if (app.status === nextStatus) return;
 
-    setOptimisticStatuses((current) => applyOptimisticStatus(current, app.id, nextStatus));
+    const draggedAt = new Date().toISOString();
+    const appliedDate = nextStatus === 'applied' ? TODAY : app.applied_date;
+    const optimisticPatch = {
+      status: nextStatus,
+      applied_date: appliedDate,
+      updated_at: draggedAt,
+    };
+    const updatePayload = {
+      status: nextStatus,
+      ...(nextStatus === 'applied' && { applied_date: TODAY }),
+    };
+
+    setOptimisticStatuses((current) => applyOptimisticApplicationPatch(current, app.id, optimisticPatch));
     try {
-      await updateApp.mutateAsync({ id: app.id, data: { status: nextStatus } });
+      await updateApp.mutateAsync({ id: app.id, data: updatePayload });
     } catch {
       setOptimisticStatuses((current) => rollbackOptimisticStatus(current, app.id));
       toast.error('Status update failed');

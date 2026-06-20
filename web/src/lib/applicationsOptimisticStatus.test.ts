@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Application } from '@shared/schemas';
 import {
+  applyOptimisticApplicationPatch,
   applyOptimisticStatus,
   applyOptimisticStatuses,
   reconcileOptimisticStatuses,
@@ -37,6 +38,20 @@ describe('applications optimistic status helpers', () => {
     expect(applyOptimisticStatuses([application], optimistic)[0].status).toBe('interviewing');
   });
 
+  it('applies optimistic applied date and updated date fields', () => {
+    const optimistic = applyOptimisticApplicationPatch({}, application.id, {
+      status: 'applied',
+      applied_date: '2026-06-20',
+      updated_at: '2026-06-20T12:00:00.000Z',
+    });
+
+    expect(applyOptimisticStatuses([application], optimistic)[0]).toMatchObject({
+      status: 'applied',
+      applied_date: '2026-06-20',
+      updated_at: '2026-06-20T12:00:00.000Z',
+    });
+  });
+
   it('rolls back a failed status update to the server-backed status', () => {
     const optimistic = applyOptimisticStatus({}, application.id, 'interviewing');
     const rolledBack = rollbackOptimisticStatus(optimistic, application.id);
@@ -47,6 +62,21 @@ describe('applications optimistic status helpers', () => {
   it('clears optimistic state after refetched data confirms the new status', () => {
     const optimistic = applyOptimisticStatus({}, application.id, 'interviewing');
     const confirmed = { ...application, status: 'interviewing' as const };
+
+    expect(reconcileOptimisticStatuses(optimistic, [confirmed])).toEqual({});
+  });
+
+  it('clears optimistic applied moves even when the server returns its own updated_at timestamp', () => {
+    const optimistic = applyOptimisticApplicationPatch({}, application.id, {
+      status: 'applied',
+      applied_date: '2026-06-20',
+      updated_at: '2026-06-20T12:00:00.000Z',
+    });
+    const confirmed = {
+      ...application,
+      applied_date: '2026-06-20',
+      updated_at: '2026-06-20T12:00:01.000Z',
+    };
 
     expect(reconcileOptimisticStatuses(optimistic, [confirmed])).toEqual({});
   });

@@ -7,6 +7,7 @@ import {
   KANBAN_COLLAPSED_CARD_LIMIT,
   getKanbanStatusMove,
   groupApplicationsByStatus,
+  sortApplicationsByUpdatedAt,
 } from './ApplicationsKanbanBoard';
 
 function makeApplication(overrides: Partial<Application> = {}): Application {
@@ -80,7 +81,7 @@ describe('ApplicationsKanbanBoard', () => {
   it('renders required card fields and actions from the filtered result set', () => {
     const markup = renderToStaticMarkup(
       <ApplicationsKanbanBoard
-        applications={[makeApplication({ applied_date: null })]}
+        applications={[makeApplication({ applied_date: null, deadline: '2026-03-15' })]}
         onEdit={vi.fn()}
         onDelete={vi.fn()}
         onStatusChange={vi.fn()}
@@ -89,10 +90,11 @@ describe('ApplicationsKanbanBoard', () => {
     );
 
     expect(markup).toContain('Acme Robotics');
-    expect(markup).toContain('Controls Engineering Intern');
+    expect(markup).not.toContain('Controls Engineering Intern');
     expect(markup).toContain('Not applied');
     expect(markup).toContain('02/01/2026');
-    expect(markup).toContain('Pasadena, CA');
+    expect(markup).not.toContain('Pasadena, CA');
+    expect(markup).toContain('Deadline 03/15/2026');
     expect(markup).toContain('Edit');
     expect(markup).toContain('aria-label="Delete"');
   });
@@ -123,6 +125,14 @@ describe('ApplicationsKanbanBoard', () => {
     expect(getKanbanStatusMove(interviewingApp, 'interviewing')).toBeNull();
     expect(getKanbanStatusMove(app, 'unknown')).toBeNull();
     expect(getKanbanStatusMove(undefined, 'interviewing')).toBeNull();
+  });
+
+  it('sorts lane cards by most recently updated first', () => {
+    expect(sortApplicationsByUpdatedAt([
+      makeApplication({ id: 'older', company: 'Older', updated_at: '2026-02-01T12:00:00.000Z' }),
+      makeApplication({ id: 'newer', company: 'Newer', updated_at: '2026-02-03T12:00:00.000Z' }),
+      makeApplication({ id: 'middle', company: 'Middle', updated_at: '2026-02-02T12:00:00.000Z' }),
+    ]).map((app) => app.id)).toEqual(['newer', 'middle', 'older']);
   });
 
   it('limits each lane preview and provides a way to show the remaining cards', () => {

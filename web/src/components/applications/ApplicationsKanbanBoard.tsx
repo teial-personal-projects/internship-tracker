@@ -55,6 +55,15 @@ export function groupApplicationsByStatus(applications: Application[]): Applicat
   return grouped;
 }
 
+export function sortApplicationsByUpdatedAt(applications: Application[]): Application[] {
+  return [...applications].sort((left, right) => {
+    const byUpdatedAt = Date.parse(right.updated_at) - Date.parse(left.updated_at);
+    if (byUpdatedAt !== 0) return byUpdatedAt;
+
+    return left.company.localeCompare(right.company);
+  });
+}
+
 export function getKanbanStatusMove(
   app: Application | undefined,
   targetStatus: string | undefined,
@@ -117,7 +126,7 @@ export function ApplicationsKanbanBoard({
         <div className="w-full max-w-full min-w-0 overflow-x-auto overflow-y-hidden pb-2">
           <div className="flex min-w-max gap-3">
             {APPLICATION_KANBAN_STATUSES.map((status) => {
-              const laneApplications = grouped[status];
+            const laneApplications = sortApplicationsByUpdatedAt(grouped[status]);
               return (
                 <KanbanLane
                   key={status}

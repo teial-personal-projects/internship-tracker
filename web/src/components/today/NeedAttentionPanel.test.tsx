@@ -21,7 +21,7 @@ const application: Application = {
   pay: null,
   added: '2026-02-01',
   applied_date: '2026-02-03',
-  deadline: null,
+  deadline: '2026-03-15',
   created_at: '2026-02-01T12:00:00.000Z',
   updated_at: '2026-02-04T12:00:00.000Z',
 };
@@ -32,9 +32,10 @@ describe('NeedAttentionPanel', () => {
 
     expect(markup).toContain('Applications');
     expect(markup).toContain('Acme Robotics');
-    expect(markup).toContain('Controls Engineering Intern');
+    expect(markup).not.toContain('Controls Engineering Intern');
     expect(markup).toContain('Applied');
     expect(markup).toContain('02/03/2026');
+    expect(markup).toContain('Deadline 03/15/2026');
     expect(markup).toContain('grid gap-3');
   });
 });
