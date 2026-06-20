@@ -111,8 +111,8 @@ describe('ApplicationsKanbanBoard', () => {
     );
 
     expect(markup).toContain('w-full max-w-full min-w-0 overflow-x-auto overflow-y-hidden');
-    expect(markup).toContain('w-[min(18rem,calc(100vw-2rem))] shrink-0');
-    expect(markup).toContain('sm:w-72');
+    expect(markup).toContain('w-[min(16rem,calc(100vw-2rem))] shrink-0');
+    expect(markup).toContain('sm:w-64');
     expect(markup).toContain('w-full min-w-0 cursor-grab touch-none overflow-hidden');
   });
 

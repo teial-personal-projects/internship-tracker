@@ -182,7 +182,7 @@ function KanbanLane({
     <section
       ref={setNodeRef}
       aria-label={STATUS_LABELS[status] ?? status}
-      className="flex max-h-[68vh] w-[min(18rem,calc(100vw-2rem))] shrink-0 flex-col rounded-lg border sm:w-72"
+      className="flex max-h-[68vh] w-[min(16rem,calc(100vw-2rem))] shrink-0 flex-col rounded-lg border sm:w-64"
       style={{
         background: isOver ? 'var(--accent-tint)' : 'var(--softer)',
         borderColor: isOver ? 'var(--accent)' : 'var(--line)',

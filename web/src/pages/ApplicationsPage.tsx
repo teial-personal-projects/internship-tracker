@@ -19,7 +19,6 @@ import { ApplicationCardList } from '@/components/ApplicationCardList';
 import { ApplicationsKanbanBoard } from '@/components/applications/ApplicationsKanbanBoard';
 import { ApplicationModal, type ApplicationFormValues } from '@/components/ApplicationModal';
 import { ActionItemsPanel } from '@/components/today/ActionItemsPanel';
-import { OverdueFollowupsPanel } from '@/components/today/OverdueFollowupsPanel';
 import { RecentContactsPanel } from '@/components/today/RecentContactsPanel';
 import { getApplicationsContentState } from '@/lib/applicationsContentState';
 import { buildApplicationsListParams, hasApplicationListFilters, toggleStatusFilter } from '@/lib/applicationsListParams';
@@ -407,7 +406,6 @@ function ApplicationsRightRail({
 
   return (
     <aside className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-36 xl:self-start">
-      <OverdueFollowupsPanel contacts={data.overdue_follow_ups} />
       <ActionItemsPanel actionItems={data.action_items} totalOpenTasks={data.stats.open_tasks} />
       <RecentContactsPanel contacts={data.recent_contacts} />
     </aside>
