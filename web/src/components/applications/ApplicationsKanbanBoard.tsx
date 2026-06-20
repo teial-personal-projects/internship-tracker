@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import * as Dialog from '@radix-ui/react-dialog';
 import {
   DndContext,
   KeyboardSensor,
@@ -12,6 +14,7 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { X } from 'lucide-react';
 import type { Application, ApplicationStatus } from '@shared/schemas';
 import { ApplicationCompactCard } from '@/components/applications/ApplicationCompactCard';
 import { STATUS_COLORS, STATUS_LABELS } from '@/theme';
@@ -27,6 +30,8 @@ export const APPLICATION_KANBAN_STATUSES = [
 
 export type ApplicationKanbanStatus = (typeof APPLICATION_KANBAN_STATUSES)[number];
 export type ApplicationsByStatus = Record<ApplicationKanbanStatus, Application[]>;
+export const KANBAN_COLLAPSED_CARD_LIMIT = 4;
+
 const KANBAN_STATUS_BY_APPLICATION_STATUS: Record<ApplicationStatus, ApplicationKanbanStatus> = {
   not_started: 'not_started',
   in_progress: 'in_progress',
@@ -92,6 +97,7 @@ export function ApplicationsKanbanBoard({
 }: Props) {
   const grouped = groupApplicationsByStatus(applications);
   const appById = new Map(applications.map((app) => [app.id, app]));
+  const [activeLane, setActiveLane] = useState<ApplicationKanbanStatus | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -106,25 +112,40 @@ export function ApplicationsKanbanBoard({
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={kanbanCollisionDetection} onDragEnd={handleDragEnd}>
-      <div className="w-full max-w-full min-w-0 overflow-x-auto overflow-y-hidden pb-2">
-        <div className="flex min-w-max gap-3">
-          {APPLICATION_KANBAN_STATUSES.map((status) => {
-            const laneApplications = grouped[status];
-            return (
-              <KanbanLane
-                key={status}
-                status={status}
-                applications={laneApplications}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                deletingId={deletingId}
-              />
-            );
-          })}
+    <>
+      <DndContext sensors={sensors} collisionDetection={kanbanCollisionDetection} onDragEnd={handleDragEnd}>
+        <div className="w-full max-w-full min-w-0 overflow-x-auto overflow-y-hidden pb-2">
+          <div className="flex min-w-max gap-3">
+            {APPLICATION_KANBAN_STATUSES.map((status) => {
+              const laneApplications = grouped[status];
+              return (
+                <KanbanLane
+                  key={status}
+                  status={status}
+                  applications={laneApplications}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onViewAll={() => setActiveLane(status)}
+                  deletingId={deletingId}
+                />
+              );
+            })}
+          </div>
         </div>
-      </div>
-    </DndContext>
+      </DndContext>
+
+      <KanbanLaneDialog
+        status={activeLane}
+        applications={activeLane ? grouped[activeLane] : []}
+        deletingId={deletingId}
+        onClose={() => setActiveLane(null)}
+        onEdit={(app) => {
+          setActiveLane(null);
+          onEdit(app);
+        }}
+        onDelete={onDelete}
+      />
+    </>
   );
 }
 
@@ -133,16 +154,20 @@ function KanbanLane({
   applications,
   onEdit,
   onDelete,
+  onViewAll,
   deletingId,
 }: {
-  status: ApplicationStatus;
+  status: ApplicationKanbanStatus;
   applications: Application[];
   onEdit: (app: Application) => void;
   onDelete: (id: string) => void;
+  onViewAll: () => void;
   deletingId: string | null;
 }) {
   const colors = STATUS_COLORS[status] ?? { bg: 'var(--soft)', color: 'var(--ink-3)', dot: 'var(--ink-4)' };
   const { isOver, setNodeRef } = useDroppable({ id: status });
+  const visibleApplications = applications.slice(0, KANBAN_COLLAPSED_CARD_LIMIT);
+  const hiddenCount = applications.length - visibleApplications.length;
 
   return (
     <section
@@ -176,7 +201,7 @@ function KanbanLane({
           </div>
         ) : (
           <>
-            {applications.map((app) => (
+            {visibleApplications.map((app) => (
               <KanbanCard
                 key={app.id}
                 app={app}
@@ -185,10 +210,78 @@ function KanbanLane({
                 isDeleting={deletingId === app.id}
               />
             ))}
+            {hiddenCount > 0 && (
+              <button
+                type="button"
+                className="rounded-md border border-dashed bg-white px-3 py-2 text-xs font-semibold transition hover:bg-[var(--soft)]"
+                style={{ borderColor: 'var(--line)', color: 'var(--ink-3)' }}
+                onClick={onViewAll}
+              >
+                View {hiddenCount} more
+              </button>
+            )}
           </>
         )}
       </div>
     </section>
+  );
+}
+
+function KanbanLaneDialog({
+  status,
+  applications,
+  deletingId,
+  onClose,
+  onEdit,
+  onDelete,
+}: {
+  status: ApplicationKanbanStatus | null;
+  applications: Application[];
+  deletingId: string | null;
+  onClose: () => void;
+  onEdit: (app: Application) => void;
+  onDelete: (id: string) => void;
+}) {
+  const label = status ? STATUS_LABELS[status] ?? status : '';
+
+  return (
+    <Dialog.Root open={status !== null} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" />
+        <Dialog.Content
+          className="fixed left-1/2 top-1/2 z-50 flex max-h-[82vh] w-[min(52rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg border bg-white shadow-xl"
+          style={{ borderColor: 'var(--line)' }}
+        >
+          <div className="flex items-center justify-between gap-3 border-b px-4 py-3" style={{ borderColor: 'var(--line)', background: 'var(--soft)' }}>
+            <Dialog.Title className="text-base font-bold" style={{ color: 'var(--ink)' }}>
+              {label}
+            </Dialog.Title>
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-semibold tabular-nums" style={{ color: 'var(--ink-3)' }}>
+                {applications.length} applications
+              </span>
+              <Dialog.Close asChild>
+                <button type="button" aria-label="Close" className="rounded p-1 hover:bg-black/10">
+                  <X size={18} />
+                </button>
+              </Dialog.Close>
+            </div>
+          </div>
+
+          <div className="grid gap-3 overflow-y-auto p-4 sm:grid-cols-2">
+            {applications.map((app) => (
+              <ApplicationCompactCard
+                key={app.id}
+                app={app}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                isDeleting={deletingId === app.id}
+              />
+            ))}
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 

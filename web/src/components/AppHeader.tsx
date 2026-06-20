@@ -12,7 +12,7 @@ export function AppHeader() {
       <div className="flex items-center justify-between px-4 sm:px-6 py-3 gap-4">
 
         {/* Brand mark + wordmark */}
-        <Link to="/today" className="flex items-center gap-3 hover:opacity-90 transition-opacity shrink-0">
+        <Link to="/applications" className="flex items-center gap-3 hover:opacity-90 transition-opacity shrink-0">
           <div
             className="w-10 h-10 flex items-center justify-center shrink-0"
             style={{ background: 'var(--accent)', borderRadius: 11 }}

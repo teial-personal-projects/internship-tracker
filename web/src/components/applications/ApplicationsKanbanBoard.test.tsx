@@ -4,6 +4,7 @@ import type { Application } from '@shared/schemas';
 import {
   APPLICATION_KANBAN_STATUSES,
   ApplicationsKanbanBoard,
+  KANBAN_COLLAPSED_CARD_LIMIT,
   getKanbanStatusMove,
   groupApplicationsByStatus,
 } from './ApplicationsKanbanBoard';
@@ -124,7 +125,7 @@ describe('ApplicationsKanbanBoard', () => {
     expect(getKanbanStatusMove(undefined, 'interviewing')).toBeNull();
   });
 
-  it('shows all cards in a lane via scroll rather than hiding them', () => {
+  it('limits each lane preview and provides a way to show the remaining cards', () => {
     const applications = Array.from({ length: 7 }, (_, index) => (
       makeApplication({
         id: `11111111-1111-4111-8111-${String(index).padStart(12, '0')}`,
@@ -143,7 +144,10 @@ describe('ApplicationsKanbanBoard', () => {
     );
 
     expect(markup).toContain('Company 1');
-    expect(markup).toContain('Company 7');
-    expect(markup).not.toContain('more hidden');
+    expect(markup).toContain(`Company ${KANBAN_COLLAPSED_CARD_LIMIT}`);
+    expect(markup).not.toContain(`Company ${KANBAN_COLLAPSED_CARD_LIMIT + 1}`);
+    expect(markup).not.toContain('Company 7');
+    expect(markup).toContain('View 3 more');
+    expect(markup).not.toContain('Show fewer');
   });
 });
