@@ -4,6 +4,7 @@ import { requireAuth, type AuthRequest } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
 import { createUserClient } from '../lib/supabase';
 import { sanitizeWatchlistInput } from '../lib/sanitize';
+import { sendApplicationSourceMigrationError } from '../lib/schemaCache';
 import {
   CreateCompanyWatchlistEntrySchema,
   UpdateCompanyWatchlistEntrySchema,
@@ -225,6 +226,9 @@ router.post('/:id/promote', requireAuth, async (req: Request, res, next) => {
       .select('id')
       .single();
 
+    if (sendApplicationSourceMigrationError(res, applicationError)) {
+      return;
+    }
     if (applicationError || !application) {
       res.status(500).json({ error: applicationError?.message ?? 'Failed to create application' });
       return;

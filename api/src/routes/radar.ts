@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireAuth, type AuthRequest } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
 import { createUserClient } from '../lib/supabase';
+import { sendApplicationSourceMigrationError } from '../lib/schemaCache';
 import { refreshRadarSource, type RadarRefreshDb } from '../radar/refreshRadarSource';
 import type { AtsType } from '@internship-tracker/shared';
 import type { Request, Response } from 'express';
@@ -155,6 +156,9 @@ router.post('/postings/:id/promote', requireAuth, async (req: Request, res, next
       .select('id')
       .single();
 
+    if (sendApplicationSourceMigrationError(res, applicationError)) {
+      return;
+    }
     if (applicationError || !application) {
       res.status(500).json({ error: applicationError?.message ?? 'Failed to create application' });
       return;
