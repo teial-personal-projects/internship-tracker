@@ -13,11 +13,6 @@ export const STATUS_COLORS: Record<string, { bg: string; color: string; dot: str
 
   // v2 statuses
   phone_screen:    { bg: '#F7D9CD', color: '#A8442A', dot: '#A8442A' },
-  screening:       { bg: '#F7D9CD', color: '#A8442A', dot: '#A8442A' },
-  technical:       { bg: '#E0DAF0', color: '#7C6CB0', dot: '#7C6CB0' },
-  on_site:         { bg: '#DDE8DF', color: '#6B8F7A', dot: '#6B8F7A' },
-  final_round:     { bg: '#DDE8DF', color: '#6B8F7A', dot: '#6B8F7A' },
-  withdrawn:       { bg: '#F3E9D7', color: '#B8BECF', dot: '#B8BECF' },
 };
 
 export const STATUS_LABELS: Record<string, string> = {
@@ -32,11 +27,6 @@ export const STATUS_LABELS: Record<string, string> = {
   archive:         'Archive',
   other:           'Other',
   phone_screen:    'Phone Screen',
-  screening:       'Screening',
-  technical:       'Technical',
-  on_site:         'On Site',
-  final_round:     'Final Round',
-  withdrawn:       'Withdrawn',
 };
 
 export const INTERVIEW_TYPE_LABELS: Record<string, string> = {

@@ -31,14 +31,9 @@ const KANBAN_STATUS_BY_APPLICATION_STATUS: Record<ApplicationStatus, Application
   not_started: 'not_started',
   in_progress: 'in_progress',
   applied: 'applied',
-  screening: 'interviewing',
   interviewing: 'interviewing',
-  technical: 'interviewing',
-  on_site: 'interviewing',
-  final_round: 'interviewing',
   offered: 'offered',
   rejected: 'rejected',
-  withdrawn: 'rejected',
   archive: 'rejected',
 };
 

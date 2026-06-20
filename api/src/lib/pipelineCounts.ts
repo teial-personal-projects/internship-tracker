@@ -39,18 +39,9 @@ const TODAY_BUCKETS: Array<{
   label: string;
   statuses: ApplicationStatus[];
 }> = [
-  {
-    key: 'applied',
-    label: 'Applied',
-    statuses: ['applied', 'screening', 'interviewing', 'technical', 'on_site', 'final_round', 'offered'],
-  },
-  {
-    key: 'screening',
-    label: 'Phone screen',
-    statuses: ['screening', 'interviewing', 'technical', 'on_site', 'final_round', 'offered'],
-  },
-  { key: 'technical', label: 'Technical', statuses: ['technical', 'on_site', 'final_round', 'offered'] },
-  { key: 'final_offer', label: 'Final / Offer', statuses: ['final_round', 'offered'] },
+  { key: 'applied',      label: 'Applied',      statuses: ['applied', 'interviewing', 'offered'] },
+  { key: 'interviewing', label: 'Interviewing',  statuses: ['interviewing', 'offered'] },
+  { key: 'offered',      label: 'Offered',       statuses: ['offered'] },
 ];
 
 function emptyPipelineCounts(): PipelineCounts {

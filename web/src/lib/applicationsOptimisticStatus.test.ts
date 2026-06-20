@@ -33,27 +33,27 @@ const application: Application = {
 
 describe('applications optimistic status helpers', () => {
   it('applies an optimistic status so the card moves immediately', () => {
-    const optimistic = applyOptimisticStatus({}, application.id, 'technical');
+    const optimistic = applyOptimisticStatus({}, application.id, 'interviewing');
 
-    expect(applyOptimisticStatuses([application], optimistic)[0].status).toBe('technical');
+    expect(applyOptimisticStatuses([application], optimistic)[0].status).toBe('interviewing');
   });
 
   it('rolls back a failed status update to the server-backed status', () => {
-    const optimistic = applyOptimisticStatus({}, application.id, 'technical');
+    const optimistic = applyOptimisticStatus({}, application.id, 'interviewing');
     const rolledBack = rollbackOptimisticStatus(optimistic, application.id);
 
     expect(applyOptimisticStatuses([application], rolledBack)[0].status).toBe('applied');
   });
 
   it('clears optimistic state after refetched data confirms the new status', () => {
-    const optimistic = applyOptimisticStatus({}, application.id, 'technical');
-    const confirmed = { ...application, status: 'technical' as const };
+    const optimistic = applyOptimisticStatus({}, application.id, 'interviewing');
+    const confirmed = { ...application, status: 'interviewing' as const };
 
     expect(reconcileOptimisticStatuses(optimistic, [confirmed])).toEqual({});
   });
 
   it('keeps optimistic state while refetched data has not caught up', () => {
-    const optimistic = applyOptimisticStatus({}, application.id, 'technical');
+    const optimistic = applyOptimisticStatus({}, application.id, 'interviewing');
 
     expect(reconcileOptimisticStatuses(optimistic, [application])).toBe(optimistic);
   });

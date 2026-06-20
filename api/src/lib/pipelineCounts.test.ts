@@ -55,14 +55,14 @@ describe('getPipelineCounts', () => {
     const query = new PipelineQuery([
       { user_id: 'user-1', status: 'applied' },
       { user_id: 'user-1', status: 'applied' },
-      { user_id: 'user-1', status: 'screening' },
+      { user_id: 'user-1', status: 'interviewing' },
       { user_id: 'user-2', status: 'offered' },
     ]);
 
     const result = await getPipelineCounts(createDb(query), 'user-1');
 
     expect(result.counts.applied).toBe(2);
-    expect(result.counts.screening).toBe(1);
+    expect(result.counts.interviewing).toBe(1);
     expect(result.counts.offered).toBe(0);
     expect(result.counts.not_started).toBe(0);
     expect(result.total).toBe(3);
@@ -73,10 +73,10 @@ describe('getPipelineCounts', () => {
     const query = new PipelineQuery([
       { user_id: 'user-1', status: 'not_started' },
       { user_id: 'user-1', status: 'in_progress' },
-      { user_id: 'user-1', status: 'technical' },
-      { user_id: 'user-1', status: 'final_round' },
+      { user_id: 'user-1', status: 'interviewing' },
       { user_id: 'user-1', status: 'offered' },
-      { user_id: 'user-2', status: 'technical' },
+      { user_id: 'user-1', status: 'rejected' },
+      { user_id: 'user-2', status: 'interviewing' },
     ]);
 
     const result = await getPipelineCounts(createDb(query), 'user-1');
@@ -92,19 +92,16 @@ describe('getTodayPipelineBuckets', () => {
     const result = await getPipelineCounts(
       createDb(new PipelineQuery([
         { user_id: 'user-1', status: 'applied' },
-        { user_id: 'user-1', status: 'screening' },
-        { user_id: 'user-1', status: 'technical' },
-        { user_id: 'user-1', status: 'final_round' },
+        { user_id: 'user-1', status: 'interviewing' },
         { user_id: 'user-1', status: 'offered' },
       ])),
       'user-1',
     );
 
     expect(getTodayPipelineBuckets(result)).toEqual([
-      { key: 'applied', label: 'Applied', count: 5, percent: 100 },
-      { key: 'screening', label: 'Phone screen', count: 4, percent: 80 },
-      { key: 'technical', label: 'Technical', count: 3, percent: 60 },
-      { key: 'final_offer', label: 'Final / Offer', count: 2, percent: 40 },
+      { key: 'applied',      label: 'Applied',      count: 3, percent: 100 },
+      { key: 'interviewing', label: 'Interviewing',  count: 2, percent: 66.7 },
+      { key: 'offered',      label: 'Offered',       count: 1, percent: 33.3 },
     ]);
   });
 
@@ -118,10 +115,9 @@ describe('getTodayPipelineBuckets', () => {
     );
 
     expect(getTodayPipelineBuckets(result)).toEqual([
-      { key: 'applied', label: 'Applied', count: 0, percent: 0 },
-      { key: 'screening', label: 'Phone screen', count: 0, percent: 0 },
-      { key: 'technical', label: 'Technical', count: 0, percent: 0 },
-      { key: 'final_offer', label: 'Final / Offer', count: 0, percent: 0 },
+      { key: 'applied',      label: 'Applied',      count: 0, percent: 0 },
+      { key: 'interviewing', label: 'Interviewing',  count: 0, percent: 0 },
+      { key: 'offered',      label: 'Offered',       count: 0, percent: 0 },
     ]);
   });
 
@@ -129,21 +125,18 @@ describe('getTodayPipelineBuckets', () => {
     const distributions: ApplicationRow[][] = [
       [
         { user_id: 'user-1', status: 'applied' },
-        { user_id: 'user-1', status: 'screening' },
-        { user_id: 'user-1', status: 'technical' },
-        { user_id: 'user-1', status: 'final_round' },
+        { user_id: 'user-1', status: 'interviewing' },
+        { user_id: 'user-1', status: 'offered' },
       ],
       [
-        { user_id: 'user-1', status: 'screening' },
-        { user_id: 'user-1', status: 'screening' },
-        { user_id: 'user-1', status: 'on_site' },
+        { user_id: 'user-1', status: 'applied' },
+        { user_id: 'user-1', status: 'interviewing' },
         { user_id: 'user-1', status: 'offered' },
       ],
       [
         { user_id: 'user-1', status: 'not_started' },
         { user_id: 'user-1', status: 'in_progress' },
         { user_id: 'user-1', status: 'rejected' },
-        { user_id: 'user-1', status: 'withdrawn' },
       ],
     ];
 

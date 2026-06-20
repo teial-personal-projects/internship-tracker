@@ -27,11 +27,7 @@ const FOLLOW_UP_OVERDUE_DAYS = 7;
 const ACTIVE_APPLICATION_STATUSES = [
   'in_progress',
   'applied',
-  'screening',
   'interviewing',
-  'technical',
-  'on_site',
-  'final_round',
 ];
 
 const FOLLOW_UP_OUTREACH_STATUSES = [
@@ -209,7 +205,6 @@ router.get('/', requireAuth, async (req: Request, res, next) => {
     const payload: TodayPayload = {
       stats: {
         applications: pipeline.total,
-        phone_screens: pipeline.counts.screening,
         open_tasks: countOrZero(actionItemsResult as QueryResult<unknown>),
         interviews_this_week: countOrZero(interviewsThisWeekResult as QueryResult<unknown>),
       },

@@ -13,14 +13,9 @@ export const PIPELINE_STAGES = [
   'not_started',
   'in_progress',
   'applied',
-  'screening',
   'interviewing',
-  'technical',
-  'on_site',
-  'final_round',
   'offered',
   'rejected',
-  'withdrawn',
   'archive',
 ] as const;
 

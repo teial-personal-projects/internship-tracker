@@ -15,6 +15,7 @@ describe('buildApplicationsListParams', () => {
       sort: 'company_asc',
       page: 3,
       limit: 25,
+      showArchived: false,
     })).toEqual({
       status: 'applied',
       search: 'acme',
@@ -23,6 +24,7 @@ describe('buildApplicationsListParams', () => {
       sort: 'company_asc',
       page: 3,
       limit: 25,
+      exclude_archive: true,
     });
   });
 
@@ -35,14 +37,15 @@ describe('buildApplicationsListParams', () => {
       sort: 'added_desc',
       page: 1,
       limit: 25,
-    })).toEqual({ sort: 'added_desc', page: 1, limit: 25 });
+      showArchived: false,
+    })).toEqual({ sort: 'added_desc', page: 1, limit: 25, exclude_archive: true });
   });
 });
 
 describe('toggleStatusFilter', () => {
   it('sets a rail status when it is inactive and clears it when clicked again', () => {
-    expect(toggleStatusFilter('', 'screening')).toBe('screening');
-    expect(toggleStatusFilter('screening', 'screening')).toBe('');
+    expect(toggleStatusFilter('', 'interviewing')).toBe('interviewing');
+    expect(toggleStatusFilter('interviewing', 'interviewing')).toBe('');
   });
 });
 

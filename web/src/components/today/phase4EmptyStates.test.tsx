@@ -17,7 +17,6 @@ describe('Phase 4 zero-data Today states', () => {
         <StatCards
           stats={{
             applications: 0,
-            phone_screens: 0,
             open_tasks: 0,
             interviews_this_week: 0,
           }}
@@ -28,7 +27,6 @@ describe('Phase 4 zero-data Today states', () => {
         <FunnelPanel
           buckets={[
             { key: 'applied', label: 'Applied', count: 0, percent: 0 },
-            { key: 'screening', label: 'Screening', count: 0, percent: 0 },
             { key: 'interviewing', label: 'Interviewing', count: 0, percent: 0 },
             { key: 'offered', label: 'Offered', count: 0, percent: 0 },
           ]}

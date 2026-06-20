@@ -76,6 +76,7 @@ router.get('/', requireAuth, async (req: Request, res, next) => {
       search:           req.query.search as string | undefined,
       date_from:        req.query.date_from as string | undefined,
       date_to:          req.query.date_to as string | undefined,
+      exclude_archive:  req.query.exclude_archive === 'true',
     });
 
     const { data, error, count } = await query.range(from, to);

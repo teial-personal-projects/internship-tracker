@@ -12,6 +12,7 @@ function createQuerySpy() {
   const spy = {
     calls,
     eq(col: string, val: string)      { calls.push({ method: 'eq',    args: [col, val] }); return spy; },
+    neq(col: string, val: string)     { calls.push({ method: 'neq',   args: [col, val] }); return spy; },
     ilike(col: string, pat: string)   { calls.push({ method: 'ilike', args: [col, pat] }); return spy; },
     gte(col: string, val: string)     { calls.push({ method: 'gte',   args: [col, val] }); return spy; },
     lte(col: string, val: string)     { calls.push({ method: 'lte',   args: [col, val] }); return spy; },

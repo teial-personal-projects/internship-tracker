@@ -4,15 +4,11 @@ const PIPELINE_STAGES = [
   'not_started',
   'in_progress',
   'applied',
-  'screening',
   'interviewing',
-  'technical',
-  'on_site',
-  'final_round',
   'offered',
 ] as const;
 
-const TERMINAL_STAGES = ['rejected', 'withdrawn', 'archive'] as const;
+const TERMINAL_STAGES = ['rejected', 'archive'] as const;
 
 interface Props {
   statusCounts: Record<string, number>;

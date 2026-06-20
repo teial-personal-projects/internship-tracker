@@ -65,6 +65,7 @@ export function ApplicationsPage() {
   const [editingApp, setEditingApp] = useState<Application | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, ApplicationStatus>>({});
+  const [showArchived, setShowArchived] = useState(false);
   const paging = useMemo(() => getApplicationsPaging(effectiveView, page), [page, effectiveView]);
 
   const queryParams = useMemo(() => buildApplicationsListParams({
@@ -75,7 +76,8 @@ export function ApplicationsPage() {
     sort,
     page: paging.page,
     limit: paging.limit,
-  }), [statusFilter, search, dateFrom, dateTo, sort, paging]);
+    showArchived,
+  }), [statusFilter, search, dateFrom, dateTo, sort, paging, showArchived]);
 
   const { data, isLoading, error } = useApplications(queryParams);
   const { data: routedApplication } = useApplication(applicationIdParam);
@@ -252,6 +254,18 @@ export function ApplicationsPage() {
           </div>
 
           {!isMobile && <ApplicationsViewToggle view={effectiveView} onChange={handleViewChange} />}
+
+          <button
+            type="button"
+            onClick={() => setShowArchived((v) => !v)}
+            className="shrink-0 inline-flex items-center gap-1.5 rounded-xl border bg-white px-3 py-2 text-sm font-medium shadow-sm transition"
+            style={{
+              borderColor: showArchived ? 'var(--accent)' : 'var(--line)',
+              color: showArchived ? 'var(--accent)' : 'var(--ink-3)',
+            }}
+          >
+            {showArchived ? 'Hide archived' : 'Show archived'}
+          </button>
 
           <button type="button" onClick={openAdd} className="btn-primary text-sm px-4 py-2 shrink-0 sm:ml-auto">
             + Add

@@ -9,11 +9,7 @@ interface NeedAttentionPanelProps {
 const ACTIVE_STATUSES: ApplicationStatus[] = [
   'in_progress',
   'applied',
-  'screening',
   'interviewing',
-  'technical',
-  'on_site',
-  'final_round',
 ];
 
 export function NeedAttentionPanel({ applications, onEdit }: NeedAttentionPanelProps) {

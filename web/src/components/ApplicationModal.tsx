@@ -19,8 +19,7 @@ import { todayStr } from '@/lib/dateUtils';
 const TODAY = todayStr();
 
 const APPLICATION_STATUSES: ApplicationStatus[] = [
-  'not_started', 'in_progress', 'applied', 'screening', 'interviewing',
-  'technical', 'on_site', 'final_round', 'offered', 'rejected', 'withdrawn', 'archive',
+  'not_started', 'in_progress', 'applied', 'interviewing', 'offered', 'rejected', 'archive',
 ];
 
 const APPLICATION_TYPES: ApplicationType[] = [

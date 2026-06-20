@@ -8,6 +8,7 @@ interface BuildApplicationsListParamsInput {
   sort: NonNullable<ApplicationsListParams['sort']>;
   page: number;
   limit: number;
+  showArchived: boolean;
 }
 
 export function buildApplicationsListParams({
@@ -18,9 +19,11 @@ export function buildApplicationsListParams({
   sort,
   page,
   limit,
+  showArchived,
 }: BuildApplicationsListParamsInput): ApplicationsListParams {
   return {
     ...(statusFilter && { status: statusFilter }),
+    ...(!showArchived && { exclude_archive: true }),
     ...(search.trim() && { search: search.trim() }),
     ...(dateFrom && { date_from: dateFrom }),
     ...(dateTo && { date_to: dateTo }),

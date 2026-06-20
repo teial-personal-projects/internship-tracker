@@ -39,10 +39,10 @@ describe('ApplicationsKanbanBoard', () => {
   it('groups applications into every supported status column', () => {
     const grouped = groupApplicationsByStatus([
       makeApplication({ id: '11111111-1111-4111-8111-111111111111', status: 'applied' }),
-      makeApplication({ id: '33333333-3333-4333-8333-333333333333', status: 'technical' }),
-      makeApplication({ id: '44444444-4444-4444-8444-444444444444', status: 'screening' }),
-      makeApplication({ id: '55555555-5555-4555-8555-555555555555', status: 'final_round' }),
-      makeApplication({ id: '66666666-6666-4666-8666-666666666666', status: 'withdrawn' }),
+      makeApplication({ id: '33333333-3333-4333-8333-333333333333', status: 'interviewing' }),
+      makeApplication({ id: '44444444-4444-4444-8444-444444444444', status: 'interviewing' }),
+      makeApplication({ id: '55555555-5555-4555-8555-555555555555', status: 'interviewing' }),
+      makeApplication({ id: '66666666-6666-4666-8666-666666666666', status: 'rejected' }),
       makeApplication({ id: '77777777-7777-4777-8777-777777777777', status: 'archive' }),
     ]);
 
@@ -67,11 +67,9 @@ describe('ApplicationsKanbanBoard', () => {
     expect(markup).toContain('Not Started');
     expect(markup).toContain('In Progress');
     expect(markup).toContain('Applied');
-    expect(markup).not.toContain('Screening');
     expect(markup).toContain('Interviewing');
-    expect(markup).not.toContain('Technical');
-    expect(markup).toContain('On Site');
-    expect(markup).not.toContain('Final Round');
+    expect(markup).toContain('Offered');
+    expect(markup).toContain('Rejected');
     expect(markup).toContain('Offered');
     expect(markup).toContain('Rejected');
     expect(markup).not.toContain('Withdrawn');
@@ -118,12 +116,11 @@ describe('ApplicationsKanbanBoard', () => {
 
   it('resolves status moves and treats current-status drops as no-ops', () => {
     const app = makeApplication({ status: 'applied' });
-    const finalRoundApp = makeApplication({ status: 'final_round' });
+    const interviewingApp = makeApplication({ status: 'interviewing' });
 
     expect(getKanbanStatusMove(app, 'interviewing')).toEqual({ app, status: 'interviewing' });
     expect(getKanbanStatusMove(app, 'applied')).toBeNull();
-    expect(getKanbanStatusMove(app, 'technical')).toBeNull();
-    expect(getKanbanStatusMove(finalRoundApp, 'interviewing')).toBeNull();
+    expect(getKanbanStatusMove(interviewingApp, 'interviewing')).toBeNull();
     expect(getKanbanStatusMove(app, 'unknown')).toBeNull();
     expect(getKanbanStatusMove(undefined, 'interviewing')).toBeNull();
   });

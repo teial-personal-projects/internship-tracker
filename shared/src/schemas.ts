@@ -93,9 +93,7 @@ export type UpdateProfileSchemaType = z.infer<typeof UpdateProfileSchema>;
 // ============================================================
 
 export const ApplicationStatusSchema = z.enum([
-  'not_started', 'in_progress', 'applied', 'screening', 'interviewing',
-  'technical', 'on_site', 'final_round', 'offered', 'rejected',
-  'withdrawn', 'archive',
+  'not_started', 'in_progress', 'applied', 'interviewing', 'offered', 'rejected', 'archive',
 ]);
 
 export const ApplicationTypeSchema = z.enum([
@@ -490,7 +488,6 @@ export const ApplicationEventSchema = z.object({
 
 export const TodayStatsSchema = z.object({
   applications: z.number().int().nonnegative(),
-  phone_screens: z.number().int().nonnegative(),
   open_tasks: z.number().int().nonnegative(),
   interviews_this_week: z.number().int().nonnegative(),
 });

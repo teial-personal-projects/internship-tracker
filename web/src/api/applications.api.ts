@@ -29,6 +29,7 @@ export interface ApplicationsListParams {
     | 'location_desc';
   page?: number;
   limit?: number;
+  exclude_archive?: boolean;
 }
 
 export interface ApplicationsListResponse {

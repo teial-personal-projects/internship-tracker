@@ -8,6 +8,7 @@ export interface TaskAutoGenerationDb {
 interface SelectQuery {
   eq(column: string, value: string): SelectQuery;
   single(): Promise<{ data: unknown; error: { message: string } | null }>;
+  maybeSingle(): Promise<{ data: unknown; error: { message: string } | null }>;
 }
 
 interface ContactRow {
@@ -101,7 +102,7 @@ export async function createFindEngineeringLeadTask(
   const { data: directContact, error: directContactError } = await directContactQuery
     .eq('application_id', applicationId)
     .eq('user_id', userId)
-    .single();
+    .maybeSingle();
 
   if (directContactError) {
     return { created: false, error: directContactError };
@@ -114,7 +115,7 @@ export async function createFindEngineeringLeadTask(
   const { data: recruiterLink, error: recruiterLinkError } = await recruiterLinkQuery
     .eq('application_id', applicationId)
     .eq('user_id', userId)
-    .single();
+    .maybeSingle();
 
   if (recruiterLinkError) {
     return { created: false, error: recruiterLinkError };
