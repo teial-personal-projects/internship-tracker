@@ -1,11 +1,11 @@
 import { formatDistanceToNow } from 'date-fns';
-import { ApplicationTypeBadge } from '@/components/ApplicationTypeBadge';
 import { StatusBadge } from '@/components/StatusBadge';
 import { formatDate } from '@/lib/dateUtils';
 import type { Application, ApplicationStatus } from '@shared/schemas';
 
 interface NeedAttentionPanelProps {
   applications: Application[];
+  onEdit: (app: Application) => void;
 }
 
 const ACTIVE_STATUSES: ApplicationStatus[] = [
@@ -18,7 +18,7 @@ const ACTIVE_STATUSES: ApplicationStatus[] = [
   'final_round',
 ];
 
-export function NeedAttentionPanel({ applications }: NeedAttentionPanelProps) {
+export function NeedAttentionPanel({ applications, onEdit }: NeedAttentionPanelProps) {
   const activeApplications = applications.filter((application) =>
     ACTIVE_STATUSES.includes(application.status),
   );
@@ -55,9 +55,15 @@ export function NeedAttentionPanel({ applications }: NeedAttentionPanelProps) {
                 </p>
               </div>
 
-              <div className="mt-3 flex flex-wrap items-center gap-2">
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                 <StatusBadge status={application.status} />
-                <ApplicationTypeBadge type={application.application_type} />
+                <button
+                  type="button"
+                  onClick={() => onEdit(application)}
+                  className="btn-outline px-2 py-1 text-xs"
+                >
+                  Edit
+                </button>
               </div>
 
               <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">

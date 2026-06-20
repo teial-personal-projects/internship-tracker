@@ -24,7 +24,7 @@ describe('Phase 4 zero-data Today states', () => {
         />
         <UpNextCard interview={null} />
         <ActionItemsPanel actionItems={[]} totalOpenTasks={0} />
-        <NeedAttentionPanel applications={[]} />
+        <NeedAttentionPanel applications={[]} onEdit={() => {}} />
         <FunnelPanel
           buckets={[
             { key: 'applied', label: 'Applied', count: 0, percent: 0 },

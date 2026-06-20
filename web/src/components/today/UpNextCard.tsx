@@ -1,6 +1,5 @@
 import { format } from 'date-fns';
 import { Clock, ExternalLink, FileText, Users } from 'lucide-react';
-import { ApplicationTypeBadge } from '@/components/ApplicationTypeBadge';
 import { INTERVIEW_TYPE_LABELS } from '@/theme';
 import type { TodayInterview } from '@shared/schemas';
 
@@ -50,9 +49,6 @@ export function UpNextCard({ interview }: UpNextCardProps) {
           <p className="truncate text-sm" style={{ color: 'var(--ink-3)' }}>
             {interview.application_title}
           </p>
-          <div className="mt-2">
-            <ApplicationTypeBadge type={interview.application_type} />
-          </div>
         </div>
 
         {interview.location_link && (

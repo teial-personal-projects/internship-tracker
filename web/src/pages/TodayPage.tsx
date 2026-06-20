@@ -1,4 +1,7 @@
+import { useState, useMemo } from 'react';
+import { toast } from 'sonner';
 import { AppHeader } from '@/components/AppHeader';
+import { ApplicationModal, type ApplicationFormValues } from '@/components/ApplicationModal';
 import { Spinner } from '@/components/Spinner';
 import { ActionItemsPanel } from '@/components/today/ActionItemsPanel';
 import { NeedAttentionPanel } from '@/components/today/NeedAttentionPanel';
@@ -7,8 +10,10 @@ import { RecentContactsPanel } from '@/components/today/RecentContactsPanel';
 import { StatCards } from '@/components/today/StatCards';
 import { UpNextCard } from '@/components/today/UpNextCard';
 import { useToday } from '@/hooks/useToday';
+import { useUpdateApplication } from '@/hooks/useApplications';
 import { useAuth } from '@/contexts/AuthContext';
 import { buildTodaySummary } from '@/lib/todaySummary';
+import type { Application } from '@shared/schemas';
 import type { ReactNode } from 'react';
 
 function PanelShell({ title, children }: { title: string; children: ReactNode }) {
@@ -35,6 +40,28 @@ function EmptyLine({ children }: { children: ReactNode }) {
 export function TodayPage() {
   const { user } = useAuth();
   const { data, isLoading, error } = useToday();
+  const updateApp = useUpdateApplication();
+  const [editingApp, setEditingApp] = useState<Application | null>(null);
+
+  const modalDefaultValues = useMemo(() => editingApp ?? undefined, [editingApp]);
+
+  async function handleEditSubmit(formData: ApplicationFormValues) {
+    if (!editingApp) return;
+    const payload = {
+      ...formData,
+      application_type: formData.application_type || 'cold_strategic',
+      checklist_state: editingApp.checklist_state,
+      source: editingApp.source,
+      source_metadata: editingApp.source_metadata,
+    };
+    try {
+      await updateApp.mutateAsync({ id: editingApp.id, data: payload });
+      toast.success('Application updated');
+      setEditingApp(null);
+    } catch {
+      toast.error('Something went wrong');
+    }
+  }
   const firstName = typeof user?.user_metadata?.first_name === 'string' && user.user_metadata.first_name.trim()
     ? user.user_metadata.first_name.trim()
     : 'there';
@@ -84,7 +111,7 @@ export function TodayPage() {
                   <UpNextCard interview={data.up_next[0] ?? null} />
                 </PanelShell>
 
-                <NeedAttentionPanel applications={data.need_attention} />
+                <NeedAttentionPanel applications={data.need_attention} onEdit={setEditingApp} />
               </div>
 
               <aside className="flex min-w-0 flex-col gap-5">
@@ -98,6 +125,15 @@ export function TodayPage() {
           )}
         </div>
       </main>
+
+      <ApplicationModal
+        isOpen={editingApp !== null}
+        onClose={() => setEditingApp(null)}
+        onSubmit={handleEditSubmit}
+        isLoading={updateApp.isPending}
+        defaultValues={modalDefaultValues}
+        title="Edit Application"
+      />
     </div>
   );
 }

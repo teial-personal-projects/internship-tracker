@@ -29,7 +29,7 @@ const application: Application = {
 
 describe('NeedAttentionPanel', () => {
   it('renders active applications as cards with applied date', () => {
-    const markup = renderToStaticMarkup(<NeedAttentionPanel applications={[application]} />);
+    const markup = renderToStaticMarkup(<NeedAttentionPanel applications={[application]} onEdit={() => {}} />);
 
     expect(markup).toContain('Applications');
     expect(markup).toContain('Acme Robotics');

@@ -1,6 +1,5 @@
 import { differenceInCalendarDays, format, parseISO } from 'date-fns';
 import { toast } from 'sonner';
-import { ApplicationTypeBadge } from '@/components/ApplicationTypeBadge';
 import { PRIORITY_COLORS, PRIORITY_LABELS } from '@/theme';
 import { useUpdateTask } from '@/hooks/useTasks';
 import type { TodayTask } from '@shared/schemas';
@@ -93,11 +92,6 @@ export function ActionItemsPanel({ actionItems, totalOpenTasks }: ActionItemsPan
                     <span aria-hidden="true">·</span>
                     <span>{formatDueLabel(task.due_date)}</span>
                   </div>
-                  {task.application_type && (
-                    <div className="mt-2">
-                      <ApplicationTypeBadge type={task.application_type} />
-                    </div>
-                  )}
                 </div>
               </div>
             );
