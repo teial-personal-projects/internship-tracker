@@ -505,11 +505,13 @@ export const TodayFunnelBucketSchema = z.object({
 export const TodayInterviewSchema = InterviewSchema.extend({
   application_company: z.string().max(MAX_COMPANY_LENGTH),
   application_title: z.string().max(MAX_TITLE_LENGTH),
+  application_type: ApplicationTypeSchema,
 });
 
 export const TodayTaskSchema = TaskSchema.extend({
   application_company: z.string().max(MAX_COMPANY_LENGTH).nullable(),
   application_title: z.string().max(MAX_TITLE_LENGTH).nullable(),
+  application_type: ApplicationTypeSchema.nullable(),
   contact_name: z.string().max(MAX_FIRST_NAME_LENGTH + MAX_LAST_NAME_LENGTH + 1).nullable(),
 });
 

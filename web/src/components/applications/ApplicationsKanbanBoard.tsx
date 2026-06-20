@@ -16,7 +16,6 @@ import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import type { Application, ApplicationStatus } from '@shared/schemas';
 import { GripVertical } from 'lucide-react';
-import { ApplicationTypeBadge } from '@/components/ApplicationTypeBadge';
 import { Spinner } from '@/components/Spinner';
 import { TrashIcon } from '@/components/icons/TrashIcon';
 import { formatDate } from '@/lib/dateUtils';
@@ -279,7 +278,6 @@ function KanbanCard({
         </div>
 
         <div className="mt-3 flex flex-wrap gap-1.5">
-          <ApplicationTypeBadge type={app.application_type} />
           <span className="rounded px-2 py-0.5 text-[11px]" style={{ background: 'var(--soft)', color: 'var(--ink-3)' }}>
             {app.location ?? 'No location'}
           </span>

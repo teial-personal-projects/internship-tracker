@@ -1,5 +1,4 @@
 import { formatDistanceToNow } from 'date-fns';
-import { CircleAlert } from 'lucide-react';
 import { STATUS_COLORS, STATUS_LABELS } from '@/theme';
 import { useApplicationActivity } from '@/hooks/useApplications';
 import { EVENT_LABELS } from '@/lib/applicationEvents';
@@ -7,7 +6,6 @@ import { EVENT_LABELS } from '@/lib/applicationEvents';
 interface ApplicationsRailProps {
   statusCounts: Record<string, number>;
   activeStatus: string;
-  unsetTypeCount: number;
   onStatusClick: (status: string) => void;
 }
 
@@ -136,25 +134,11 @@ function ActivityCard() {
   );
 }
 
-function UnsetTypeNudge({ count }: { count: number }) {
-  if (count <= 0) return null;
-
-  return (
-    <div className="flex items-start gap-2 rounded-lg border p-3 text-sm" style={{ background: 'var(--sun-soft)', color: '#92400E', borderColor: '#FDE68A' }}>
-      <CircleAlert size={15} className="mt-0.5 shrink-0" />
-      <span>
-        {count} application{count > 1 ? 's' : ''} {count > 1 ? 'have' : 'has'} no type set.
-      </span>
-    </div>
-  );
-}
-
 export function ApplicationsRail(props: ApplicationsRailProps) {
   return (
     <aside className="flex min-w-0 flex-col gap-3">
       <PipelineCard {...props} />
       <ActivityCard />
-      <UnsetTypeNudge count={props.unsetTypeCount} />
     </aside>
   );
 }

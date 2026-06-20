@@ -69,7 +69,14 @@ function sortIndicator(column: SortColumn, currentSort: ApplicationSort): string
   return '';
 }
 
-export function ApplicationsTable({ applications, sort, onSort, onEdit, onDelete, deletingId }: Props) {
+export function ApplicationsTable({
+  applications,
+  sort,
+  onSort,
+  onEdit,
+  onDelete,
+  deletingId,
+}: Props) {
   if (applications.length === 0) {
     return (
       <div className="flex items-center justify-center py-16 rounded-lg border bg-white" style={{ borderColor: 'var(--line)' }}>

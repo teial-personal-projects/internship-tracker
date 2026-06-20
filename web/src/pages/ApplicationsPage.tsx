@@ -58,7 +58,6 @@ export function ApplicationsPage() {
   const view = getApplicationsView(searchParams.get('view'));
 
   const [statusFilter, setStatusFilter] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
   const [search, setSearch] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -71,14 +70,13 @@ export function ApplicationsPage() {
 
   const queryParams = useMemo(() => buildApplicationsListParams({
     statusFilter,
-    typeFilter,
     search,
     dateFrom,
     dateTo,
     sort,
     page: paging.page,
     limit: paging.limit,
-  }), [statusFilter, typeFilter, search, dateFrom, dateTo, sort, paging]);
+  }), [statusFilter, search, dateFrom, dateTo, sort, paging]);
 
   const { data, isLoading, error } = useApplications(queryParams);
   const { data: stats } = useApplicationStats();
@@ -96,10 +94,8 @@ export function ApplicationsPage() {
   const total = data?.total ?? 0;
   const totalPages = data?.totalPages ?? 1;
   const statusCounts = stats?.status_counts ?? {};
-  const unsetTypeCount = stats?.unset_type_count ?? 0;
   const hasFilters = hasApplicationListFilters({
     statusFilter,
-    typeFilter,
     search,
     dateFrom,
     dateTo,
@@ -130,7 +126,6 @@ export function ApplicationsPage() {
   }
 
   function handleSearch(q: string) { setSearch(q); resetPage(); }
-  function handleTypeFilter(t: string) { setTypeFilter(t); resetPage(); }
   function handleDateFrom(d: string) { setDateFrom(d); resetPage(); }
   function handleDateTo(d: string) { setDateTo(d); resetPage(); }
   function handleSort(nextSort: ApplicationSort) { setSort(nextSort); resetPage(); }
@@ -139,7 +134,6 @@ export function ApplicationsPage() {
   }
   function clearFilters() {
     setStatusFilter('');
-    setTypeFilter('');
     setSearch('');
     setDateFrom('');
     setDateTo('');
@@ -260,20 +254,6 @@ export function ApplicationsPage() {
             )}
           </div>
 
-          {/* Type filter */}
-          <select
-            value={typeFilter}
-            onChange={(e) => handleTypeFilter(e.target.value)}
-            className="hidden min-h-11 rounded-xl border bg-white px-3 py-2 text-sm shadow-sm focus:outline-none sm:block"
-            style={{ borderColor: 'var(--line)', color: 'var(--ink-2)' }}
-          >
-            <option value="">All Types</option>
-            <option value="cold_strategic">Cold</option>
-            <option value="recruiter_assisted">Recruiter</option>
-            <option value="referral">Referral</option>
-            <option value="other">Other</option>
-          </select>
-
           <ApplicationsViewToggle view={view} onChange={handleViewChange} />
 
           <button type="button" onClick={openAdd} className="btn-primary text-sm px-4 py-2 shrink-0">
@@ -313,7 +293,12 @@ export function ApplicationsPage() {
                 deletingId={deletingId}
               />
             ) : isMobile ? (
-              <ApplicationCardList applications={visibleApplications} onEdit={handleEdit} onDelete={handleDelete} deletingId={deletingId} />
+              <ApplicationCardList
+                applications={visibleApplications}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                deletingId={deletingId}
+              />
             ) : (
               <ApplicationsTable
                 applications={visibleApplications}
@@ -340,7 +325,6 @@ export function ApplicationsPage() {
           <ApplicationsRail
             statusCounts={statusCounts}
             activeStatus={statusFilter}
-            unsetTypeCount={unsetTypeCount}
             onStatusClick={handleStatusClick}
           />
         </div>

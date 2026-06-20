@@ -2,7 +2,6 @@ import { useState } from 'react';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import type { Application } from '@shared/schemas';
 import { StatusBadge } from './StatusBadge';
-import { ApplicationTypeBadge } from './ApplicationTypeBadge';
 import { TrashIcon } from './icons/TrashIcon';
 import { Spinner } from './Spinner';
 import { formatDate } from '@/lib/dateUtils';
@@ -14,7 +13,12 @@ interface Props {
   deletingId: string | null;
 }
 
-export function ApplicationCardList({ applications, onEdit, onDelete, deletingId }: Props) {
+export function ApplicationCardList({
+  applications,
+  onEdit,
+  onDelete,
+  deletingId,
+}: Props) {
   if (applications.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -45,7 +49,12 @@ interface ApplicationCardProps {
   isDeleting: boolean;
 }
 
-function ApplicationCard({ app, onEdit, onDelete, isDeleting }: ApplicationCardProps) {
+function ApplicationCard({
+  app,
+  onEdit,
+  onDelete,
+  isDeleting,
+}: ApplicationCardProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   return (
@@ -66,7 +75,6 @@ function ApplicationCard({ app, onEdit, onDelete, isDeleting }: ApplicationCardP
       </div>
 
       <div className="flex flex-wrap gap-2 mb-3">
-        <ApplicationTypeBadge type={app.application_type} />
         {app.location && (
           <span className="text-[11px] px-2 py-0.5 rounded" style={{ background: 'var(--soft)', color: 'var(--ink-3)' }}>
             {app.location}

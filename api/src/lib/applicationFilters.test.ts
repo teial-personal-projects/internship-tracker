@@ -70,7 +70,7 @@ describe('applyApplicationFilters — no year constraint (2.5.3)', () => {
 
   it('never adds an implicit year constraint — only caller-supplied bounds appear', () => {
     const spy = createQuerySpy();
-    applyApplicationFilters(spy, { application_type: 'cold_strategic' });
+    applyApplicationFilters(spy, { status: 'applied' });
     const dateConstraints = spy.calls.filter(
       c => (c.method === 'gte' || c.method === 'lte') && c.args[0] === 'applied_date',
     );

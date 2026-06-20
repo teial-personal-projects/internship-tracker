@@ -13,7 +13,6 @@ import type {
 
 export interface ApplicationsListParams {
   status?: string;
-  application_type?: string;
   search?: string;
   date_from?: string;
   date_to?: string;
@@ -41,7 +40,6 @@ export interface ApplicationsListResponse {
 
 export interface ApplicationStats {
   status_counts: Record<string, number>;
-  unset_type_count: number;
 }
 
 export interface ApplicationEvent {

@@ -2,7 +2,6 @@ import type { ApplicationsListParams } from '@/api/applications.api';
 
 interface BuildApplicationsListParamsInput {
   statusFilter: string;
-  typeFilter: string;
   search: string;
   dateFrom: string;
   dateTo: string;
@@ -13,7 +12,6 @@ interface BuildApplicationsListParamsInput {
 
 export function buildApplicationsListParams({
   statusFilter,
-  typeFilter,
   search,
   dateFrom,
   dateTo,
@@ -23,7 +21,6 @@ export function buildApplicationsListParams({
 }: BuildApplicationsListParamsInput): ApplicationsListParams {
   return {
     ...(statusFilter && { status: statusFilter }),
-    ...(typeFilter && { application_type: typeFilter }),
     ...(search.trim() && { search: search.trim() }),
     ...(dateFrom && { date_from: dateFrom }),
     ...(dateTo && { date_to: dateTo }),
@@ -39,10 +36,9 @@ export function toggleStatusFilter(currentStatus: string, nextStatus: string): s
 
 export function hasApplicationListFilters({
   statusFilter,
-  typeFilter,
   search,
   dateFrom,
   dateTo,
-}: Pick<BuildApplicationsListParamsInput, 'statusFilter' | 'typeFilter' | 'search' | 'dateFrom' | 'dateTo'>): boolean {
-  return Boolean(statusFilter || typeFilter || search.trim() || dateFrom || dateTo);
+}: Pick<BuildApplicationsListParamsInput, 'statusFilter' | 'search' | 'dateFrom' | 'dateTo'>): boolean {
+  return Boolean(statusFilter || search.trim() || dateFrom || dateTo);
 }

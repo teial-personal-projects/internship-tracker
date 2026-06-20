@@ -320,4 +320,5 @@ describe('GET /api/applications', () => {
     expect(body.data.map((row: ApplicationRow) => row.id)).toEqual(['sf', 'ny', 'la']);
     expect(query.calls).toContainEqual({ method: 'order', args: ['location', { ascending: false }] });
   });
+
 });

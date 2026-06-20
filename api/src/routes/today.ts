@@ -46,7 +46,7 @@ interface QueryResult<T> {
   count?: number | null;
 }
 
-type ApplicationJoin = Pick<Application, 'company' | 'title' | 'user_id'> | null;
+type ApplicationJoin = Pick<Application, 'company' | 'title' | 'application_type' | 'user_id'> | null;
 type ContactJoin = Pick<Contact, 'first_name' | 'last_name' | 'user_id'> | null;
 
 type InterviewRow = Interview & {
@@ -106,6 +106,7 @@ function toTodayInterview(row: InterviewRow, userId: string) {
     ...interview,
     application_company: applications.company,
     application_title: applications.title,
+    application_type: applications.application_type,
   };
 }
 
@@ -123,6 +124,7 @@ function toTodayTask(row: TaskRow, userId: string): TodayTask | null {
     ...task,
     application_company: application?.company ?? null,
     application_title: application?.title ?? null,
+    application_type: application?.application_type ?? null,
     contact_name: contactName,
   };
 }
@@ -149,7 +151,7 @@ router.get('/', requireAuth, async (req: Request, res, next) => {
       getPipelineCounts(db as unknown as PipelineCountsDb, user.id),
       db
         .from('interviews')
-        .select('*, applications(company, title, user_id)')
+        .select('*, applications(company, title, application_type, user_id)')
         .eq('user_id', user.id)
         .eq('status', 'scheduled')
         .gte('scheduled_at', now.toISOString())
@@ -164,7 +166,7 @@ router.get('/', requireAuth, async (req: Request, res, next) => {
         .lt('scheduled_at', weekEnd),
       db
         .from('tasks')
-        .select('*, applications(company, title, user_id), contacts(first_name, last_name, user_id)', { count: 'exact' })
+        .select('*, applications(company, title, application_type, user_id), contacts(first_name, last_name, user_id)', { count: 'exact' })
         .eq('user_id', user.id)
         .eq('status', 'open')
         .order('priority', { ascending: true })

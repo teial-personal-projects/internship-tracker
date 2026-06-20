@@ -73,7 +73,6 @@ router.get('/', requireAuth, async (req: Request, res, next) => {
 
     const query = applyApplicationFilters(baseQuery, {
       status:           req.query.status as string | undefined,
-      application_type: req.query.application_type as string | undefined,
       search:           req.query.search as string | undefined,
       date_from:        req.query.date_from as string | undefined,
       date_to:          req.query.date_to as string | undefined,
@@ -138,26 +137,9 @@ router.get('/stats', requireAuth, async (req: Request, res, next) => {
   try {
     const db = createUserClient(req);
     const user = (req as AuthRequest).user;
-    const [{ counts: status_counts }, { data, error }] = await Promise.all([
-      getPipelineCounts(db as unknown as PipelineCountsDb, user.id),
-      db.from('applications').select('application_type').eq('user_id', user.id),
-    ]);
+    const { counts: status_counts } = await getPipelineCounts(db as unknown as PipelineCountsDb, user.id);
 
-    if (error) {
-      res.status(500).json({ error: error.message });
-      return;
-    }
-
-    // unset_type_count: total across all pages, for the prompt banner in the Applications tab
-    let unset_type_count = 0;
-    for (const row of data ?? []) {
-      const app = row as { application_type: string | null };
-      if (!app.application_type) {
-        unset_type_count += 1;
-      }
-    }
-
-    res.json({ status_counts, unset_type_count });
+    res.json({ status_counts });
   } catch (err) {
     next(err);
   }

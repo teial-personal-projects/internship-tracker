@@ -220,7 +220,7 @@ describe('GET /api/today', () => {
         application_id: 'app-1',
         status: 'scheduled',
         scheduled_at: '2026-06-18T15:00:00.000Z',
-        applications: { company: 'Past Co', title: 'Past Role', user_id: 'user-1' },
+        applications: { company: 'Past Co', title: 'Past Role', application_type: 'cold_strategic', user_id: 'user-1' },
       },
       {
         id: 'later-interview',
@@ -228,7 +228,7 @@ describe('GET /api/today', () => {
         application_id: 'app-2',
         status: 'scheduled',
         scheduled_at: '2026-06-19T19:00:00.000Z',
-        applications: { company: 'Later Co', title: 'Later Role', user_id: 'user-1' },
+        applications: { company: 'Later Co', title: 'Later Role', application_type: 'referral', user_id: 'user-1' },
       },
       {
         id: 'next-interview',
@@ -236,7 +236,7 @@ describe('GET /api/today', () => {
         application_id: 'app-3',
         status: 'scheduled',
         scheduled_at: '2026-06-18T18:00:00.000Z',
-        applications: { company: 'Next Co', title: 'Next Role', user_id: 'user-1' },
+        applications: { company: 'Next Co', title: 'Next Role', application_type: 'recruiter_assisted', user_id: 'user-1' },
       },
       {
         id: 'cancelled-interview',
@@ -244,7 +244,7 @@ describe('GET /api/today', () => {
         application_id: 'app-4',
         status: 'cancelled',
         scheduled_at: '2026-06-18T17:00:00.000Z',
-        applications: { company: 'Cancelled Co', title: 'Cancelled Role', user_id: 'user-1' },
+        applications: { company: 'Cancelled Co', title: 'Cancelled Role', application_type: 'other', user_id: 'user-1' },
       },
     ];
 
@@ -265,6 +265,48 @@ describe('GET /api/today', () => {
       id: 'next-interview',
       application_company: 'Next Co',
       application_title: 'Next Role',
+      application_type: 'recruiter_assisted',
+    });
+  });
+
+  it('returns application type on action item application context', async () => {
+    const tasks = [
+      {
+        id: 'task-1',
+        user_id: 'user-1',
+        title: 'Send follow-up',
+        status: 'open',
+        priority: 'high',
+        due_date: '2026-06-19',
+        application_id: 'app-1',
+        contact_id: null,
+        applications: {
+          company: 'Recruiter Co',
+          title: 'Hardware Intern',
+          application_type: 'recruiter_assisted',
+          user_id: 'user-1',
+        },
+        contacts: null,
+      },
+    ];
+
+    mockCreateUserClient.mockReturnValue(createMockDb({
+      applications: [new TodayQuery([]), new TodayQuery([])],
+      interviews: [new TodayQuery([]), new TodayQuery([])],
+      tasks: [new TodayQuery(tasks)],
+      contacts: [new TodayQuery([]), new TodayQuery([])],
+    }));
+
+    const response = await request(app)
+      .get('/api/today')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.action_items[0]).toMatchObject({
+      id: 'task-1',
+      application_company: 'Recruiter Co',
+      application_title: 'Hardware Intern',
+      application_type: 'recruiter_assisted',
     });
   });
 

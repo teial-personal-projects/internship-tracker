@@ -6,10 +6,9 @@ import {
 } from './applicationsListParams';
 
 describe('buildApplicationsListParams', () => {
-  it('keeps search, date range, type, status, page, and limit in the applications query params', () => {
+  it('keeps search, date range, status, page, and limit in the applications query params', () => {
     expect(buildApplicationsListParams({
       statusFilter: 'applied',
-      typeFilter: 'referral',
       search: '  acme  ',
       dateFrom: '2026-01-01',
       dateTo: '2026-06-30',
@@ -18,7 +17,6 @@ describe('buildApplicationsListParams', () => {
       limit: 25,
     })).toEqual({
       status: 'applied',
-      application_type: 'referral',
       search: 'acme',
       date_from: '2026-01-01',
       date_to: '2026-06-30',
@@ -31,7 +29,6 @@ describe('buildApplicationsListParams', () => {
   it('does not include an implicit year parameter', () => {
     expect(buildApplicationsListParams({
       statusFilter: '',
-      typeFilter: '',
       search: '',
       dateFrom: '',
       dateTo: '',
@@ -50,10 +47,9 @@ describe('toggleStatusFilter', () => {
 });
 
 describe('hasApplicationListFilters', () => {
-  it('detects search, date, type, and status filters without counting whitespace search', () => {
+  it('detects search, date, and status filters without counting whitespace search', () => {
     const emptyFilters = {
       statusFilter: '',
-      typeFilter: '',
       search: '   ',
       dateFrom: '',
       dateTo: '',
@@ -61,7 +57,6 @@ describe('hasApplicationListFilters', () => {
 
     expect(hasApplicationListFilters(emptyFilters)).toBe(false);
     expect(hasApplicationListFilters({ ...emptyFilters, statusFilter: 'applied' })).toBe(true);
-    expect(hasApplicationListFilters({ ...emptyFilters, typeFilter: 'referral' })).toBe(true);
     expect(hasApplicationListFilters({ ...emptyFilters, search: 'acme' })).toBe(true);
     expect(hasApplicationListFilters({ ...emptyFilters, dateFrom: '2026-01-01' })).toBe(true);
     expect(hasApplicationListFilters({ ...emptyFilters, dateTo: '2026-06-30' })).toBe(true);

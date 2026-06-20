@@ -22,7 +22,12 @@ interface Props {
   isDeleting: boolean;
 }
 
-export function ApplicationRow({ app, onEdit, onDelete, isDeleting }: Props) {
+export function ApplicationRow({
+  app,
+  onEdit,
+  onDelete,
+  isDeleting,
+}: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const statusColor = STATUS_COLORS[app.status]?.dot ?? 'var(--ink-4)';
 

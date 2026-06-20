@@ -96,7 +96,6 @@ describe('ApplicationsKanbanBoard', () => {
     expect(markup).toContain('Not applied');
     expect(markup).toContain('02/01/2026');
     expect(markup).toContain('Pasadena, CA');
-    expect(markup).toContain('Referral');
     expect(markup).toContain('Edit');
     expect(markup).toContain('aria-label="Delete"');
   });
