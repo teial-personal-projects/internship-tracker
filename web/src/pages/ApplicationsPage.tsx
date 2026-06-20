@@ -329,6 +329,8 @@ export function ApplicationsPage() {
             />
           )}
 
+          <ApplicationsViewHint view={effectiveView} />
+
           {/* List */}
           {contentState === 'loading' ? (
             <div className="flex items-center justify-center py-16">
@@ -439,6 +441,16 @@ function ApplicationsListHeader({ total, action }: { total: number; action?: Rea
       </span>
       {action}
     </div>
+  );
+}
+
+function ApplicationsViewHint({ view }: { view: ApplicationsView }) {
+  return (
+    <p className="rounded-lg border bg-white px-3 py-2 text-xs leading-5" style={{ borderColor: 'var(--line)', color: 'var(--ink-3)' }}>
+      {view === 'kanban'
+        ? 'Board view groups applications by status. Drag a card to another column to update its status.'
+        : 'Grid view is best for scanning and sorting. Click a column header to change the sort order.'}
+    </p>
   );
 }
 
