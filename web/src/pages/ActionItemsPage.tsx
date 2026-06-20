@@ -43,6 +43,8 @@ const GROUP_MODES: Array<{ value: GroupMode; label: string }> = [
   { value: 'due_date', label: 'Due Date' },
 ];
 
+const RECENT_DONE_LIMIT = 5;
+
 const categoryLabel = (category: string) =>
   CATEGORIES.find((item) => item.value === category)?.label ?? category;
 
@@ -93,6 +95,12 @@ function groupTasks(
     groups.set(label, [...(groups.get(label) ?? []), task]);
   }
   return [...groups.entries()];
+}
+
+export function getRecentDoneTasks(tasks: Task[], limit = RECENT_DONE_LIMIT): Task[] {
+  return [...tasks]
+    .sort((left, right) => Date.parse(right.updated_at) - Date.parse(left.updated_at))
+    .slice(0, limit);
 }
 
 interface TaskRowProps {
@@ -343,6 +351,7 @@ export function ActionItemsPage() {
   const [groupMode, setGroupMode] = useState<GroupMode>('company');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [showRecentDone, setShowRecentDone] = useState(false);
 
   const taskParams = useMemo(() => ({
     ...(category && { category }),
@@ -370,6 +379,7 @@ export function ActionItemsPage() {
 
   const openTasks = tasks.filter((task) => task.status === 'open');
   const doneTasks = tasks.filter((task) => task.status === 'complete' || task.status === 'skipped');
+  const recentDoneTasks = showRecentDone ? getRecentDoneTasks(doneTasks) : [];
 
   async function handleComplete(task: Task) {
     setUpdatingId(task.id);
@@ -476,15 +486,28 @@ export function ActionItemsPage() {
                 updatingId={updatingId}
                 onComplete={handleComplete}
               />
-              <TaskSection
-                title="Done"
-                tasks={doneTasks}
-                groupMode={groupMode}
-                applicationById={applicationById}
-                contactById={contactById}
-                updatingId={updatingId}
-                onComplete={handleComplete}
-              />
+              {doneTasks.length > 0 && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    className="btn-outline px-3 py-1.5 text-sm"
+                    onClick={() => setShowRecentDone((current) => !current)}
+                  >
+                    {showRecentDone ? 'Hide done' : `Show ${Math.min(doneTasks.length, RECENT_DONE_LIMIT)} recent done`}
+                  </button>
+                </div>
+              )}
+              {showRecentDone && (
+                <TaskSection
+                  title="Recent done"
+                  tasks={recentDoneTasks}
+                  groupMode={groupMode}
+                  applicationById={applicationById}
+                  contactById={contactById}
+                  updatingId={updatingId}
+                  onComplete={handleComplete}
+                />
+              )}
             </div>
           )}
         </div>
