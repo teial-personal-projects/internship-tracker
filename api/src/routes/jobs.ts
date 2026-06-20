@@ -8,23 +8,30 @@ import type { Request } from 'express';
 
 const router = Router();
 
-// GET /api/jobs?year=2026
+// GET /api/jobs?date_from=2026-01-01&date_to=2026-12-31
 router.get('/', requireAuth, async (req: Request, res, next) => {
   try {
     const db = createUserClient(req);
-    // Academic year: Aug 1 of startYear → Jul 31 of startYear+1
-    const now = new Date();
-    const defaultYear = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
-    const startYear = req.query.year ? Number(req.query.year) : defaultYear;
-    const start = `${startYear}-08-01`;
-    const end = `${startYear + 1}-07-31`;
+    const dateFrom = typeof req.query.date_from === 'string' ? req.query.date_from : undefined;
+    const dateTo = typeof req.query.date_to === 'string' ? req.query.date_to : undefined;
+    const startYear = typeof req.query.year === 'string' ? Number(req.query.year) : undefined;
 
-    const { data, error } = await db
+    let query = db
       .from('jobs')
       .select('*')
-      .gte('added', start)
-      .lte('added', end)
       .order('added', { ascending: false });
+
+    if (dateFrom) {
+      query = query.gte('added', dateFrom);
+    }
+    if (dateTo) {
+      query = query.lte('added', dateTo);
+    }
+    if (startYear && Number.isFinite(startYear)) {
+      query = query.gte('added', `${startYear}-08-01`).lte('added', `${startYear + 1}-07-31`);
+    }
+
+    const { data, error } = await query;
     if (error) {
       res.status(500).json({ error: error.message });
       return;

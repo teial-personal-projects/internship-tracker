@@ -1,7 +1,6 @@
 import type { JobBoard } from '@shared/types';
 import { useJobBoards } from '@/hooks/useJobBoards';
 import { AppHeader } from '@/components/AppHeader';
-import { UserMenu } from '@/components/UserMenu';
 import { Spinner } from '@/components/Spinner';
 
 function BoardCard({ board }: { board: JobBoard }) {
@@ -33,15 +32,13 @@ export function JobBoardsPage() {
   const categories = [...new Set(boards.map((b) => b.category))];
 
   return (
-    <div className="min-h-screen bg-[#F5F5F3] overflow-x-hidden">
-      <AppHeader>
-        <UserMenu />
-      </AppHeader>
+    <div className="min-h-screen overflow-x-hidden" style={{ background: 'var(--bg)' }}>
+      <AppHeader />
 
       <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 flex flex-col gap-8 overflow-hidden">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Job Boards</h1>
-          <p className="text-sm text-gray-500 mt-1">Browse popular job boards to find your next internship.</p>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--ink)' }}>Job Boards</h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--ink-3)' }}>Browse popular job boards to find your next internship.</p>
         </div>
         {isLoading && (
           <div className="flex justify-center py-16">

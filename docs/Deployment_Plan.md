@@ -1,12 +1,13 @@
-# Internship Tracker Deployment Plan
+# Track My Application Deployment Plan
 
-This document provides step-by-step instructions for deploying Internship Tracker to production.
+This document provides step-by-step instructions for deploying Track My Application to production.
 
 ---
 
 ## Deployment Overview
 
 **Architecture:**
+
 - **Frontend**: React/Vite app on Cloudflare Pages (Free)
 - **Backend**: Express/Node.js API on Railway (~$5/month)
 - **Database**: Supabase PostgreSQL (Free tier)
@@ -21,8 +22,8 @@ Before deploying, ensure you have:
 
 - [ ] All code committed and pushed to GitHub (`teial-personal-projects/internship-tracker`)
 - [ ] Supabase project created and schema applied
-- [ ] Railway account created (https://railway.app)
-- [ ] Cloudflare account created (https://dash.cloudflare.com)
+- [ ] Railway account created (<https://railway.app>)
+- [ ] Cloudflare account created (<https://dash.cloudflare.com>)
 - [ ] `.env.dev` and `.env.prod` files populated with real values (never commit these)
 
 ---
@@ -33,7 +34,7 @@ Before deploying, ensure you have:
 
 The Supabase project is already created. Apply all SQL files in order via the **SQL Editor** in the Supabase Dashboard:
 
-1. Go to https://supabase.com/dashboard → your project → **SQL Editor**
+1. Go to <https://supabase.com/dashboard> → your project → **SQL Editor**
 2. Run `supabase-migration.sql` (core tables: jobs, user_profiles)
 3. Run `job-boards.sql` (job_boards table + seed data)
 4. Run `seed-jobs.sql` if you want sample job data
@@ -51,6 +52,7 @@ These are already set in your `api/.env.dev` and `api/.env.prod` files.
 ### 1.3 Verify Row-Level Security
 
 Confirm RLS is enabled on all tables:
+
 - `jobs` — users can only see their own jobs
 - `user_profiles` — users can only see their own profile
 - `job_boards` — public read (no user restriction needed)
@@ -81,7 +83,7 @@ Create `api/railway.json` in the repo:
 
 ### 2.2 Create Railway Project
 
-1. Go to https://railway.app
+1. Go to <https://railway.app>
 2. Click **"New Project"**
 3. Select **"Deploy from GitHub repo"**
 4. Authorize Railway and select `teial-personal-projects/internship-tracker`
@@ -98,7 +100,7 @@ Create `api/railway.json` in the repo:
 
 In Railway Dashboard → your service → **Variables**, add:
 
-```
+```env
 SUPABASE_URL=https://vhfpemdmpscnwrqbateu.supabase.co
 SUPABASE_ANON_KEY=eyJ...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
@@ -107,8 +109,8 @@ ALLOWED_ORIGINS=https://internship-tracker.pages.dev
 ```
 
 > `PORT` is set automatically by Railway — do not set it manually.
-
-> Update `ALLOWED_ORIGINS` once you have your final Cloudflare Pages URL. You can comma-separate multiple origins:
+> Update `ALLOWED_ORIGINS` once you have your final Cloudflare Pages URL.
+> You can comma-separate multiple origins:
 > `ALLOWED_ORIGINS=https://internship-tracker.pages.dev,https://yourcustomdomain.com`
 
 ### 2.5 Configure Railway Environments (Dev vs Prod)
@@ -119,12 +121,14 @@ Railway supports multiple environments tied to git branches:
 - **production** environment → deploys from `main` branch
 
 To set up:
+
 1. Railway Dashboard → your project → click environment dropdown (top left)
 2. Click **"New Environment"** → name it `development`
 3. Set it to deploy from the `dev` branch
 4. Configure its own set of Variables (can use same Supabase project for now)
 
 Railway automatically sets:
+
 - `RAILWAY_ENVIRONMENT_NAME` — environment name
 - `RAILWAY_GIT_BRANCH` — branch deployed
 
@@ -133,26 +137,31 @@ Railway automatically sets:
 Once deployed, Railway gives you a URL like `https://internship-tracker-api.up.railway.app`.
 
 **Test the health endpoint:**
+
 ```bash
 curl https://internship-tracker-api.up.railway.app/health
 ```
 
 Expected response:
+
 ```json
 { "ok": true }
 ```
 
 **Verify auth is required (should return 401):**
+
 ```bash
 curl https://internship-tracker-api.up.railway.app/api/jobs
 ```
 
 Expected:
+
 ```json
 { "error": "Missing Authorization header" }
 ```
 
 **Get a JWT for testing** (via Supabase auth API):
+
 ```bash
 curl -X POST 'https://vhfpemdmpscnwrqbateu.supabase.co/auth/v1/token?grant_type=password' \
   -H "apikey: YOUR_SUPABASE_ANON_KEY" \
@@ -161,6 +170,7 @@ curl -X POST 'https://vhfpemdmpscnwrqbateu.supabase.co/auth/v1/token?grant_type=
 ```
 
 Save the `access_token` and test an authenticated endpoint:
+
 ```bash
 curl https://internship-tracker-api.up.railway.app/api/jobs \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
@@ -198,7 +208,7 @@ Visit `http://localhost:4173` and confirm the app loads and can reach the API.
 
 ### 3.2 Deploy to Cloudflare Pages
 
-1. Go to https://dash.cloudflare.com
+1. Go to <https://dash.cloudflare.com>
 2. Navigate to **Workers & Pages**
 3. Click **"Create application"** → **"Pages"** → **"Connect to Git"**
 4. Authorize Cloudflare and select `teial-personal-projects/internship-tracker`
@@ -206,7 +216,7 @@ Visit `http://localhost:4173` and confirm the app loads and can reach the API.
 ### 3.3 Configure Build Settings
 
 | Setting | Value |
-|---|---|
+| --- | --- |
 | Framework preset | Vite |
 | Build command | `cd web && npm install && npm run build` |
 | Build output directory | `web/dist` |
@@ -216,14 +226,15 @@ Visit `http://localhost:4173` and confirm the app loads and can reach the API.
 
 In Cloudflare Pages → **Environment variables**, add for **Production**:
 
-```
+```env
 VITE_SUPABASE_URL=https://vhfpemdmpscnwrqbateu.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
 VITE_API_URL=https://internship-tracker-api.up.railway.app
 ```
 
 And for **Preview** (dev branch deployments):
-```
+
+```env
 VITE_SUPABASE_URL=https://vhfpemdmpscnwrqbateu.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
 VITE_API_URL=https://internshiptracker-dev.up.railway.app
@@ -241,7 +252,7 @@ VITE_API_URL=https://internshiptracker-dev.up.railway.app
 
 Now that you have your Cloudflare URL, go back to Railway and update:
 
-```
+```env
 ALLOWED_ORIGINS=https://internship-tracker.pages.dev
 ```
 
@@ -271,15 +282,18 @@ Railway will redeploy automatically.
 
 ### 4.1 Monitoring
 
-**Railway (Backend)**
+#### Railway (Backend)
+
 - Dashboard → **Observability** — view request logs and errors
 - Watch for 5xx errors after deploys
 
-**Supabase (Database)**
+#### Supabase (Database)
+
 - Dashboard → **Reports** — monitor DB size (stay under 500MB free tier limit)
 - Dashboard → **Logs** — check for slow queries or auth errors
 
-**Cloudflare (Frontend)**
+#### Cloudflare (Frontend)
+
 - Dashboard → **Analytics** — page views, error rates
 
 ### 4.2 Database Backups
@@ -290,14 +304,17 @@ Railway will redeploy automatically.
 ### 4.3 Updating the App
 
 **Backend changes:**
+
 1. Push to `dev` or `main` branch
 2. Railway auto-deploys on push (~1–2 minutes)
 
 **Frontend changes:**
+
 1. Push to `dev` or `main` branch
 2. Cloudflare Pages auto-deploys on push (~2–3 minutes)
 
 **Database schema changes:**
+
 1. Write a new SQL migration file
 2. Run it manually in Supabase SQL Editor
 
@@ -305,10 +322,10 @@ Railway will redeploy automatically.
 
 ## Environment Variable Reference
 
-### Railway (Backend)
+### Railway Backend Variables
 
 | Variable | Description |
-|---|---|
+| --- | --- |
 | `SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_ANON_KEY` | Supabase anon/public key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (secret) |
@@ -319,7 +336,7 @@ Railway will redeploy automatically.
 ### Cloudflare Pages (Frontend)
 
 | Variable | Description |
-|---|---|
+| --- | --- |
 | `VITE_SUPABASE_URL` | Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | Supabase anon/public key |
 | `VITE_API_URL` | Railway backend URL (e.g. `https://your-app.railway.app`) |

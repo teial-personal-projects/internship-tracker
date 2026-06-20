@@ -1,10 +1,14 @@
+import sanitizeHtml from 'sanitize-html';
+
+const STRIP_ALL = { allowedTags: [] as string[], allowedAttributes: {} };
+
 function sanitizeText(input: string | null | undefined): string | null {
   if (input == null || input === '') return null;
-  const clean = input.trim().replace(/<[^>]*>/g, '');
+  const clean = sanitizeHtml(input, STRIP_ALL).trim();
   return clean || null;
 }
 
-const TEXT_FIELDS = [
+const JOB_TEXT_FIELDS = [
   'company',
   'title',
   'industry',
@@ -14,9 +18,62 @@ const TEXT_FIELDS = [
   'notes',
 ];
 
+const APPLICATION_TEXT_FIELDS = [
+  'company',
+  'title',
+  'industry',
+  'location',
+  'pay',
+  'notes',
+];
+
+const TASK_TEXT_FIELDS = [
+  'title',
+  'notes',
+];
+
+const WATCHLIST_TEXT_FIELDS = [
+  'company_name',
+  'industry',
+  'notes',
+  'ats_board_token',
+];
+
 export function sanitizeJobInput(data: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = { ...data };
-  for (const field of TEXT_FIELDS) {
+  for (const field of JOB_TEXT_FIELDS) {
+    if (typeof result[field] === 'string') {
+      result[field] = sanitizeText(result[field] as string);
+    }
+  }
+  return result;
+}
+
+export function sanitizeApplicationInput(data: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...data };
+  for (const field of APPLICATION_TEXT_FIELDS) {
+    if (typeof result[field] === 'string') {
+      result[field] = sanitizeText(result[field] as string);
+    }
+  }
+  delete result.source;
+  delete result.source_metadata;
+  return result;
+}
+
+export function sanitizeTaskInput(data: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...data };
+  for (const field of TASK_TEXT_FIELDS) {
+    if (typeof result[field] === 'string') {
+      result[field] = sanitizeText(result[field] as string);
+    }
+  }
+  return result;
+}
+
+export function sanitizeWatchlistInput(data: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...data };
+  for (const field of WATCHLIST_TEXT_FIELDS) {
     if (typeof result[field] === 'string') {
       result[field] = sanitizeText(result[field] as string);
     }

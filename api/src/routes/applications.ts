@@ -1,0 +1,617 @@
+import { Router } from 'express';
+import { requireAuth, type AuthRequest } from '../middleware/auth';
+import { validateBody } from '../middleware/validate';
+import { createUserClient } from '../lib/supabase';
+import { sanitizeApplicationInput } from '../lib/sanitize';
+import { computePageRange, computeTotalPages } from '../lib/pagination';
+import { applyApplicationFilters } from '../lib/applicationFilters';
+import { getPipelineCounts } from '../lib/pipelineCounts';
+import type { PipelineCountsDb } from '../lib/pipelineCounts';
+import {
+  CreateApplicationEventSchema,
+  CreateApplicationSchema,
+  CreateInterviewSchema,
+  UpdateApplicationSchema,
+  UpdateInterviewSchema,
+} from '@internship-tracker/shared';
+import type { ApplicationActivityItem } from '@internship-tracker/shared';
+import type { Request, Response } from 'express';
+
+const router = Router();
+
+const PAGE_MAX = 100;
+const ACTIVITY_LIMIT = 6;
+const CreateScopedInterviewSchema = CreateInterviewSchema.omit({ application_id: true });
+const UpdateScopedInterviewSchema = UpdateInterviewSchema.omit({ application_id: true });
+const APPLICATION_SORTS = {
+  added_desc: { column: 'added', ascending: false },
+  added_asc: { column: 'added', ascending: true },
+  applied_desc: { column: 'applied_date', ascending: false },
+  applied_asc: { column: 'applied_date', ascending: true },
+  company_asc: { column: 'company', ascending: true },
+  company_desc: { column: 'company', ascending: false },
+  status_asc: { column: 'status', ascending: true },
+  status_desc: { column: 'status', ascending: false },
+  location_asc: { column: 'location', ascending: true },
+  location_desc: { column: 'location', ascending: false },
+} as const;
+
+type ApplicationSort = keyof typeof APPLICATION_SORTS;
+
+function getApplicationSort(value: unknown): ApplicationSort {
+  return typeof value === 'string' && value in APPLICATION_SORTS
+    ? value as ApplicationSort
+    : 'added_desc';
+}
+
+// GET /api/applications
+router.get('/', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(PAGE_MAX, Math.max(1, Number(req.query.limit) || 25));
+    const { from, to } = computePageRange(page, limit);
+    const sort = APPLICATION_SORTS[getApplicationSort(req.query.sort)];
+
+    const baseQuery = db
+      .from('applications')
+      .select('*', { count: 'exact' })
+      .order(sort.column, { ascending: sort.ascending });
+
+    const query = applyApplicationFilters(baseQuery, {
+      status:           req.query.status as string | undefined,
+      search:           req.query.search as string | undefined,
+      date_from:        req.query.date_from as string | undefined,
+      date_to:          req.query.date_to as string | undefined,
+      exclude_archive:  req.query.exclude_archive === 'true',
+    });
+
+    const { data, error, count } = await query.range(from, to);
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    const total = count ?? 0;
+    res.json({
+      data,
+      total,
+      page,
+      totalPages: computeTotalPages(total, limit),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/applications
+router.post('/', requireAuth, validateBody(CreateApplicationSchema), async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const payload = sanitizeApplicationInput({ ...req.body, user_id: user.id });
+
+    const { data, error } = await db.from('applications').insert(payload).select().single();
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.status(201).json({ data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/applications/stats — must appear before /:id to avoid "stats" being parsed as an id
+router.get('/stats', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const { counts: status_counts } = await getPipelineCounts(db as unknown as PipelineCountsDb, user.id);
+
+    res.json({ status_counts });
+  } catch (err) {
+    next(err);
+  }
+});
+
+async function verifyApplicationOwnership(
+  db: ReturnType<typeof createUserClient>,
+  applicationId: string,
+  userId: string,
+): Promise<'ok' | 'not_found' | 'forbidden'> {
+  const { data, error } = await db
+    .from('applications')
+    .select('id, user_id')
+    .eq('id', applicationId)
+    .single();
+
+  if (error || !data) {
+    return 'not_found';
+  }
+
+  return (data as { user_id: string }).user_id === userId ? 'ok' : 'forbidden';
+}
+
+function sendOwnershipError(
+  res: Response,
+  ownership: 'not_found' | 'forbidden',
+): void {
+  if (ownership === 'forbidden') {
+    res.status(403).json({ error: 'Application does not belong to current user' });
+    return;
+  }
+  res.status(404).json({ error: 'Application not found' });
+}
+
+type ActivityRow = Omit<ApplicationActivityItem, 'company' | 'title'> & {
+  applications: {
+    company: string;
+    title: string;
+    user_id: string;
+  } | null;
+};
+
+function toApplicationActivityItem(row: ActivityRow, userId: string): ApplicationActivityItem | null {
+  if (row.applications?.user_id !== userId) return null;
+
+  const { applications, ...event } = row;
+  return {
+    ...event,
+    company: applications.company,
+    title: applications.title,
+  };
+}
+
+// GET /api/applications/activity
+router.get('/activity', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+
+    const { data, error } = await db
+      .from('application_events')
+      .select('*, applications(company, title, user_id)')
+      .eq('user_id', user.id)
+      .order('occurred_at', { ascending: false })
+      .range(0, ACTIVITY_LIMIT - 1);
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    const activity = ((data ?? []) as ActivityRow[])
+      .map((row) => toApplicationActivityItem(row, user.id))
+      .filter((row): row is ApplicationActivityItem => row !== null);
+
+    res.json({ data: activity });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/applications/:id/events
+router.get('/:id/events', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const { id } = req.params;
+
+    const ownership = await verifyApplicationOwnership(db, id, user.id);
+    if (ownership !== 'ok') {
+      sendOwnershipError(res, ownership);
+      return;
+    }
+
+    const { data, error } = await db
+      .from('application_events')
+      .select('*, contacts(first_name, last_name)')
+      .eq('application_id', id)
+      .order('occurred_at', { ascending: false });
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.json({ data: data ?? [] });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/applications/:id/events
+router.post('/:id/events', requireAuth, validateBody(CreateApplicationEventSchema), async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const { id } = req.params;
+
+    const ownership = await verifyApplicationOwnership(db, id, user.id);
+    if (ownership !== 'ok') {
+      sendOwnershipError(res, ownership);
+      return;
+    }
+
+    const body = req.body as {
+      event_type: string;
+      body?: string | null;
+      contact_id?: string | null;
+      occurred_at?: string;
+    };
+
+    if (body.contact_id) {
+      const { data: contact, error: contactError } = await db
+        .from('contacts')
+        .select('id, user_id')
+        .eq('id', body.contact_id)
+        .single();
+
+      if (contactError || !contact || (contact as { user_id: string }).user_id !== user.id) {
+        res.status(400).json({ error: 'Contact does not belong to current user' });
+        return;
+      }
+    }
+
+    const payload = {
+      ...body,
+      application_id: id,
+      user_id: user.id,
+      occurred_at: body.occurred_at ?? new Date().toISOString(),
+    };
+
+    const { data, error } = await db
+      .from('application_events')
+      .insert(payload)
+      .select('*, contacts(first_name, last_name)')
+      .single();
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.status(201).json({ data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/applications/:id/contacts
+router.get('/:id/contacts', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const { id } = req.params;
+
+    const ownership = await verifyApplicationOwnership(db, id, user.id);
+    if (ownership !== 'ok') {
+      sendOwnershipError(res, ownership);
+      return;
+    }
+
+    const { data, error } = await db
+      .from('application_contacts')
+      .select('*, contacts(*)')
+      .eq('application_id', id)
+      .eq('user_id', user.id);
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.json({ data: data ?? [] });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/applications/:id/interviews
+router.get('/:id/interviews', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const { id } = req.params;
+
+    const ownership = await verifyApplicationOwnership(db, id, user.id);
+    if (ownership !== 'ok') {
+      sendOwnershipError(res, ownership);
+      return;
+    }
+
+    const { data, error } = await db
+      .from('interviews')
+      .select('*')
+      .eq('application_id', id)
+      .eq('user_id', user.id)
+      .order('scheduled_at', { ascending: false });
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.json({ data: data ?? [] });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/applications/:id/interviews
+router.post('/:id/interviews', requireAuth, validateBody(CreateScopedInterviewSchema), async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const { id } = req.params;
+
+    const ownership = await verifyApplicationOwnership(db, id, user.id);
+    if (ownership !== 'ok') {
+      sendOwnershipError(res, ownership);
+      return;
+    }
+
+    const payload = {
+      ...req.body,
+      application_id: id,
+      user_id: user.id,
+    };
+
+    const { data, error } = await db
+      .from('interviews')
+      .insert(payload)
+      .select()
+      .single();
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.status(201).json({ data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PATCH /api/applications/:id/interviews/:interviewId
+router.patch('/:id/interviews/:interviewId', requireAuth, validateBody(UpdateScopedInterviewSchema), async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const { id, interviewId } = req.params;
+
+    const ownership = await verifyApplicationOwnership(db, id, user.id);
+    if (ownership !== 'ok') {
+      sendOwnershipError(res, ownership);
+      return;
+    }
+
+    const { data, error } = await db
+      .from('interviews')
+      .update(req.body)
+      .eq('id', interviewId)
+      .eq('application_id', id)
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+    if (!data) {
+      res.status(404).json({ error: 'Interview not found' });
+      return;
+    }
+
+    res.json({ data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/applications/:id/interviews/:interviewId
+router.delete('/:id/interviews/:interviewId', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const { id, interviewId } = req.params;
+
+    const ownership = await verifyApplicationOwnership(db, id, user.id);
+    if (ownership !== 'ok') {
+      sendOwnershipError(res, ownership);
+      return;
+    }
+
+    const { error } = await db
+      .from('interviews')
+      .delete()
+      .eq('id', interviewId)
+      .eq('application_id', id)
+      .eq('user_id', user.id);
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.json({ data: null });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/applications/:id/contacts
+router.post('/:id/contacts', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const { id } = req.params;
+    const contactId = (req.body as { contact_id?: string }).contact_id;
+
+    if (!contactId) {
+      res.status(400).json({ error: 'contact_id is required' });
+      return;
+    }
+
+    const ownership = await verifyApplicationOwnership(db, id, user.id);
+    if (ownership !== 'ok') {
+      sendOwnershipError(res, ownership);
+      return;
+    }
+
+    const { data: contact, error: contactError } = await db
+      .from('contacts')
+      .select('id, user_id, contact_type')
+      .eq('id', contactId)
+      .single();
+
+    if (contactError || !contact || (contact as { user_id: string }).user_id !== user.id) {
+      res.status(400).json({ error: 'Contact does not belong to current user' });
+      return;
+    }
+
+    if ((contact as { contact_type: string }).contact_type !== 'recruiter') {
+      res.status(400).json({ error: 'Only recruiter contacts can be linked to applications' });
+      return;
+    }
+
+    const { data, error } = await db
+      .from('application_contacts')
+      .insert({ application_id: id, contact_id: contactId, user_id: user.id })
+      .select()
+      .single();
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.status(201).json({ data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/applications/:id/contacts/:cid
+router.delete('/:id/contacts/:cid', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const { id, cid } = req.params;
+
+    const ownership = await verifyApplicationOwnership(db, id, user.id);
+    if (ownership !== 'ok') {
+      sendOwnershipError(res, ownership);
+      return;
+    }
+
+    const { error } = await db
+      .from('application_contacts')
+      .delete()
+      .eq('application_id', id)
+      .eq('contact_id', cid)
+      .eq('user_id', user.id);
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.json({ data: null });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/applications/:id
+router.get('/:id', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const { id } = req.params;
+
+    const { data, error } = await db
+      .from('applications')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+    if (!data) {
+      res.status(404).json({ error: 'Application not found' });
+      return;
+    }
+    res.json({ data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PATCH /api/applications/:id
+router.patch('/:id', requireAuth, validateBody(UpdateApplicationSchema), async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const { id } = req.params;
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { user_id, created_at, updated_at, ...rest } = req.body as Record<string, unknown>;
+    const payload = sanitizeApplicationInput(rest);
+
+    const { data, error } = await db
+      .from('applications')
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+    if (!data) {
+      res.status(404).json({ error: 'Application not found' });
+      return;
+    }
+
+    res.json({ data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/applications/:id
+router.delete('/:id', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const { id } = req.params;
+
+    // Count related records before cascade delete
+    const [{ count: contactCount }, { count: taskCount }, { count: interviewCount }] =
+      await Promise.all([
+        db.from('application_contacts').select('*', { count: 'exact', head: true }).eq('application_id', id),
+        db.from('tasks').select('*', { count: 'exact', head: true }).eq('application_id', id),
+        db.from('interviews').select('*', { count: 'exact', head: true }).eq('application_id', id),
+      ]);
+
+    const cascaded = (contactCount ?? 0) + (taskCount ?? 0) + (interviewCount ?? 0) > 0;
+
+    const { error } = await db.from('applications').delete().eq('id', id);
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+    res.json({ data: null, cascaded });
+  } catch (err) {
+    next(err);
+  }
+});
+
+export default router;
