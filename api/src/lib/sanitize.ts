@@ -56,6 +56,8 @@ export function sanitizeApplicationInput(data: Record<string, unknown>): Record<
       result[field] = sanitizeText(result[field] as string);
     }
   }
+  delete result.source;
+  delete result.source_metadata;
   return result;
 }
 

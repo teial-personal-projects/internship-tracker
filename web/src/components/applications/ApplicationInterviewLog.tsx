@@ -50,6 +50,7 @@ interface Props {
   onCreate?: (input: CreateApplicationInterviewInput) => Promise<unknown> | unknown;
   onUpdate?: (interviewId: string, input: UpdateApplicationInterviewInput) => Promise<unknown> | unknown;
   isSaving?: boolean;
+  onEditorOpenChange?: (open: boolean) => void;
 }
 
 type InterviewDraft = {
@@ -69,6 +70,7 @@ export function ApplicationInterviewLog({
   onCreate,
   onUpdate,
   isSaving = false,
+  onEditorOpenChange,
 }: Props) {
   const [draft, setDraft] = useState<InterviewDraft>(() => createEmptyDraft());
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -82,6 +84,7 @@ export function ApplicationInterviewLog({
     setEditingId(null);
     setFormError('');
     setIsEditorOpen(true);
+    onEditorOpenChange?.(true);
   }
 
   function openEdit(interview: Interview) {
@@ -89,6 +92,7 @@ export function ApplicationInterviewLog({
     setEditingId(interview.id);
     setFormError('');
     setIsEditorOpen(true);
+    onEditorOpenChange?.(true);
   }
 
   function closeEditor() {
@@ -96,6 +100,7 @@ export function ApplicationInterviewLog({
     setEditingId(null);
     setFormError('');
     setIsEditorOpen(false);
+    onEditorOpenChange?.(false);
   }
 
   async function saveInterview() {

@@ -1,5 +1,6 @@
+import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import * as Dialog from '@radix-ui/react-dialog';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Spinner } from './Spinner';
 import type { Application, ApplicationStatus, ApplicationType } from '@shared/schemas';
@@ -52,11 +53,13 @@ interface Props {
 }
 
 export function ApplicationModal({ isOpen, onClose, onSubmit, isLoading, defaultValues, title = 'Add Application' }: Props) {
+  const [showDiscardWarning, setShowDiscardWarning] = useState(false);
+  const [isInterviewEditorOpen, setIsInterviewEditorOpen] = useState(false);
   const applicationId = defaultValues?.id ?? null;
   const interviewsQuery = useApplicationInterviews(isOpen ? applicationId : null);
   const createInterview = useCreateApplicationInterview(applicationId);
   const updateInterview = useUpdateApplicationInterview(applicationId);
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<ApplicationFormValues>({
+  const { register, handleSubmit, formState: { errors, isDirty }, reset } = useForm<ApplicationFormValues>({
     defaultValues: { added: TODAY, status: 'not_started', application_type: 'cold_strategic', ...defaultValues } as Partial<ApplicationFormValues>,
   });
 
@@ -66,9 +69,21 @@ export function ApplicationModal({ isOpen, onClose, onSubmit, isLoading, default
     }
   }, [isOpen, defaultValues, reset]);
 
-  function handleClose() { reset(); onClose(); }
+  function handleClose() {
+    if (isDirty || isInterviewEditorOpen) { setShowDiscardWarning(true); return; }
+    reset();
+    onClose();
+  }
+
+  function handleConfirmDiscard() {
+    setShowDiscardWarning(false);
+    setIsInterviewEditorOpen(false);
+    reset();
+    onClose();
+  }
 
   return (
+    <>
     <Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" />
@@ -77,13 +92,11 @@ export function ApplicationModal({ isOpen, onClose, onSubmit, isLoading, default
             <Dialog.Title className="text-base font-bold" style={{ color: 'var(--ink)' }}>
               {title}
             </Dialog.Title>
-            <Dialog.Close asChild>
-              <button type="button" aria-label="Close" className="p-1 rounded hover:bg-black/10 transition-colors">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </Dialog.Close>
+            <button type="button" aria-label="Close" onClick={handleClose} className="p-1 rounded hover:bg-black/10 transition-colors">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden">
@@ -176,6 +189,7 @@ export function ApplicationModal({ isOpen, onClose, onSubmit, isLoading, default
                   isSaving={createInterview.isPending || updateInterview.isPending}
                   onCreate={(input) => createInterview.mutateAsync(input)}
                   onUpdate={(interviewId, input) => updateInterview.mutateAsync({ interviewId, data: input })}
+                  onEditorOpenChange={setIsInterviewEditorOpen}
                 />
               )}
 
@@ -191,5 +205,31 @@ export function ApplicationModal({ isOpen, onClose, onSubmit, isLoading, default
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
+
+    <AlertDialog.Root open={showDiscardWarning} onOpenChange={setShowDiscardWarning}>
+      <AlertDialog.Portal>
+        <AlertDialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" />
+        <AlertDialog.Content
+          className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border bg-white p-6 shadow-xl"
+          style={{ borderColor: 'var(--line)' }}
+        >
+          <AlertDialog.Title className="text-base font-bold" style={{ color: 'var(--ink)' }}>
+            Unsaved changes
+          </AlertDialog.Title>
+          <AlertDialog.Description className="mt-2 text-sm" style={{ color: 'var(--ink-3)' }}>
+            You have unsaved changes. Discard them and close?
+          </AlertDialog.Description>
+          <div className="mt-5 flex justify-end gap-2">
+            <AlertDialog.Cancel asChild>
+              <button type="button" className="btn-ghost text-sm text-gray-600">Keep Editing</button>
+            </AlertDialog.Cancel>
+            <AlertDialog.Action asChild>
+              <button type="button" onClick={handleConfirmDiscard} className="btn-danger text-sm px-4">Discard Changes</button>
+            </AlertDialog.Action>
+          </div>
+        </AlertDialog.Content>
+      </AlertDialog.Portal>
+    </AlertDialog.Root>
+    </>
   );
 }
