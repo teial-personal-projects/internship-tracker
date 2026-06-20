@@ -4,6 +4,7 @@ interface Props {
   total: number;
   limit: number;
   onPageChange: (page: number) => void;
+  action?: React.ReactNode;
 }
 
 export function getPaginationRange(page: number, total: number, limit: number) {
@@ -13,7 +14,7 @@ export function getPaginationRange(page: number, total: number, limit: number) {
   };
 }
 
-export function Pagination({ page, totalPages, total, limit, onPageChange }: Props) {
+export function Pagination({ page, totalPages, total, limit, onPageChange, action }: Props) {
   const { start, end } = getPaginationRange(page, total, limit);
 
   return (
@@ -43,6 +44,7 @@ export function Pagination({ page, totalPages, total, limit, onPageChange }: Pro
         >
           Next →
         </button>
+        {action}
       </div>
     </div>
   );
