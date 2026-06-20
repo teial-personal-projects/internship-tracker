@@ -1,6 +1,6 @@
 import type { ApplicationsView } from './applicationsView';
 
-export const GRID_PAGE_LIMIT = 25;
+export const GRID_PAGE_LIMIT = 10;
 export const KANBAN_PAGE_LIMIT = 100;
 
 export function getApplicationsPaging(view: ApplicationsView, page: number) {

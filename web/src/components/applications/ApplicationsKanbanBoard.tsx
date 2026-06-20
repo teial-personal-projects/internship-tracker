@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   DndContext,
   KeyboardSensor,
@@ -13,12 +12,8 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import type { Application, ApplicationStatus } from '@shared/schemas';
-import { GripVertical } from 'lucide-react';
-import { Spinner } from '@/components/Spinner';
-import { TrashIcon } from '@/components/icons/TrashIcon';
-import { formatDate } from '@/lib/dateUtils';
+import { ApplicationCompactCard } from '@/components/applications/ApplicationCompactCard';
 import { STATUS_COLORS, STATUS_LABELS } from '@/theme';
 
 export const APPLICATION_KANBAN_STATUSES = [
@@ -224,15 +219,7 @@ function KanbanCard({
   onDelete: (id: string) => void;
   isDeleting: boolean;
 }) {
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const colors = STATUS_COLORS[app.status] ?? { dot: 'var(--ink-4)' };
-  const {
-    attributes,
-    isDragging,
-    listeners,
-    setNodeRef,
-    transform,
-  } = useDraggable({
+  const { attributes, isDragging, listeners, setNodeRef, transform } = useDraggable({
     id: app.id,
     data: { status: app.status },
   });
@@ -241,106 +228,14 @@ function KanbanCard({
     : undefined;
 
   return (
-    <article
+    <div
       ref={setNodeRef}
-      className="w-full min-w-0 cursor-grab touch-none overflow-hidden rounded-md border bg-white shadow-sm active:cursor-grabbing"
-      style={{
-        ...dragStyle,
-        borderColor: 'var(--line)',
-        opacity: isDragging ? 0.7 : 1,
-        position: 'relative',
-        zIndex: isDragging ? 20 : 'auto',
-      }}
+      className="cursor-grab touch-none active:cursor-grabbing"
+      style={{ ...dragStyle, opacity: isDragging ? 0.7 : 1, zIndex: isDragging ? 20 : undefined, position: 'relative' }}
       {...attributes}
       {...listeners}
     >
-      <div className="h-1" style={{ background: colors.dot }} aria-hidden="true" />
-      <div className="p-3">
-        <div className="flex items-start gap-2">
-          <button
-            type="button"
-            className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-xs hover:bg-gray-50 focus:outline-none focus:ring-2"
-            style={{ color: 'var(--ink-4)', '--tw-ring-color': 'var(--accent)' } as React.CSSProperties}
-            aria-label={`Move ${app.company}`}
-            tabIndex={-1}
-          >
-            <GripVertical className="h-4 w-4" aria-hidden="true" />
-          </button>
-          <div className="min-w-0">
-            <h3 className="truncate text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-              {app.company}
-            </h3>
-            <p className="mt-0.5 line-clamp-2 text-xs leading-5" style={{ color: 'var(--ink-3)' }}>
-              {app.title}
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          <span className="rounded px-2 py-0.5 text-[11px]" style={{ background: 'var(--soft)', color: 'var(--ink-3)' }}>
-            {app.location ?? 'No location'}
-          </span>
-        </div>
-
-        <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
-          <div>
-            <dt className="font-semibold uppercase tracking-wide" style={{ color: 'var(--ink-4)' }}>Applied</dt>
-            <dd className="mt-0.5 truncate" style={{ color: app.applied_date ? 'var(--ink-2)' : 'var(--ink-4)' }}>
-              {formatDate(app.applied_date, 'Not applied')}
-            </dd>
-          </div>
-          <div>
-            <dt className="font-semibold uppercase tracking-wide" style={{ color: 'var(--ink-4)' }}>Added</dt>
-            <dd className="mt-0.5 truncate" style={{ color: 'var(--ink-2)' }}>
-              {formatDate(app.added, 'Not set')}
-            </dd>
-          </div>
-        </dl>
-
-        <div className="mt-3 flex items-center justify-end gap-1">
-          <button type="button" onClick={() => onEdit(app)} className="btn-outline px-2 py-1 text-xs">
-            Edit
-          </button>
-          <button
-            type="button"
-            disabled={isDeleting}
-            onClick={() => setConfirmOpen(true)}
-            className="btn-ghost px-2 py-1 text-xs text-red-600 hover:bg-red-50"
-            aria-label="Delete"
-          >
-            {isDeleting ? <Spinner size="sm" color="red" /> : <TrashIcon />}
-          </button>
-        </div>
-      </div>
-
-      <AlertDialog.Root open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialog.Portal>
-          <AlertDialog.Overlay className="fixed inset-0 z-40 bg-black/50" />
-          <AlertDialog.Content className="app-confirm-content">
-            <AlertDialog.Title className="mb-2 text-base font-bold" style={{ color: 'var(--ink)' }}>
-              Delete Application
-            </AlertDialog.Title>
-            <AlertDialog.Description className="mb-5 text-sm" style={{ color: 'var(--ink-2)' }}>
-              Delete <strong>{app.company}</strong> - {app.title}? This cannot be undone.
-            </AlertDialog.Description>
-            <div className="flex justify-end gap-2">
-              <AlertDialog.Cancel asChild>
-                <button type="button" className="btn-ghost text-sm text-gray-600">Cancel</button>
-              </AlertDialog.Cancel>
-              <AlertDialog.Action asChild>
-                <button
-                  type="button"
-                  disabled={isDeleting}
-                  onClick={() => { setConfirmOpen(false); onDelete(app.id); }}
-                  className="btn-danger text-sm"
-                >
-                  Delete
-                </button>
-              </AlertDialog.Action>
-            </div>
-          </AlertDialog.Content>
-        </AlertDialog.Portal>
-      </AlertDialog.Root>
-    </article>
+      <ApplicationCompactCard app={app} onEdit={onEdit} onDelete={onDelete} isDeleting={isDeleting} />
+    </div>
   );
 }
