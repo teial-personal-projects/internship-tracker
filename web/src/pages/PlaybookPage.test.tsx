@@ -21,7 +21,6 @@ describe('PlaybookPage', () => {
     expect(markup).toContain('Day 4-5');
     expect(markup).toContain('the cover letter differentiator');
     expect(markup).toContain('Double-down target');
-    expect(markup).toContain('Manage your templates');
     expect(markup).not.toContain('type="checkbox"');
   });
 });

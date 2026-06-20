@@ -2,10 +2,8 @@ import { apiClient } from './client';
 import type {
   ContactType,
   ContactInteractionType,
-  ContactTemplateType,
   CreateContactInteractionSchemaType,
   CreateContactSchemaType,
-  CreateContactTemplateSchemaType,
   HowFound,
   OutreachStatus,
   PreferredContactMethod,
@@ -46,17 +44,6 @@ export interface ContactInteraction {
   created_at: string;
 }
 
-export interface ContactTemplate {
-  id: string;
-  user_id: string;
-  contact_id: string;
-  name: string;
-  template_type?: ContactTemplateType | null;
-  body?: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface ContactsListParams {
   contact_type?: string;
   application_id?: string;
@@ -93,18 +80,5 @@ export async function createContactInteraction(
   input: Omit<CreateContactInteractionSchemaType, 'contact_id'>,
 ): Promise<ContactInteraction> {
   const { data } = await apiClient.post<{ data: ContactInteraction }>(`/contacts/${id}/interactions`, input);
-  return data.data;
-}
-
-export async function getContactTemplates(id: string): Promise<ContactTemplate[]> {
-  const { data } = await apiClient.get<{ data: ContactTemplate[] }>(`/contacts/${id}/templates`);
-  return data.data;
-}
-
-export async function createContactTemplate(
-  id: string,
-  input: Omit<CreateContactTemplateSchemaType, 'contact_id'>,
-): Promise<ContactTemplate> {
-  const { data } = await apiClient.post<{ data: ContactTemplate }>(`/contacts/${id}/templates`, input);
   return data.data;
 }
