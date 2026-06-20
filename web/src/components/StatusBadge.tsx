@@ -1,12 +1,11 @@
-import type { Job } from '@shared/types';
 import { STATUS_COLORS, STATUS_LABELS } from '@/theme';
 
 interface Props {
-  job: Job;
+  status: string;
 }
 
-export function StatusBadge({ job }: Props) {
-  const colors = STATUS_COLORS[job.status];
+export function StatusBadge({ status }: Props) {
+  const colors = STATUS_COLORS[status];
 
   return (
     <span
@@ -21,7 +20,7 @@ export function StatusBadge({ job }: Props) {
         className="text-xs font-semibold whitespace-nowrap"
         style={{ color: colors?.color ?? '#444441' }}
       >
-        {STATUS_LABELS[job.status] ?? job.status}
+        {STATUS_LABELS[status] ?? status}
       </span>
     </span>
   );

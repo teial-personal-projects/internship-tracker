@@ -4,7 +4,6 @@ import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
 import { Spinner } from '@/components/Spinner';
 import { AppHeader } from '@/components/AppHeader';
-import { UserMenu } from '@/components/UserMenu';
 import { supabase } from '@/lib/supabaseClient';
 import { MIN_YEAR_OPTIONS } from '@shared/types';
 import type { MinYear } from '@shared/types';
@@ -114,11 +113,9 @@ export function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#F5F5F3]">
-      <AppHeader>
-        <UserMenu />
-      </AppHeader>
+      <AppHeader />
 
-      <div className="max-w-[800px] mx-auto py-8 px-4">
+      <div className="mobile-safe-bottom mx-auto max-w-[800px] px-4 py-8">
         <div className="bg-white rounded-xl border border-brand-100 overflow-hidden">
           {/* Card header */}
           <div className="bg-brand-50 border-b-2 border-brand-200 px-8 py-4">
@@ -134,7 +131,7 @@ export function ProfilePage() {
               </div>
             ) : (
               <div className="flex flex-col gap-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label className="field-label">First Name</label>
                     <input
@@ -155,7 +152,7 @@ export function ProfilePage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label className="field-label">Major</label>
                     <input

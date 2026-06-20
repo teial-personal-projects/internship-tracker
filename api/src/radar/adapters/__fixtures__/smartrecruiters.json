@@ -1,0 +1,15 @@
+{
+  "content": [
+    {
+      "id": "smart-1",
+      "name": "Senior Full Stack Engineer",
+      "postingUrl": "https://jobs.smartrecruiters.com/example/smart-1",
+      "releasedDate": "2026-06-03T10:00:00.000Z",
+      "location": {
+        "city": "Remote",
+        "region": "US",
+        "country": "United States"
+      }
+    }
+  ]
+}

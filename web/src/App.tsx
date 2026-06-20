@@ -1,9 +1,12 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoginPage } from '@/pages/LoginPage';
-import { DashboardPage } from '@/pages/DashboardPage';
+import { ApplicationsPage } from '@/pages/ApplicationsPage';
 import { ProfilePage } from '@/pages/ProfilePage';
-import { JobBoardsPage } from '@/pages/JobBoardsPage';
+import { ContactsPage } from '@/pages/ContactsPage';
+import { ActionItemsPage } from '@/pages/ActionItemsPage';
+import { RadarPage } from '@/pages/RadarPage';
+import { PlaybookPage } from '@/pages/PlaybookPage';
 import { Spinner } from '@/components/Spinner';
 
 function AppRoutes() {
@@ -23,10 +26,27 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/" element={<DashboardPage />} />
-      <Route path="/profile" element={<ProfilePage />} />
-      <Route path="/job-boards" element={<JobBoardsPage />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Primary tabs */}
+      <Route path="/applications"  element={<ApplicationsPage />} />
+      <Route path="/contacts"      element={<ContactsPage />} />
+      <Route path="/radar"         element={<RadarPage />} />
+      <Route path="/action-items"  element={<ActionItemsPage />} />
+      <Route path="/playbook"      element={<PlaybookPage />} />
+
+      {/* Hamburger menu pages */}
+      <Route path="/profile"       element={<ProfilePage />} />
+
+      {/* Redirects from old routes */}
+      <Route path="/"              element={<Navigate to="/applications" replace />} />
+      <Route path="/today"         element={<Navigate to="/applications" replace />} />
+      <Route path="/dashboard"     element={<Navigate to="/applications" replace />} />
+      <Route path="/interviews"    element={<Navigate to="/applications" replace />} />
+      <Route path="/notifications" element={<Navigate to="/applications" replace />} />
+      <Route path="/watchlist"     element={<Navigate to="/radar" replace />} />
+      <Route path="/job-boards"    element={<Navigate to="/radar" replace />} />
+
+      {/* Catch-all */}
+      <Route path="*" element={<Navigate to="/applications" replace />} />
     </Routes>
   );
 }

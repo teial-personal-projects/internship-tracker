@@ -1,0 +1,156 @@
+import { apiClient } from './client';
+import type { Contact } from './contacts.api';
+import type { Application, Interview } from '@shared/schemas';
+import type {
+  ApplicationActivityItem,
+  ApplicationEventType,
+  CreateApplicationEventSchemaType,
+  CreateApplicationSchemaType,
+  CreateInterviewSchemaType,
+  UpdateApplicationSchemaType,
+  UpdateInterviewSchemaType,
+} from '@shared/schemas';
+
+export interface ApplicationsListParams {
+  status?: string;
+  search?: string;
+  date_from?: string;
+  date_to?: string;
+  sort?:
+    | 'added_desc'
+    | 'added_asc'
+    | 'applied_desc'
+    | 'applied_asc'
+    | 'company_asc'
+    | 'company_desc'
+    | 'status_asc'
+    | 'status_desc'
+    | 'location_asc'
+    | 'location_desc';
+  page?: number;
+  limit?: number;
+  exclude_archive?: boolean;
+}
+
+export interface ApplicationsListResponse {
+  data: Application[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+export interface ApplicationStats {
+  status_counts: Record<string, number>;
+}
+
+export interface ApplicationEvent {
+  id: string;
+  application_id: string;
+  user_id: string;
+  event_type: ApplicationEventType;
+  body?: string | null;
+  contact_id?: string | null;
+  occurred_at: string;
+  created_at: string;
+  contacts?: {
+    first_name: string;
+    last_name: string;
+  } | null;
+}
+
+export interface ApplicationContactLink {
+  id: string;
+  application_id: string;
+  contact_id: string;
+  user_id: string;
+  created_at: string;
+  contacts?: Contact | null;
+}
+
+export type CreateApplicationInterviewInput = Omit<CreateInterviewSchemaType, 'application_id'>;
+export type UpdateApplicationInterviewInput = Omit<UpdateInterviewSchemaType, 'application_id'>;
+
+export async function getApplications(params: ApplicationsListParams = {}): Promise<ApplicationsListResponse> {
+  const { data } = await apiClient.get<ApplicationsListResponse>('/applications', { params });
+  return data;
+}
+
+export async function getApplication(id: string): Promise<Application> {
+  const { data } = await apiClient.get<{ data: Application }>(`/applications/${id}`);
+  return data.data;
+}
+
+export async function getApplicationStats(): Promise<ApplicationStats> {
+  const { data } = await apiClient.get<ApplicationStats>('/applications/stats');
+  return data;
+}
+
+export async function getApplicationActivity(): Promise<ApplicationActivityItem[]> {
+  const { data } = await apiClient.get<{ data: ApplicationActivityItem[] }>('/applications/activity');
+  return data.data;
+}
+
+export async function createApplication(input: CreateApplicationSchemaType): Promise<Application> {
+  const { data } = await apiClient.post<{ data: Application }>('/applications', input);
+  return data.data;
+}
+
+export async function updateApplication(id: string, input: UpdateApplicationSchemaType): Promise<Application> {
+  const { data } = await apiClient.patch<{ data: Application }>(`/applications/${id}`, input);
+  return data.data;
+}
+
+export async function deleteApplication(id: string): Promise<{ cascaded: boolean }> {
+  const { data } = await apiClient.delete<{ data: null; cascaded: boolean }>(`/applications/${id}`);
+  return { cascaded: data.cascaded };
+}
+
+export async function getApplicationEvents(applicationId: string): Promise<ApplicationEvent[]> {
+  const { data } = await apiClient.get<{ data: ApplicationEvent[] }>(`/applications/${applicationId}/events`);
+  return data.data;
+}
+
+export async function createApplicationEvent(
+  applicationId: string,
+  input: CreateApplicationEventSchemaType,
+): Promise<ApplicationEvent> {
+  const { data } = await apiClient.post<{ data: ApplicationEvent }>(`/applications/${applicationId}/events`, input);
+  return data.data;
+}
+
+export async function getApplicationContacts(applicationId: string): Promise<ApplicationContactLink[]> {
+  const { data } = await apiClient.get<{ data: ApplicationContactLink[] }>(`/applications/${applicationId}/contacts`);
+  return data.data;
+}
+
+export async function getApplicationInterviews(applicationId: string): Promise<Interview[]> {
+  const { data } = await apiClient.get<{ data: Interview[] }>(`/applications/${applicationId}/interviews`);
+  return data.data;
+}
+
+export async function createApplicationInterview(
+  applicationId: string,
+  input: CreateApplicationInterviewInput,
+): Promise<Interview> {
+  const { data } = await apiClient.post<{ data: Interview }>(`/applications/${applicationId}/interviews`, input);
+  return data.data;
+}
+
+export async function updateApplicationInterview(
+  applicationId: string,
+  interviewId: string,
+  input: UpdateApplicationInterviewInput,
+): Promise<Interview> {
+  const { data } = await apiClient.patch<{ data: Interview }>(
+    `/applications/${applicationId}/interviews/${interviewId}`,
+    input,
+  );
+  return data.data;
+}
+
+export async function deleteApplicationInterview(
+  applicationId: string,
+  interviewId: string,
+): Promise<void> {
+  await apiClient.delete(`/applications/${applicationId}/interviews/${interviewId}`);
+}

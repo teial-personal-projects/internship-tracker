@@ -1,0 +1,138 @@
+import { useState, useMemo } from 'react';
+import { toast } from 'sonner';
+import { AppHeader } from '@/components/AppHeader';
+import { ApplicationModal, type ApplicationFormValues } from '@/components/ApplicationModal';
+import { Spinner } from '@/components/Spinner';
+import { ActionItemsPanel } from '@/components/today/ActionItemsPanel';
+import { NeedAttentionPanel } from '@/components/today/NeedAttentionPanel';
+import { OverdueFollowupsPanel } from '@/components/today/OverdueFollowupsPanel';
+import { RecentContactsPanel } from '@/components/today/RecentContactsPanel';
+import { StatCards } from '@/components/today/StatCards';
+import { UpNextCard } from '@/components/today/UpNextCard';
+import { useToday } from '@/hooks/useToday';
+import { useUpdateApplication } from '@/hooks/useApplications';
+import { useAuth } from '@/contexts/AuthContext';
+import { buildTodaySummary } from '@/lib/todaySummary';
+import type { Application } from '@shared/schemas';
+import type { ReactNode } from 'react';
+
+function PanelShell({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="rounded-lg border bg-white" style={{ borderColor: 'var(--line)' }}>
+      <div className="border-b px-4 py-3" style={{ borderColor: 'var(--line)' }}>
+        <h3 className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
+          {title}
+        </h3>
+      </div>
+      <div className="p-4">{children}</div>
+    </section>
+  );
+}
+
+function EmptyLine({ children }: { children: ReactNode }) {
+  return (
+    <p className="text-sm" style={{ color: 'var(--ink-3)' }}>
+      {children}
+    </p>
+  );
+}
+
+export function TodayPage() {
+  const { user } = useAuth();
+  const { data, isLoading, error } = useToday();
+  const updateApp = useUpdateApplication();
+  const [editingApp, setEditingApp] = useState<Application | null>(null);
+
+  const modalDefaultValues = useMemo(() => editingApp ?? undefined, [editingApp]);
+
+  async function handleEditSubmit(formData: ApplicationFormValues) {
+    if (!editingApp) return;
+    const payload = {
+      ...formData,
+      application_type: formData.application_type || 'cold_strategic',
+      source: editingApp.source,
+      source_metadata: editingApp.source_metadata,
+    };
+    try {
+      await updateApp.mutateAsync({ id: editingApp.id, data: payload });
+      toast.success('Application updated');
+      setEditingApp(null);
+    } catch {
+      toast.error('Something went wrong');
+    }
+  }
+  const firstName = typeof user?.user_metadata?.first_name === 'string' && user.user_metadata.first_name.trim()
+    ? user.user_metadata.first_name.trim()
+    : 'there';
+
+  return (
+    <div className="flex h-screen flex-col overflow-hidden" style={{ background: 'var(--bg)' }}>
+      <AppHeader />
+
+      <main className="mobile-safe-bottom flex-1 overflow-x-hidden overflow-y-auto px-4 py-6 sm:px-6 md:pb-8">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-5">
+          <header className="max-w-3xl">
+            <h2
+              className="text-3xl font-bold tracking-tight sm:text-4xl"
+              style={{ color: 'var(--ink)', fontFamily: "'Fraunces', serif" }}
+            >
+              Good morning,{' '}
+              <span style={{ color: 'var(--accent)' }}>
+                {firstName}
+              </span>
+              .
+            </h2>
+            {data && (
+              <p className="mt-2 text-base leading-7" style={{ color: 'var(--ink-2)' }}>
+                {buildTodaySummary(data)}
+              </p>
+            )}
+          </header>
+
+          {isLoading && (
+            <div className="flex items-center justify-center rounded-lg border bg-white py-16" style={{ borderColor: 'var(--line)' }}>
+              <Spinner size="lg" />
+            </div>
+          )}
+
+          {error && (
+            <div className="rounded-lg border px-4 py-3 text-sm" style={{ background: '#FEF2F2', color: '#B91C1C', borderColor: '#FECACA' }}>
+              Failed to load today.
+            </div>
+          )}
+
+          {data && (
+            <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_320px] lg:grid-cols-[minmax(0,1fr)_360px]">
+              <div className="flex min-w-0 flex-col gap-5">
+                <StatCards stats={data.stats} />
+
+                <PanelShell title="Up next">
+                  <UpNextCard interview={data.up_next[0] ?? null} />
+                </PanelShell>
+
+                <NeedAttentionPanel applications={data.need_attention} onEdit={setEditingApp} />
+              </div>
+
+              <aside className="flex min-w-0 flex-col gap-5">
+                <OverdueFollowupsPanel contacts={data.overdue_follow_ups} />
+
+                <ActionItemsPanel actionItems={data.action_items} totalOpenTasks={data.stats.open_tasks} />
+
+                <RecentContactsPanel contacts={data.recent_contacts} />
+              </aside>
+            </div>
+          )}
+        </div>
+      </main>
+
+      <ApplicationModal
+        isOpen={editingApp !== null}
+        onClose={() => setEditingApp(null)}
+        onSubmit={handleEditSubmit}
+        isLoading={updateApp.isPending}
+        defaultValues={modalDefaultValues}
+        title="Edit Application"
+      />
+    </div>
+  );
+}

@@ -1,0 +1,23 @@
+{
+  "jobs": [
+    {
+      "id": 101,
+      "title": "Senior Software Engineer",
+      "location": {
+        "name": "Remote - United States"
+      },
+      "absolute_url": "https://boards.greenhouse.io/example/jobs/101",
+      "updated_at": "2026-06-01T12:00:00-04:00",
+      "content": "Example content"
+    },
+    {
+      "id": "job-202",
+      "title": "Staff Infrastructure Engineer",
+      "location": {
+        "name": "Los Angeles, CA"
+      },
+      "absolute_url": "https://boards.greenhouse.io/example/jobs/202",
+      "updated_at": null
+    }
+  ]
+}
