@@ -352,7 +352,7 @@ function ApplicationsViewToggle({
 }) {
   const options: Array<{ value: ApplicationsView; label: string; Icon: typeof Table2 }> = [
     { value: 'grid', label: 'Grid', Icon: Table2 },
-    { value: 'kanban', label: 'Kanban', Icon: Columns3 },
+    { value: 'kanban', label: 'Board', Icon: Columns3 },
   ];
 
   return (
