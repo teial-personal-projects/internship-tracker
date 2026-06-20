@@ -84,13 +84,13 @@ export function TodayPage() {
                   <UpNextCard interview={data.up_next[0] ?? null} />
                 </PanelShell>
 
-                <ActionItemsPanel actionItems={data.action_items} totalOpenTasks={data.stats.open_tasks} />
-
                 <NeedAttentionPanel applications={data.need_attention} />
               </div>
 
               <aside className="flex min-w-0 flex-col gap-5">
                 <OverdueFollowupsPanel contacts={data.overdue_follow_ups} />
+
+                <ActionItemsPanel actionItems={data.action_items} totalOpenTasks={data.stats.open_tasks} />
 
                 <RecentContactsPanel contacts={data.recent_contacts} />
               </aside>

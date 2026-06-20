@@ -224,8 +224,8 @@ export function ApplicationsPage() {
         </p>
 
         {/* Search + date range + add */}
-        <div className="mobile-filter-scroll sm:flex sm:items-center sm:overflow-visible sm:pb-0">
-          <div className="relative min-w-64 flex-1 sm:min-w-40">
+        <div className="mobile-filter-scroll sm:flex sm:items-center sm:gap-2 sm:overflow-visible sm:pb-0">
+          <div className="relative min-w-56 shrink-0 sm:w-[36rem] lg:w-[40rem]">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'var(--ink-4)' }} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
             </svg>
@@ -256,7 +256,7 @@ export function ApplicationsPage() {
 
           <ApplicationsViewToggle view={view} onChange={handleViewChange} />
 
-          <button type="button" onClick={openAdd} className="btn-primary text-sm px-4 py-2 shrink-0">
+          <button type="button" onClick={openAdd} className="btn-primary text-sm px-4 py-2 shrink-0 sm:ml-auto">
             + Add
           </button>
         </div>

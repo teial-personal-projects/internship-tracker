@@ -41,7 +41,7 @@ describe('Phase 4 zero-data Today states', () => {
     expect(markup).toContain('No applications yet');
     expect(markup).toContain('No interviews scheduled.');
     expect(markup).toContain('No open action items.');
-    expect(markup).toContain('Nothing in active stages right now.');
+    expect(markup).toContain('No active applications right now.');
     expect(markup).toContain('No applications in this cycle yet.');
     expect(markup).toContain('current on follow-ups');
     expect(markup).toContain('No contacts yet.');
