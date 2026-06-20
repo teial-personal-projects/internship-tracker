@@ -1,4 +1,5 @@
 import type { Application } from '@shared/schemas';
+import { ArrowDown, ArrowUp } from 'lucide-react';
 import { ApplicationRow } from './ApplicationRow';
 
 interface Props {
@@ -69,6 +70,35 @@ function sortIndicator(column: SortColumn, currentSort: ApplicationSort): string
   return '';
 }
 
+function sortDirection(column: SortColumn, currentSort: ApplicationSort): 'ascending' | 'descending' | null {
+  if (column === 'company') {
+    if (currentSort === 'company_asc') return 'ascending';
+    if (currentSort === 'company_desc') return 'descending';
+  }
+
+  if (column === 'applied') {
+    if (currentSort === 'applied_asc') return 'ascending';
+    if (currentSort === 'applied_desc') return 'descending';
+  }
+
+  if (column === 'status') {
+    if (currentSort === 'status_asc') return 'ascending';
+    if (currentSort === 'status_desc') return 'descending';
+  }
+
+  if (column === 'added') {
+    if (currentSort === 'added_asc') return 'ascending';
+    if (currentSort === 'added_desc') return 'descending';
+  }
+
+  if (column === 'location') {
+    if (currentSort === 'location_asc') return 'ascending';
+    if (currentSort === 'location_desc') return 'descending';
+  }
+
+  return null;
+}
+
 export function ApplicationsTable({
   applications,
   sort,
@@ -90,29 +120,43 @@ export function ApplicationsTable({
       <table className="w-full min-w-[880px] text-sm border-collapse">
         <thead className="sticky top-0 z-10">
           <tr style={{ background: 'var(--soft)', borderBottom: '2px solid var(--line)' }}>
-            {HEADERS.map(({ key, label, sortColumn }) => (
-              <th
-                key={key}
-                className="text-left text-[11px] font-semibold uppercase tracking-wide px-2 py-3 whitespace-nowrap"
-                style={{ color: 'var(--ink-3)' }}
-              >
-                {sortColumn ? (
+            {HEADERS.map(({ key, label, sortColumn }) => {
+              const direction = sortColumn ? sortDirection(sortColumn, sort) : null;
+              const isSorted = direction !== null;
+              const DirectionIcon = direction === 'ascending' ? ArrowUp : ArrowDown;
+
+              return (
+                <th
+                  key={key}
+                  aria-sort={direction ?? undefined}
+                  className="text-left text-[11px] font-semibold uppercase tracking-wide px-2 py-3 whitespace-nowrap"
+                  style={{ color: isSorted ? 'var(--accent-dark)' : 'var(--ink-3)' }}
+                >
+                  {sortColumn ? (
                   <button
                     type="button"
                     onClick={() => onSort(sortForColumn(sortColumn, sort))}
-                    className="inline-flex items-center gap-1 rounded px-1 py-0.5 uppercase tracking-wide hover:bg-white/70"
-                    style={{ color: 'inherit' }}
+                    className="inline-flex min-h-7 items-center gap-1.5 rounded-md border px-2 py-1 uppercase tracking-wide transition-colors hover:bg-white/80"
+                    style={{
+                      background: isSorted ? 'var(--accent-tint)' : 'transparent',
+                      borderColor: isSorted ? 'var(--accent-soft)' : 'transparent',
+                      color: 'inherit',
+                    }}
                   >
                     {label}
-                    {sortIndicator(sortColumn, sort) && (
-                      <span className="normal-case tracking-normal" style={{ color: 'var(--ink-4)' }}>
-                        {sortIndicator(sortColumn, sort)}
-                      </span>
+                    {isSorted && (
+                      <>
+                        <DirectionIcon size={12} strokeWidth={2.25} aria-hidden="true" />
+                        <span className="normal-case tracking-normal">
+                          {sortIndicator(sortColumn, sort)}
+                        </span>
+                      </>
                     )}
                   </button>
-                ) : label}
-              </th>
-            ))}
+                  ) : label}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>

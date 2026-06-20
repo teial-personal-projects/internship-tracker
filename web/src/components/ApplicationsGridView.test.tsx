@@ -47,6 +47,8 @@ describe('Applications grid view preservation', () => {
     expect(markup).toContain('Added');
     expect(markup).toContain('Location');
     expect(markup).toContain('Newest');
+    expect(markup).toContain('aria-sort="descending"');
+    expect(markup).toContain('var(--accent-tint)');
     expect(markup).toContain('Acme Robotics');
     expect(markup).toContain('Controls Engineering Intern');
     expect(markup).toContain('Edit');
