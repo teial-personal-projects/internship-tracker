@@ -26,7 +26,6 @@ export const APPLICATION_KANBAN_STATUSES = [
   'in_progress',
   'applied',
   'interviewing',
-  'on_site',
   'offered',
   'rejected',
 ] satisfies ApplicationStatus[];
@@ -41,7 +40,7 @@ const KANBAN_STATUS_BY_APPLICATION_STATUS: Record<ApplicationStatus, Application
   screening: 'interviewing',
   interviewing: 'interviewing',
   technical: 'interviewing',
-  on_site: 'on_site',
+  on_site: 'interviewing',
   final_round: 'interviewing',
   offered: 'offered',
   rejected: 'rejected',

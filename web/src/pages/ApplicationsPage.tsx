@@ -6,7 +6,6 @@ import type { Application, ApplicationStatus, CreateApplicationSchemaType } from
 import {
   useApplication,
   useApplications,
-  useApplicationStats,
   useCreateApplication,
   useUpdateApplication,
   useDeleteApplication,
@@ -18,7 +17,6 @@ import { Pagination } from '@/components/Pagination';
 import { ApplicationsTable } from '@/components/ApplicationsTable';
 import { ApplicationCardList } from '@/components/ApplicationCardList';
 import { ApplicationsKanbanBoard } from '@/components/applications/ApplicationsKanbanBoard';
-import { ApplicationsRail } from '@/components/applications/ApplicationsRail';
 import { ApplicationModal, type ApplicationFormValues } from '@/components/ApplicationModal';
 import { getApplicationsContentState } from '@/lib/applicationsContentState';
 import { buildApplicationsListParams, hasApplicationListFilters, toggleStatusFilter } from '@/lib/applicationsListParams';
@@ -80,7 +78,6 @@ export function ApplicationsPage() {
   }), [statusFilter, search, dateFrom, dateTo, sort, paging]);
 
   const { data, isLoading, error } = useApplications(queryParams);
-  const { data: stats } = useApplicationStats();
   const { data: routedApplication } = useApplication(applicationIdParam);
 
   const createApp = useCreateApplication();
@@ -94,7 +91,6 @@ export function ApplicationsPage() {
   );
   const total = data?.total ?? 0;
   const totalPages = data?.totalPages ?? 1;
-  const statusCounts = stats?.status_counts ?? {};
   const hasFilters = hasApplicationListFilters({
     statusFilter,
     search,
@@ -269,8 +265,7 @@ export function ApplicationsPage() {
           </div>
         )}
 
-        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_320px] lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="flex min-w-0 flex-col gap-2">
+        <div className="flex flex-col gap-2">
             {/* Pagination (top) */}
             {!isKanbanView && !isLoading && totalPages > 1 && (
               <Pagination page={page} totalPages={totalPages} total={total} limit={GRID_PAGE_LIMIT} onPageChange={setPage} />
@@ -321,13 +316,6 @@ export function ApplicationsPage() {
             {!isKanbanView && !isLoading && totalPages > 1 && (
               <Pagination page={page} totalPages={totalPages} total={total} limit={GRID_PAGE_LIMIT} onPageChange={setPage} />
             )}
-          </div>
-
-          <ApplicationsRail
-            statusCounts={statusCounts}
-            activeStatus={statusFilter}
-            onStatusClick={handleStatusClick}
-          />
         </div>
       </main>
 
