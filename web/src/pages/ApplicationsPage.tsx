@@ -56,6 +56,7 @@ export function ApplicationsPage() {
   const page = Math.max(1, Number(searchParams.get('page') ?? '1'));
   const applicationIdParam = searchParams.get('application_id');
   const view = getApplicationsView(searchParams.get('view'));
+  const effectiveView: ApplicationsView = isMobile && view === 'kanban' ? 'grid' : view;
 
   const [statusFilter, setStatusFilter] = useState('');
   const [search, setSearch] = useState('');
@@ -66,7 +67,7 @@ export function ApplicationsPage() {
   const [editingApp, setEditingApp] = useState<Application | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, ApplicationStatus>>({});
-  const paging = useMemo(() => getApplicationsPaging(view, page), [page, view]);
+  const paging = useMemo(() => getApplicationsPaging(effectiveView, page), [page, effectiveView]);
 
   const queryParams = useMemo(() => buildApplicationsListParams({
     statusFilter,
@@ -100,8 +101,8 @@ export function ApplicationsPage() {
     dateFrom,
     dateTo,
   });
-  const isKanbanView = view === 'kanban';
-  const showKanbanLimitHint = shouldShowKanbanLimitHint(view, total);
+  const isKanbanView = effectiveView === 'kanban';
+  const showKanbanLimitHint = shouldShowKanbanLimitHint(effectiveView, total);
   const contentState = getApplicationsContentState({ isLoading, total, hasFilters });
 
   function setPage(newPage: number) {
@@ -254,7 +255,7 @@ export function ApplicationsPage() {
             )}
           </div>
 
-          <ApplicationsViewToggle view={view} onChange={handleViewChange} />
+          {!isMobile && <ApplicationsViewToggle view={effectiveView} onChange={handleViewChange} />}
 
           <button type="button" onClick={openAdd} className="btn-primary text-sm px-4 py-2 shrink-0 sm:ml-auto">
             + Add
@@ -284,7 +285,7 @@ export function ApplicationsPage() {
               <ApplicationOnboardingEmptyState onAdd={openAdd} />
             ) : contentState === 'filtered-empty' ? (
               <FilteredEmptyState onClearFilters={clearFilters} />
-            ) : view === 'kanban' ? (
+            ) : effectiveView === 'kanban' ? (
               <ApplicationsKanbanBoard
                 applications={visibleApplications}
                 onEdit={handleEdit}
