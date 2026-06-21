@@ -32,7 +32,6 @@ const steps: PlaybookStep[] = [
       'Check eng lead’s LinkedIn for talks, posts, or prior background',
       'Look up the tech stack with Wappalyzer, StackShare, or the job description',
       'Draft a personalized “in” — not from the job description',
-      'Write 2x credibility signals: OSS project, talk, technical opinion, or strong team signal',
       'Find double-down target name and email',
     ],
   },
@@ -44,7 +43,6 @@ const steps: PlaybookStep[] = [
     tint: '#F6E7BE',
     items: [
       'Apply on company website or LinkedIn',
-      'Attach message with 2x credibility + 1x personalized in',
       'Confirm message is under 150 words with no job-description mirroring',
       'Send double-down email to named target same day',
       'Set follow-up reminder for 4-5 business days',
@@ -60,7 +58,6 @@ const steps: PlaybookStep[] = [
     items: [
       'Reply to double-down thread with a 1-2 sentence follow-up',
       'Update contact status to: Follow-up sent',
-      'Add one new useful signal if you have it',
       'Ask whether there is a better person to speak with',
       'Move on unless the company is unusually high priority',
     ],
@@ -83,8 +80,7 @@ const steps: PlaybookStep[] = [
 
 const coverLetterRules = [
   'Keep the cover letter 120-150 words.',
-  'Use 2x engineering credibility signals.',
-  'Use 1x personalized “in” — the cover letter differentiator.',
+  'Use a personalized “in” — the cover letter differentiator.',
   'Use a direct, casual close like “All best” or “Cheers”.',
   'Avoid formal cover-letter language and dense punctuation.',
 ];
