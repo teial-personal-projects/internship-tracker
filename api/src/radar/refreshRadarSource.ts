@@ -4,6 +4,8 @@ import type { NormalizedPosting } from './adapters/types';
 import { getAtsAdapter } from './adapters/registry';
 import { criteriaFromRow, matches } from './match';
 
+type SourceTier = 'direct_ats' | 'curated_board' | 'aggregator';
+
 type RadarSourceRow = {
   id: string;
   user_id: string;
@@ -11,6 +13,8 @@ type RadarSourceRow = {
   ats_type: AtsType | null;
   ats_board_token: string | null;
   radar_enabled: boolean;
+  source_tier?: SourceTier;
+  source_name?: string | null;
 };
 
 type DbResult<T> = Promise<{ data: T; error: { message: string } | null }>;
@@ -110,6 +114,8 @@ async function insertPosting(
       url: posting.url,
       posted_at: posting.postedAt,
       status: 'new',
+      source_tier: source.source_tier ?? 'direct_ats',
+      first_seen_source: source.source_name ?? source.ats_type ?? 'radar',
       raw_payload: posting.raw,
     }),
   );
@@ -144,6 +150,10 @@ export async function refreshRadarSource(
 ): Promise<RefreshResult> {
   if (!source.radar_enabled) {
     return { inserted: 0, matched: 0, fetched: 0, error: 'Radar source is not enabled' };
+  }
+
+  if ((source.source_tier ?? 'direct_ats') !== 'direct_ats') {
+    return { inserted: 0, matched: 0, fetched: 0, error: 'Only direct ATS sources can be refreshed right now' };
   }
 
   if (!source.ats_type || !source.ats_board_token) {

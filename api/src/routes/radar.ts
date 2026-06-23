@@ -11,6 +11,7 @@ import type { Request, Response } from 'express';
 const router = Router();
 
 type Ownership = 'ok' | 'not_found' | 'forbidden';
+type SourceTier = 'direct_ats' | 'curated_board' | 'aggregator';
 
 const UpdatePostingStatusSchema = z.object({
   status: z.enum(['seen', 'dismissed']),
@@ -189,7 +190,7 @@ router.post('/sources/:watchlistId/refresh', requireAuth, async (req: Request, r
 
     const { data: entry, error: entryError } = await db
       .from('company_watchlist')
-      .select('id, user_id, company_name, ats_type, ats_board_token, radar_enabled')
+      .select('id, user_id, company_name, ats_type, ats_board_token, radar_enabled, source_tier, source_name')
       .eq('id', watchlistId)
       .single();
 
@@ -210,6 +211,8 @@ router.post('/sources/:watchlistId/refresh', requireAuth, async (req: Request, r
       ats_type: AtsType | null;
       ats_board_token: string | null;
       radar_enabled: boolean;
+      source_tier: SourceTier;
+      source_name: string | null;
     };
 
     const result = await refreshRadarSource(db as unknown as RadarRefreshDb, source);

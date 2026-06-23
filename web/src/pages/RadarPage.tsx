@@ -355,6 +355,8 @@ export function RadarPage() {
         company_name: posting.company_name,
         added: new Date().toISOString().slice(0, 10),
         radar_enabled: false,
+        source_tier: posting.source_tier,
+        source_name: posting.first_seen_source,
       });
       toast.success('Company saved');
     } catch (err) {

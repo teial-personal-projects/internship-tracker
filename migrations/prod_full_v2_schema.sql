@@ -1130,3 +1130,91 @@ CREATE POLICY "radar_criteria_delete" ON radar_criteria
   FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
 -- ============================================================
+
+
+-- ============================================================
+-- migrations/radar_004_radar_sources.sql
+-- ============================================================
+
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS radar_sources (
+  id                              TEXT PRIMARY KEY,
+  source_name                     TEXT NOT NULL CHECK (char_length(source_name) <= 100),
+  source_tier                     source_tier_enum NOT NULL,
+  adapter_type                    TEXT CHECK (adapter_type IS NULL OR btrim(adapter_type) <> ''),
+  supports_direct_validity_checks BOOLEAN NOT NULL DEFAULT false,
+  is_active                       BOOLEAN NOT NULL DEFAULT true,
+  metadata                        JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at                      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at                      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT radar_sources_direct_validity_adapter
+    CHECK (NOT supports_direct_validity_checks OR adapter_type IS NOT NULL)
+);
+
+CREATE TRIGGER radar_sources_updated_at
+  BEFORE UPDATE ON radar_sources
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE INDEX IF NOT EXISTS idx_radar_sources_source_tier
+  ON radar_sources(source_tier);
+
+CREATE INDEX IF NOT EXISTS idx_radar_sources_active
+  ON radar_sources(is_active);
+
+-- Data API grants
+REVOKE ALL PRIVILEGES ON TABLE public.radar_sources FROM anon, authenticated;
+GRANT SELECT ON TABLE public.radar_sources TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.radar_sources TO service_role;
+
+-- Row Level Security
+ALTER TABLE radar_sources ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "radar_sources_select" ON radar_sources
+  FOR SELECT TO authenticated USING (true);
+
+-- ============================================================
+
+
+-- ============================================================
+-- migrations/radar_005_seed_radar_sources.sql
+-- ============================================================
+
+-- ============================================================
+
+INSERT INTO radar_sources (
+  id,
+  source_name,
+  source_tier,
+  adapter_type,
+  supports_direct_validity_checks
+) VALUES
+  ('greenhouse', 'Greenhouse', 'direct_ats', 'greenhouse', true),
+  ('lever', 'Lever', 'direct_ats', 'lever', true),
+  ('ashby', 'Ashby', 'direct_ats', 'ashby', true),
+  ('smartrecruiters', 'SmartRecruiters', 'direct_ats', 'smartrecruiters', true),
+  ('pinpoint', 'Pinpoint', 'direct_ats', 'pinpoint', false),
+  ('welcomekit', 'Welcome Kit', 'direct_ats', 'welcomekit', false),
+  ('custom', 'Custom careers page', 'direct_ats', 'custom', false),
+  ('linkedin', 'LinkedIn', 'curated_board', null, false),
+  ('we_work_remotely', 'We Work Remotely', 'curated_board', null, false),
+  ('working_nomads', 'Working Nomads', 'curated_board', null, false),
+  ('remote_co', 'Remote.co', 'curated_board', null, false),
+  ('idealist', 'Idealist', 'curated_board', null, false),
+  ('flexjobs', 'FlexJobs', 'curated_board', null, false),
+  ('indeed', 'Indeed', 'aggregator', null, false),
+  ('talent', 'Talent.com', 'aggregator', null, false),
+  ('monster', 'Monster', 'aggregator', null, false),
+  ('jooble', 'Jooble', 'aggregator', null, false),
+  ('jora', 'Jora', 'aggregator', null, false),
+  ('lensa', 'Lensa', 'aggregator', null, false),
+  ('ziprecruiter', 'ZipRecruiter', 'aggregator', null, false)
+ON CONFLICT (id) DO UPDATE SET
+  source_name = EXCLUDED.source_name,
+  source_tier = EXCLUDED.source_tier,
+  adapter_type = EXCLUDED.adapter_type,
+  supports_direct_validity_checks = EXCLUDED.supports_direct_validity_checks,
+  is_active = true,
+  updated_at = now();
+
+-- ============================================================

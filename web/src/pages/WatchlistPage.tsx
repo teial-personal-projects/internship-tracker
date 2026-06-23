@@ -16,7 +16,7 @@ import {
 } from '@/hooks/useWatchlist';
 import { formatDate, todayStr } from '@/lib/dateUtils';
 import type { WatchlistEntry, WatchlistRadarRefreshResult } from '@/api/watchlist.api';
-import type { AtsType, CreateCompanyWatchlistEntrySchemaType, TaskPriority } from '@shared/schemas';
+import type { AtsType, CreateCompanyWatchlistEntrySchemaType, SourceTier, TaskPriority } from '@shared/schemas';
 
 type SortKey = 'added' | 'company_name' | 'priority' | 'target_apply_date';
 
@@ -41,6 +41,24 @@ const ATS_OPTIONS: Array<{ value: AtsType; label: string }> = [
   { value: 'pinpoint', label: 'Pinpoint' },
   { value: 'welcomekit', label: 'Welcome Kit' },
   { value: 'custom', label: 'Custom careers page' },
+];
+
+const SOURCE_TIER_OPTIONS: Array<{ value: SourceTier; label: string; description: string }> = [
+  {
+    value: 'direct_ats',
+    label: 'Direct ATS',
+    description: 'Refreshes from the company career system and ranks as the freshest source.',
+  },
+  {
+    value: 'curated_board',
+    label: 'Curated board',
+    description: 'Stores a board source such as LinkedIn or Idealist for future discovery adapters.',
+  },
+  {
+    value: 'aggregator',
+    label: 'Aggregator',
+    description: 'Stores syndication context only; aggregator rows will support corroboration later.',
+  },
 ];
 
 interface CareersSource {
@@ -96,6 +114,14 @@ function inferCareersSource(input: string): CareersSource | null {
   }
 
   return { atsType: 'custom', value: url.href };
+}
+
+function sourceTier(entry: WatchlistEntry): SourceTier {
+  return entry.source_tier ?? 'direct_ats';
+}
+
+function sourceTierLabel(tier: SourceTier): string {
+  return SOURCE_TIER_OPTIONS.find((option) => option.value === tier)?.label ?? 'Direct ATS';
 }
 
 function sourceUrlFromEntry(entry: WatchlistEntry | null): string {
@@ -171,7 +197,7 @@ function formatDateTime(value: string | null | undefined): string {
 }
 
 function canRefreshSource(entry: WatchlistEntry): boolean {
-  return Boolean(entry.radar_enabled && entry.ats_type && entry.ats_board_token);
+  return Boolean(entry.radar_enabled && sourceTier(entry) === 'direct_ats' && entry.ats_type && entry.ats_board_token);
 }
 
 interface WatchlistRowProps {
@@ -200,6 +226,14 @@ function RefreshStatus({
     return (
       <p className="mt-1 truncate text-xs" style={{ color: 'var(--ink-3)' }}>
         Idle
+      </p>
+    );
+  }
+
+  if (sourceTier(entry) !== 'direct_ats') {
+    return (
+      <p className="mt-1 truncate text-xs" style={{ color: 'var(--ink-3)' }}>
+        Saved for provenance
       </p>
     );
   }
@@ -294,9 +328,14 @@ function WatchlistRow({
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full" style={{ background: entry.radar_enabled ? 'var(--sage)' : 'var(--line)' }} />
           <span className="font-medium" style={{ color: 'var(--ink-2)' }}>
-            {entry.radar_enabled ? 'Source on' : 'Source off'}
+            {entry.radar_enabled ? sourceTierLabel(sourceTier(entry)) : 'Source off'}
           </span>
         </div>
+        {entry.source_name && (
+          <p className="mt-1 truncate text-xs" style={{ color: 'var(--ink-3)' }}>
+            {entry.source_name}
+          </p>
+        )}
         <RefreshStatus entry={entry} isRefreshing={isRefreshing} refreshResult={refreshResult} refreshError={refreshError} />
       </div>
 
@@ -385,8 +424,13 @@ function WatchlistCard({
             Source
           </p>
           <p className="mt-1" style={{ color: 'var(--ink-2)' }}>
-            {entry.radar_enabled ? 'Enabled' : 'Not enabled'}
+            {entry.radar_enabled ? sourceTierLabel(sourceTier(entry)) : 'Not enabled'}
           </p>
+          {entry.source_name && (
+            <p className="mt-1 text-xs" style={{ color: 'var(--ink-3)' }}>
+              {entry.source_name}
+            </p>
+          )}
           <RefreshStatus entry={entry} isRefreshing={isRefreshing} refreshResult={refreshResult} refreshError={refreshError} />
         </div>
       </div>
@@ -442,10 +486,13 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
   const [careersUrl, setCareersUrl] = useState('');
   const [atsType, setAtsType] = useState<AtsType | ''>('');
   const [atsBoardToken, setAtsBoardToken] = useState('');
+  const [selectedSourceTier, setSelectedSourceTier] = useState<SourceTier>('direct_ats');
+  const [sourceName, setSourceName] = useState('');
   const [useManualSource, setUseManualSource] = useState(false);
   const [radarEnabled, setRadarEnabled] = useState(false);
 
-  const inferredSource = useMemo(() => inferCareersSource(careersUrl), [careersUrl]);
+  const isDirectAts = selectedSourceTier === 'direct_ats';
+  const inferredSource = useMemo(() => (isDirectAts ? inferCareersSource(careersUrl) : null), [careersUrl, isDirectAts]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -459,20 +506,25 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
     setCareersUrl(sourceUrlFromEntry(entry));
     setAtsType(entry?.ats_type ?? '');
     setAtsBoardToken(entry?.ats_board_token ?? '');
+    setSelectedSourceTier(entry?.source_tier ?? 'direct_ats');
+    setSourceName(entry?.source_name ?? '');
     setUseManualSource(false);
     setRadarEnabled(entry?.radar_enabled ?? false);
   }, [entry, isOpen]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const source = useManualSource
+    const source = isDirectAts && useManualSource
       ? {
           atsType: atsType || null,
           value: atsBoardToken.trim() || null,
         }
-      : {
+      : isDirectAts ? {
           atsType: inferredSource?.atsType ?? null,
           value: inferredSource?.value ?? null,
+        } : {
+          atsType: null,
+          value: null,
         };
 
     onSubmit({
@@ -486,6 +538,8 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
       ats_type: source.atsType,
       ats_board_token: source.value,
       radar_enabled: radarEnabled,
+      source_tier: selectedSourceTier,
+      source_name: sourceName.trim() || null,
     });
   }
 
@@ -560,62 +614,93 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
                 </label>
 
                 <label className="mt-4 block">
-                  <span className="field-label">Careers URL</span>
-                  <input
-                    className="field-input"
-                    type="url"
-                    placeholder="https://company.example.com/careers"
-                    value={careersUrl}
-                    onChange={(event) => setCareersUrl(event.target.value)}
-                  />
+                  <span className="field-label">Source Tier</span>
+                  <select
+                    className="field-select"
+                    value={selectedSourceTier}
+                    onChange={(event) => setSelectedSourceTier(event.target.value as SourceTier)}
+                  >
+                    {SOURCE_TIER_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
                 </label>
 
                 <div className="mt-3 rounded-lg border bg-white px-3 py-2 text-xs" style={{ borderColor: 'var(--line)', color: 'var(--ink-3)' }}>
-                  {inferredSource
-                    ? `Detected ${ATS_OPTIONS.find((option) => option.value === inferredSource.atsType)?.label ?? inferredSource.atsType} source.`
-                    : 'Paste a careers URL to detect the source automatically.'}
+                  {SOURCE_TIER_OPTIONS.find((option) => option.value === selectedSourceTier)?.description}
                 </div>
 
-                <details className="mt-4 rounded-lg border bg-white p-3" style={{ borderColor: 'var(--line)' }}>
-                  <summary className="cursor-pointer text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-                    Advanced source settings
-                  </summary>
-                  <label className="mt-3 flex items-center gap-2 text-sm" style={{ color: 'var(--ink-2)' }}>
-                    <input
-                      type="checkbox"
-                      checked={useManualSource}
-                      onChange={(event) => setUseManualSource(event.target.checked)}
-                      style={{ accentColor: 'var(--accent)' }}
-                    />
-                    Use manual source settings
-                  </label>
-                  <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                    <label>
-                      <span className="field-label">Careers Source Type</span>
-                      <select
-                        className="field-select"
-                        value={useManualSource ? atsType : inferredSource?.atsType ?? ''}
-                        onChange={(event) => setAtsType(event.target.value as AtsType | '')}
-                        disabled={!useManualSource}
-                      >
-                        <option value="">Not set</option>
-                        {ATS_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>{option.label}</option>
-                        ))}
-                      </select>
-                    </label>
-                    <label>
-                      <span className="field-label">Careers Source</span>
+                {isDirectAts ? (
+                  <>
+                    <label className="mt-4 block">
+                      <span className="field-label">Careers URL</span>
                       <input
                         className="field-input"
-                        value={useManualSource ? atsBoardToken : inferredSource?.value ?? ''}
-                        onChange={(event) => setAtsBoardToken(event.target.value)}
-                        placeholder="company careers source"
-                        disabled={!useManualSource}
+                        type="url"
+                        placeholder="https://company.example.com/careers"
+                        value={careersUrl}
+                        onChange={(event) => setCareersUrl(event.target.value)}
                       />
                     </label>
-                  </div>
-                </details>
+
+                    <div className="mt-3 rounded-lg border bg-white px-3 py-2 text-xs" style={{ borderColor: 'var(--line)', color: 'var(--ink-3)' }}>
+                      {inferredSource
+                        ? `Detected ${ATS_OPTIONS.find((option) => option.value === inferredSource.atsType)?.label ?? inferredSource.atsType} source.`
+                        : 'Paste a careers URL to detect the source automatically.'}
+                    </div>
+
+                    <details className="mt-4 rounded-lg border bg-white p-3" style={{ borderColor: 'var(--line)' }}>
+                      <summary className="cursor-pointer text-sm font-semibold" style={{ color: 'var(--ink)' }}>
+                        Advanced source settings
+                      </summary>
+                      <label className="mt-3 flex items-center gap-2 text-sm" style={{ color: 'var(--ink-2)' }}>
+                        <input
+                          type="checkbox"
+                          checked={useManualSource}
+                          onChange={(event) => setUseManualSource(event.target.checked)}
+                          style={{ accentColor: 'var(--accent)' }}
+                        />
+                        Use manual source settings
+                      </label>
+                      <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                        <label>
+                          <span className="field-label">Careers Source Type</span>
+                          <select
+                            className="field-select"
+                            value={useManualSource ? atsType : inferredSource?.atsType ?? ''}
+                            onChange={(event) => setAtsType(event.target.value as AtsType | '')}
+                            disabled={!useManualSource}
+                          >
+                            <option value="">Not set</option>
+                            {ATS_OPTIONS.map((option) => (
+                              <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <label>
+                          <span className="field-label">Careers Source</span>
+                          <input
+                            className="field-input"
+                            value={useManualSource ? atsBoardToken : inferredSource?.value ?? ''}
+                            onChange={(event) => setAtsBoardToken(event.target.value)}
+                            placeholder="company careers source"
+                            disabled={!useManualSource}
+                          />
+                        </label>
+                      </div>
+                    </details>
+                  </>
+                ) : (
+                  <label className="mt-4 block">
+                    <span className="field-label">Source Name</span>
+                    <input
+                      className="field-input"
+                      placeholder={selectedSourceTier === 'curated_board' ? 'LinkedIn, Idealist, Remote.co' : 'Indeed, Talent.com, ZipRecruiter'}
+                      value={sourceName}
+                      onChange={(event) => setSourceName(event.target.value)}
+                    />
+                  </label>
+                )}
               </div>
             </div>
 

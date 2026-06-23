@@ -15,7 +15,8 @@ WITH expected_tables(table_name) AS (
     ('company_watchlist'),
     ('application_events'),
     ('discovered_postings'),
-    ('radar_criteria')
+    ('radar_criteria'),
+    ('radar_sources')
 ),
 expected_columns(table_name, column_name) AS (
   VALUES
@@ -47,7 +48,16 @@ expected_columns(table_name, column_name) AS (
     ('radar_criteria', 'include_keywords'),
     ('radar_criteria', 'exclude_keywords'),
     ('radar_criteria', 'seniority_terms'),
-    ('radar_criteria', 'location_rules')
+    ('radar_criteria', 'location_rules'),
+    ('radar_sources', 'id'),
+    ('radar_sources', 'source_name'),
+    ('radar_sources', 'source_tier'),
+    ('radar_sources', 'adapter_type'),
+    ('radar_sources', 'supports_direct_validity_checks'),
+    ('radar_sources', 'is_active'),
+    ('radar_sources', 'metadata'),
+    ('radar_sources', 'created_at'),
+    ('radar_sources', 'updated_at')
 ),
 expected_enum_values(type_name, enum_value) AS (
   VALUES
@@ -114,7 +124,9 @@ expected_indexes(index_name) AS (
     ('idx_discovered_postings_first_seen_at'),
     ('idx_discovered_postings_watchlist_id'),
     ('idx_discovered_postings_user_source_tier_first_seen'),
-    ('idx_discovered_postings_user_validity_status')
+    ('idx_discovered_postings_user_validity_status'),
+    ('idx_radar_sources_source_tier'),
+    ('idx_radar_sources_active')
 ),
 expected_triggers(table_name, trigger_name) AS (
   VALUES
@@ -125,7 +137,8 @@ expected_triggers(table_name, trigger_name) AS (
     ('interviews', 'interviews_updated_at'),
     ('company_watchlist', 'company_watchlist_updated_at'),
     ('discovered_postings', 'discovered_postings_updated_at'),
-    ('radar_criteria', 'radar_criteria_updated_at')
+    ('radar_criteria', 'radar_criteria_updated_at'),
+    ('radar_sources', 'radar_sources_updated_at')
 )
 SELECT
   'table' AS section,

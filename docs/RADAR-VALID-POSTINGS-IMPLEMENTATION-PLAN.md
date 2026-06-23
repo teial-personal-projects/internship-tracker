@@ -48,14 +48,14 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 
 ## Step 3 — Source Configuration
 
-3.1 [ ] Add a source tier selector to the watchlist Radar configuration.
-3.2 [ ] Default existing ATS-backed watchlist rows to `direct_ats`.
-3.3 [ ] Keep ATS adapter fields visible only when `source_tier = direct_ats`.
-3.4 [ ] Add source setup copy that explains direct ATS, curated board, and aggregator behavior in operational terms.
-3.5 [ ] Create `api/src/radar/sources/registry.ts`.
-3.6 [ ] Define known source metadata: source name, tier, adapter type, and whether the source supports direct validity checks.
-3.7 [ ] Map current ATS adapters to `direct_ats`.
-3.8 [ ] Reserve curated-board entries for future adapters without wiring broad scraping into the first release.
+3.1 [x] Add a source tier selector to the watchlist Radar configuration.
+3.2 [x] Default existing ATS-backed watchlist rows to `direct_ats`.
+3.3 [x] Keep ATS adapter fields visible only when `source_tier = direct_ats`.
+3.4 [x] Add source setup copy that explains direct ATS, curated board, and aggregator behavior in operational terms.
+3.5 [x] Create `radar_sources` table with a JSON-backed `api/src/radar/sources/registry.ts` fallback.
+3.6 [x] Define known source metadata in database seed data: source name, tier, adapter type, and whether the source supports direct validity checks.
+3.7 [x] Map current ATS adapters to `direct_ats`.
+3.8 [x] Reserve curated-board entries for future adapters without wiring broad scraping into the first release.
 
 ## Step 4 — Save Company From Radar
 

@@ -337,6 +337,8 @@ export const CreateCompanyWatchlistEntrySchema = z.object({
   ats_type: AtsTypeSchema.nullable().optional(),
   ats_board_token: z.string().nullable().optional(),
   radar_enabled: z.boolean().optional(),
+  source_tier: SourceTierSchema.default('direct_ats'),
+  source_name: z.string().nullable().optional(),
 });
 
 export const UpdateCompanyWatchlistEntrySchema = CreateCompanyWatchlistEntrySchema
@@ -345,6 +347,8 @@ export const UpdateCompanyWatchlistEntrySchema = CreateCompanyWatchlistEntrySche
     ats_type: AtsTypeSchema.nullable().optional(),
     ats_board_token: z.string().nullable().optional(),
     radar_enabled: z.boolean().optional(),
+    source_tier: SourceTierSchema.optional(),
+    source_name: z.string().nullable().optional(),
   });
 
 export const CreateApplicationEventSchema = z.object({
