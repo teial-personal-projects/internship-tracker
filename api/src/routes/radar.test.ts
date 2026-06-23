@@ -28,9 +28,11 @@ type Row = Record<string, unknown> & { id?: string };
 
 class Query {
   private readonly filters: Array<[string, string]> = [];
+  private readonly ilikeFilters: Array<[string, string]> = [];
   private insertPayload: Row | null = null;
   private insertedRow: Row | null = null;
   private updatePayload: Row | null = null;
+  private rowLimit: number | null = null;
 
   constructor(
     private readonly table: string,
@@ -45,7 +47,8 @@ class Query {
     return this;
   }
 
-  ilike() {
+  ilike(column: string, pattern: string) {
+    this.ilikeFilters.push([column, pattern]);
     return this;
   }
 
@@ -63,6 +66,11 @@ class Query {
 
   update(payload: Row) {
     this.updatePayload = payload;
+    return this;
+  }
+
+  limit(count: number) {
+    this.rowLimit = count;
     return this;
   }
 
@@ -91,12 +99,16 @@ class Query {
       return this.filterRows();
     }
 
-    return matched;
+    return this.rowLimit == null ? matched : matched.slice(0, this.rowLimit);
   }
 
   private filterRows(): Row[] {
     return (this.rowsByTable[this.table] ?? []).filter((row) =>
-      this.filters.every(([column, value]) => row[column] === value),
+      this.filters.every(([column, value]) => row[column] === value)
+      && this.ilikeFilters.every(([column, value]) => (
+        typeof row[column] === 'string'
+        && (row[column] as string).toLowerCase() === value.toLowerCase()
+      )),
     );
   }
 }
@@ -124,7 +136,7 @@ describe('radar routes', () => {
     vi.clearAllMocks();
   });
 
-  it('POST /api/radar/postings/:id/promote creates an application and marks the posting promoted', async () => {
+  it('POST /api/radar/postings/:id/save-company creates a watchlist entry without creating an application', async () => {
     const db = createMockDb({
       discovered_postings: [{
         id: POSTING_ID,
@@ -133,34 +145,88 @@ describe('radar routes', () => {
         title: 'Senior Software Engineer',
         url: 'https://example.com/job',
         status: 'new',
+        watchlist_id: WATCHLIST_ID,
+        source_tier: 'direct_ats',
+        first_seen_source: 'greenhouse',
+      }],
+      company_watchlist: [{
+        id: WATCHLIST_ID,
+        user_id: USER_ID,
+        company_name: 'Source Company',
+        ats_type: 'greenhouse',
+        ats_board_token: 'source-company',
       }],
       applications: [],
     });
     mockCreateUserClient.mockReturnValue(db.client);
 
     const response = await request(app)
-      .post(`/api/radar/postings/${POSTING_ID}/promote`)
+      .post(`/api/radar/postings/${POSTING_ID}/save-company`)
       .set('Authorization', 'Bearer test-token');
 
     expect(response.status).toBe(201);
-    expect(response.body.data).toEqual({ application_id: 'applications-new' });
-    expect(db.rowsByTable.applications).toContainEqual(expect.objectContaining({
-      id: 'applications-new',
-      user_id: USER_ID,
-      company: 'Acme',
-      title: 'Senior Software Engineer',
-      job_link: 'https://example.com/job',
-      source: 'radar',
-      source_metadata: { discovered_posting_id: POSTING_ID },
-      applied_date: null,
-    }));
-    expect(db.rowsByTable.discovered_postings[0]).toMatchObject({
-      id: POSTING_ID,
-      status: 'promoted',
+    expect(response.body.data).toMatchObject({
+      created: true,
+      watchlist_entry: {
+        id: 'company_watchlist-new',
+        company_name: 'Acme',
+        source_tier: 'direct_ats',
+        source_name: 'greenhouse',
+      },
     });
+    expect(db.rowsByTable.company_watchlist).toContainEqual(expect.objectContaining({
+      id: 'company_watchlist-new',
+      user_id: USER_ID,
+      company_name: 'Acme',
+      radar_enabled: false,
+      source_tier: 'direct_ats',
+      source_name: 'greenhouse',
+      ats_type: 'greenhouse',
+      ats_board_token: 'source-company',
+    }));
+    expect(db.rowsByTable.company_watchlist).toHaveLength(2);
+    expect(db.rowsByTable.applications).toHaveLength(0);
+    expect(db.rowsByTable.discovered_postings[0].status).toBe('new');
   });
 
-  it("POST /api/radar/postings/:id/promote returns 403 for another user's posting", async () => {
+  it('POST /api/radar/postings/:id/save-company returns the existing watchlist row for duplicate companies', async () => {
+    const db = createMockDb({
+      discovered_postings: [{
+        id: POSTING_ID,
+        user_id: USER_ID,
+        company_name: 'Acme',
+        title: 'Senior Software Engineer',
+        url: 'https://example.com/job',
+        status: 'new',
+        source_tier: 'direct_ats',
+        first_seen_source: 'greenhouse',
+      }],
+      company_watchlist: [{
+        id: WATCHLIST_ID,
+        user_id: USER_ID,
+        company_name: 'acme',
+      }],
+      applications: [],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .post(`/api/radar/postings/${POSTING_ID}/save-company`)
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toMatchObject({
+      created: false,
+      watchlist_entry: {
+        id: WATCHLIST_ID,
+        company_name: 'acme',
+      },
+    });
+    expect(db.rowsByTable.company_watchlist).toHaveLength(1);
+    expect(db.rowsByTable.applications).toHaveLength(0);
+  });
+
+  it("POST /api/radar/postings/:id/save-company returns 403 for another user's posting", async () => {
     const db = createMockDb({
       discovered_postings: [{
         id: POSTING_ID,
@@ -170,15 +236,17 @@ describe('radar routes', () => {
         url: 'https://example.com/job',
         status: 'new',
       }],
+      company_watchlist: [],
       applications: [],
     });
     mockCreateUserClient.mockReturnValue(db.client);
 
     const response = await request(app)
-      .post(`/api/radar/postings/${POSTING_ID}/promote`)
+      .post(`/api/radar/postings/${POSTING_ID}/save-company`)
       .set('Authorization', 'Bearer test-token');
 
     expect(response.status).toBe(403);
+    expect(db.rowsByTable.company_watchlist).toHaveLength(0);
     expect(db.rowsByTable.applications).toHaveLength(0);
     expect(db.rowsByTable.discovered_postings[0].status).toBe('new');
   });

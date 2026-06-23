@@ -4,8 +4,8 @@ import { Building2, CheckCircle2, ChevronDown, ExternalLink, Eye, RefreshCw, Sea
 import { toast } from 'sonner';
 import { AppHeader } from '@/components/AppHeader';
 import { Spinner } from '@/components/Spinner';
-import { useCreateWatchlistEntry, useWatchlist } from '@/hooks/useWatchlist';
-import { useRadarPostings, useUpdateRadarPostingStatus } from '@/hooks/useRadar';
+import { useWatchlist } from '@/hooks/useWatchlist';
+import { useRadarPostings, useSaveRadarPostingCompany, useUpdateRadarPostingStatus } from '@/hooks/useRadar';
 import { WatchlistWorkspace } from '@/pages/WatchlistPage';
 import type { WatchlistEntry } from '@/api/watchlist.api';
 import type {
@@ -318,7 +318,7 @@ export function RadarPage() {
 
   const { data: postings = [], isLoading, error } = useRadarPostings(queryParams);
   const { data: watchlist = [] } = useWatchlist();
-  const createWatchlistEntry = useCreateWatchlistEntry();
+  const savePostingCompany = useSaveRadarPostingCompany();
   const updatePostingStatus = useUpdateRadarPostingStatus();
 
   const savedCompanyNames = useMemo(
@@ -351,13 +351,7 @@ export function RadarPage() {
 
     setSavingCompanyName(normalizedCompanyName);
     try {
-      await createWatchlistEntry.mutateAsync({
-        company_name: posting.company_name,
-        added: new Date().toISOString().slice(0, 10),
-        radar_enabled: false,
-        source_tier: posting.source_tier,
-        source_name: posting.first_seen_source,
-      });
+      await savePostingCompany.mutateAsync(posting.id);
       toast.success('Company saved');
     } catch (err) {
       toast.error(apiErrorMessage(err, 'Could not save company'));

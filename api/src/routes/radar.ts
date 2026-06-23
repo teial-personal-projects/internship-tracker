@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { requireAuth, type AuthRequest } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
 import { createUserClient } from '../lib/supabase';
-import { sendApplicationSourceMigrationError } from '../lib/schemaCache';
 import { refreshRadarSource, type RadarRefreshDb } from '../radar/refreshRadarSource';
 import type { AtsType } from '@internship-tracker/shared';
 import type { Request, Response } from 'express';
@@ -116,8 +115,8 @@ router.patch('/postings/:id', requireAuth, validateBody(UpdatePostingStatusSchem
   }
 });
 
-// POST /api/radar/postings/:id/promote
-router.post('/postings/:id/promote', requireAuth, async (req: Request, res, next) => {
+// POST /api/radar/postings/:id/save-company
+router.post('/postings/:id/save-company', requireAuth, async (req: Request, res, next) => {
   try {
     const db = createUserClient(req);
     const user = (req as AuthRequest).user;
@@ -131,51 +130,67 @@ router.post('/postings/:id/promote', requireAuth, async (req: Request, res, next
     }
 
     const p = posting as {
+      watchlist_id?: string;
       company_name: string;
-      title: string;
-      url: string;
-      status: string;
+      source_tier?: SourceTier;
+      first_seen_source?: string | null;
     };
 
-    if (p.status === 'promoted') {
-      res.status(409).json({ error: 'Posting has already been promoted' });
+    const { data: existingEntries, error: existingError } = await db
+      .from('company_watchlist')
+      .select('*')
+      .eq('user_id', user.id)
+      .ilike('company_name', p.company_name)
+      .limit(1);
+
+    if (existingError) {
+      res.status(500).json({ error: existingError.message });
       return;
     }
 
-    const { data: application, error: applicationError } = await db
-      .from('applications')
+    const existingEntry = existingEntries?.[0] ?? null;
+    if (existingEntry) {
+      res.json({ data: { watchlist_entry: existingEntry, created: false } });
+      return;
+    }
+
+    const sourceName = p.first_seen_source && p.first_seen_source !== 'radar'
+      ? p.first_seen_source
+      : null;
+
+    const { data: sourceEntry } = p.watchlist_id ? await db
+      .from('company_watchlist')
+      .select('ats_type, ats_board_token, source_name')
+      .eq('id', p.watchlist_id)
+      .single() : { data: null };
+
+    const sourceContext = sourceEntry as {
+      ats_type?: AtsType | null;
+      ats_board_token?: string | null;
+      source_name?: string | null;
+    } | null;
+
+    const { data: watchlistEntry, error: watchlistError } = await db
+      .from('company_watchlist')
       .insert({
         user_id: user.id,
-        company: p.company_name,
-        title: p.title,
-        job_link: p.url,
-        status: 'not_started',
-        applied_date: null,
-        source: 'radar',
-        source_metadata: { discovered_posting_id: id },
+        company_name: p.company_name,
+        added: new Date().toISOString().slice(0, 10),
+        radar_enabled: false,
+        source_tier: p.source_tier ?? 'direct_ats',
+        source_name: sourceName ?? sourceContext?.source_name ?? null,
+        ats_type: sourceContext?.ats_type ?? null,
+        ats_board_token: sourceContext?.ats_board_token ?? null,
       })
-      .select('id')
+      .select()
       .single();
 
-    if (sendApplicationSourceMigrationError(res, applicationError)) {
-      return;
-    }
-    if (applicationError || !application) {
-      res.status(500).json({ error: applicationError?.message ?? 'Failed to create application' });
+    if (watchlistError || !watchlistEntry) {
+      res.status(500).json({ error: watchlistError?.message ?? 'Failed to save company' });
       return;
     }
 
-    const { error: updateError } = await db
-      .from('discovered_postings')
-      .update({ status: 'promoted' })
-      .eq('id', id);
-
-    if (updateError) {
-      res.status(500).json({ error: updateError.message });
-      return;
-    }
-
-    res.status(201).json({ data: { application_id: (application as { id: string }).id } });
+    res.status(201).json({ data: { watchlist_entry: watchlistEntry, created: true } });
   } catch (err) {
     next(err);
   }

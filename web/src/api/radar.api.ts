@@ -1,5 +1,6 @@
 import { apiClient } from './client';
 import type { DiscoveredPosting, PostingStatus } from '@shared/schemas';
+import type { WatchlistEntry } from './watchlist.api';
 
 export interface RadarPostingsParams {
   status?: PostingStatus;
@@ -20,7 +21,12 @@ export async function updateRadarPostingStatus(
   return data.data;
 }
 
-export async function promoteRadarPosting(id: string): Promise<{ application_id: string }> {
-  const { data } = await apiClient.post<{ data: { application_id: string } }>(`/radar/postings/${id}/promote`);
+export interface SaveRadarCompanyResult {
+  watchlist_entry: WatchlistEntry;
+  created: boolean;
+}
+
+export async function saveRadarPostingCompany(id: string): Promise<SaveRadarCompanyResult> {
+  const { data } = await apiClient.post<{ data: SaveRadarCompanyResult }>(`/radar/postings/${id}/save-company`);
   return data.data;
 }

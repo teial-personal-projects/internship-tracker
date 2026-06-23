@@ -59,13 +59,13 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 
 ## Step 4 — Save Company From Radar
 
-4.1 [ ] Add or update the backend flow for saving a Radar posting company to `company_watchlist`.
-4.2 [ ] Reuse the existing watchlist create/update behavior instead of creating an Application.
-4.3 [ ] Prevent duplicate watchlist rows for the same user and company.
-4.4 [ ] Preserve source context when useful, such as company name, source tier, source name, ATS type, and board token when available.
-4.5 [ ] Show `Save company` on unsaved Radar companies.
-4.6 [ ] Show `Saved company` when the company already exists in Companies To Watch.
-4.7 [ ] Do not create Applications records from Radar postings.
+4.1 [x] Add or update the backend flow for saving a Radar posting company to `company_watchlist`.
+4.2 [x] Reuse the existing watchlist create/update behavior instead of creating an Application.
+4.3 [x] Prevent duplicate watchlist rows for the same user and company.
+4.4 [x] Preserve source context when useful, such as company name, source tier, source name, ATS type, and board token when available.
+4.5 [x] Show `Save company` on unsaved Radar companies.
+4.6 [x] Show `Saved company` when the company already exists in Companies To Watch.
+4.7 [x] Do not create Applications records from Radar postings.
 
 ## Step 5 — Provenance-Aware Ingestion
 
