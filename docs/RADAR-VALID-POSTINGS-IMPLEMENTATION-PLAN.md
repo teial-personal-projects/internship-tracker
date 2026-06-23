@@ -40,11 +40,11 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 
 ## Step 2 — Shared Schemas
 
-2.1 [ ] Add `SourceTierSchema` and `PostingValidityStatusSchema` in `shared/src/schemas.ts`.
-2.2 [ ] Extend `RadarSourceSchema` with `source_tier` and `source_name`.
-2.3 [ ] Extend `DiscoveredPostingSchema` with provenance and validity fields.
-2.4 [ ] Export inferred `SourceTier` and `PostingValidityStatus` types.
-2.5 [ ] Run shared package type checks.
+2.1 [x] Add `SourceTierSchema` and `PostingValidityStatusSchema` in `shared/src/schemas.ts`.
+2.2 [x] Extend `RadarSourceSchema` with `source_tier` and `source_name`.
+2.3 [x] Extend `DiscoveredPostingSchema` with provenance and validity fields.
+2.4 [x] Export inferred `SourceTier` and `PostingValidityStatus` types.
+2.5 [x] Run shared package type checks.
 
 ## Step 3 — Source Configuration
 

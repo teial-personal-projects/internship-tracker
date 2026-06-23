@@ -184,6 +184,14 @@ export const PostingStatusSchema = z.enum([
   'new', 'seen', 'dismissed', 'promoted',
 ]);
 
+export const SourceTierSchema = z.enum([
+  'direct_ats', 'curated_board', 'aggregator',
+]);
+
+export const PostingValidityStatusSchema = z.enum([
+  'unchecked', 'live', 'closed', 'not_found', 'stale', 'error',
+]);
+
 // ============================================================
 // V2 Entity Schemas
 // ============================================================
@@ -353,6 +361,8 @@ export const RadarSourceSchema = z.object({
   ats_type: AtsTypeSchema.nullable(),
   ats_board_token: z.string().nullable(),
   radar_enabled: z.boolean(),
+  source_tier: SourceTierSchema,
+  source_name: z.string().nullable(),
   last_refreshed_at: z.string().datetime().nullable(),
 });
 
@@ -372,6 +382,13 @@ export const DiscoveredPostingSchema = z.object({
   posted_at: z.string().datetime().nullable(),
   first_seen_at: z.string().datetime(),
   status: PostingStatusSchema,
+  source_tier: SourceTierSchema,
+  first_seen_source: z.string().min(1),
+  also_seen_on: z.array(z.unknown()),
+  source_first_seen_at: z.record(z.unknown()),
+  validity_status: PostingValidityStatusSchema,
+  last_validated_at: z.string().datetime().nullable(),
+  validation_error: z.string().nullable(),
   raw_payload: z.record(z.unknown()),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
@@ -548,6 +565,8 @@ export type NotificationType = z.infer<typeof NotificationTypeSchema>;
 export type ApplicationEventType = z.infer<typeof ApplicationEventTypeSchema>;
 export type AtsType = z.infer<typeof AtsTypeSchema>;
 export type PostingStatus = z.infer<typeof PostingStatusSchema>;
+export type SourceTier = z.infer<typeof SourceTierSchema>;
+export type PostingValidityStatus = z.infer<typeof PostingValidityStatusSchema>;
 
 export type CreateApplicationSchemaType = z.infer<typeof CreateApplicationSchema>;
 export type UpdateApplicationSchemaType = z.infer<typeof UpdateApplicationSchema>;

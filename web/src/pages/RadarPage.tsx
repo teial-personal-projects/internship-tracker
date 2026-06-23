@@ -8,20 +8,17 @@ import { useCreateWatchlistEntry, useWatchlist } from '@/hooks/useWatchlist';
 import { useRadarPostings, useUpdateRadarPostingStatus } from '@/hooks/useRadar';
 import { WatchlistWorkspace } from '@/pages/WatchlistPage';
 import type { WatchlistEntry } from '@/api/watchlist.api';
-import type { DiscoveredPosting, PostingStatus } from '@shared/schemas';
+import type {
+  DiscoveredPosting,
+  PostingStatus,
+  PostingValidityStatus,
+  SourceTier,
+} from '@shared/schemas';
 
 type StatusFilter = Extract<PostingStatus, 'new' | 'seen' | 'dismissed'>;
 type DiscoveryView = 'fresh_direct' | 'curated' | 'aggregator' | 'live_only' | 'all';
-type SourceTier = 'direct_ats' | 'curated_board' | 'aggregator';
-type ValidityStatus = 'unchecked' | 'live' | 'closed' | 'not_found' | 'stale' | 'error';
-
-interface RadarPostingView extends DiscoveredPosting {
-  source_tier?: SourceTier;
-  first_seen_source?: string;
-  also_seen_on?: Array<{ sourceName?: string; source_name?: string; name?: string } | string>;
-  validity_status?: ValidityStatus;
-  last_validated_at?: string | null;
-}
+type RadarPostingView = DiscoveredPosting;
+type ProvenanceSource = { sourceName?: string; source_name?: string; name?: string };
 
 interface CompanyGroup {
   company: string;
@@ -89,17 +86,17 @@ function sourceName(posting: RadarPostingView, entry: WatchlistEntry | undefined
   return 'Radar';
 }
 
-function validityStatus(posting: RadarPostingView): ValidityStatus {
+function validityStatus(posting: RadarPostingView): PostingValidityStatus {
   return posting.validity_status ?? 'unchecked';
 }
 
-function validityLabel(status: ValidityStatus): string {
+function validityLabel(status: PostingValidityStatus): string {
   if (status === 'not_found') return 'Not found';
   if (status === 'error') return 'Validation failed';
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
-function validityColor(status: ValidityStatus): string {
+function validityColor(status: PostingValidityStatus): string {
   if (status === 'live') return '#15803D';
   if (status === 'closed' || status === 'not_found') return '#B91C1C';
   if (status === 'error') return '#A36410';
@@ -112,7 +109,10 @@ function alsoSeenOn(posting: RadarPostingView): string[] {
   return posting.also_seen_on
     .map((source) => {
       if (typeof source === 'string') return source;
-      return source.sourceName ?? source.source_name ?? source.name ?? '';
+      if (!source || typeof source !== 'object') return '';
+
+      const provenanceSource = source as ProvenanceSource;
+      return provenanceSource.sourceName ?? provenanceSource.source_name ?? provenanceSource.name ?? '';
     })
     .filter(Boolean);
 }
