@@ -157,6 +157,20 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
+DO $$ BEGIN
+  CREATE TYPE source_tier_enum AS ENUM (
+    'direct_ats', 'curated_board', 'aggregator'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE posting_validity_status_enum AS ENUM (
+    'unchecked', 'live', 'closed', 'not_found', 'stale', 'error'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
 -- ============================================================
 
 
@@ -700,6 +714,8 @@ CREATE TABLE IF NOT EXISTS company_watchlist (
   notes              TEXT CHECK (char_length(notes) <= 5000),
   priority           task_priority_enum,
   target_apply_date  DATE,
+  source_tier        source_tier_enum NOT NULL DEFAULT 'direct_ats',
+  source_name        TEXT,
   added              DATE NOT NULL DEFAULT CURRENT_DATE,
   created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -1010,9 +1026,16 @@ CREATE TABLE IF NOT EXISTS discovered_postings (
   posted_at       TIMESTAMPTZ,
   first_seen_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
   status          posting_status_enum NOT NULL DEFAULT 'new',
-  raw_payload     JSONB NOT NULL DEFAULT '{}'::jsonb,
-  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  source_tier          source_tier_enum NOT NULL DEFAULT 'direct_ats',
+  first_seen_source    TEXT NOT NULL DEFAULT 'radar',
+  also_seen_on         JSONB NOT NULL DEFAULT '[]'::jsonb,
+  source_first_seen_at JSONB NOT NULL DEFAULT '{}'::jsonb,
+  validity_status      posting_validity_status_enum NOT NULL DEFAULT 'unchecked',
+  last_validated_at    TIMESTAMPTZ,
+  validation_error     TEXT,
+  raw_payload          JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
   CONSTRAINT discovered_postings_watchlist_external_unique
     UNIQUE (watchlist_id, external_job_id)
 );
@@ -1032,6 +1055,12 @@ CREATE INDEX IF NOT EXISTS idx_discovered_postings_first_seen_at
 
 CREATE INDEX IF NOT EXISTS idx_discovered_postings_watchlist_id
   ON discovered_postings(watchlist_id);
+
+CREATE INDEX IF NOT EXISTS idx_discovered_postings_user_source_tier_first_seen
+  ON discovered_postings(user_id, source_tier, first_seen_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_discovered_postings_user_validity_status
+  ON discovered_postings(user_id, validity_status);
 
 -- Data API grants
 REVOKE ALL PRIVILEGES ON TABLE public.discovered_postings FROM anon, authenticated;

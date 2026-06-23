@@ -49,6 +49,7 @@ Each file contains an `-- UP` block and a `-- DOWN` block.
 | `v2_018_interview_type_expansion.sql` | Add specific interview type enum values |
 | `radar_001_job_radar.sql` | Add Job Radar source fields and discovered postings |
 | `radar_002_radar_criteria.sql` | Add per-user Job Radar match criteria |
+| `radar_003_source_tiers.sql` | Add Radar source tiers and posting validity metadata |
 
 For existing v2 environments where some migrations were already applied before
 explicit Data API grants were added, run `../supabase-grants.sql` once after the

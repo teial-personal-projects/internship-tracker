@@ -32,9 +32,18 @@ expected_columns(table_name, column_name) AS (
     ('company_watchlist', 'ats_board_token'),
     ('company_watchlist', 'radar_enabled'),
     ('company_watchlist', 'last_refreshed_at'),
+    ('company_watchlist', 'source_tier'),
+    ('company_watchlist', 'source_name'),
     ('discovered_postings', 'watchlist_id'),
     ('discovered_postings', 'external_job_id'),
     ('discovered_postings', 'status'),
+    ('discovered_postings', 'source_tier'),
+    ('discovered_postings', 'first_seen_source'),
+    ('discovered_postings', 'also_seen_on'),
+    ('discovered_postings', 'source_first_seen_at'),
+    ('discovered_postings', 'validity_status'),
+    ('discovered_postings', 'last_validated_at'),
+    ('discovered_postings', 'validation_error'),
     ('radar_criteria', 'include_keywords'),
     ('radar_criteria', 'exclude_keywords'),
     ('radar_criteria', 'seniority_terms'),
@@ -79,7 +88,16 @@ expected_enum_values(type_name, enum_value) AS (
     ('posting_status_enum', 'new'),
     ('posting_status_enum', 'seen'),
     ('posting_status_enum', 'dismissed'),
-    ('posting_status_enum', 'promoted')
+    ('posting_status_enum', 'promoted'),
+    ('source_tier_enum', 'direct_ats'),
+    ('source_tier_enum', 'curated_board'),
+    ('source_tier_enum', 'aggregator'),
+    ('posting_validity_status_enum', 'unchecked'),
+    ('posting_validity_status_enum', 'live'),
+    ('posting_validity_status_enum', 'closed'),
+    ('posting_validity_status_enum', 'not_found'),
+    ('posting_validity_status_enum', 'stale'),
+    ('posting_validity_status_enum', 'error')
 ),
 expected_indexes(index_name) AS (
   VALUES
@@ -94,7 +112,9 @@ expected_indexes(index_name) AS (
     ('idx_discovered_postings_user_id'),
     ('idx_discovered_postings_status'),
     ('idx_discovered_postings_first_seen_at'),
-    ('idx_discovered_postings_watchlist_id')
+    ('idx_discovered_postings_watchlist_id'),
+    ('idx_discovered_postings_user_source_tier_first_seen'),
+    ('idx_discovered_postings_user_validity_status')
 ),
 expected_triggers(table_name, trigger_name) AS (
   VALUES

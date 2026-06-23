@@ -1,23 +1,46 @@
+import { useMemo, useState } from 'react';
+import { isAxiosError } from 'axios';
+import { Building2, CheckCircle2, ChevronDown, ExternalLink, Eye, RefreshCw, Search, SlidersHorizontal } from 'lucide-react';
+import { toast } from 'sonner';
 import { AppHeader } from '@/components/AppHeader';
 import { Spinner } from '@/components/Spinner';
-import { useRadarPostings, usePromoteRadarPosting, useUpdateRadarPostingStatus } from '@/hooks/useRadar';
-import { useWatchlist } from '@/hooks/useWatchlist';
-import { formatDate } from '@/lib/dateUtils';
-import { isAxiosError } from 'axios';
-import { ArrowRight, Building2, CalendarDays, ExternalLink, RefreshCw, Search, SlidersHorizontal, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { useCreateWatchlistEntry, useWatchlist } from '@/hooks/useWatchlist';
+import { useRadarPostings, useUpdateRadarPostingStatus } from '@/hooks/useRadar';
 import { WatchlistWorkspace } from '@/pages/WatchlistPage';
+import type { WatchlistEntry } from '@/api/watchlist.api';
 import type { DiscoveredPosting, PostingStatus } from '@shared/schemas';
 
-type StatusFilter = Extract<PostingStatus, 'new' | 'seen' | 'dismissed' | 'promoted'>;
+type StatusFilter = Extract<PostingStatus, 'new' | 'seen' | 'dismissed'>;
+type DiscoveryView = 'fresh_direct' | 'curated' | 'aggregator' | 'live_only' | 'all';
+type SourceTier = 'direct_ats' | 'curated_board' | 'aggregator';
+type ValidityStatus = 'unchecked' | 'live' | 'closed' | 'not_found' | 'stale' | 'error';
+
+interface RadarPostingView extends DiscoveredPosting {
+  source_tier?: SourceTier;
+  first_seen_source?: string;
+  also_seen_on?: Array<{ sourceName?: string; source_name?: string; name?: string } | string>;
+  validity_status?: ValidityStatus;
+  last_validated_at?: string | null;
+}
+
+interface CompanyGroup {
+  company: string;
+  watchlistEntry: WatchlistEntry | undefined;
+  postings: RadarPostingView[];
+}
 
 const STATUS_OPTIONS: Array<{ value: StatusFilter; label: string }> = [
   { value: 'new', label: 'New' },
   { value: 'seen', label: 'Seen' },
   { value: 'dismissed', label: 'Dismissed' },
-  { value: 'promoted', label: 'Added' },
+];
+
+const VIEW_OPTIONS: Array<{ value: DiscoveryView; label: string }> = [
+  { value: 'fresh_direct', label: 'Fresh direct matches' },
+  { value: 'curated', label: 'Curated' },
+  { value: 'aggregator', label: 'Aggregator' },
+  { value: 'live_only', label: 'Live only' },
+  { value: 'all', label: 'All' },
 ];
 
 function apiErrorMessage(error: unknown, fallback: string): string {
@@ -27,19 +50,95 @@ function apiErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-function formatIsoDate(value: string | null | undefined, empty = 'Not listed'): string {
-  if (!value) return empty;
-  return formatDate(value.slice(0, 10), empty);
+function formatRelativeTime(value: string | null | undefined): string {
+  if (!value) return '';
+
+  const timestamp = new Date(value).getTime();
+  if (Number.isNaN(timestamp)) return '';
+
+  const diffMs = Date.now() - timestamp;
+  const diffHours = Math.max(1, Math.round(diffMs / 3_600_000));
+  if (diffHours < 24) return `${diffHours}h ago`;
+
+  const diffDays = Math.max(1, Math.round(diffHours / 24));
+  return `${diffDays}d ago`;
 }
 
-function remoteLabel(posting: DiscoveredPosting): string {
-  const remoteStatus = posting.remote_status?.trim();
-  if (remoteStatus) return remoteStatus;
-  return posting.location?.toLowerCase().includes('remote') ? 'Remote' : 'Remote unknown';
+function sourceTier(posting: RadarPostingView): SourceTier {
+  return posting.source_tier ?? 'direct_ats';
 }
 
-function groupByCompany(postings: DiscoveredPosting[]) {
-  const groups = new Map<string, DiscoveredPosting[]>();
+function sourceTierLabel(tier: SourceTier): string {
+  if (tier === 'curated_board') return 'Curated';
+  if (tier === 'aggregator') return 'Aggregator';
+  return 'Direct ATS';
+}
+
+function sourceName(posting: RadarPostingView, entry: WatchlistEntry | undefined): string {
+  if (posting.first_seen_source && posting.first_seen_source !== 'radar') {
+    return posting.first_seen_source;
+  }
+
+  if (entry?.ats_type) {
+    return entry.ats_type
+      .split(/[_-]/)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  }
+
+  return 'Radar';
+}
+
+function validityStatus(posting: RadarPostingView): ValidityStatus {
+  return posting.validity_status ?? 'unchecked';
+}
+
+function validityLabel(status: ValidityStatus): string {
+  if (status === 'not_found') return 'Not found';
+  if (status === 'error') return 'Validation failed';
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function validityColor(status: ValidityStatus): string {
+  if (status === 'live') return '#15803D';
+  if (status === 'closed' || status === 'not_found') return '#B91C1C';
+  if (status === 'error') return '#A36410';
+  return '#7C5E10';
+}
+
+function alsoSeenOn(posting: RadarPostingView): string[] {
+  if (!Array.isArray(posting.also_seen_on)) return [];
+
+  return posting.also_seen_on
+    .map((source) => {
+      if (typeof source === 'string') return source;
+      return source.sourceName ?? source.source_name ?? source.name ?? '';
+    })
+    .filter(Boolean);
+}
+
+function isFreshMatch(posting: RadarPostingView): boolean {
+  const status = validityStatus(posting);
+  return sourceTier(posting) === 'direct_ats' && status !== 'closed' && status !== 'not_found';
+}
+
+function postingMatchesView(posting: RadarPostingView, view: DiscoveryView): boolean {
+  const tier = sourceTier(posting);
+  const validity = validityStatus(posting);
+
+  if (view === 'fresh_direct') return isFreshMatch(posting);
+  if (view === 'curated') return tier === 'curated_board';
+  if (view === 'aggregator') return tier === 'aggregator';
+  if (view === 'live_only') return validity === 'live';
+  return true;
+}
+
+function groupByCompany(
+  postings: RadarPostingView[],
+  watchlist: WatchlistEntry[],
+): CompanyGroup[] {
+  const watchlistById = new Map(watchlist.map((entry) => [entry.id, entry]));
+  const groups = new Map<string, RadarPostingView[]>();
 
   for (const posting of postings) {
     const companyPostings = groups.get(posting.company_name) ?? [];
@@ -48,204 +147,289 @@ function groupByCompany(postings: DiscoveredPosting[]) {
   }
 
   return [...groups.entries()]
-    .map(([company, companyPostings]) => ({
-      company,
-      postings: companyPostings.sort((left, right) => right.first_seen_at.localeCompare(left.first_seen_at)),
-    }))
+    .map(([company, companyPostings]) => {
+      const sortedPostings = companyPostings.sort((left, right) => right.first_seen_at.localeCompare(left.first_seen_at));
+      return {
+        company,
+        postings: sortedPostings,
+        watchlistEntry: watchlistById.get(sortedPostings[0]?.watchlist_id ?? ''),
+      };
+    })
     .sort((left, right) => right.postings[0].first_seen_at.localeCompare(left.postings[0].first_seen_at));
 }
 
-interface PostingCardProps {
-  posting: DiscoveredPosting;
-  onPromote: (posting: DiscoveredPosting) => void;
-  onDismiss: (posting: DiscoveredPosting) => void;
-  isPromoting: boolean;
-  isDismissing: boolean;
+function companyInitials(company: string): string {
+  const words = company.split(/\s+/).filter(Boolean);
+  return words.slice(0, 2).map((word) => word[0]?.toUpperCase()).join('') || 'CO';
 }
 
-function PostingCard({ posting, onPromote, onDismiss, isPromoting, isDismissing }: PostingCardProps) {
-  const canAct = posting.status !== 'dismissed' && posting.status !== 'promoted';
+interface PostingRowProps {
+  posting: RadarPostingView;
+  watchlistEntry: WatchlistEntry | undefined;
+  isSaved: boolean;
+  isSaving: boolean;
+  onSaveCompany: (posting: RadarPostingView) => void;
+  onMarkSeen: (posting: RadarPostingView) => void;
+}
+
+function PostingRow({
+  posting,
+  watchlistEntry,
+  isSaved,
+  isSaving,
+  onSaveCompany,
+  onMarkSeen,
+}: PostingRowProps) {
+  const status = validityStatus(posting);
+  const tier = sourceTier(posting);
+  const seenSources = alsoSeenOn(posting);
+  const source = sourceName(posting, watchlistEntry);
+  const relativeFirstSeen = formatRelativeTime(posting.first_seen_at);
+  const canSave = !isSaved && !isSaving;
 
   return (
-    <article className="rounded-lg border bg-white p-4 shadow-sm" style={{ borderColor: 'var(--line)' }}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            {posting.status === 'new' && (
-              <span className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider" style={{ background: 'var(--accent-tint)', color: 'var(--accent-dark)' }}>
-                New
-              </span>
-            )}
-            <span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: 'var(--sage-tint)', color: 'var(--sage)' }}>
-              {remoteLabel(posting)}
+    <div className="flex flex-col gap-3 border-t px-4 py-3 first:border-t-0 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: 'var(--line)' }}>
+      <div className="min-w-0">
+        <a
+          href={posting.url}
+          target="_blank"
+          rel="noreferrer"
+          onClick={() => { if (posting.status === 'new') onMarkSeen(posting); }}
+          className="inline-flex max-w-full items-center gap-1 text-sm font-semibold hover:underline"
+          style={{ color: 'var(--ink)' }}
+        >
+          <span className="truncate">{posting.title}</span>
+          <ExternalLink size={13} className="shrink-0" />
+        </a>
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs" style={{ color: 'var(--ink-3)' }}>
+          <span className="rounded-full px-2 py-0.5 font-semibold" style={{ background: 'var(--sage-tint)', color: 'var(--sage)' }}>
+            {sourceTierLabel(tier)}
+          </span>
+          <span className="inline-flex items-center gap-1" style={{ color: validityColor(status) }}>
+            <CheckCircle2 size={12} />
+            {validityLabel(status)}
+          </span>
+          <span>First seen from {source}</span>
+          {relativeFirstSeen && <span>{relativeFirstSeen}</span>}
+          {seenSources.map((seenSource) => (
+            <span key={seenSource} className="inline-flex items-center gap-1">
+              <Eye size={12} />
+              Also seen on {seenSource}
             </span>
-          </div>
-          <h3 className="mt-2 text-base font-semibold" style={{ color: 'var(--ink)' }}>
-            {posting.title}
-          </h3>
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm" style={{ color: 'var(--ink-3)' }}>
-            <span className="inline-flex items-center gap-1">
-              <CalendarDays size={14} />
-              Posted {formatIsoDate(posting.posted_at)}
-            </span>
-            <span>First seen {formatIsoDate(posting.first_seen_at)}</span>
-            {posting.location && <span>{posting.location}</span>}
-          </div>
-        </div>
-
-        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-          <a
-            href={posting.url}
-            target="_blank"
-            rel="noreferrer"
-            className="btn-outline inline-flex min-h-11 items-center gap-1 px-3 text-sm"
-          >
-            <ExternalLink size={15} />
-            Open
-          </a>
-          {canAct && (
-            <>
-              <button
-                type="button"
-                className="btn-primary inline-flex min-h-11 items-center gap-1 px-3 text-sm"
-                onClick={() => onPromote(posting)}
-                disabled={isPromoting}
-              >
-                {isPromoting ? <Spinner size="sm" color="white" /> : <ArrowRight size={15} />}
-                Add to tracker
-              </button>
-              <button
-                type="button"
-                className="btn-ghost min-h-11 px-3 text-sm"
-                onClick={() => onDismiss(posting)}
-                disabled={isDismissing}
-                style={{ color: 'var(--ink-3)' }}
-              >
-                {isDismissing ? <Spinner size="sm" /> : 'Dismiss'}
-              </button>
-            </>
-          )}
+          ))}
         </div>
       </div>
-    </article>
+
+      <button
+        type="button"
+        className={isSaved ? 'btn-outline min-h-9 px-3 text-sm' : 'btn-primary min-h-9 px-3 text-sm'}
+        onClick={() => onSaveCompany(posting)}
+        disabled={!canSave}
+      >
+        {isSaving ? <Spinner size="sm" color="white" /> : isSaved ? 'Saved company' : 'Save company'}
+      </button>
+    </div>
+  );
+}
+
+interface CompanyRadarCardProps {
+  group: CompanyGroup;
+  savedCompanyNames: Set<string>;
+  savingCompanyName: string | null;
+  onSaveCompany: (posting: RadarPostingView) => void;
+  onMarkSeen: (posting: RadarPostingView) => void;
+}
+
+function CompanyRadarCard({
+  group,
+  savedCompanyNames,
+  savingCompanyName,
+  onSaveCompany,
+  onMarkSeen,
+}: CompanyRadarCardProps) {
+  const freshDirectCount = group.postings.filter(isFreshMatch).length;
+  const closedCount = group.postings.filter((posting) => {
+    const status = validityStatus(posting);
+    return status === 'closed' || status === 'not_found';
+  }).length;
+  const primarySource = sourceName(group.postings[0], group.watchlistEntry);
+  const subtitleParts = [primarySource, group.watchlistEntry?.industry].filter(Boolean);
+
+  return (
+    <section className="overflow-hidden rounded-lg border bg-white shadow-sm" style={{ borderColor: 'var(--line)' }}>
+      <div className="flex items-center justify-between gap-3 px-4 py-3" style={{ background: 'var(--soft)' }}>
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold" style={{ background: 'var(--sage-tint)', color: 'var(--sage)' }}>
+            {companyInitials(group.company)}
+          </div>
+          <div className="min-w-0">
+            <h2 className="truncate text-sm font-bold" style={{ color: 'var(--ink)' }}>
+              {group.company}
+            </h2>
+            <p className="truncate text-xs" style={{ color: 'var(--ink-3)' }}>
+              {subtitleParts.join(' · ') || 'Company source'}
+            </p>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {freshDirectCount > 0 && (
+            <span className="rounded-full px-2 py-1 text-xs font-semibold" style={{ background: 'var(--sage-tint)', color: 'var(--sage)' }}>
+              {freshDirectCount} fresh direct
+            </span>
+          )}
+          {closedCount > 0 && (
+            <span className="rounded-full px-2 py-1 text-xs font-semibold" style={{ background: '#FEF2F2', color: '#B91C1C' }}>
+              {closedCount} closed
+            </span>
+          )}
+          <ChevronDown size={16} style={{ color: 'var(--ink-3)' }} />
+        </div>
+      </div>
+
+      <div>
+        {group.postings.map((posting) => (
+          <PostingRow
+            key={posting.id}
+            posting={posting}
+            watchlistEntry={group.watchlistEntry}
+            isSaved={savedCompanyNames.has(posting.company_name.toLowerCase())}
+            isSaving={savingCompanyName === posting.company_name.toLowerCase()}
+            onSaveCompany={onSaveCompany}
+            onMarkSeen={onMarkSeen}
+          />
+        ))}
+      </div>
+    </section>
   );
 }
 
 export function RadarPage() {
-  const navigate = useNavigate();
   const [status, setStatus] = useState<StatusFilter>('new');
   const [watchlistId, setWatchlistId] = useState('');
   const [search, setSearch] = useState('');
-  const [promotingId, setPromotingId] = useState<string | null>(null);
-  const [dismissingId, setDismissingId] = useState<string | null>(null);
+  const [view, setView] = useState<DiscoveryView>('fresh_direct');
+  const [savingCompanyName, setSavingCompanyName] = useState<string | null>(null);
 
   const queryParams = useMemo(() => ({
-    status,
+    ...(status && { status }),
     ...(watchlistId && { watchlist_id: watchlistId }),
     ...(search.trim() && { search: search.trim() }),
   }), [search, status, watchlistId]);
 
   const { data: postings = [], isLoading, error } = useRadarPostings(queryParams);
   const { data: watchlist = [] } = useWatchlist();
-  const promotePosting = usePromoteRadarPosting();
+  const createWatchlistEntry = useCreateWatchlistEntry();
   const updatePostingStatus = useUpdateRadarPostingStatus();
 
-  const companyGroups = useMemo(() => groupByCompany(postings), [postings]);
+  const savedCompanyNames = useMemo(
+    () => new Set(watchlist.map((entry) => entry.company_name.toLowerCase())),
+    [watchlist],
+  );
 
-  async function handlePromote(posting: DiscoveredPosting) {
-    setPromotingId(posting.id);
+  const filteredPostings = useMemo(() => (
+    (postings as RadarPostingView[]).filter((posting) => postingMatchesView(posting, view))
+  ), [postings, view]);
+
+  const companyGroups = useMemo(() => groupByCompany(filteredPostings, watchlist), [filteredPostings, watchlist]);
+
+  const metrics = useMemo(() => {
+    const viewPostings = postings as RadarPostingView[];
+    const newToday = viewPostings.filter((posting) => posting.status === 'new').length;
+    const directAts = viewPostings.filter((posting) => sourceTier(posting) === 'direct_ats').length;
+    const live = viewPostings.filter((posting) => validityStatus(posting) === 'live').length;
+    const closed = viewPostings.filter((posting) => {
+      const postingValidity = validityStatus(posting);
+      return postingValidity === 'closed' || postingValidity === 'not_found';
+    }).length;
+
+    return { newToday, directAts, live, closed };
+  }, [postings]);
+
+  async function handleSaveCompany(posting: RadarPostingView) {
+    const normalizedCompanyName = posting.company_name.toLowerCase();
+    if (savedCompanyNames.has(normalizedCompanyName)) return;
+
+    setSavingCompanyName(normalizedCompanyName);
     try {
-      const result = await promotePosting.mutateAsync(posting.id);
-      toast.success('Application added to tracker');
-      navigate(`/applications?application_id=${result.application_id}`);
+      await createWatchlistEntry.mutateAsync({
+        company_name: posting.company_name,
+        added: new Date().toISOString().slice(0, 10),
+        radar_enabled: false,
+      });
+      toast.success('Company saved');
     } catch (err) {
-      toast.error(apiErrorMessage(err, 'Could not add posting to tracker'));
+      toast.error(apiErrorMessage(err, 'Could not save company'));
     } finally {
-      setPromotingId(null);
+      setSavingCompanyName(null);
     }
   }
 
-  async function handleDismiss(posting: DiscoveredPosting) {
-    setDismissingId(posting.id);
+  async function handleMarkSeen(posting: RadarPostingView) {
+    if (posting.status !== 'new') return;
+
     try {
-      await updatePostingStatus.mutateAsync({ id: posting.id, status: 'dismissed' });
-      toast.success('Posting dismissed');
-    } catch (err) {
-      toast.error(apiErrorMessage(err, 'Could not dismiss posting'));
-    } finally {
-      setDismissingId(null);
+      await updatePostingStatus.mutateAsync({ id: posting.id, status: 'seen' });
+    } catch {
+      // Opening the source posting should not be blocked by status bookkeeping.
     }
   }
 
-  const hasFilters = status !== 'new' || watchlistId || search.trim();
+  const hasFilters = status !== 'new' || watchlistId || search.trim() || view !== 'fresh_direct';
 
   return (
     <div className="flex h-screen flex-col overflow-hidden" style={{ background: 'var(--bg)' }}>
       <AppHeader />
-      <main className="mobile-safe-bottom flex flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto p-3 sm:p-4 md:pb-6">
-        <div className="flex flex-col gap-1">
+      <main className="mobile-safe-bottom flex flex-1 flex-col gap-3 overflow-x-hidden overflow-y-auto p-3 sm:p-4 md:pb-6">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <h1 className="text-2xl font-bold" style={{ color: 'var(--ink)' }}>
             Discover & Watchlist
           </h1>
-          <p className="text-sm" style={{ color: 'var(--ink-3)' }}>
-            Manage watched companies and review matched roles from their careers pages.
-          </p>
+          <span className="text-sm" style={{ color: 'var(--ink-3)' }}>
+            Open roles, save companies.
+          </span>
         </div>
 
-        <section className="grid gap-3 rounded-lg border bg-white p-4 shadow-sm md:grid-cols-3" style={{ borderColor: 'var(--line)' }}>
-          <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ background: 'var(--soft)' }}>
-              <Building2 size={18} strokeWidth={1.75} style={{ color: 'var(--ink-3)' }} />
-            </div>
-            <div>
-              <h2 className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-                Watched companies
-              </h2>
-              <p className="mt-1 text-xs leading-5" style={{ color: 'var(--ink-3)' }}>
-                Add target companies and connect their careers source.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ background: 'var(--soft)' }}>
-              <RefreshCw size={18} strokeWidth={1.75} style={{ color: 'var(--ink-3)' }} />
-            </div>
-            <div>
-              <h2 className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-                Source refresh
-              </h2>
-              <p className="mt-1 text-xs leading-5" style={{ color: 'var(--ink-3)' }}>
-                Auto-refresh runs for stale sources; refresh manually anytime.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ background: 'var(--soft)' }}>
-              <Search size={18} strokeWidth={1.75} style={{ color: 'var(--ink-3)' }} />
-            </div>
-            <div>
-              <h2 className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-                Matched roles
-              </h2>
-              <p className="mt-1 text-xs leading-5" style={{ color: 'var(--ink-3)' }}>
-                Review discovered postings and add strong matches to Applications.
-              </p>
-            </div>
-          </div>
+        <section className="rounded-lg border bg-white p-3 shadow-sm" style={{ borderColor: 'var(--line)' }}>
+          <WatchlistWorkspace embedded />
         </section>
 
-        <section className="rounded-lg border bg-white p-4 shadow-sm" style={{ borderColor: 'var(--line)' }}>
-          <WatchlistWorkspace embedded autoRefreshStaleSources />
-        </section>
-
-        <div className="flex flex-col gap-1 pt-2">
-          <h2 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>
-            Discovered Postings
-          </h2>
-          <p className="text-sm" style={{ color: 'var(--ink-3)' }}>
-            Matched roles from watched companies, grouped by company with newest matches first.
-          </p>
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-2">
+            <Building2 size={18} style={{ color: 'var(--ink-3)' }} />
+            <h2 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>
+              Radar by company
+            </h2>
+          </div>
+          <select
+            value={view}
+            onChange={(event) => setView(event.target.value as DiscoveryView)}
+            className="field-select min-w-52 md:w-auto"
+            aria-label="Radar view"
+          >
+            {VIEW_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
         </div>
+
+        <section className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-lg border bg-white p-3" style={{ borderColor: 'var(--line)' }}>
+            <p className="text-xs" style={{ color: 'var(--ink-3)' }}>New</p>
+            <p className="mt-1 text-2xl font-bold" style={{ color: 'var(--ink)' }}>{metrics.newToday}</p>
+          </div>
+          <div className="rounded-lg border bg-white p-3" style={{ borderColor: 'var(--line)' }}>
+            <p className="text-xs" style={{ color: 'var(--ink-3)' }}>Direct ATS</p>
+            <p className="mt-1 text-2xl font-bold" style={{ color: 'var(--ink)' }}>{metrics.directAts}</p>
+          </div>
+          <div className="rounded-lg border bg-white p-3" style={{ borderColor: 'var(--line)' }}>
+            <p className="text-xs" style={{ color: 'var(--ink-3)' }}>Live</p>
+            <p className="mt-1 text-2xl font-bold" style={{ color: 'var(--ink)' }}>{metrics.live}</p>
+          </div>
+          <div className="rounded-lg border bg-white p-3" style={{ borderColor: 'var(--line)' }}>
+            <p className="text-xs" style={{ color: 'var(--ink-3)' }}>Closed</p>
+            <p className="mt-1 text-2xl font-bold" style={{ color: 'var(--ink)' }}>{metrics.closed}</p>
+          </div>
+        </section>
 
         <section className="rounded-lg border bg-white p-3 shadow-sm" style={{ borderColor: 'var(--line)' }}>
           <div className="mobile-filter-scroll md:grid md:grid-cols-[180px_minmax(180px,240px)_1fr_auto] md:items-center md:overflow-visible md:pb-0">
@@ -298,9 +482,9 @@ export function RadarPage() {
                   setStatus('new');
                   setWatchlistId('');
                   setSearch('');
+                  setView('fresh_direct');
                 }}
               >
-                <X size={15} />
                 Reset
               </button>
             )}
@@ -318,31 +502,16 @@ export function RadarPage() {
             <Spinner size="lg" />
           </div>
         ) : companyGroups.length > 0 ? (
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-3">
             {companyGroups.map((group) => (
-              <section key={group.company} className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 px-1">
-                  <Building2 size={17} style={{ color: 'var(--ink-3)' }} />
-                  <h2 className="text-base font-semibold" style={{ color: 'var(--ink)' }}>
-                    {group.company}
-                  </h2>
-                  <span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: 'var(--soft)', color: 'var(--ink-2)' }}>
-                    {group.postings.length}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-2">
-                  {group.postings.map((posting) => (
-                    <PostingCard
-                      key={posting.id}
-                      posting={posting}
-                      onPromote={handlePromote}
-                      onDismiss={handleDismiss}
-                      isPromoting={promotingId === posting.id}
-                      isDismissing={dismissingId === posting.id}
-                    />
-                  ))}
-                </div>
-              </section>
+              <CompanyRadarCard
+                key={group.company}
+                group={group}
+                savedCompanyNames={savedCompanyNames}
+                savingCompanyName={savingCompanyName}
+                onSaveCompany={handleSaveCompany}
+                onMarkSeen={handleMarkSeen}
+              />
             ))}
           </div>
         ) : (
@@ -360,7 +529,7 @@ export function RadarPage() {
                   {hasFilters ? 'No postings match these filters' : 'No matched postings yet'}
                 </h2>
                 <p className="mt-1 text-sm" style={{ color: 'var(--ink-3)' }}>
-                  Add a watched company, connect its careers source, then refresh that source to pull matching roles into this workspace.
+                  Add a watched company, connect its careers source, then refresh that source to surface matching roles.
                 </p>
               </div>
             </div>
