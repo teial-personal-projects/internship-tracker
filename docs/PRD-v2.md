@@ -4,7 +4,7 @@
 **Site:** track-my-app.com
 **Prepared by:** Teial Dickens
 **Date:** April 27, 2026
-**Version:** 2.5 — Job Radar added; deferred features moved to v3
+**Version:** 2.6 — Job discovery deferred to v3
 **Status:** In Progress
 
 ---
@@ -13,7 +13,7 @@
 
 Track My Application helps job seekers log applications and track statuses across the job search pipeline. Version 2.0 augments the platform with several new feature modules grounded in a proven outreach-driven application methodology — showing that a personalized cover letter, same-day double-down outreach to a specific person at the company, and a structured follow-up process increases application-to-phone-screen conversion from roughly 2% to approximately 10%.
 
-The v2.0 feature set introduces a unified Contacts system (covering both company contacts and external recruiters), an Action Items task queue, an Application Type classification field, a Companies To Watch research list, an Application Event Log, and a manual Job Radar refresh flow for discovering roles from monitored companies. The Interview Tracker, In-App Notifications, scheduled background jobs, email delivery, and Playbook originally drafted for v2.0 have moved to v3.0. Navigation keeps four primary tabs with secondary items in a menu.
+The v2.0 feature set introduces a unified Contacts system (covering both company contacts and external recruiters), an Action Items task queue, an Application Type classification field, a Companies To Watch research list, and an Application Event Log. Job discovery, the Interview Tracker, In-App Notifications, scheduled background jobs, email delivery, and Playbook originally drafted for v2.0 have moved to v3.0. Navigation keeps primary workflow tabs with secondary items in a menu.
 
 ---
 
@@ -52,7 +52,7 @@ Additionally, many job seekers work with external recruiters who have their own 
 - Support recruiter relationship management including notes, preferences, and templates
 - Help users create and manage follow-up tasks without sending reminders or notifications
 - Give users an action-item queue that reflects the proven 4-step method
-- Let users manually refresh watched-company job feeds and review fresh matches in Discover
+- Let users maintain a Companies To Watch research list without running job discovery
 
 ---
 
@@ -60,7 +60,7 @@ Additionally, many job seekers work with external recruiters who have their own 
 
 ### 4.1 Navigation structure
 
-The application uses a **four-tab primary bar** with secondary items in a **hamburger/overflow menu**. This replaces the previous two-tier navigation (Dashboard + Job Boards pills + secondary tab row).
+The application uses a **primary tab bar** with secondary items in a **hamburger/overflow menu**. This replaces the previous two-tier navigation (Dashboard + Job Boards pills + secondary tab row).
 
 Primary tabs (always visible):
 
@@ -68,7 +68,6 @@ Primary tabs (always visible):
 | --- | --- |
 | Applications (Apps on mobile) | Pipeline bar, application list, urgent tasks widget |
 | Contacts | Unified contact tracker — company contacts and recruiters in one view |
-| Discover | Job radar of fresh matching roles from manually refreshed monitored companies |
 | Action Items | Task queue driven by the outreach method |
 
 Overflow / hamburger menu (top-right):
@@ -479,51 +478,39 @@ A user can log an event via an inline form directly in the timeline panel: event
 
 ---
 
-### Feature 10: Job Radar
+### Feature 10: Job Discovery
 
 #### 10.1 Overview
 
-The Job Radar supports Companies To Watch without introducing background jobs in v2.0. Instead of checking each company's careers page by hand, the user can manually refresh monitored public applicant tracking system (ATS) feeds. The system normalizes the postings, filters them to the user's criteria, and surfaces fresh matches in a Discover view. A matched role is promoted into an application with the same promote flow used by Companies To Watch. Scheduled polling, notifications, and email alerting for new matches are specified in `PRD-v3.md`.
+Job discovery is deferred to `PRD-v3.md`. V2 does not search external job boards, call paid job-search APIs, poll sources, scrape sites, or surface discovered postings. Companies To Watch remains a manual research list for companies the user already knows they may want to apply to later.
 
 #### 10.2 Monitored sources
 
-Radar settings live on each Companies To Watch entry. A watchlist company becomes a radar source when the user supplies its ATS type and board token and enables the radar.
+No monitored job sources are active in V2. Any source catalog, provider adapter, scheduled polling, direct ATS refresh, or discovered-posting workflow is V3-owned.
 
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
-| ats_type | Enum | Yes | `greenhouse`, `lever`, `ashby`, `smartrecruiters`, `pinpoint`, `welcomekit`, `custom` |
-| ats_board_token | Text | Yes | The board identifier from the ATS URL |
-| radar_enabled | Boolean | Yes | Off by default; manual refresh reads only enabled sources |
-| last_refreshed_at | Timestamp | Auto | Updated after each manual refresh |
+| None | N/A | N/A | V2 does not configure monitored job sources |
 
 #### 10.3 Discovered postings
 
-Each normalized posting is stored once per source, deduped on the external job id.
+V2 does not create discovered posting records from job discovery. If the schema includes dormant Radar tables or columns, they are reserved for V3 and should not be exposed as an active V2 product surface.
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| watchlist_id | FK | The monitored company the posting came from |
-| company_name | Text | Denormalized for display |
-| external_job_id | Text | The ATS job id; unique per source for dedupe |
-| title | Text | Role title |
-| location | Text | Raw location string from the ATS |
-| remote_status | Text | Parsed remote or LA classification |
-| url | Text | Direct link to the posting |
-| posted_at | Timestamp | From the ATS when available |
-| first_seen_at | Timestamp | When the radar first saw it; drives the apply-fast goal |
-| status | Enum | `new`, `seen`, `dismissed`, `promoted` |
+| None | N/A | V2 does not store active discovered postings |
 
 #### 10.4 Matching
 
-Manual refresh keeps only postings that match the user's criteria. The v2.0 default keeps roles whose title signals seniority (senior, staff, or principal, never junior or intern) and whose location reads remote US or LA. Per-user criteria refinement is a fast-follow.
+Matching criteria, ranking, and posting validation are deferred to V3.
 
 #### 10.5 Discover surface
 
-The Discover tab lists new matched postings grouped by company, newest first, each with a NEW badge, the posted and first-seen dates, and a remote tag. Each card offers Add to tracker, which promotes the posting into an application and navigates to it, and Dismiss, which hides it. A filter bar narrows by status, company, and search.
+V2 does not include a Discover tab. V3 owns the job discovery surface.
 
-#### 10.6 Promote to application
+#### 10.6 Direct ATS refreshes
 
-Add to tracker creates an `applications` record pre-populated with company name, title, and the posting URL, sets the posting status to `promoted`, and reuses the Companies To Watch promote pattern.
+Direct ATS adapters are deferred to V3 with the rest of job discovery. V2 Companies To Watch entries remain manually managed.
 
 ---
 
@@ -543,7 +530,7 @@ V2 product requirements define what data the product must capture and how users 
 | Task | Stores manual and auto-generated action items with category, priority, status, due date, and optional application/contact links. |
 | Company watchlist entry | Stores companies a user wants to monitor before applying. |
 | Application event | Stores application-scoped timeline entries independent of named contacts. |
-| Discovered posting | Stores normalized roles found by Job Radar from monitored company sources. |
+| Discovered posting | Deferred V3 concept for normalized roles found by job discovery. |
 
 ### 6.2 Business rules
 
@@ -564,7 +551,7 @@ V2 product requirements define what data the product must capture and how users 
 
 ### 6.4 API surface expectations
 
-The app exposes authenticated API capabilities for Applications, Contacts, Action Items, Companies To Watch, Application Events, Job Radar, and Profile. Exact route paths, validation schemas, persistence details, and ownership-check implementation live in [application-tracker-sdd.md](application-tracker-sdd.md) and the implementation plan.
+The app exposes authenticated API capabilities for Applications, Contacts, Action Items, Companies To Watch, Application Events, and Profile. Exact route paths, validation schemas, persistence details, and ownership-check implementation live in [application-tracker-sdd.md](application-tracker-sdd.md) and the implementation plan.
 
 ---
 
@@ -572,7 +559,8 @@ The app exposes authenticated API capabilities for Applications, Contacts, Actio
 
 - Interview Tracker, In-App Notifications, and Playbook, all moved to v3.0 (originally drafted for v2.0)
 - Email integration of any kind (outreach emails, notification digests, follow-up reminders) — planned for v3.0
-- Background schedulers or cron jobs, including overdue escalation and scheduled Radar polling — planned for v3.0
+- Background schedulers or cron jobs, including overdue escalation and job discovery polling — planned for v3.0
+- Job discovery, including provider-backed search, direct ATS refreshes, discovered postings, and Discover UI — planned for v3.0
 - Calendar integration for phone screen scheduling
 - AI-generated cover letter drafting
 - Resume file storage and version management
@@ -590,7 +578,7 @@ The app exposes authenticated API capabilities for Applications, Contacts, Actio
 | Contact email field creates expectation of email send functionality | High | Low | Label field as reference only; no mailto links or send-email actions in v2.0 |
 | Data model changes require migration of existing application records | High | Low | All new entities are additive; jobs table untouched during rollout |
 | Unified contacts model creates confusion about recruiter vs. company contact | Low | Medium | Clear visual differentiation in the UI with contact_type badge |
-| ATS feed format changes break a source adapter | Medium | Low | Per-source error isolation in manual refresh; one bad board never aborts another refresh |
+| Curated board API or feed changes break a source adapter | Medium | Low | Per-source error isolation in manual search; one bad source never aborts another search |
 
 ---
 
@@ -650,7 +638,6 @@ The app exposes authenticated API capabilities for Applications, Contacts, Actio
 
 - [ ] Four primary tabs render at all viewport widths
 - [ ] Hamburger menu contains Companies To Watch, Profile, Sign out
-- [ ] Discover tab renders the job radar as a primary tab
 - [ ] On mobile (<768px), primary tabs render as bottom navigation bar
 - [ ] Bottom nav never wraps — scrolls horizontally if needed
 - [ ] All tab content stacks to single-column on viewports below 600px
@@ -663,15 +650,12 @@ The app exposes authenticated API capabilities for Applications, Contacts, Actio
 - [ ] "Start Application" button creates a new application pre-populated with company name and industry, removes the watchlist entry, and navigates to the new record
 - [ ] Watchlist entries are scoped to the authenticated user (403 on unauthorized access)
 
-### Feature 10 — Job Radar
+### Feature 10 — Job Discovery
 
-- [ ] A Companies To Watch entry becomes a radar source by setting ATS type, board token, and enabling the radar
-- [ ] Manual refresh reads only radar-enabled sources and writes new matches to discovered_postings
-- [ ] A repeat manual refresh inserts no duplicate postings (deduped on watchlist_id and external_job_id)
-- [ ] The Discover tab lists new matched postings grouped by company with a NEW badge and first-seen date
-- [ ] Add to tracker promotes a posting into an application and marks the posting promoted
-- [ ] Dismiss hides a posting and it does not reappear on the next manual refresh
-- [ ] Radar data is scoped to the authenticated user (403 on unauthorized access)
+- [ ] Job discovery is not exposed in V2 navigation
+- [ ] V2 does not call external job-search providers, paid APIs, or job-board scraping flows
+- [ ] V2 does not create discovered postings from external job sources
+- [ ] Companies To Watch remains manually managed and does not auto-refresh jobs
 
 ---
 
@@ -686,3 +670,4 @@ The app exposes authenticated API capabilities for Applications, Contacts, Actio
 | 2.3 | April 30, 2026 | Teial Dickens | Renamed "Jobs" tab to "Applications" (abbreviated "Apps" on mobile) throughout |
 | 2.4 | May 2, 2026 | Teial Dickens | Added Feature 9: Application Event Log — application-level interaction timeline independent of named contacts; fixed `entry_type` → `purpose` column name in contact_interactions technical spec |
 | 2.5 | June 16, 2026 | Teial Dickens | Interview Tracker, In-App Notifications, and Playbook moved to PRD-v3.md; added Job Radar (manual ATS refresh feeding Companies To Watch); Interviews tab replaced with Discover |
+| 2.6 | June 24, 2026 | Teial Dickens | Moved Job Discovery and Discover surface to PRD-v3.md; V2 keeps Companies To Watch as a manual research list |

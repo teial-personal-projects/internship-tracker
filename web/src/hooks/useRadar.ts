@@ -6,6 +6,8 @@ import type { PostingStatus } from '@shared/schemas';
 export const radarKeys = {
   all: ['radar'] as const,
   postings: (params: RadarPostingsParams) => ['radar', 'postings', params] as const,
+  criteria: () => ['radar', 'criteria'] as const,
+  searchSources: () => ['radar', 'search-sources'] as const,
 };
 
 export function useRadarPostings(params: RadarPostingsParams = {}) {
@@ -17,6 +19,44 @@ export function useRadarPostings(params: RadarPostingsParams = {}) {
   });
 }
 
+export function useRadarCriteria() {
+  return useQuery({
+    queryKey: radarKeys.criteria(),
+    queryFn: radarApi.getRadarCriteria,
+    staleTime: 60_000,
+  });
+}
+
+export function useRadarSearchSources() {
+  return useQuery({
+    queryKey: radarKeys.searchSources(),
+    queryFn: radarApi.getRadarSearchSources,
+    staleTime: 60_000,
+  });
+}
+
+export function useUpdateRadarCriteria() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: radarApi.updateRadarCriteria,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: radarKeys.criteria() });
+    },
+  });
+}
+
+export function useSearchTrustedSources() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: radarApi.searchTrustedSources,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: radarKeys.all });
+    },
+  });
+}
+
 export function useUpdateRadarPostingStatus() {
   const queryClient = useQueryClient();
 
@@ -25,18 +65,6 @@ export function useUpdateRadarPostingStatus() {
       radarApi.updateRadarPostingStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: radarKeys.all });
-    },
-  });
-}
-
-export function usePromoteRadarPosting() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => radarApi.promoteRadarPosting(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: radarKeys.all });
-      queryClient.invalidateQueries({ queryKey: ['applications'] });
     },
   });
 }

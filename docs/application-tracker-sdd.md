@@ -207,8 +207,9 @@ Tasks drive the Action Items tab and auto-generated workflow reminders.
 
 ### 5.5 Companies To Watch
 
-`company_watchlist` stores companies the user may apply to later. Radar settings
-live on each watchlist entry.
+`company_watchlist` stores companies the user may apply to later. In V2 this is
+a manual research list. Job discovery, direct ATS refreshes, and provider-backed
+source searches are deferred to V3.
 
 | Column | Type | Notes |
 | --- | --- | --- |
@@ -228,7 +229,25 @@ live on each watchlist entry.
 | `created_at` | TIMESTAMPTZ | Defaults to now |
 | `updated_at` | TIMESTAMPTZ | Updated by trigger |
 
-### 5.6 Application Events
+### 5.6 Radar Sources
+
+`radar_sources` is dormant V3-owned schema for future Job Discovery. V2 should
+not expose source configuration, provider-backed search, direct ATS refreshes,
+or source polling in the product.
+
+| Column | Type | Notes |
+| --- | --- | --- |
+| `id` | TEXT PK | Stable source identifier |
+| `source_name` | TEXT | Display name |
+| `source_tier` | `source_tier_enum` | `curated_board`, `direct_ats`, or `aggregator` |
+| `adapter_type` | TEXT | Nullable source adapter key |
+| `supports_direct_validity_checks` | BOOLEAN | True when the adapter can validate source jobs directly |
+| `is_active` | BOOLEAN | Source catalog visibility |
+| `metadata` | JSONB | Query fields, feed templates, attribution, and discovery flags |
+| `created_at` | TIMESTAMPTZ | Defaults to now |
+| `updated_at` | TIMESTAMPTZ | Updated by trigger |
+
+### 5.7 Application Events
 
 `application_events` stores application-scoped timeline entries independent of
 named contact interactions.
@@ -244,17 +263,20 @@ named contact interactions.
 | `occurred_at` | TIMESTAMPTZ | Defaults to now |
 | `created_at` | TIMESTAMPTZ | Defaults to now |
 
-### 5.7 Discovered Postings
+### 5.8 Discovered Postings
 
-`discovered_postings` stores normalized ATS roles found by the Job Radar.
+`discovered_postings` is dormant V3-owned schema for future Job Discovery. V2
+does not create, refresh, or expose discovered postings as an active product
+surface.
 
 | Column | Type | Notes |
 | --- | --- | --- |
 | `id` | UUID PK | |
 | `user_id` | UUID FK | `auth.users(id)` |
-| `watchlist_id` | UUID FK | `company_watchlist(id)`, `ON DELETE CASCADE` |
+| `watchlist_id` | UUID FK | Nullable; `company_watchlist(id)`, `ON DELETE CASCADE` |
+| `radar_source_id` | TEXT FK | Nullable; `radar_sources(id)` |
 | `company_name` | TEXT | Denormalized display value |
-| `external_job_id` | TEXT | ATS job id |
+| `external_job_id` | TEXT | Upstream source job id |
 | `title` | TEXT | Role title |
 | `location` | TEXT | Raw location string |
 | `remote_status` | TEXT | Normalized location classification |
@@ -262,13 +284,21 @@ named contact interactions.
 | `posted_at` | TIMESTAMPTZ | Nullable |
 | `first_seen_at` | TIMESTAMPTZ | Defaults to now |
 | `status` | `posting_status_enum` | `new`, `seen`, `dismissed`, `promoted` |
+| `source_tier` | `source_tier_enum` | Denormalized source tier for filtering and ranking |
+| `first_seen_source` | TEXT | Source display name for first sighting |
+| `also_seen_on` | JSONB | Supporting provenance from later sightings |
+| `source_first_seen_at` | JSONB | Per-source first-seen timestamps |
+| `validity_status` | `posting_validity_status_enum` | `unchecked`, `live`, `closed`, `not_found`, `stale`, `error` |
+| `last_validated_at` | TIMESTAMPTZ | Nullable |
+| `validation_error` | TEXT | Nullable |
 | `raw_payload` | JSONB | Original ATS record |
 | `created_at` | TIMESTAMPTZ | Defaults to now |
 
-Deduplication is enforced by a unique constraint on
-`(watchlist_id, external_job_id)`.
+Deduplication keeps the direct ATS uniqueness rule on
+`(watchlist_id, external_job_id)` and also enforces source-discovered uniqueness
+on `(user_id, radar_source_id, external_job_id)` when `radar_source_id` is set.
 
-### 5.8 Dormant V3 Schema
+### 5.9 Dormant V3 Schema
 
 The `interviews`, `notification_preferences`, and `notification_log` tables are
 V3-owned. V2 does not expose active Interview Tracker or In-App Notification
@@ -319,7 +349,6 @@ Route groups:
 | `/api/contacts` | Contact CRUD, interactions, templates |
 | `/api/tasks` | Task queue CRUD and quick-complete behavior |
 | `/api/watchlist` | Companies To Watch CRUD and promote flow |
-| `/api/radar/postings` | Discovered posting list, dismiss, promote |
 | `/api/profile` | User profile settings |
 | `/api/job-boards` | Legacy curated job board list |
 
@@ -351,27 +380,26 @@ V2 task generation runs from API-side mutations only:
 - Past-due tasks are visually marked in V2; scheduled overdue escalation moves
   to V3.
 
-### 8.3 Job Radar
+### 8.3 Job Discovery
 
-V2 Job Radar is manually refreshed. The refresh service reads one enabled
-watchlist source, fetches ATS postings through an adapter registry, normalizes
-each posting, filters by match criteria, and upserts new matches into
-`discovered_postings`. Scheduled polling moves to V3.
+Job Discovery is deferred to V3. V2 does not search providers, poll sources,
+scrape boards, refresh direct ATS feeds, validate postings, or expose discovered
+postings. Companies To Watch remains a manual research list.
 
 Adapters return a common normalized shape:
 
 | Field | Meaning |
 | --- | --- |
-| `externalId` | ATS job id |
+| `externalId` | Upstream source job id |
 | `title` | Posting title |
 | `location` | Raw location |
 | `remoteStatus` | Parsed remote or LA classification |
 | `url` | Posting URL |
-| `postedAt` | ATS timestamp when available |
-| `raw` | Original ATS payload |
+| `postedAt` | Source timestamp when available |
+| `raw` | Original source payload |
 
-The MVP matcher keeps roles whose title signals seniority and whose location
-reads remote US or Los Angeles.
+The matcher keeps roles that match the user's title, field or industry,
+location, and exclusion criteria when V3 implements discovery.
 
 ---
 
@@ -383,7 +411,7 @@ be registered from `api/src/index.ts` only when guarded by `ENABLE_BACKGROUND_JO
 | Job | Cadence | Purpose |
 | --- | --- | --- |
 | `escalateOverdueTasks` | V3 daily | Escalate overdue open tasks and notify users |
-| `pollRadarSources` | V3 every 30 minutes | Poll enabled ATS sources |
+| `pollRadarSources` | V3 every 30 minutes | Poll V3-owned job discovery sources if that feature is enabled |
 
 Jobs should not run during tests unless explicitly invoked. If the API is scaled
 to multiple Railway instances, job execution should move to a single worker
@@ -399,7 +427,6 @@ Primary V2 routes:
 | --- | --- |
 | `/applications` | Applications tab |
 | `/contacts` | Contacts tab and per-application detail |
-| `/radar` | Discover tab |
 | `/action-items` | Action Items tab |
 | `/watchlist` | Companies To Watch |
 | `/profile` | Profile settings |

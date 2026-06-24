@@ -1,6 +1,6 @@
 # Track My Application
 
-A full-stack web application for tracking job applications, deadlines, contacts, and job discovery workflows. Built as a monorepo with a React frontend, Express API backend, and Supabase PostgreSQL database.
+A full-stack web application for tracking job applications, deadlines, contacts, and companies to watch. Built as a monorepo with a React frontend, Express API backend, and Supabase PostgreSQL database.
 
 ---
 

@@ -50,4 +50,25 @@ describe('GreenhouseAdapter', () => {
       'Greenhouse request failed with status 404',
     );
   });
+
+  it('validates missing Greenhouse jobs as closed after a successful board response', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => fixture,
+    } as Response);
+
+    await expect(new GreenhouseAdapter().validate?.({
+      boardToken: 'example-board',
+      externalId: 'missing-job',
+      title: 'Senior Software Engineer',
+      location: 'Remote - United States',
+      remoteStatus: 'remote_us',
+      url: 'https://boards.greenhouse.io/example/jobs/missing-job',
+      postedAt: null,
+      raw: {},
+    })).resolves.toEqual({
+      status: 'closed',
+      error: null,
+    });
+  });
 });

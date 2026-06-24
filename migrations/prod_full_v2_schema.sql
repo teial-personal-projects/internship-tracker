@@ -157,6 +157,20 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
+DO $$ BEGIN
+  CREATE TYPE source_tier_enum AS ENUM (
+    'direct_ats', 'curated_board', 'aggregator'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE posting_validity_status_enum AS ENUM (
+    'unchecked', 'live', 'closed', 'not_found', 'stale', 'error'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
 -- ============================================================
 
 
@@ -700,6 +714,8 @@ CREATE TABLE IF NOT EXISTS company_watchlist (
   notes              TEXT CHECK (char_length(notes) <= 5000),
   priority           task_priority_enum,
   target_apply_date  DATE,
+  source_tier        source_tier_enum NOT NULL DEFAULT 'direct_ats',
+  source_name        TEXT,
   added              DATE NOT NULL DEFAULT CURRENT_DATE,
   created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -1000,7 +1016,8 @@ ALTER TABLE company_watchlist
 CREATE TABLE IF NOT EXISTS discovered_postings (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id         UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  watchlist_id    UUID NOT NULL REFERENCES company_watchlist(id) ON DELETE CASCADE,
+  watchlist_id    UUID REFERENCES company_watchlist(id) ON DELETE CASCADE,
+  radar_source_id TEXT,
   company_name    TEXT NOT NULL CHECK (char_length(company_name) <= 200),
   external_job_id TEXT NOT NULL,
   title           TEXT NOT NULL CHECK (char_length(title) <= 200),
@@ -1010,9 +1027,16 @@ CREATE TABLE IF NOT EXISTS discovered_postings (
   posted_at       TIMESTAMPTZ,
   first_seen_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
   status          posting_status_enum NOT NULL DEFAULT 'new',
-  raw_payload     JSONB NOT NULL DEFAULT '{}'::jsonb,
-  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  source_tier          source_tier_enum NOT NULL DEFAULT 'direct_ats',
+  first_seen_source    TEXT NOT NULL DEFAULT 'radar',
+  also_seen_on         JSONB NOT NULL DEFAULT '[]'::jsonb,
+  source_first_seen_at JSONB NOT NULL DEFAULT '{}'::jsonb,
+  validity_status      posting_validity_status_enum NOT NULL DEFAULT 'unchecked',
+  last_validated_at    TIMESTAMPTZ,
+  validation_error     TEXT,
+  raw_payload          JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
   CONSTRAINT discovered_postings_watchlist_external_unique
     UNIQUE (watchlist_id, external_job_id)
 );
@@ -1032,6 +1056,19 @@ CREATE INDEX IF NOT EXISTS idx_discovered_postings_first_seen_at
 
 CREATE INDEX IF NOT EXISTS idx_discovered_postings_watchlist_id
   ON discovered_postings(watchlist_id);
+
+CREATE INDEX IF NOT EXISTS idx_discovered_postings_user_source_tier_first_seen
+  ON discovered_postings(user_id, source_tier, first_seen_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_discovered_postings_user_validity_status
+  ON discovered_postings(user_id, validity_status);
+
+CREATE INDEX IF NOT EXISTS idx_discovered_postings_user_radar_source_first_seen
+  ON discovered_postings(user_id, radar_source_id, first_seen_at DESC);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_discovered_postings_user_radar_source_external_unique
+  ON discovered_postings(user_id, radar_source_id, external_job_id)
+  WHERE radar_source_id IS NOT NULL;
 
 -- Data API grants
 REVOKE ALL PRIVILEGES ON TABLE public.discovered_postings FROM anon, authenticated;
@@ -1065,14 +1102,17 @@ CREATE POLICY "discovered_postings_delete" ON discovered_postings
 
 CREATE TABLE IF NOT EXISTS radar_criteria (
   user_id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  title_terms      TEXT[] NOT NULL DEFAULT '{}',
+  field_terms      TEXT[] NOT NULL DEFAULT '{}',
   include_keywords TEXT[] NOT NULL DEFAULT '{}',
   exclude_keywords TEXT[] NOT NULL DEFAULT '{}',
   seniority_terms  TEXT[] NOT NULL DEFAULT '{}',
+  location_terms   TEXT[] NOT NULL DEFAULT '{}',
   location_rules   TEXT[] NOT NULL DEFAULT '{}',
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   CONSTRAINT radar_criteria_location_rules_valid
-    CHECK (location_rules <@ ARRAY['remote_us', 'la', 'onsite', 'unknown']::TEXT[])
+    CHECK (location_rules <@ ARRAY['remote_us', 'onsite']::TEXT[])
 );
 
 CREATE TRIGGER radar_criteria_updated_at
@@ -1099,5 +1139,95 @@ CREATE POLICY "radar_criteria_update" ON radar_criteria
 
 CREATE POLICY "radar_criteria_delete" ON radar_criteria
   FOR DELETE TO authenticated USING (auth.uid() = user_id);
+
+-- ============================================================
+
+
+-- ============================================================
+-- migrations/radar_004_radar_sources.sql
+-- ============================================================
+
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS radar_sources (
+  id                              TEXT PRIMARY KEY,
+  source_name                     TEXT NOT NULL CHECK (char_length(source_name) <= 100),
+  source_tier                     source_tier_enum NOT NULL,
+  adapter_type                    TEXT CHECK (adapter_type IS NULL OR btrim(adapter_type) <> ''),
+  supports_direct_validity_checks BOOLEAN NOT NULL DEFAULT false,
+  is_active                       BOOLEAN NOT NULL DEFAULT true,
+  metadata                        JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at                      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at                      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT radar_sources_direct_validity_adapter
+    CHECK (NOT supports_direct_validity_checks OR adapter_type IS NOT NULL)
+);
+
+CREATE TRIGGER radar_sources_updated_at
+  BEFORE UPDATE ON radar_sources
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE INDEX IF NOT EXISTS idx_radar_sources_source_tier
+  ON radar_sources(source_tier);
+
+CREATE INDEX IF NOT EXISTS idx_radar_sources_active
+  ON radar_sources(is_active);
+
+-- Data API grants
+REVOKE ALL PRIVILEGES ON TABLE public.radar_sources FROM anon, authenticated;
+GRANT SELECT ON TABLE public.radar_sources TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.radar_sources TO service_role;
+
+-- Row Level Security
+ALTER TABLE radar_sources ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "radar_sources_select" ON radar_sources
+  FOR SELECT TO authenticated USING (true);
+
+DO $$
+BEGIN
+  ALTER TABLE discovered_postings
+    ADD CONSTRAINT discovered_postings_radar_source_id_fkey
+    FOREIGN KEY (radar_source_id) REFERENCES radar_sources(id);
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+-- ============================================================
+
+
+-- ============================================================
+-- migrations/radar_005_seed_radar_sources.sql
+-- ============================================================
+
+-- ============================================================
+
+INSERT INTO radar_sources (
+  id,
+  source_name,
+  source_tier,
+  adapter_type,
+  supports_direct_validity_checks
+) VALUES
+  ('greenhouse', 'Greenhouse', 'direct_ats', 'greenhouse', true),
+  ('lever', 'Lever', 'direct_ats', 'lever', true),
+  ('ashby', 'Ashby', 'direct_ats', 'ashby', true),
+  ('smartrecruiters', 'SmartRecruiters', 'direct_ats', 'smartrecruiters', true),
+  ('pinpoint', 'Pinpoint', 'direct_ats', 'pinpoint', false),
+  ('welcomekit', 'Welcome Kit', 'direct_ats', 'welcomekit', false),
+  ('custom', 'Custom careers page', 'direct_ats', 'custom', false),
+  ('linkedin', 'LinkedIn', 'curated_board', null, false),
+  ('working_nomads', 'Working Nomads', 'curated_board', null, false),
+  ('remote_co', 'Remote.co', 'curated_board', null, false),
+  ('idealist', 'Idealist', 'curated_board', null, false),
+  ('indeed', 'Indeed', 'aggregator', null, false),
+  ('ziprecruiter', 'ZipRecruiter', 'aggregator', null, false)
+ON CONFLICT (id) DO UPDATE SET
+  source_name = EXCLUDED.source_name,
+  source_tier = EXCLUDED.source_tier,
+  adapter_type = EXCLUDED.adapter_type,
+  supports_direct_validity_checks = EXCLUDED.supports_direct_validity_checks,
+  is_active = true,
+  updated_at = now();
 
 -- ============================================================

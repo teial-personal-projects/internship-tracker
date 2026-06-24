@@ -5,6 +5,8 @@ import { createApp } from '../app';
 const mockGetUser = vi.hoisted(() => vi.fn());
 const mockCreateUserClient = vi.hoisted(() => vi.fn());
 const mockRefreshRadarSource = vi.hoisted(() => vi.fn());
+const mockValidatePostingFromSource = vi.hoisted(() => vi.fn());
+const mockSearchTrustedSources = vi.hoisted(() => vi.fn());
 
 vi.mock('../lib/supabase', () => ({
   supabaseAdmin: {
@@ -19,6 +21,14 @@ vi.mock('../radar/refreshRadarSource', () => ({
   refreshRadarSource: mockRefreshRadarSource,
 }));
 
+vi.mock('../radar/validatePosting', () => ({
+  validatePostingFromSource: mockValidatePostingFromSource,
+}));
+
+vi.mock('../radar/trustedSources/searchTrustedSources', () => ({
+  searchTrustedSources: mockSearchTrustedSources,
+}));
+
 const USER_ID = '00000000-0000-4000-8000-000000000001';
 const OTHER_USER_ID = '00000000-0000-4000-8000-000000000002';
 const POSTING_ID = '11111111-1111-4111-8111-111111111111';
@@ -28,9 +38,11 @@ type Row = Record<string, unknown> & { id?: string };
 
 class Query {
   private readonly filters: Array<[string, string]> = [];
+  private readonly ilikeFilters: Array<[string, string]> = [];
   private insertPayload: Row | null = null;
   private insertedRow: Row | null = null;
   private updatePayload: Row | null = null;
+  private rowLimit: number | null = null;
 
   constructor(
     private readonly table: string,
@@ -45,7 +57,8 @@ class Query {
     return this;
   }
 
-  ilike() {
+  ilike(column: string, pattern: string) {
+    this.ilikeFilters.push([column, pattern]);
     return this;
   }
 
@@ -63,6 +76,11 @@ class Query {
 
   update(payload: Row) {
     this.updatePayload = payload;
+    return this;
+  }
+
+  limit(count: number) {
+    this.rowLimit = count;
     return this;
   }
 
@@ -91,12 +109,16 @@ class Query {
       return this.filterRows();
     }
 
-    return matched;
+    return this.rowLimit == null ? matched : matched.slice(0, this.rowLimit);
   }
 
   private filterRows(): Row[] {
     return (this.rowsByTable[this.table] ?? []).filter((row) =>
-      this.filters.every(([column, value]) => row[column] === value),
+      this.filters.every(([column, value]) => row[column] === value)
+      && this.ilikeFilters.every(([column, value]) => (
+        typeof row[column] === 'string'
+        && (row[column] as string).toLowerCase().includes(value.replaceAll('%', '').toLowerCase())
+      )),
     );
   }
 }
@@ -118,13 +140,589 @@ describe('radar routes', () => {
       data: { user: { id: USER_ID, email: 'test@example.com' } },
       error: null,
     });
+    mockValidatePostingFromSource.mockResolvedValue({
+      attempted: false,
+      status: null,
+      error: null,
+    });
+    mockSearchTrustedSources.mockResolvedValue([]);
   });
 
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  it('POST /api/radar/postings/:id/promote creates an application and marks the posting promoted', async () => {
+  it('GET /api/radar/search-sources returns listed job sites with searchability status', async () => {
+    const db = createMockDb({
+      radar_sources: [
+        {
+          id: 'linkedin',
+          source_name: 'LinkedIn',
+          source_tier: 'curated_board',
+          is_active: true,
+          metadata: {},
+        },
+        {
+          id: 'example_board',
+          source_name: 'Example Board',
+          source_tier: 'curated_board',
+          is_active: true,
+          metadata: {
+            trusted_discovery_enabled: true,
+            trusted_source_adapter: 'example_adapter',
+          },
+        },
+        {
+          id: 'greenhouse',
+          source_name: 'Greenhouse',
+          source_tier: 'direct_ats',
+          is_active: true,
+          metadata: {},
+        },
+        {
+          id: 'we_work_remotely',
+          source_name: 'We Work Remotely',
+          source_tier: 'curated_board',
+          is_active: true,
+          metadata: {
+            trusted_discovery_enabled: true,
+            trusted_source_adapter: 'we_work_remotely',
+          },
+        },
+      ],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .get('/api/radar/search-sources')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toEqual([
+      expect.objectContaining({
+        id: 'example_board',
+        source_name: 'Example Board',
+        source_tier: 'curated_board',
+        is_active: true,
+        is_searchable: true,
+      }),
+      expect.objectContaining({
+        id: 'linkedin',
+        source_name: 'LinkedIn',
+        source_tier: 'curated_board',
+        is_active: true,
+        is_searchable: false,
+      }),
+    ]);
+    expect(response.body.data).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'we_work_remotely' }),
+    ]));
+  });
+
+  it('GET /api/radar/postings searches posting titles', async () => {
+    const db = createMockDb({
+      discovered_postings: [
+        {
+          id: 'posting-1',
+          user_id: USER_ID,
+          company_name: 'Acme',
+          title: 'Senior Software Engineer',
+          location: 'Remote',
+          status: 'new',
+          watchlist_id: WATCHLIST_ID,
+        },
+        {
+          id: 'posting-2',
+          user_id: USER_ID,
+          company_name: 'Beta',
+          title: 'Product Manager',
+          location: 'Remote',
+          status: 'new',
+          watchlist_id: '33333333-3333-4333-8333-333333333333',
+        },
+      ],
+      company_watchlist: [],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .get('/api/radar/postings?search=software')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0]).toMatchObject({
+      id: 'posting-1',
+      title: 'Senior Software Engineer',
+    });
+  });
+
+  it('GET /api/radar/postings does not search watchlist industries', async () => {
+    const db = createMockDb({
+      discovered_postings: [
+        {
+          id: 'posting-1',
+          user_id: USER_ID,
+          company_name: 'Acme',
+          title: 'Backend Engineer',
+          location: 'Remote',
+          status: 'new',
+          watchlist_id: WATCHLIST_ID,
+        },
+        {
+          id: 'posting-2',
+          user_id: USER_ID,
+          company_name: 'Beta',
+          title: 'Backend Engineer',
+          location: 'Remote',
+          status: 'new',
+          watchlist_id: '33333333-3333-4333-8333-333333333333',
+        },
+      ],
+      company_watchlist: [
+        {
+          id: WATCHLIST_ID,
+          user_id: USER_ID,
+          company_name: 'Acme',
+          industry: 'Education Technology',
+        },
+        {
+          id: '33333333-3333-4333-8333-333333333333',
+          user_id: USER_ID,
+          company_name: 'Beta',
+          industry: 'Fintech',
+        },
+      ],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .get('/api/radar/postings?search=education')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toHaveLength(0);
+  });
+
+  it('GET /api/radar/postings filters by source tier and validity status', async () => {
+    const db = createMockDb({
+      discovered_postings: [
+        {
+          id: 'posting-1',
+          user_id: USER_ID,
+          company_name: 'Acme',
+          title: 'Senior Software Engineer',
+          location: 'Remote',
+          status: 'new',
+          watchlist_id: WATCHLIST_ID,
+          source_tier: 'direct_ats',
+          validity_status: 'live',
+          first_seen_at: '2026-06-01T00:00:00.000Z',
+        },
+        {
+          id: 'posting-2',
+          user_id: USER_ID,
+          company_name: 'Beta',
+          title: 'Backend Engineer',
+          location: 'Remote',
+          status: 'new',
+          source_tier: 'curated_board',
+          validity_status: 'unchecked',
+          first_seen_at: '2026-06-02T00:00:00.000Z',
+        },
+      ],
+      company_watchlist: [],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .get('/api/radar/postings?source_tier=direct_ats&validity_status=live')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0]).toMatchObject({
+      id: 'posting-1',
+      source_tier: 'direct_ats',
+      validity_status: 'live',
+    });
+  });
+
+  it('GET /api/radar/postings defaults new postings to quality sort', async () => {
+    const db = createMockDb({
+      discovered_postings: [
+        {
+          id: 'aggregator-posting',
+          user_id: USER_ID,
+          company_name: 'Aggregator Co',
+          title: 'Backend Engineer',
+          location: 'Remote',
+          status: 'new',
+          source_tier: 'aggregator',
+          validity_status: 'unchecked',
+          first_seen_at: '2026-06-20T00:00:00.000Z',
+        },
+        {
+          id: 'curated-posting',
+          user_id: USER_ID,
+          company_name: 'Curated Co',
+          title: 'Backend Engineer',
+          location: 'Remote',
+          status: 'new',
+          source_tier: 'curated_board',
+          validity_status: 'live',
+          first_seen_at: '2026-06-01T00:00:00.000Z',
+        },
+      ],
+      company_watchlist: [],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .get('/api/radar/postings?status=new')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.map((posting: Row) => posting.id)).toEqual([
+      'curated-posting',
+      'aggregator-posting',
+    ]);
+  });
+
+  it('GET /api/radar/postings hides old closed postings by default but returns them for closed filter', async () => {
+    const db = createMockDb({
+      discovered_postings: [
+        {
+          id: 'old-closed',
+          user_id: USER_ID,
+          company_name: 'Acme',
+          title: 'Closed Role',
+          location: 'Remote',
+          status: 'new',
+          source_tier: 'direct_ats',
+          validity_status: 'closed',
+          last_validated_at: '2024-01-01T00:00:00.000Z',
+          first_seen_at: '2024-01-01T00:00:00.000Z',
+        },
+        {
+          id: 'live-role',
+          user_id: USER_ID,
+          company_name: 'Acme',
+          title: 'Live Role',
+          location: 'Remote',
+          status: 'new',
+          source_tier: 'direct_ats',
+          validity_status: 'live',
+          last_validated_at: '2026-06-01T00:00:00.000Z',
+          first_seen_at: '2026-06-01T00:00:00.000Z',
+        },
+      ],
+      company_watchlist: [],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const defaultResponse = await request(app)
+      .get('/api/radar/postings')
+      .set('Authorization', 'Bearer test-token');
+    const closedResponse = await request(app)
+      .get('/api/radar/postings?validity_status=closed')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(defaultResponse.status).toBe(200);
+    expect(defaultResponse.body.data.map((posting: Row) => posting.id)).toEqual(['live-role']);
+    expect(closedResponse.status).toBe(200);
+    expect(closedResponse.body.data.map((posting: Row) => posting.id)).toEqual(['old-closed']);
+  });
+
+  it('GET /api/radar/postings excludes closed postings from direct ATS fresh queries', async () => {
+    const db = createMockDb({
+      discovered_postings: [
+        {
+          id: 'closed-direct',
+          user_id: USER_ID,
+          company_name: 'Acme',
+          title: 'Closed Role',
+          location: 'Remote',
+          status: 'new',
+          source_tier: 'direct_ats',
+          validity_status: 'closed',
+          last_validated_at: new Date().toISOString(),
+          first_seen_at: '2026-06-01T00:00:00.000Z',
+        },
+        {
+          id: 'live-direct',
+          user_id: USER_ID,
+          company_name: 'Acme',
+          title: 'Live Role',
+          location: 'Remote',
+          status: 'new',
+          source_tier: 'direct_ats',
+          validity_status: 'live',
+          first_seen_at: '2026-06-02T00:00:00.000Z',
+        },
+      ],
+      company_watchlist: [],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .get('/api/radar/postings?status=new&source_tier=direct_ats')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.map((posting: Row) => posting.id)).toEqual(['live-direct']);
+  });
+
+  it('GET /api/radar/postings includes old closed postings when requested', async () => {
+    const db = createMockDb({
+      discovered_postings: [
+        {
+          id: 'old-closed',
+          user_id: USER_ID,
+          company_name: 'Acme',
+          title: 'Closed Role',
+          location: 'Remote',
+          status: 'new',
+          source_tier: 'direct_ats',
+          validity_status: 'closed',
+          last_validated_at: '2024-01-01T00:00:00.000Z',
+          first_seen_at: '2024-01-01T00:00:00.000Z',
+        },
+        {
+          id: 'live-role',
+          user_id: USER_ID,
+          company_name: 'Acme',
+          title: 'Live Role',
+          location: 'Remote',
+          status: 'new',
+          source_tier: 'direct_ats',
+          validity_status: 'live',
+          last_validated_at: '2026-06-01T00:00:00.000Z',
+          first_seen_at: '2026-06-01T00:00:00.000Z',
+        },
+      ],
+      company_watchlist: [],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .get('/api/radar/postings?include_closed=true')
+      .set('Authorization', 'Bearer test-token');
+    const ids = response.body.data.map((posting: Row) => posting.id);
+
+    expect(response.status).toBe(200);
+    expect(ids).toContain('old-closed');
+    expect(ids).toContain('live-role');
+  });
+
+  it('GET /api/radar/criteria returns empty criteria when none are saved', async () => {
+    const db = createMockDb({
+      radar_criteria: [],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .get('/api/radar/criteria')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toMatchObject({
+      user_id: USER_ID,
+      title_terms: [],
+      field_terms: [],
+      exclude_keywords: [],
+      location_terms: [],
+      location_rules: [],
+    });
+  });
+
+  it('PUT /api/radar/criteria persists editable trusted discovery criteria', async () => {
+    const db = createMockDb({
+      radar_criteria: [],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .put('/api/radar/criteria')
+      .send({
+        title_terms: ['backend engineer', 'software engineer'],
+        field_terms: ['edtech', 'civic tech'],
+        location_terms: ['New York', 'Chicago'],
+        exclude_keywords: ['intern'],
+        location_rules: [],
+      })
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toMatchObject({
+      user_id: USER_ID,
+      title_terms: ['backend engineer', 'software engineer'],
+      field_terms: ['edtech', 'civic tech'],
+      include_keywords: [],
+      exclude_keywords: ['intern'],
+      seniority_terms: [],
+      location_terms: ['New York', 'Chicago'],
+      location_rules: [],
+    });
+    expect(db.rowsByTable.radar_criteria).toContainEqual(expect.objectContaining({
+      id: 'radar_criteria-new',
+      user_id: USER_ID,
+      title_terms: ['backend engineer', 'software engineer'],
+      field_terms: ['edtech', 'civic tech'],
+      location_terms: ['New York', 'Chicago'],
+    }));
+  });
+
+  it('GET /api/radar/criteria preserves intentionally cleared saved criteria', async () => {
+    const db = createMockDb({
+      radar_criteria: [{
+        user_id: USER_ID,
+        title_terms: [],
+        field_terms: [],
+        include_keywords: [],
+        exclude_keywords: [],
+        seniority_terms: [],
+        location_terms: [],
+        location_rules: [],
+        created_at: '2026-06-01T00:00:00.000Z',
+        updated_at: '2026-06-01T00:00:00.000Z',
+      }],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .get('/api/radar/criteria')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toMatchObject({
+      user_id: USER_ID,
+      title_terms: [],
+      field_terms: [],
+      include_keywords: [],
+      exclude_keywords: [],
+      seniority_terms: [],
+      location_terms: [],
+      location_rules: [],
+    });
+  });
+
+  it('POST /api/radar/search is a manual trusted source action and does not refresh watchlist sources', async () => {
+    const db = createMockDb({
+      radar_criteria: [{
+        user_id: USER_ID,
+        title_terms: ['software engineer'],
+        field_terms: ['edtech'],
+        include_keywords: [],
+        exclude_keywords: ['intern'],
+        seniority_terms: [],
+        location_terms: [],
+        location_rules: ['remote_us'],
+        created_at: '2026-06-01T00:00:00.000Z',
+        updated_at: '2026-06-01T00:00:00.000Z',
+      }],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+    mockSearchTrustedSources.mockResolvedValue([{
+      sourceId: 'trusted_board_fixture',
+      sourceName: 'Example Trusted Board',
+      fetched: 2,
+      matched: 1,
+      inserted: 1,
+      error: null,
+    }]);
+
+    const response = await request(app)
+      .post('/api/radar/search')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toMatchObject({
+      sources_searched: 1,
+      fetched: 2,
+      matched: 1,
+      inserted: 1,
+      criteria: {
+        title_terms: ['software engineer'],
+        field_terms: ['edtech'],
+      },
+      sources: [{
+        sourceId: 'trusted_board_fixture',
+        sourceName: 'Example Trusted Board',
+      }],
+    });
+    expect(mockSearchTrustedSources).toHaveBeenCalledWith(expect.anything(), USER_ID, expect.objectContaining({
+      title_terms: ['software engineer'],
+    }));
+    expect(mockRefreshRadarSource).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/radar/search reports when no trusted sources are configured', async () => {
+    const db = createMockDb({
+      radar_criteria: [{
+        user_id: USER_ID,
+        title_terms: ['software engineer'],
+        field_terms: [],
+        include_keywords: [],
+        exclude_keywords: [],
+        seniority_terms: [],
+        location_terms: [],
+        location_rules: [],
+        created_at: '2026-06-01T00:00:00.000Z',
+        updated_at: '2026-06-01T00:00:00.000Z',
+      }],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+    mockSearchTrustedSources.mockResolvedValue([]);
+
+    const response = await request(app)
+      .post('/api/radar/search')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toMatchObject({
+      sources_searched: 0,
+      fetched: 0,
+      matched: 0,
+      inserted: 0,
+      sources: [],
+      message: 'No trusted sources are configured yet.',
+    });
+  });
+
+  it('PATCH /api/radar/postings/:id validates the posting before marking it seen', async () => {
+    const db = createMockDb({
+      discovered_postings: [{
+        id: POSTING_ID,
+        user_id: USER_ID,
+        company_name: 'Acme',
+        title: 'Senior Software Engineer',
+        url: 'https://example.com/job',
+        status: 'new',
+        watchlist_id: WATCHLIST_ID,
+        source_tier: 'direct_ats',
+      }],
+      company_watchlist: [],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .patch(`/api/radar/postings/${POSTING_ID}`)
+      .send({ status: 'seen' })
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toMatchObject({
+      id: POSTING_ID,
+      status: 'seen',
+    });
+    expect(mockValidatePostingFromSource).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      id: POSTING_ID,
+      source_tier: 'direct_ats',
+    }));
+  });
+
+  it('POST /api/radar/postings/:id/save-company is not available', async () => {
     const db = createMockDb({
       discovered_postings: [{
         id: POSTING_ID,
@@ -134,51 +732,17 @@ describe('radar routes', () => {
         url: 'https://example.com/job',
         status: 'new',
       }],
+      company_watchlist: [],
       applications: [],
     });
     mockCreateUserClient.mockReturnValue(db.client);
 
     const response = await request(app)
-      .post(`/api/radar/postings/${POSTING_ID}/promote`)
+      .post(`/api/radar/postings/${POSTING_ID}/save-company`)
       .set('Authorization', 'Bearer test-token');
 
-    expect(response.status).toBe(201);
-    expect(response.body.data).toEqual({ application_id: 'applications-new' });
-    expect(db.rowsByTable.applications).toContainEqual(expect.objectContaining({
-      id: 'applications-new',
-      user_id: USER_ID,
-      company: 'Acme',
-      title: 'Senior Software Engineer',
-      job_link: 'https://example.com/job',
-      source: 'radar',
-      source_metadata: { discovered_posting_id: POSTING_ID },
-      applied_date: null,
-    }));
-    expect(db.rowsByTable.discovered_postings[0]).toMatchObject({
-      id: POSTING_ID,
-      status: 'promoted',
-    });
-  });
-
-  it("POST /api/radar/postings/:id/promote returns 403 for another user's posting", async () => {
-    const db = createMockDb({
-      discovered_postings: [{
-        id: POSTING_ID,
-        user_id: OTHER_USER_ID,
-        company_name: 'Acme',
-        title: 'Senior Software Engineer',
-        url: 'https://example.com/job',
-        status: 'new',
-      }],
-      applications: [],
-    });
-    mockCreateUserClient.mockReturnValue(db.client);
-
-    const response = await request(app)
-      .post(`/api/radar/postings/${POSTING_ID}/promote`)
-      .set('Authorization', 'Bearer test-token');
-
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(404);
+    expect(db.rowsByTable.company_watchlist).toHaveLength(0);
     expect(db.rowsByTable.applications).toHaveLength(0);
     expect(db.rowsByTable.discovered_postings[0].status).toBe('new');
   });

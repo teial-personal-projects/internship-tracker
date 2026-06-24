@@ -2,6 +2,7 @@ import { apiClient } from './client';
 import type {
   AtsType,
   CreateCompanyWatchlistEntrySchemaType,
+  SourceTier,
   TaskPriority,
   UpdateCompanyWatchlistEntrySchemaType,
 } from '@shared/schemas';
@@ -18,6 +19,8 @@ export interface WatchlistEntry {
   ats_type?: AtsType | null;
   ats_board_token?: string | null;
   radar_enabled?: boolean;
+  source_tier?: SourceTier;
+  source_name?: string | null;
   last_refreshed_at?: string | null;
   added: string;
   created_at: string;
