@@ -2,15 +2,15 @@
 
 **Status:** Proposed
 **Last updated:** June 24, 2026
-**Scope:** Turn Job Radar into a trusted job-board discovery surface for high-signal software engineering roles, fully separated from Companies To Watch.
+**Scope:** Turn Job Radar into a trusted job-board discovery surface for high-signal software engineering roles, with broad provider-backed discovery first and user-initiated company saves feeding later watchlist enrichment.
 
 ## Product Direction
 
-Radar is a trusted job discovery surface, not an application tracker and not a company watcher. Its discovery strategy starts by asking which public job boards expose safe searchable APIs, RSS feeds, documented export formats, or other explicit non-scraping integration paths. Those sources are modeled as curated `radar_sources` with `source_tier = curated_board`, searched directly from the Job Search page, and ranked as the primary discovery channel for credible software engineering openings that match the user's title, field, location, and exclusion criteria. Radar should let the user click through to the original posting. It should not create Applications records, save Companies To Watch records, or require the user to track a role.
+Radar is a trusted job discovery surface, not an application tracker. Its discovery strategy starts with a provider abstraction for public job-search APIs, with Adzuna as the first broad discovery provider because it supports title and location search through a documented API. Provider results are normalized into a stable posting shape, searched directly from the Job Search page, and ranked as the primary discovery channel for credible software engineering openings that match the user's title, field, location, and exclusion criteria. Radar should let the user click through to the original posting and optionally save the company for later watchlist enrichment. It should not create Applications records or require the user to track a role.
 
-The Companies To Watch list is a separate support tool: it stores companies the user already knows they want to keep checking. Direct ATS adapters can remain there for company-specific careers refreshes, but they are not the primary Radar discovery strategy. Job-board search must not read from, write to, dedupe against, or otherwise depend on Companies To Watch.
+The Companies To Watch list is a separate support tool: it stores companies the user already knows they want to keep checking. Direct ATS adapters can remain there for company-specific careers refreshes, but they are not the primary Radar discovery strategy. Broad job search must not read from, dedupe against, or otherwise depend on Companies To Watch. A user-initiated Save company action may create or update a watchlist row from a Radar result, but that save is a one-way action from discovery into watchlist monitoring.
 
-Trusted job-board sources should be curated deliberately. Prefer niche boards, official feeds, APIs, and sources with consistently real postings. Broad aggregators and LinkedIn-style repeat feeds are mostly confirmation signals and should not be allowed to clutter the workflow.
+Trusted job sources should be curated deliberately. Prefer documented APIs, official feeds, explicit export formats, and sources with consistently real postings. Broad providers such as Adzuna can be used for initial discovery when they expose a supported API and preserve links to original postings. LinkedIn-style repeat feeds and low-quality aggregators are mostly confirmation signals and should not be allowed to clutter the workflow.
 
 No cron jobs, scheduled jobs, auto-refresh loops, or other automated background polling should be added for this pass. Search, refresh, and validation should happen only from explicit user actions.
 
@@ -18,9 +18,9 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 
 | Tier | Source class | Examples | Product behavior |
 | --- | --- | --- | --- |
-| 1 | Trusted curated boards | Wellfound-style niche boards, mission-driven boards, Working Nomads, Remote.co, Idealist if a safe integration exists | Primary discovery channels when they expose reliable feeds, searchable APIs, or explicit export formats |
-| 2 | Direct ATS | Greenhouse, Lever, Ashby, Workday, SmartRecruiters | Highest-confidence original source for company-specific careers refreshes |
-| 3 | Aggregators | Indeed, ZipRecruiter-style syndication | Append as `also_seen_on` instead of creating noise |
+| 1 | Supported discovery providers | Adzuna first, then other documented job-search APIs or safe curated boards | Primary broad discovery channel when the provider supports query, location, original posting URL, and stable source job ID |
+| 2 | Direct ATS | Greenhouse, Lever, Ashby, Workday, SmartRecruiters | Highest-confidence original source for company-specific careers refreshes after a company is saved |
+| 3 | Confirmation aggregators | Indeed, ZipRecruiter-style syndication, LinkedIn-style repeat feeds | Append as `also_seen_on` instead of creating noise |
 
 ## Step 1 — Data Model
 
@@ -39,7 +39,7 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 1.13 [x] Add indexes on `discovered_postings(user_id, source_tier, first_seen_at DESC)` and `discovered_postings(user_id, validity_status)`.
 1.14 [x] Update `migrations/prod_full_v2_schema.sql` with the complete schema changes so a fresh database does not require replaying the migration chain.
 1.15 [x] Update any schema audit scripts that check Radar columns, enums, tables, or indexes.
-1.16 [x] Make `discovered_postings.watchlist_id` nullable so trusted source searches can discover jobs without a watchlist row.
+1.16 [x] Make `discovered_postings.watchlist_id` nullable so provider-backed searches can discover jobs without a watchlist row.
 1.17 [x] Add `radar_source_id TEXT REFERENCES radar_sources(id)` to `discovered_postings` for source-discovered postings.
 1.18 [x] Add indexes on `discovered_postings(user_id, radar_source_id, first_seen_at DESC)` and keep the existing watchlist index for separate company-specific refreshes.
 1.19 [x] Add a partial unique index on `(user_id, radar_source_id, external_job_id)` for source-discovered postings.
@@ -72,13 +72,14 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 
 ## Step 4 — Watchlist Separation
 
-4.1 [x] Remove the backend flow for saving a Radar posting company to `company_watchlist`.
-4.2 [x] Do not reuse watchlist create/update behavior from job-board postings.
-4.3 [x] Do not check Companies To Watch for duplicate job-board companies.
-4.4 [x] Do not preserve job-board source context into watchlist rows.
-4.5 [x] Do not show `Save company` on Radar job-board postings.
-4.6 [x] Do not show watchlist saved state on Radar job-board postings.
-4.7 [x] Do not create Applications records from Radar postings.
+4.1 [ ] Keep broad Radar search independent from `company_watchlist`.
+4.2 [ ] Do not read watched-company names, industries, or ATS settings when running provider-backed Radar search.
+4.3 [ ] Do not dedupe provider-backed Radar results against Companies To Watch rows.
+4.4 [ ] Add a user-initiated `Save company` action on Radar postings.
+4.5 [ ] Save only company-level watchlist context from Radar, not an application record.
+4.6 [ ] Preserve useful source context on saved watchlist rows, such as the provider name, posting URL, and inferred company name.
+4.7 [ ] Show watchlist saved state on Radar postings when the company has already been saved.
+4.8 [ ] Do not create Applications records from Radar postings.
 
 ## Step 5 — Provenance-Aware Ingestion
 
@@ -114,10 +115,10 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 ## Step 7 — Ranking and API Filters
 
 7.1 [x] Create `api/src/radar/qualityScore.ts`.
-7.2 [x] Score curated-board postings highest for general discovery.
+7.2 [ ] Score enabled provider-backed postings highest for general discovery, starting with Adzuna.
 7.3 [x] Score recently first-seen postings higher.
 7.4 [x] Score validated-live postings higher.
-7.5 [x] Penalize aggregators unless they corroborate a direct ATS posting.
+7.5 [ ] Penalize low-quality confirmation aggregators unless they corroborate a provider or direct ATS posting.
 7.6 [x] Penalize stale or unchecked postings.
 7.7 [x] Add `source_tier` filter to `GET /api/radar/postings`.
 7.8 [x] Add `validity_status` filter to `GET /api/radar/postings`.
@@ -137,7 +138,7 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 8.5 [x] Show validity state: `Live`, `Unchecked`, `Closed`, `Validation failed`, or `Stale`.
 8.6 [x] Show `First seen from Greenhouse` or the relevant source name.
 8.7 [x] Show `Also seen on LinkedIn` only as supporting context, not as a separate card.
-8.8 [x] Remove application-tracking and company-saving actions from Radar cards.
+8.8 [ ] Make `Open posting` and `Save company` the primary Radar card actions.
 8.9 [x] Keep closed postings visible with a closed state, but do not present them as fresh matches.
 8.10 [x] Remove application-tracking actions from the Discover and Watchlist UI.
 8.11 [x] Avoid bulky explanatory hero cards or tutorial panels that push job content down the page.
@@ -146,71 +147,101 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 8.14 [x] Do not add a general manual validity toggle to Radar cards in this pass.
 8.15 [x] Label Radar search so it is clear that title, company, and industry terms are searchable.
 
-## Step 9 — Trusted Discovery Criteria
+## Step 9 — Radar Search Criteria
 
 9.1 [x] Add editable Radar search criteria for target titles, fields or industries, locations, and exclusion terms.
 9.2 [x] Seed sensible default title terms such as `software engineer`, `backend engineer`, and `full-stack engineer`.
 9.3 [x] Seed field or industry terms oriented around the user's targets, such as `edtech`, `education technology`, `mission-driven`, `civic tech`, and `nonprofit tech`.
 9.4 [x] Keep criteria user-editable and persist them in `radar_criteria` or a follow-on criteria table.
-9.5 [x] Add a manual `Search trusted sources` action.
+9.5 [ ] Add a manual `Search providers` action.
 9.6 [x] Do not run source searches automatically or on a timer.
 9.7 [x] Show why a posting matched, such as title term, field term, source, and location rule.
 9.8 [x] Keep job-board search visually and behaviorally separate from Companies To Watch.
 
-## Step 10 — Trusted Source Search
+## Step 10 — Provider Search
 
-10.1 [x] Define a `TrustedSourceAdapter` contract for source searches that accepts criteria and returns `NormalizedPosting[]`.
+10.1 [ ] Define a `RadarProviderAdapter` contract for source searches that accepts criteria and returns `NormalizedPosting[]`.
 10.2 [x] Support source-discovered postings that are not associated with a watchlist row.
 10.3 [x] Insert source-discovered postings with `radar_source_id`, `sourceName`, `sourceTier`, provenance fields, and nullable `watchlist_id`.
 10.4 [x] Reuse fingerprint dedupe only among job-board source-discovered roles, not against watchlist-discovered roles.
-10.5 [x] Do not save discovered job-board companies to `company_watchlist`.
-10.6 [x] Build the first trusted source adapter only after evaluating whether the source meaningfully helps the user's target roles.
-10.7 [x] Prefer sources with official RSS feeds, documented APIs, or explicit export formats.
+10.5 [ ] Allow discovered job-board companies to be saved to `company_watchlist` only from the explicit `Save company` action.
+10.6 [ ] Build the first provider adapter as an Adzuna adapter.
+10.7 [ ] Prefer sources with official RSS feeds, documented APIs, or explicit export formats.
 10.8 [x] Avoid sources that require broad scraping, anti-bot bypassing, paid access, or produce mostly LinkedIn-style duplicate noise.
-10.9 [x] Do not ship a trusted-source adapter until the source is explicitly selected for the user's target search.
+10.9 [ ] Do not ship an additional provider adapter until the source is explicitly selected for the user's target search.
 10.10 [x] Keep Idealist as a high-value follow-up only if a safe, non-scraping integration path is chosen.
-10.11 [x] Treat direct ATS adapters as company-specific refresh tools, not as the starting point for broad discovery.
+10.11 [ ] Treat direct ATS adapters as company-specific refresh tools after a company is saved, not as the starting point for broad discovery.
 
-## Step 11 — Optional Metrics
+## Step 11 — Adzuna Provider Abstraction
 
-11.1 [ ] Calculate lead time between first trusted-source sighting, direct ATS sighting, and later aggregator sightings.
-11.2 [ ] Surface a compact metric only when it helps explain source quality, such as `Trusted sources found roles 2d before broad syndication`.
-11.3 [ ] Hide metrics until there is enough data to avoid misleading averages.
-11.4 [ ] Retain closed posting rows because their `source_first_seen_at` and `also_seen_on` history contributes to lead-time metrics.
+11.1 [ ] Introduce a provider interface that accepts Radar criteria and returns normalized postings.
+11.2 [ ] Implement the Adzuna provider as the first broad discovery adapter.
+11.3 [ ] Normalize provider results into `source`, `sourceJobId`, `title`, `company`, `location`, `postingUrl`, `description`, `postedAt`, `expiresAt`, and `rawPayload`.
+11.4 [ ] Keep source-specific response parsing inside the provider adapter instead of leaking Adzuna fields into routes or UI components.
+11.5 [ ] Store the normalized source fields on `discovered_postings` or map them to existing columns without losing `rawPayload`.
+11.6 [ ] Require a stable provider job ID for dedupe; fall back to canonical posting URL only when a provider cannot supply an ID.
+11.7 [ ] Keep the original posting URL as the primary outbound action.
+11.8 [ ] Add provider-level error handling that reports unavailable, rate-limited, or malformed provider responses without deleting existing postings.
+11.9 [ ] Add configuration for Adzuna credentials through server environment variables and document the required variables in `.env.example`.
+11.10 [ ] Do not add background polling; run Adzuna search only from explicit user actions.
 
-## Step 12 — Tests
+## Step 12 — Watchlist ATS Enrichment
 
-12.1 [x] Add `fingerprint.test.ts` coverage proving the same role from ATS and aggregator URLs produces the same canonical fingerprint.
-12.2 [x] Add `refreshRadarSource.test.ts` coverage proving an existing posting appends `also_seen_on` instead of inserting a duplicate.
-12.3 [x] Add `refreshRadarSource.test.ts` coverage proving the highest-authority source tier remains canonical after an aggregator sighting.
-12.4 [x] Add `refreshRadarSource.test.ts` coverage proving a later direct ATS match can promote a curated or aggregator posting without changing `first_seen_at`.
-12.5 [x] Add adapter tests proving validation marks missing jobs as closed after a successful board response.
-12.6 [x] Add route tests proving Radar job-board postings cannot save companies to the watchlist.
-12.7 [x] Add route tests proving quality sort returns curated-board live postings before aggregator unchecked postings.
-12.8 [x] Add route tests proving old closed postings are hidden from the default view but returned by `All` or `Closed` filters.
-12.9 [x] Add trusted source adapter tests with source-specific fixture data after the first source is selected.
-12.10 [x] Add route tests proving source-discovered postings can exist without a watchlist row.
-12.11 [x] Add route tests proving `Search trusted sources` stores source-discovered postings with `radar_source_id`.
-12.12 [x] Add frontend tests proving Radar cards render source tier badges and validity status.
-12.13 [x] Add frontend tests proving Radar cards open the original posting from the title or primary action.
-12.14 [x] Add frontend tests proving Radar cards do not expose company-saving or application-tracking actions.
-12.15 [x] Add frontend tests proving closed postings are excluded from fresh-match presentation.
-12.16 [x] Add frontend tests proving source tier and validity filters update API params.
-12.17 [x] Add frontend tests proving `also_seen_on` displays as supporting provenance without rendering duplicate cards.
-12.18 [x] Add frontend tests proving there is no general manual validity override control.
-12.19 [x] Add frontend tests proving the job-board workspace does not render watchlist controls.
+12.1 [ ] After a company is saved from Radar, try known Greenhouse and Lever board identifiers when available.
+12.2 [ ] Keep Greenhouse and Lever enrichment company-oriented, not broad discovery.
+12.3 [ ] Store discovered ATS configuration on the watchlist row only after a successful company-specific lookup.
+12.4 [ ] Refresh saved-company postings from Greenhouse or Lever only from explicit user actions.
+12.5 [ ] If no ATS board is found, keep the saved company visible without marking enrichment as failed.
+12.6 [ ] Prefer direct ATS postings over provider results when both match the same company and role fingerprint.
+12.7 [ ] Never create an Applications record from Greenhouse or Lever enrichment.
 
-## Step 13 — Verification
+## Step 13 — Optional Metrics
 
-13.1 [x] Run backend tests relevant to Radar ingestion, routes, and adapters.
-13.2 [x] Run frontend tests relevant to Discover and Watchlist.
-13.3 [x] Run shared, API, and web type checks.
-13.4 [x] Run the web build.
-13.5 [x] Run markdownlint on changed markdown files.
-13.6 [ ] Manually verify the Discover route after signing in.
-13.7 [ ] Manually verify the Watchlist section after signing in.
+13.1 [ ] Calculate lead time between first provider sighting, direct ATS sighting, and later aggregator sightings.
+13.2 [ ] Surface a compact metric only when it helps explain source quality, such as `Trusted sources found roles 2d before broad syndication`.
+13.3 [ ] Hide metrics until there is enough data to avoid misleading averages.
+13.4 [ ] Retain closed posting rows because their `source_first_seen_at` and `also_seen_on` history contributes to lead-time metrics.
 
-Manual UI verification note: the local app opened successfully at `http://127.0.0.1:5175/radar`, but the available browser profile was not signed in and redirected to the login screen. Complete 13.6 and 13.7 after signing in locally.
+## Step 14 — Tests
+
+14.1 [x] Add `fingerprint.test.ts` coverage proving the same role from ATS and aggregator URLs produces the same canonical fingerprint.
+14.2 [x] Add `refreshRadarSource.test.ts` coverage proving an existing posting appends `also_seen_on` instead of inserting a duplicate.
+14.3 [x] Add `refreshRadarSource.test.ts` coverage proving the highest-authority source tier remains canonical after an aggregator sighting.
+14.4 [x] Add `refreshRadarSource.test.ts` coverage proving a later direct ATS match can promote a curated or aggregator posting without changing `first_seen_at`.
+14.5 [x] Add adapter tests proving validation marks missing jobs as closed after a successful board response.
+14.6 [ ] Add route tests proving Radar job-board postings can save companies to the watchlist only from an explicit user action.
+14.7 [ ] Add route tests proving quality sort returns enabled provider-backed live postings before low-quality aggregator unchecked postings.
+14.8 [x] Add route tests proving old closed postings are hidden from the default view but returned by `All` or `Closed` filters.
+14.9 [ ] Add Adzuna provider adapter tests with source-specific fixture data.
+14.10 [x] Add route tests proving source-discovered postings can exist without a watchlist row.
+14.11 [ ] Add route tests proving `Search providers` stores source-discovered postings with `radar_source_id`.
+14.12 [x] Add frontend tests proving Radar cards render source tier badges and validity status.
+14.13 [x] Add frontend tests proving Radar cards open the original posting from the title or primary action.
+14.14 [ ] Add frontend tests proving Radar cards expose `Open posting` and `Save company` without exposing application-tracking actions.
+14.15 [x] Add frontend tests proving closed postings are excluded from fresh-match presentation.
+14.16 [x] Add frontend tests proving source tier and validity filters update API params.
+14.17 [x] Add frontend tests proving `also_seen_on` displays as supporting provenance without rendering duplicate cards.
+14.18 [x] Add frontend tests proving there is no general manual validity override control.
+14.19 [ ] Add frontend tests proving saved-company state appears without making broad Radar search depend on watchlist controls.
+14.20 [ ] Add Greenhouse and Lever enrichment tests for saved companies.
+
+## Step 15 — Verification
+
+15.1 [ ] Run backend tests relevant to Radar ingestion, routes, providers, and adapters.
+15.2 [ ] Run frontend tests relevant to Discover and Watchlist.
+15.3 [ ] Run shared, API, and web type checks.
+15.4 [ ] Run the web build.
+15.5 [ ] Run markdownlint on changed markdown files.
+15.6 [ ] Manually verify the Discover route after signing in.
+15.7 [ ] Manually verify the Watchlist section after signing in.
+
+Manual UI verification note: the local app opened successfully at `http://127.0.0.1:5175/radar`, but the available browser profile was not signed in and redirected to the login screen. Complete 15.6 and 15.7 after signing in locally.
+
+## Source Notes
+
+1. [ ] Use the [Adzuna API documentation](https://developer.adzuna.com/) as the initial provider reference.
+2. [ ] Use the [Greenhouse Job Board API documentation](https://developers.greenhouse.io/job-board.html) for saved-company enrichment.
+3. [ ] Use the [Lever developer documentation](https://hire.lever.co/developer/documentation) for saved-company enrichment.
 
 ## Non-Goals For This Pass
 
@@ -219,24 +250,23 @@ Manual UI verification note: the local app opened successfully at `http://127.0.
 3. [ ] Do not try to solve every Workday tenant.
 4. [ ] Do not introduce paid board integrations.
 5. [ ] Do not create Applications records from Radar postings.
-6. [ ] Do not create company watchlist rows from job-board postings.
+6. [ ] Do not automatically create company watchlist rows from job-board postings.
 7. [ ] Do not scrape Idealist or other curated boards that lack an official feed in this pass.
 8. [ ] Do not add manual validity override UI until real closed-but-live false positives justify it.
-9. [ ] Do not connect the job-board workflow to Companies To Watch.
+9. [ ] Do not make broad provider search depend on Companies To Watch.
 10. [ ] Do not prioritize a job source simply because it is easy to integrate if it does not help the user's target roles.
 
 ## Future Implementation
 
-Future enhancements are intentionally out of scope for the current pass. They should not be implemented until the Job Search page is stable as a standalone external job-board search surface.
+Future enhancements are intentionally out of scope for the current pass. They should not be implemented until the Adzuna-backed Job Search page and saved-company enrichment path are stable.
 
-### Add To Company Watch List From Job Search Page
+### Additional Discovery Providers
 
-1.1 [ ] Add an optional `Add to company watch list` action on Job Search result cards.
-1.2 [ ] Keep the action user-initiated only; job-board search must not automatically create Companies To Watch rows.
-1.3 [ ] Treat the action as a one-way save from a selected posting to Companies To Watch, not as a signal that Job Search should read from the watchlist.
-1.4 [ ] Preserve the current Job Search search behavior: do not search watched-company names, watched-company industries, or watched-company ATS sources.
-1.5 [ ] Do not dedupe job-board search results against Companies To Watch entries unless a future design explicitly reopens that decision.
-1.6 [ ] If this enhancement is built, add backend and frontend tests proving that the save action does not make Companies To Watch part of Job Search ranking, search, or source selection.
+1.1 [ ] Evaluate TheirStack only after Adzuna proves the workflow and better company or job intelligence is worth paid access.
+1.2 [ ] Evaluate Coresignal only if the app needs enterprise-scale structured job or company data.
+1.3 [ ] Add niche boards, RSS feeds, and documented exports when they improve match quality for the user's target roles.
+1.4 [ ] Keep each new provider behind the same normalized provider interface.
+1.5 [ ] Add source-specific tests and fixtures before enabling a new provider in the UI.
 
 ## Resolved Decisions
 
@@ -245,7 +275,7 @@ Future enhancements are intentionally out of scope for the current pass. They sh
 3. [x] Keep `discovered_postings.source_tier` as a denormalized query-time copy used by filters and quality sort.
 4. [x] Do not add manual validity override UI in this pass.
 5. [x] Keep closed discovered postings and demote or filter them at query time instead of hard-deleting them.
-6. [x] Treat Companies To Watch as separate from the job-board discovery workflow.
+6. [x] Treat Companies To Watch as separate from broad provider search while allowing explicit company saves from Radar.
 7. [x] Remove the We Work Remotely pilot adapter and do not search bundled fallback sources.
-8. [x] Make curated public job boards with safe APIs or feeds the starting point for Radar discovery.
-9. [x] Keep direct ATS adapters for company-specific refreshes instead of treating them as primary discovery sources.
+8. [x] Make Adzuna the first broad discovery provider through a normalized provider abstraction.
+9. [x] Keep direct ATS adapters for saved-company refreshes instead of treating them as primary broad discovery sources.
