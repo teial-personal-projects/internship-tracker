@@ -9,6 +9,7 @@ import { RadarPage } from '@/pages/RadarPage';
 import { WatchlistPage } from '@/pages/WatchlistPage';
 import { PlaybookPage } from '@/pages/PlaybookPage';
 import { Spinner } from '@/components/Spinner';
+import { isJobSearchEnabled } from '@/lib/features';
 
 function AppRoutes() {
   const { user, loading } = useAuth();
@@ -30,7 +31,10 @@ function AppRoutes() {
       {/* Primary tabs */}
       <Route path="/applications"  element={<ApplicationsPage />} />
       <Route path="/contacts"      element={<ContactsPage />} />
-      <Route path="/radar"         element={<RadarPage />} />
+      <Route
+        path="/radar"
+        element={isJobSearchEnabled ? <RadarPage /> : <Navigate to="/applications" replace />}
+      />
       <Route path="/watchlist"     element={<WatchlistPage />} />
       <Route path="/action-items"  element={<ActionItemsPage />} />
       <Route path="/playbook"      element={<PlaybookPage />} />
@@ -44,7 +48,10 @@ function AppRoutes() {
       <Route path="/dashboard"     element={<Navigate to="/applications" replace />} />
       <Route path="/interviews"    element={<Navigate to="/applications" replace />} />
       <Route path="/notifications" element={<Navigate to="/applications" replace />} />
-      <Route path="/job-boards"    element={<Navigate to="/radar" replace />} />
+      <Route
+        path="/job-boards"
+        element={<Navigate to={isJobSearchEnabled ? '/radar' : '/applications'} replace />}
+      />
 
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/applications" replace />} />

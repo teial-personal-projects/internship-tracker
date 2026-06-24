@@ -153,7 +153,7 @@ function LoginForm({ onSwitch }: { onSwitch: () => void }) {
           Sign in to your workspace
         </h2>
         <p className="mt-1 text-sm" style={{ color: 'var(--ink-2)' }}>
-          Continue from your active applications, companies, and Radar searches.
+          Continue from your active applications, companies, and follow-ups.
         </p>
       </div>
 
@@ -243,7 +243,7 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
           Create your workspace
         </h2>
         <p className="mt-1 text-sm" style={{ color: 'var(--ink-2)' }}>
-          Set up a focused place for applications, follow-ups, and trusted job discovery.
+          Set up a focused place for applications, companies, and follow-ups.
         </p>
       </div>
 
@@ -395,7 +395,7 @@ export function LoginPage() {
             </div>
 
             <p className="mt-5 max-w-lg text-base leading-7" style={{ color: 'var(--ink-2)' }}>
-              Keep applications, companies, contacts, follow-ups, and trusted job discovery in one place without turning every lead into an application record.
+              Keep applications, companies, contacts, and follow-ups in one focused workspace.
             </p>
 
             <div className="mt-8 space-y-5">
@@ -407,12 +407,12 @@ export function LoginPage() {
               <AuthFeature
                 icon={<BriefcaseBusiness size={18} />}
                 title="Separate leads from applications"
-                text="Use Radar and Companies To Watch without cluttering your active application list."
+                text="Use Companies To Watch without cluttering your active application list."
               />
               <AuthFeature
                 icon={<CheckCircle2 size={18} />}
                 title="Keep the workflow tight"
-                text="Save the company, open the original posting, and decide when something is worth tracking."
+                text="Track the company, contacts, and next steps only when something is worth pursuing."
               />
             </div>
           </div>
@@ -423,7 +423,7 @@ export function LoginPage() {
             <BrandMark />
             <div>
               <p className="text-kicker" style={{ color: 'var(--accent)' }}>Track My Application</p>
-              <h1 className="text-xl font-bold" style={{ color: 'var(--ink)' }}>Job search workspace</h1>
+              <h1 className="text-xl font-bold" style={{ color: 'var(--ink)' }}>Application workspace</h1>
             </div>
           </div>
 

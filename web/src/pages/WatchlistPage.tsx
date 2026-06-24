@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { isAxiosError } from 'axios';
 import { AppHeader } from '@/components/AppHeader';
 import { Spinner } from '@/components/Spinner';
+import { isJobSearchEnabled } from '@/lib/features';
 import {
   useCreateWatchlistEntry,
   useDeleteWatchlistEntry,
@@ -197,7 +198,7 @@ function formatDateTime(value: string | null | undefined): string {
 }
 
 function canRefreshSource(entry: WatchlistEntry): boolean {
-  return Boolean(entry.radar_enabled && sourceTier(entry) === 'direct_ats' && entry.ats_type && entry.ats_board_token);
+  return Boolean(isJobSearchEnabled && entry.radar_enabled && sourceTier(entry) === 'direct_ats' && entry.ats_type && entry.ats_board_token);
 }
 
 interface WatchlistRowProps {
@@ -222,6 +223,8 @@ function RefreshStatus({
   refreshResult: WatchlistRadarRefreshResult | undefined;
   refreshError: string | undefined;
 }) {
+  if (!isJobSearchEnabled) return null;
+
   if (!entry.radar_enabled) {
     return (
       <p className="mt-1 truncate text-xs" style={{ color: 'var(--ink-3)' }}>
@@ -288,6 +291,7 @@ function WatchlistRow({
   refreshError,
 }: WatchlistRowProps) {
   const priority = priorityMeta(entry.priority);
+  const sourceEnabled = isJobSearchEnabled && entry.radar_enabled;
 
   return (
     <div className="grid min-w-[1380px] grid-cols-[minmax(220px,1.4fr)_140px_120px_140px_210px_minmax(220px,1.2fr)_250px] items-center gap-3 border-b px-3 py-3 last:border-b-0" style={{ borderColor: 'var(--line)' }}>
@@ -326,12 +330,12 @@ function WatchlistRow({
 
       <div className="min-w-0 text-sm">
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full" style={{ background: entry.radar_enabled ? 'var(--sage)' : 'var(--line)' }} />
+          <span className="h-2 w-2 rounded-full" style={{ background: sourceEnabled ? 'var(--sage)' : 'var(--line)' }} />
           <span className="font-medium" style={{ color: 'var(--ink-2)' }}>
-            {entry.radar_enabled ? sourceTierLabel(sourceTier(entry)) : 'Source off'}
+            {sourceEnabled ? sourceTierLabel(sourceTier(entry)) : 'Manual list'}
           </span>
         </div>
-        {entry.source_name && (
+        {sourceEnabled && entry.source_name && (
           <p className="mt-1 truncate text-xs" style={{ color: 'var(--ink-3)' }}>
             {entry.source_name}
           </p>
@@ -344,7 +348,7 @@ function WatchlistRow({
       </p>
 
       <div className="flex items-center justify-end gap-1">
-        {entry.radar_enabled && (
+        {sourceEnabled && (
           <button
             type="button"
             onClick={() => onRefresh(entry)}
@@ -388,6 +392,7 @@ function WatchlistCard({
   refreshError,
 }: WatchlistRowProps) {
   const priority = priorityMeta(entry.priority);
+  const sourceEnabled = isJobSearchEnabled && entry.radar_enabled;
 
   return (
     <article className="rounded-lg border bg-white p-4" style={{ borderColor: 'var(--line)' }}>
@@ -424,9 +429,9 @@ function WatchlistCard({
             Source
           </p>
           <p className="mt-1" style={{ color: 'var(--ink-2)' }}>
-            {entry.radar_enabled ? sourceTierLabel(sourceTier(entry)) : 'Not enabled'}
+            {sourceEnabled ? sourceTierLabel(sourceTier(entry)) : 'Manual list'}
           </p>
-          {entry.source_name && (
+          {sourceEnabled && entry.source_name && (
             <p className="mt-1 text-xs" style={{ color: 'var(--ink-3)' }}>
               {entry.source_name}
             </p>
@@ -440,7 +445,7 @@ function WatchlistCard({
       </p>
 
       <div className="mt-4 flex justify-end gap-2">
-        {entry.radar_enabled && (
+        {sourceEnabled && (
           <button
             type="button"
             className="btn-outline inline-flex items-center gap-1 text-sm"
@@ -514,12 +519,12 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const source = isDirectAts && useManualSource
+    const source = isJobSearchEnabled && isDirectAts && useManualSource
       ? {
           atsType: atsType || null,
           value: atsBoardToken.trim() || null,
         }
-      : isDirectAts ? {
+      : isJobSearchEnabled && isDirectAts ? {
           atsType: inferredSource?.atsType ?? null,
           value: inferredSource?.value ?? null,
         } : {
@@ -537,9 +542,9 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
       notes: notes.trim() || null,
       ats_type: source.atsType,
       ats_board_token: source.value,
-      radar_enabled: radarEnabled,
-      source_tier: selectedSourceTier,
-      source_name: sourceName.trim() || null,
+      radar_enabled: isJobSearchEnabled && radarEnabled,
+      source_tier: isJobSearchEnabled ? selectedSourceTier : 'direct_ats',
+      source_name: isJobSearchEnabled ? sourceName.trim() || null : null,
     });
   }
 
@@ -594,6 +599,7 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
                 <span className="field-label">Notes</span>
                 <textarea className="field-textarea" rows={4} value={notes} onChange={(event) => setNotes(event.target.value)} />
               </label>
+              {isJobSearchEnabled && (
               <div className="sm:col-span-2 rounded-lg border p-4" style={{ borderColor: 'var(--line)', background: 'var(--softer)' }}>
                 <label className="flex items-center justify-between gap-4">
                   <span>
@@ -702,6 +708,7 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
                   </label>
                 )}
               </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-2 border-t bg-gray-50 px-6 py-4" style={{ borderColor: 'var(--line)' }}>
@@ -930,7 +937,7 @@ export function WatchlistWorkspace({ embedded = false }: WatchlistWorkspaceProps
               No companies found
             </h2>
             <p className="mx-auto mt-1 max-w-md text-sm" style={{ color: 'var(--ink-3)' }}>
-              Add a company you want to watch so it stays separate from your job-board searches.
+              Add a company you want to keep separate from your active applications.
             </p>
             <button type="button" onClick={openAddModal} className="btn-primary mt-5 inline-flex items-center gap-2 text-sm">
               <Plus size={16} />

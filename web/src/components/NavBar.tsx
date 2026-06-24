@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { BookOpen, Briefcase, Building2, ClipboardList, Search, Users } from 'lucide-react';
+import { isJobSearchEnabled } from '@/lib/features';
 import type { LucideIcon } from 'lucide-react';
 
 interface TabConfig {
@@ -12,7 +13,9 @@ interface TabConfig {
 const TABS: TabConfig[] = [
   { to: '/applications', label: 'Applications', mobileLabel: 'Apps',      Icon: Briefcase     },
   { to: '/contacts',     label: 'Contacts',      mobileLabel: 'Contacts',  Icon: Users         },
-  { to: '/radar',        label: 'Job Search',    mobileLabel: 'Search',    Icon: Search        },
+  ...(isJobSearchEnabled
+    ? [{ to: '/radar', label: 'Job Search', mobileLabel: 'Search', Icon: Search }]
+    : []),
   { to: '/watchlist',    label: 'Companies to Watch', mobileLabel: 'Watch', Icon: Building2     },
   { to: '/action-items', label: 'Action Items',  mobileLabel: 'Actions',   Icon: ClipboardList },
   { to: '/playbook',     label: 'Playbook',      mobileLabel: 'Guide',     Icon: BookOpen      },
