@@ -6,9 +6,9 @@
 
 ## Product Direction
 
-Radar is a trusted job discovery surface, not an application tracker and not a company watcher. Its job is to search curated, high-signal job sources for credible software engineering openings that match the user's title, field, location, and exclusion criteria. It should let the user click through to the original posting. It should not create Applications records, save Companies To Watch records, or require the user to track a role.
+Radar is a trusted job discovery surface, not an application tracker and not a company watcher. Its discovery strategy starts by asking which public job boards expose safe searchable APIs, RSS feeds, documented export formats, or other explicit non-scraping integration paths. Those sources are modeled as curated `radar_sources` with `source_tier = curated_board`, searched directly from the Job Search page, and ranked as the primary discovery channel for credible software engineering openings that match the user's title, field, location, and exclusion criteria. Radar should let the user click through to the original posting. It should not create Applications records, save Companies To Watch records, or require the user to track a role.
 
-The Companies To Watch list is a separate support tool: it stores companies the user already knows they want to keep checking. Job-board search must not read from, write to, dedupe against, or otherwise depend on Companies To Watch.
+The Companies To Watch list is a separate support tool: it stores companies the user already knows they want to keep checking. Direct ATS adapters can remain there for company-specific careers refreshes, but they are not the primary Radar discovery strategy. Job-board search must not read from, write to, dedupe against, or otherwise depend on Companies To Watch.
 
 Trusted job-board sources should be curated deliberately. Prefer niche boards, official feeds, APIs, and sources with consistently real postings. Broad aggregators and LinkedIn-style repeat feeds are mostly confirmation signals and should not be allowed to clutter the workflow.
 
@@ -18,8 +18,8 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 
 | Tier | Source class | Examples | Product behavior |
 | --- | --- | --- | --- |
-| 1 | Direct ATS | Greenhouse, Lever, Ashby, Workday, SmartRecruiters | Highest-confidence original source for company-specific careers refreshes |
-| 2 | Trusted curated boards | Wellfound-style niche boards, mission-driven boards, Working Nomads, Remote.co, Idealist if a safe integration exists | Primary discovery channels when they expose reliable feeds or APIs |
+| 1 | Trusted curated boards | Wellfound-style niche boards, mission-driven boards, Working Nomads, Remote.co, Idealist if a safe integration exists | Primary discovery channels when they expose reliable feeds, searchable APIs, or explicit export formats |
+| 2 | Direct ATS | Greenhouse, Lever, Ashby, Workday, SmartRecruiters | Highest-confidence original source for company-specific careers refreshes |
 | 3 | Aggregators | Indeed, ZipRecruiter-style syndication | Append as `also_seen_on` instead of creating noise |
 
 ## Step 1 — Data Model
@@ -68,6 +68,7 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 3.9 [x] Treat `radar_sources` as the catalog of trusted job-search sources.
 3.10 [x] Add source metadata fields needed for manual search, such as supported query fields, feed URL template, attribution text, and whether the source is enabled for trusted discovery.
 3.11 [x] Keep company source settings only for company-specific direct ATS refreshes.
+3.12 [x] Choose curated-board sources by first evaluating whether they expose safe searchable APIs, RSS feeds, documented exports, or equivalent explicit integration paths.
 
 ## Step 4 — Watchlist Separation
 
@@ -113,7 +114,7 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 ## Step 7 — Ranking and API Filters
 
 7.1 [x] Create `api/src/radar/qualityScore.ts`.
-7.2 [x] Score direct ATS postings highest.
+7.2 [x] Score curated-board postings highest for general discovery.
 7.3 [x] Score recently first-seen postings higher.
 7.4 [x] Score validated-live postings higher.
 7.5 [x] Penalize aggregators unless they corroborate a direct ATS posting.
@@ -168,6 +169,7 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 10.8 [x] Avoid sources that require broad scraping, anti-bot bypassing, paid access, or produce mostly LinkedIn-style duplicate noise.
 10.9 [x] Do not ship a trusted-source adapter until the source is explicitly selected for the user's target search.
 10.10 [x] Keep Idealist as a high-value follow-up only if a safe, non-scraping integration path is chosen.
+10.11 [x] Treat direct ATS adapters as company-specific refresh tools, not as the starting point for broad discovery.
 
 ## Step 11 — Optional Metrics
 
@@ -184,7 +186,7 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 12.4 [x] Add `refreshRadarSource.test.ts` coverage proving a later direct ATS match can promote a curated or aggregator posting without changing `first_seen_at`.
 12.5 [x] Add adapter tests proving validation marks missing jobs as closed after a successful board response.
 12.6 [x] Add route tests proving Radar job-board postings cannot save companies to the watchlist.
-12.7 [x] Add route tests proving quality sort returns direct live postings before aggregator unchecked postings.
+12.7 [x] Add route tests proving quality sort returns curated-board live postings before aggregator unchecked postings.
 12.8 [x] Add route tests proving old closed postings are hidden from the default view but returned by `All` or `Closed` filters.
 12.9 [x] Add trusted source adapter tests with source-specific fixture data after the first source is selected.
 12.10 [x] Add route tests proving source-discovered postings can exist without a watchlist row.
@@ -245,3 +247,5 @@ Future enhancements are intentionally out of scope for the current pass. They sh
 5. [x] Keep closed discovered postings and demote or filter them at query time instead of hard-deleting them.
 6. [x] Treat Companies To Watch as separate from the job-board discovery workflow.
 7. [x] Remove the We Work Remotely pilot adapter and do not search bundled fallback sources.
+8. [x] Make curated public job boards with safe APIs or feeds the starting point for Radar discovery.
+9. [x] Keep direct ATS adapters for company-specific refreshes instead of treating them as primary discovery sources.

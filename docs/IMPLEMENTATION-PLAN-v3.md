@@ -227,17 +227,18 @@ File: `migrations/v3_001_email_preferences.sql`
 
 ## Phase 14. Scheduled Job Radar Polling and Alerts
 
-*Builds on the manual Job Radar refresh flow (Phases 6 through 12 of `IMPLEMENTATION-PLAN-v2.md`) and the In-App Notifications in Phase 6 of this plan, and feeds the digest from Phase 10. Build after all three are in place.*
+*Builds on the trusted-source Job Radar search flow and the In-App Notifications in Phase 6 of this plan, and feeds the digest from Phase 10. Build after all three are in place.*
 
 - [ ] 14.1 Add `new_matching_role` to `notification_type_enum` (additive migration)
-- [ ] 14.2 Create `api/src/jobs/pollRadarSources.ts` using the V2 radar refresh service
-- [ ] 14.3 Query `company_watchlist` rows where `radar_enabled = true`
-- [ ] 14.4 Refresh each source, isolate errors per source, and update `last_refreshed_at`
-- [ ] 14.5 Schedule via `node-cron` every 30 minutes, with a staggered start to stay polite to boards
-- [ ] 14.6 Guard startup with `ENABLE_BACKGROUND_JOBS`; jobs do not run in tests unless explicitly invoked
-- [ ] 14.7 After inserting a new matching posting, call `createNotification(userId, 'new_matching_role', postingId, message)`
-- [ ] 14.8 Include new matching roles in the v3 email digest qualifying events
-- [ ] 14.9 Confirm a new matching role produces exactly one notification and respects the dedupe rule
+- [ ] 14.2 Create `api/src/jobs/pollRadarSources.ts` using the trusted-source search service
+- [ ] 14.3 Query active `radar_sources` rows where `source_tier = 'curated_board'` and trusted discovery is enabled
+- [ ] 14.4 Search each curated board through its safe API, feed, documented export, or explicit integration path, isolate errors per source, and update source refresh metadata
+- [ ] 14.5 Keep direct ATS adapters available only for enabled company-specific watchlist refreshes, not as the primary polling target
+- [ ] 14.6 Schedule via `node-cron` every 30 minutes, with a staggered start to stay polite to boards
+- [ ] 14.7 Guard startup with `ENABLE_BACKGROUND_JOBS`; jobs do not run in tests unless explicitly invoked
+- [ ] 14.8 After inserting a new matching posting, call `createNotification(userId, 'new_matching_role', postingId, message)`
+- [ ] 14.9 Include new matching roles in the v3 email digest qualifying events
+- [ ] 14.10 Confirm a new matching role produces exactly one notification and respects the dedupe rule
 
 ---
 

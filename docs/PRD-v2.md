@@ -13,7 +13,7 @@
 
 Track My Application helps job seekers log applications and track statuses across the job search pipeline. Version 2.0 augments the platform with several new feature modules grounded in a proven outreach-driven application methodology — showing that a personalized cover letter, same-day double-down outreach to a specific person at the company, and a structured follow-up process increases application-to-phone-screen conversion from roughly 2% to approximately 10%.
 
-The v2.0 feature set introduces a unified Contacts system (covering both company contacts and external recruiters), an Action Items task queue, an Application Type classification field, a Companies To Watch research list, an Application Event Log, and a manual Job Radar refresh flow for discovering roles from monitored companies. The Interview Tracker, In-App Notifications, scheduled background jobs, email delivery, and Playbook originally drafted for v2.0 have moved to v3.0. Navigation keeps four primary tabs with secondary items in a menu.
+The v2.0 feature set introduces a unified Contacts system (covering both company contacts and external recruiters), an Action Items task queue, an Application Type classification field, a Companies To Watch research list, an Application Event Log, and a manual Job Radar search flow for discovering roles from curated public job-board sources. The Interview Tracker, In-App Notifications, scheduled background jobs, email delivery, and Playbook originally drafted for v2.0 have moved to v3.0. Navigation keeps four primary tabs with secondary items in a menu.
 
 ---
 
@@ -483,47 +483,54 @@ A user can log an event via an inline form directly in the timeline panel: event
 
 #### 10.1 Overview
 
-The Job Radar supports Companies To Watch without introducing background jobs in v2.0. Instead of checking each company's careers page by hand, the user can manually refresh monitored public applicant tracking system (ATS) feeds. The system normalizes the postings, filters them to the user's criteria, and surfaces fresh matches in a Discover view. A matched role is promoted into an application with the same promote flow used by Companies To Watch. Scheduled polling, notifications, and email alerting for new matches are specified in `PRD-v3.md`.
+The Job Radar is a trusted job-board discovery surface without background jobs in v2.0. Discovery starts from public job boards that expose safe searchable APIs, RSS feeds, documented export formats, or equivalent explicit non-scraping integration paths. The system models those sources as curated `radar_sources`, normalizes their postings, filters them to the user's criteria, and surfaces fresh matches in a Discover view that opens the original posting. Direct ATS adapters remain available for company-specific careers refreshes, but they are not the primary discovery strategy. Scheduled polling, notifications, and email alerting for new matches are specified in `PRD-v3.md`.
 
 #### 10.2 Monitored sources
 
-Radar settings live on each Companies To Watch entry. A watchlist company becomes a radar source when the user supplies its ATS type and board token and enables the radar.
+Curated job-board source metadata lives in `radar_sources`. A source is eligible for trusted discovery only when it exposes a safe searchable API, feed, documented export format, or other explicit integration path that does not require broad scraping, anti-bot bypassing, or paid access.
+
+Company-specific Radar settings can still live on Companies To Watch entries for direct ATS refreshes. A watchlist company becomes a direct ATS refresh source when the user supplies its ATS type and board token and enables the radar.
 
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
-| ats_type | Enum | Yes | `greenhouse`, `lever`, `ashby`, `smartrecruiters`, `pinpoint`, `welcomekit`, `custom` |
-| ats_board_token | Text | Yes | The board identifier from the ATS URL |
-| radar_enabled | Boolean | Yes | Off by default; manual refresh reads only enabled sources |
-| last_refreshed_at | Timestamp | Auto | Updated after each manual refresh |
+| radar_source_id | Text | Source-discovered postings | Source identifier from `radar_sources` |
+| source_tier | Enum | Yes | `curated_board`, `direct_ats`, or `aggregator`; curated boards are the default discovery tier |
+| ats_type | Enum | Direct ATS only | `greenhouse`, `lever`, `ashby`, `smartrecruiters`, `pinpoint`, `welcomekit`, `custom` |
+| ats_board_token | Text | Direct ATS only | The board identifier from the ATS URL |
+| radar_enabled | Boolean | Direct ATS only | Off by default; direct refresh reads only enabled company sources |
+| last_refreshed_at | Timestamp | Auto | Updated after each manual direct ATS refresh |
 
 #### 10.3 Discovered postings
 
-Each normalized posting is stored once per source, deduped on the external job id.
+Each normalized posting is stored once per curated source or direct ATS source, deduped on the external job id and canonical fingerprint where available.
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| watchlist_id | FK | The monitored company the posting came from |
+| watchlist_id | FK | Nullable; set only for company-specific direct ATS refreshes |
+| radar_source_id | Text | Nullable; set for source-discovered postings |
 | company_name | Text | Denormalized for display |
-| external_job_id | Text | The ATS job id; unique per source for dedupe |
+| external_job_id | Text | The upstream job id; unique per source for dedupe |
 | title | Text | Role title |
-| location | Text | Raw location string from the ATS |
+| location | Text | Raw location string from the source |
 | remote_status | Text | Parsed remote or LA classification |
 | url | Text | Direct link to the posting |
-| posted_at | Timestamp | From the ATS when available |
+| posted_at | Timestamp | From the source when available |
 | first_seen_at | Timestamp | When the radar first saw it; drives the apply-fast goal |
-| status | Enum | `new`, `seen`, `dismissed`, `promoted` |
+| source_tier | Enum | `curated_board`, `direct_ats`, or `aggregator` |
+| validity_status | Enum | `unchecked`, `live`, `closed`, `not_found`, `stale`, or `error` |
+| status | Enum | `new`, `seen`, `dismissed`, `promoted`; Radar does not create application records in the trusted job-board flow |
 
 #### 10.4 Matching
 
-Manual refresh keeps only postings that match the user's criteria. The v2.0 default keeps roles whose title signals seniority (senior, staff, or principal, never junior or intern) and whose location reads remote US or LA. Per-user criteria refinement is a fast-follow.
+Manual search keeps only postings that match the user's criteria. Criteria include target titles, fields or industries, locations, and exclusion terms.
 
 #### 10.5 Discover surface
 
-The Discover tab lists new matched postings grouped by company, newest first, each with a NEW badge, the posted and first-seen dates, and a remote tag. Each card offers Add to tracker, which promotes the posting into an application and navigates to it, and Dismiss, which hides it. A filter bar narrows by status, company, and search.
+The Discover tab lists new matched postings grouped by company, newest first, each with a NEW badge, source tier, validity state, the posted and first-seen dates, and a remote tag. Each card opens the original posting and can be dismissed. It does not create Applications records or Companies To Watch records from job-board results. A filter bar narrows by status, company, source tier, validity, and search.
 
-#### 10.6 Promote to application
+#### 10.6 Direct ATS refreshes
 
-Add to tracker creates an `applications` record pre-populated with company name, title, and the posting URL, sets the posting status to `promoted`, and reuses the Companies To Watch promote pattern.
+Direct ATS adapters are retained for explicit company-specific refreshes from Companies To Watch. They may improve provenance and validity checks for known target companies, but broad Radar discovery starts from curated public job-board sources that expose safe APIs or feeds.
 
 ---
 
@@ -543,7 +550,7 @@ V2 product requirements define what data the product must capture and how users 
 | Task | Stores manual and auto-generated action items with category, priority, status, due date, and optional application/contact links. |
 | Company watchlist entry | Stores companies a user wants to monitor before applying. |
 | Application event | Stores application-scoped timeline entries independent of named contacts. |
-| Discovered posting | Stores normalized roles found by Job Radar from monitored company sources. |
+| Discovered posting | Stores normalized roles found by Job Radar from curated job-board sources or company-specific direct ATS refreshes. |
 
 ### 6.2 Business rules
 
@@ -590,7 +597,7 @@ The app exposes authenticated API capabilities for Applications, Contacts, Actio
 | Contact email field creates expectation of email send functionality | High | Low | Label field as reference only; no mailto links or send-email actions in v2.0 |
 | Data model changes require migration of existing application records | High | Low | All new entities are additive; jobs table untouched during rollout |
 | Unified contacts model creates confusion about recruiter vs. company contact | Low | Medium | Clear visual differentiation in the UI with contact_type badge |
-| ATS feed format changes break a source adapter | Medium | Low | Per-source error isolation in manual refresh; one bad board never aborts another refresh |
+| Curated board API or feed changes break a source adapter | Medium | Low | Per-source error isolation in manual search; one bad source never aborts another search |
 
 ---
 
@@ -665,11 +672,12 @@ The app exposes authenticated API capabilities for Applications, Contacts, Actio
 
 ### Feature 10 — Job Radar
 
-- [ ] A Companies To Watch entry becomes a radar source by setting ATS type, board token, and enabling the radar
-- [ ] Manual refresh reads only radar-enabled sources and writes new matches to discovered_postings
-- [ ] A repeat manual refresh inserts no duplicate postings (deduped on watchlist_id and external_job_id)
-- [ ] The Discover tab lists new matched postings grouped by company with a NEW badge and first-seen date
-- [ ] Add to tracker promotes a posting into an application and marks the posting promoted
+- [ ] Curated public job-board sources are selected only when they expose safe searchable APIs, feeds, documented exports, or equivalent explicit integration paths
+- [ ] Manual search reads trusted `curated_board` sources and writes new matches to discovered_postings
+- [ ] Direct ATS adapters remain available for company-specific Companies To Watch refreshes, not primary discovery
+- [ ] A repeat manual search inserts no duplicate postings for the same source and external job id
+- [ ] The Discover tab lists new matched postings grouped by company with a NEW badge, source tier, validity state, and first-seen date
+- [ ] Radar posting cards open the original posting and do not create Applications or Companies To Watch records
 - [ ] Dismiss hides a posting and it does not reappear on the next manual refresh
 - [ ] Radar data is scoped to the authenticated user (403 on unauthorized access)
 

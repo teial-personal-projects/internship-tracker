@@ -11,6 +11,8 @@
 
 **Scope (June 2026).** Interview Tracker, In-App Notifications, Playbook, email delivery, scheduled background jobs, overdue escalation, and scheduled Radar polling moved to `IMPLEMENTATION-PLAN-v3.md`. Discover is the fourth V2 primary tab, powered by a manual Job Radar refresh flow. The Job Radar is folded in here as Phases 6 through 12, directly after Companies To Watch (Phase 5), since it builds on the watchlist and the promote-to-application flow. Radar notification alerts and automated polling are specified in `IMPLEMENTATION-PLAN-v3.md` since they require V3 notification/background-job infrastructure.
 
+**Radar strategy correction (June 24, 2026).** The completed Phases 6 through 12 document the first ATS/watchlist-based implementation. The current Radar direction is superseded by `RADAR-VALID-POSTINGS-IMPLEMENTATION-PLAN.md`: discovery starts from public job boards with safe searchable APIs, RSS feeds, documented exports, or equivalent explicit integration paths, modeled as curated `radar_sources`. Direct ATS adapters remain available for company-specific refreshes, but they are not the primary discovery strategy.
+
 **UX correction (June 18, 2026).** The initial V2 split between a hidden Companies To Watch page and a separate Discover page is confusing. Phase 16 supersedes that layout by combining watchlist setup and discovered postings into one primary workflow. The implementation should treat source setup, refresh status, and discovered jobs as one page.
 
 ---

@@ -9,8 +9,8 @@ interface QualityPosting {
 }
 
 function sourceTierScore(tier: SourceTier): number {
-  if (tier === 'direct_ats') return 100;
-  if (tier === 'curated_board') return 55;
+  if (tier === 'curated_board') return 100;
+  if (tier === 'direct_ats') return 55;
   return 10;
 }
 

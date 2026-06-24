@@ -256,11 +256,11 @@ Every email carries a one-click unsubscribe link backed by a signed token. Follo
 
 #### 5.1 Overview
 
-The Job Radar in v2.0 surfaces new matching roles in the Discover tab after a manual refresh. This feature adds scheduled polling and active alerting on top, so a new match also raises an in-app notification and, when email is enabled, appears in the next digest.
+The Job Radar in v2.0 surfaces new matching roles in the Discover tab after an explicit trusted-source search. This feature adds scheduled polling and active alerting on top, so a new match also raises an in-app notification and, when email is enabled, appears in the next digest.
 
 #### 5.2 Behavior
 
-The scheduled poller reads radar-enabled watchlist entries, refreshes their ATS feeds, and inserts newly matched postings. When it inserts a new matching posting, it creates a notification of type `new_matching_role` referencing the posting, subject to the user's notification preferences. The same match becomes a line item in the email digest from Feature 4. Each new match produces at most one notification and respects the existing dedupe rule.
+The scheduled poller reads active `curated_board` entries from `radar_sources`, searches only sources with safe searchable APIs, feeds, documented exports, or equivalent explicit integration paths, and inserts newly matched postings. Direct ATS adapters may still refresh company-specific watchlist sources, but they are secondary to curated-board discovery. When the poller inserts a new matching posting, it creates a notification of type `new_matching_role` referencing the posting, subject to the user's notification preferences. The same match becomes a line item in the email digest from Feature 4. Each new match produces at most one notification and respects the existing dedupe rule.
 
 ---
 

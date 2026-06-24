@@ -363,13 +363,13 @@ describe('radar routes', () => {
           first_seen_at: '2026-06-20T00:00:00.000Z',
         },
         {
-          id: 'direct-posting',
+          id: 'curated-posting',
           user_id: USER_ID,
-          company_name: 'Direct Co',
+          company_name: 'Curated Co',
           title: 'Backend Engineer',
           location: 'Remote',
           status: 'new',
-          source_tier: 'direct_ats',
+          source_tier: 'curated_board',
           validity_status: 'live',
           first_seen_at: '2026-06-01T00:00:00.000Z',
         },
@@ -384,7 +384,7 @@ describe('radar routes', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.data.map((posting: Row) => posting.id)).toEqual([
-      'direct-posting',
+      'curated-posting',
       'aggregator-posting',
     ]);
   });
