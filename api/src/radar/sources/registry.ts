@@ -3,7 +3,7 @@ import sourceRows from './radarSources.backup.json';
 
 type SourceTier = 'direct_ats' | 'curated_board' | 'aggregator';
 type SourceAdapterType = AtsType | null;
-type TrustedSourceAdapterType = 'we_work_remotely' | null;
+type TrustedSourceAdapterType = string | null;
 
 interface BackupRadarSourceRow {
   id: string;

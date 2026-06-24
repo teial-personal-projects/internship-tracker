@@ -51,8 +51,21 @@ export interface TrustedSourceSearchResult {
   message: string;
 }
 
+export interface RadarSearchSource {
+  id: string;
+  source_name: string;
+  source_tier: SourceTier;
+  is_active: boolean;
+  is_searchable: boolean;
+}
+
 export async function searchTrustedSources(): Promise<TrustedSourceSearchResult> {
   const { data } = await apiClient.post<{ data: TrustedSourceSearchResult }>('/radar/search');
+  return data.data;
+}
+
+export async function getRadarSearchSources(): Promise<RadarSearchSource[]> {
+  const { data } = await apiClient.get<{ data: RadarSearchSource[] }>('/radar/search-sources');
   return data.data;
 }
 

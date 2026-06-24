@@ -11,21 +11,16 @@ export interface MatchCriteria {
 }
 
 export const MVP_MATCH_CRITERIA: MatchCriteria = {
-  titleTerms: ['software engineer', 'backend engineer', 'full-stack engineer', 'full stack engineer'],
-  fieldTerms: ['edtech', 'education technology', 'mission-driven', 'civic tech', 'nonprofit tech'],
+  titleTerms: [],
+  fieldTerms: [],
   includeKeywords: [],
-  excludedTerms: ['junior', 'intern', 'internship'],
+  excludedTerms: [],
   locationTerms: [],
   allowedRemoteStatuses: [],
 };
 
 function normalizeTerms(terms: string[]): string[] {
   return terms.map((term) => term.trim().toLowerCase()).filter(Boolean);
-}
-
-function mergeTerms(configured: string[], defaults: string[]): string[] {
-  const normalized = normalizeTerms(configured);
-  return normalized.length > 0 ? normalized : defaults;
 }
 
 export function criteriaFromRow(row: RadarCriteria | null | undefined): MatchCriteria {
@@ -45,10 +40,10 @@ export function criteriaFromRow(row: RadarCriteria | null | undefined): MatchCri
     : [];
 
   return {
-    titleTerms: mergeTerms(titleTerms.length > 0 ? titleTerms : legacyTitleTerms, MVP_MATCH_CRITERIA.titleTerms),
-    fieldTerms: mergeTerms(fieldTerms, MVP_MATCH_CRITERIA.fieldTerms),
+    titleTerms: normalizeTerms(titleTerms.length > 0 ? titleTerms : legacyTitleTerms),
+    fieldTerms: normalizeTerms(fieldTerms),
     includeKeywords: normalizeTerms(includeKeywords),
-    excludedTerms: mergeTerms(excludeKeywords, MVP_MATCH_CRITERIA.excludedTerms),
+    excludedTerms: normalizeTerms(excludeKeywords),
     locationTerms: normalizeTerms(locationTerms),
     allowedRemoteStatuses: locationRules,
   };
@@ -59,7 +54,13 @@ export function matches(
   criteria: MatchCriteria = MVP_MATCH_CRITERIA,
 ): boolean {
   const title = posting.title.toLowerCase();
-  const hasTargetTitle = criteria.titleTerms.some((term) => title.includes(term));
+  const hasSearchAnchor = criteria.titleTerms.length > 0
+    || criteria.locationTerms.length > 0
+    || criteria.allowedRemoteStatuses.length > 0;
+  if (!hasSearchAnchor) return false;
+
+  const hasTargetTitle = criteria.titleTerms.length === 0
+    || criteria.titleTerms.some((term) => title.includes(term));
   const hasIncludeKeywords = criteria.includeKeywords.length === 0
     || criteria.includeKeywords.some((term) => title.includes(term));
   const isExcluded = criteria.excludedTerms.some((term) => title.includes(term));

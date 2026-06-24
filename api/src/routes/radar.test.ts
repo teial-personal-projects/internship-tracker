@@ -152,6 +152,73 @@ describe('radar routes', () => {
     vi.clearAllMocks();
   });
 
+  it('GET /api/radar/search-sources returns listed job sites with searchability status', async () => {
+    const db = createMockDb({
+      radar_sources: [
+        {
+          id: 'linkedin',
+          source_name: 'LinkedIn',
+          source_tier: 'curated_board',
+          is_active: true,
+          metadata: {},
+        },
+        {
+          id: 'example_board',
+          source_name: 'Example Board',
+          source_tier: 'curated_board',
+          is_active: true,
+          metadata: {
+            trusted_discovery_enabled: true,
+            trusted_source_adapter: 'example_adapter',
+          },
+        },
+        {
+          id: 'greenhouse',
+          source_name: 'Greenhouse',
+          source_tier: 'direct_ats',
+          is_active: true,
+          metadata: {},
+        },
+        {
+          id: 'we_work_remotely',
+          source_name: 'We Work Remotely',
+          source_tier: 'curated_board',
+          is_active: true,
+          metadata: {
+            trusted_discovery_enabled: true,
+            trusted_source_adapter: 'we_work_remotely',
+          },
+        },
+      ],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .get('/api/radar/search-sources')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toEqual([
+      expect.objectContaining({
+        id: 'example_board',
+        source_name: 'Example Board',
+        source_tier: 'curated_board',
+        is_active: true,
+        is_searchable: true,
+      }),
+      expect.objectContaining({
+        id: 'linkedin',
+        source_name: 'LinkedIn',
+        source_tier: 'curated_board',
+        is_active: true,
+        is_searchable: false,
+      }),
+    ]);
+    expect(response.body.data).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'we_work_remotely' }),
+    ]));
+  });
+
   it('GET /api/radar/postings searches posting titles', async () => {
     const db = createMockDb({
       discovered_postings: [
@@ -452,7 +519,7 @@ describe('radar routes', () => {
     expect(ids).toContain('live-role');
   });
 
-  it('GET /api/radar/criteria returns default trusted discovery criteria when none are saved', async () => {
+  it('GET /api/radar/criteria returns empty criteria when none are saved', async () => {
     const db = createMockDb({
       radar_criteria: [],
     });
@@ -465,9 +532,9 @@ describe('radar routes', () => {
     expect(response.status).toBe(200);
     expect(response.body.data).toMatchObject({
       user_id: USER_ID,
-      title_terms: ['software engineer', 'backend engineer', 'full-stack engineer', 'full stack engineer'],
-      field_terms: ['edtech', 'education technology', 'mission-driven', 'civic tech', 'nonprofit tech'],
-      exclude_keywords: ['junior', 'intern', 'internship'],
+      title_terms: [],
+      field_terms: [],
+      exclude_keywords: [],
       location_terms: [],
       location_rules: [],
     });
@@ -510,6 +577,40 @@ describe('radar routes', () => {
     }));
   });
 
+  it('GET /api/radar/criteria preserves intentionally cleared saved criteria', async () => {
+    const db = createMockDb({
+      radar_criteria: [{
+        user_id: USER_ID,
+        title_terms: [],
+        field_terms: [],
+        include_keywords: [],
+        exclude_keywords: [],
+        seniority_terms: [],
+        location_terms: [],
+        location_rules: [],
+        created_at: '2026-06-01T00:00:00.000Z',
+        updated_at: '2026-06-01T00:00:00.000Z',
+      }],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .get('/api/radar/criteria')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toMatchObject({
+      user_id: USER_ID,
+      title_terms: [],
+      field_terms: [],
+      include_keywords: [],
+      exclude_keywords: [],
+      seniority_terms: [],
+      location_terms: [],
+      location_rules: [],
+    });
+  });
+
   it('POST /api/radar/search is a manual trusted source action and does not refresh watchlist sources', async () => {
     const db = createMockDb({
       radar_criteria: [{
@@ -527,8 +628,8 @@ describe('radar routes', () => {
     });
     mockCreateUserClient.mockReturnValue(db.client);
     mockSearchTrustedSources.mockResolvedValue([{
-      sourceId: 'we_work_remotely',
-      sourceName: 'We Work Remotely',
+      sourceId: 'trusted_board_fixture',
+      sourceName: 'Example Trusted Board',
       fetched: 2,
       matched: 1,
       inserted: 1,
@@ -550,14 +651,47 @@ describe('radar routes', () => {
         field_terms: ['edtech'],
       },
       sources: [{
-        sourceId: 'we_work_remotely',
-        sourceName: 'We Work Remotely',
+        sourceId: 'trusted_board_fixture',
+        sourceName: 'Example Trusted Board',
       }],
     });
     expect(mockSearchTrustedSources).toHaveBeenCalledWith(expect.anything(), USER_ID, expect.objectContaining({
       title_terms: ['software engineer'],
     }));
     expect(mockRefreshRadarSource).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/radar/search reports when no trusted sources are configured', async () => {
+    const db = createMockDb({
+      radar_criteria: [{
+        user_id: USER_ID,
+        title_terms: ['software engineer'],
+        field_terms: [],
+        include_keywords: [],
+        exclude_keywords: [],
+        seniority_terms: [],
+        location_terms: [],
+        location_rules: [],
+        created_at: '2026-06-01T00:00:00.000Z',
+        updated_at: '2026-06-01T00:00:00.000Z',
+      }],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+    mockSearchTrustedSources.mockResolvedValue([]);
+
+    const response = await request(app)
+      .post('/api/radar/search')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toMatchObject({
+      sources_searched: 0,
+      fetched: 0,
+      matched: 0,
+      inserted: 0,
+      sources: [],
+      message: 'No trusted sources are configured yet.',
+    });
   });
 
   it('PATCH /api/radar/postings/:id validates the posting before marking it seen', async () => {

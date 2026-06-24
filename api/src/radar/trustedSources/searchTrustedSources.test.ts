@@ -76,17 +76,17 @@ function createMockDb(rowsByTable: Record<string, Row[]>) {
 
 function posting(overrides: Partial<NormalizedPosting> = {}): NormalizedPosting {
   return {
-    externalId: 'wwr-backend-1',
+    externalId: 'trusted-board-backend-1',
     companyName: 'Mission School',
     title: 'Backend Engineer',
     location: 'Remote',
     remoteStatus: 'remote_us',
-    url: 'https://weworkremotely.com/remote-jobs/mission-school-backend-engineer',
-    sourceName: 'We Work Remotely',
+    url: 'https://example.com/jobs/mission-school-backend-engineer',
+    sourceName: 'Example Trusted Board',
     sourceTier: 'curated_board',
-    canonicalUrl: 'https://weworkremotely.com/remote-jobs/mission-school-backend-engineer',
+    canonicalUrl: 'https://example.com/jobs/mission-school-backend-engineer',
     postedAt: '2026-06-01T12:00:00.000Z',
-    raw: { match_reasons: ['title "backend engineer"', 'source We Work Remotely'] },
+    raw: { match_reasons: ['title "backend engineer"', 'source Example Trusted Board'] },
     ...overrides,
   };
 }
@@ -101,13 +101,13 @@ describe('searchTrustedSources', () => {
   it('stores source-discovered postings with radar_source_id and nullable watchlist_id', async () => {
     const db = createMockDb({
       radar_sources: [{
-        id: 'we_work_remotely',
-        source_name: 'We Work Remotely',
+        id: 'trusted_board_fixture',
+        source_name: 'Example Trusted Board',
         source_tier: 'curated_board',
         is_active: true,
         metadata: {
           trusted_discovery_enabled: true,
-          trusted_source_adapter: 'we_work_remotely',
+          trusted_source_adapter: 'fixture_adapter',
           feed_urls: ['https://example.com/feed.rss'],
         },
       }],
@@ -131,7 +131,7 @@ describe('searchTrustedSources', () => {
     });
 
     expect(results).toEqual([expect.objectContaining({
-      sourceId: 'we_work_remotely',
+      sourceId: 'trusted_board_fixture',
       fetched: 1,
       matched: 1,
       inserted: 1,
@@ -140,10 +140,10 @@ describe('searchTrustedSources', () => {
     expect(db.rowsByTable.discovered_postings).toContainEqual(expect.objectContaining({
       user_id: USER_ID,
       watchlist_id: null,
-      radar_source_id: 'we_work_remotely',
+      radar_source_id: 'trusted_board_fixture',
       company_name: 'Mission School',
-      external_job_id: 'wwr-backend-1',
-      first_seen_source: 'We Work Remotely',
+      external_job_id: 'trusted-board-backend-1',
+      first_seen_source: 'Example Trusted Board',
       source_tier: 'curated_board',
     }));
   });
@@ -151,13 +151,13 @@ describe('searchTrustedSources', () => {
   it('dedupes source-discovered postings against existing fingerprint matches', async () => {
     const db = createMockDb({
       radar_sources: [{
-        id: 'we_work_remotely',
-        source_name: 'We Work Remotely',
+        id: 'trusted_board_fixture',
+        source_name: 'Example Trusted Board',
         source_tier: 'curated_board',
         is_active: true,
         metadata: {
           trusted_discovery_enabled: true,
-          trusted_source_adapter: 'we_work_remotely',
+          trusted_source_adapter: 'fixture_adapter',
           feed_urls: ['https://example.com/feed.rss'],
         },
       }],
@@ -174,7 +174,7 @@ describe('searchTrustedSources', () => {
         also_seen_on: [],
         source_first_seen_at: {},
         raw_payload: {
-          canonicalUrl: 'https://weworkremotely.com/remote-jobs/mission-school-backend-engineer',
+          canonicalUrl: 'https://example.com/jobs/mission-school-backend-engineer',
         },
       }],
     });
@@ -201,9 +201,9 @@ describe('searchTrustedSources', () => {
       id: 'existing-posting',
       first_seen_source: 'Greenhouse',
       also_seen_on: [expect.objectContaining({
-        source_name: 'We Work Remotely',
+        source_name: 'Example Trusted Board',
         source_tier: 'curated_board',
-        external_job_id: 'wwr-backend-1',
+        external_job_id: 'trusted-board-backend-1',
       })],
     });
   });

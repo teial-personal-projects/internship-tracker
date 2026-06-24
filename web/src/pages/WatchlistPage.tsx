@@ -844,7 +844,7 @@ export function WatchlistWorkspace({ embedded = false }: WatchlistWorkspaceProps
               </h1>
             )}
             <p className="mt-1 text-sm" style={{ color: 'var(--ink-3)' }}>
-              Save companies, configure careers sources, and refresh matched postings.
+              Keep track of companies you want to revisit.
             </p>
           </div>
           <span className="text-sm font-semibold" style={{ color: 'var(--ink-3)' }}>
@@ -930,7 +930,7 @@ export function WatchlistWorkspace({ embedded = false }: WatchlistWorkspaceProps
               No companies found
             </h2>
             <p className="mx-auto mt-1 max-w-md text-sm" style={{ color: 'var(--ink-3)' }}>
-              Add a company you want to watch, configure its careers source, then refresh it to discover matching postings.
+              Add a company you want to watch so it stays separate from your job-board searches.
             </p>
             <button type="button" onClick={openAddModal} className="btn-primary mt-5 inline-flex items-center gap-2 text-sm">
               <Plus size={16} />

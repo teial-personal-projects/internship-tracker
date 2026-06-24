@@ -109,6 +109,19 @@ const source = {
   radar_enabled: true,
 };
 
+const softwareEngineerCriteria = {
+  user_id: source.user_id,
+  title_terms: ['software engineer'],
+  field_terms: [],
+  include_keywords: [],
+  exclude_keywords: [],
+  seniority_terms: [],
+  location_terms: [],
+  location_rules: [],
+  created_at: '2026-06-01T00:00:00.000Z',
+  updated_at: '2026-06-01T00:00:00.000Z',
+};
+
 describe('refreshRadarSource', () => {
   afterEach(() => {
     vi.clearAllMocks();
@@ -120,7 +133,7 @@ describe('refreshRadarSource', () => {
     });
     const db = createMockDb({
       discovered_postings: [],
-      radar_criteria: [],
+      radar_criteria: [softwareEngineerCriteria],
       company_watchlist: [{ id: source.id, last_refreshed_at: null }],
     });
 
@@ -168,7 +181,7 @@ describe('refreshRadarSource', () => {
     });
     const db = createMockDb({
       discovered_postings: [],
-      radar_criteria: [],
+      radar_criteria: [softwareEngineerCriteria],
       company_watchlist: [{ id: source.id, last_refreshed_at: null }],
     }, {
       discovered_postings: 'insert failed',
@@ -181,7 +194,7 @@ describe('refreshRadarSource', () => {
     expect(db.rowsByTable.company_watchlist[0].last_refreshed_at).toBeNull();
   });
 
-  it('uses default criteria when the optional radar_criteria table is missing', async () => {
+  it('does not match postings when the optional radar_criteria table is missing', async () => {
     vi.mocked(getAtsAdapter).mockReturnValue({
       fetch: vi.fn().mockResolvedValue([matchedPosting]),
     });
@@ -194,8 +207,8 @@ describe('refreshRadarSource', () => {
 
     const result = await refreshRadarSource(db, source);
 
-    expect(result).toMatchObject({ inserted: 1, matched: 1, fetched: 1, error: null });
-    expect(db.rowsByTable.discovered_postings).toHaveLength(1);
+    expect(result).toMatchObject({ inserted: 0, matched: 0, fetched: 1, error: null });
+    expect(db.rowsByTable.discovered_postings).toHaveLength(0);
     expect(db.rowsByTable.company_watchlist[0].last_refreshed_at).toEqual(expect.any(String));
   });
 
@@ -209,7 +222,7 @@ describe('refreshRadarSource', () => {
       });
     const db = createMockDb({
       discovered_postings: [],
-      radar_criteria: [],
+      radar_criteria: [softwareEngineerCriteria],
       company_watchlist: [
         { id: 'bad-watchlist', last_refreshed_at: null },
         { id: 'good-watchlist', last_refreshed_at: null },
@@ -297,7 +310,7 @@ describe('refreshRadarSource', () => {
           companyDomain: 'acme.com',
         },
       }],
-      radar_criteria: [],
+      radar_criteria: [softwareEngineerCriteria],
       company_watchlist: [{ id: source.id, last_refreshed_at: null }],
     });
 
@@ -362,7 +375,7 @@ describe('refreshRadarSource', () => {
           companyDomain: 'acme.com',
         },
       }],
-      radar_criteria: [],
+      radar_criteria: [softwareEngineerCriteria],
       company_watchlist: [{ id: source.id, last_refreshed_at: null }],
     });
 

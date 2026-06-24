@@ -21,7 +21,6 @@ INSERT INTO radar_sources (
   ('welcomekit', 'Welcome Kit', 'direct_ats', 'welcomekit', false),
   ('custom', 'Custom careers page', 'direct_ats', 'custom', false),
   ('linkedin', 'LinkedIn', 'curated_board', null, false),
-  ('we_work_remotely', 'We Work Remotely', 'curated_board', null, false),
   ('working_nomads', 'Working Nomads', 'curated_board', null, false),
   ('remote_co', 'Remote.co', 'curated_board', null, false),
   ('idealist', 'Idealist', 'curated_board', null, false),
@@ -37,15 +36,8 @@ ON CONFLICT (id) DO UPDATE SET
 
 UPDATE radar_sources
 SET
-  metadata = metadata || jsonb_build_object(
-    'trusted_discovery_enabled', true,
-    'trusted_source_adapter', 'we_work_remotely',
-    'feed_urls', jsonb_build_array(
-      'https://weworkremotely.com/categories/remote-back-end-programming-jobs.rss',
-      'https://weworkremotely.com/categories/remote-programming-jobs.rss'
-    ),
-    'attribution_text', 'Jobs from We Work Remotely link back to the original WWR posting.'
-  ),
+  is_active = false,
+  metadata = metadata - 'trusted_discovery_enabled' - 'trusted_source_adapter' - 'feed_urls' - 'attribution_text',
   updated_at = now()
 WHERE id = 'we_work_remotely';
 
@@ -63,7 +55,6 @@ WHERE id IN (
   'welcomekit',
   'custom',
   'linkedin',
-  'we_work_remotely',
   'working_nomads',
   'remote_co',
   'idealist',

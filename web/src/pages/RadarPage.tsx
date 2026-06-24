@@ -8,13 +8,14 @@ import { useWatchlist } from '@/hooks/useWatchlist';
 import {
   useRadarCriteria,
   useRadarPostings,
+  useRadarSearchSources,
   useSaveRadarPostingCompany,
   useSearchTrustedSources,
   useUpdateRadarCriteria,
   useUpdateRadarPostingStatus,
 } from '@/hooks/useRadar';
-import { WatchlistWorkspace } from '@/pages/WatchlistPage';
 import type { RadarPostingsParams } from '@/api/radar.api';
+import type { RadarSearchSource } from '@/api/radar.api';
 import type { WatchlistEntry } from '@/api/watchlist.api';
 import type {
   DiscoveredPosting,
@@ -25,7 +26,7 @@ import type {
 } from '@shared/schemas';
 
 type StatusFilter = Extract<PostingStatus, 'new' | 'seen' | 'dismissed'>;
-type DiscoveryView = 'fresh_direct' | 'curated' | 'aggregator' | 'live_only' | 'closed' | 'all';
+type DiscoveryView = 'job_boards' | 'live_only' | 'closed' | 'all';
 type LocationRule = RadarCriteria['location_rules'][number];
 type RadarPostingView = DiscoveredPosting;
 type ProvenanceSource = { sourceName?: string; source_name?: string; name?: string };
@@ -43,12 +44,10 @@ const STATUS_OPTIONS: Array<{ value: StatusFilter; label: string }> = [
 ];
 
 const VIEW_OPTIONS: Array<{ value: DiscoveryView; label: string }> = [
-  { value: 'fresh_direct', label: 'Fresh direct matches' },
-  { value: 'curated', label: 'Curated' },
-  { value: 'aggregator', label: 'Aggregator' },
+  { value: 'job_boards', label: 'Saved job-board results' },
   { value: 'live_only', label: 'Live only' },
   { value: 'closed', label: 'Closed' },
-  { value: 'all', label: 'All' },
+  { value: 'all', label: 'All saved job-board results' },
 ];
 
 const LOCATION_OPTIONS: Array<{ value: LocationRule; label: string }> = [
@@ -85,6 +84,12 @@ function sourceTierLabel(tier: SourceTier): string {
   if (tier === 'curated_board') return 'Curated';
   if (tier === 'aggregator') return 'Aggregator';
   return 'Direct ATS';
+}
+
+function searchSourceStatus(source: RadarSearchSource): string {
+  if (source.is_searchable) return 'Searchable';
+  if (!source.is_active) return 'Not active';
+  return 'Not connected';
 }
 
 function sourceName(posting: RadarPostingView, entry: WatchlistEntry | undefined): string {
@@ -150,6 +155,25 @@ function formatTerms(terms: string[] | undefined): string {
   return (terms ?? []).join(', ');
 }
 
+function trustedSourceErrorMessage(sources: Array<{ sourceName: string; error: string | null }>): string | null {
+  const failedSources = sources.filter((source) => source.error);
+  if (failedSources.length === 0) return null;
+
+  return failedSources
+    .map((source) => `${source.sourceName}: ${source.error}`)
+    .join('; ');
+}
+
+export function hasFormSearchAnchor(
+  titleTerms: string,
+  locationTerms: string,
+  locationRules: LocationRule[],
+): boolean {
+  return parseTerms(titleTerms).length > 0
+    || parseTerms(locationTerms).length > 0
+    || locationRules.length > 0;
+}
+
 function matchReasons(posting: RadarPostingView): string[] {
   const payload = posting.raw_payload;
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return [];
@@ -161,18 +185,11 @@ function matchReasons(posting: RadarPostingView): string[] {
     .slice(0, 4);
 }
 
-function isFreshMatch(posting: RadarPostingView): boolean {
-  const status = validityStatus(posting);
-  return sourceTier(posting) === 'direct_ats' && status !== 'closed' && status !== 'not_found';
-}
-
 export function radarViewParams(view: DiscoveryView): Pick<RadarPostingsParams, 'source_tier' | 'validity_status' | 'sort' | 'include_closed'> {
-  if (view === 'fresh_direct') return { source_tier: 'direct_ats', sort: 'quality' };
-  if (view === 'curated') return { source_tier: 'curated_board', sort: 'quality' };
-  if (view === 'aggregator') return { source_tier: 'aggregator', sort: 'quality' };
-  if (view === 'live_only') return { validity_status: 'live', sort: 'quality' };
-  if (view === 'closed') return { validity_status: 'closed', sort: 'first_seen' };
-  return { sort: 'quality', include_closed: true };
+  if (view === 'job_boards') return { source_tier: 'curated_board', sort: 'quality' };
+  if (view === 'live_only') return { source_tier: 'curated_board', validity_status: 'live', sort: 'quality' };
+  if (view === 'closed') return { source_tier: 'curated_board', validity_status: 'closed', sort: 'first_seen' };
+  return { source_tier: 'curated_board', sort: 'quality', include_closed: true };
 }
 
 function groupByCompany(
@@ -304,7 +321,6 @@ function CompanyRadarCard({
   onSaveCompany,
   onMarkSeen,
 }: CompanyRadarCardProps) {
-  const freshDirectCount = group.postings.filter(isFreshMatch).length;
   const { activePostings, closedPostings } = splitPostingsByClosedState(group.postings);
   const visiblePostings = activePostings.length > 0 ? activePostings : closedPostings;
   const collapsedClosedPostings = activePostings.length > 0 ? closedPostings : [];
@@ -328,11 +344,6 @@ function CompanyRadarCard({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {freshDirectCount > 0 && (
-            <span className="rounded-full px-2 py-1 text-xs font-semibold" style={{ background: 'var(--sage-tint)', color: 'var(--sage)' }}>
-              {freshDirectCount} fresh direct
-            </span>
-          )}
           {closedPostings.length > 0 && (
             <span className="rounded-full px-2 py-1 text-xs font-semibold" style={{ background: '#FEF2F2', color: '#B91C1C' }}>
               {closedPostings.length} closed
@@ -378,9 +389,8 @@ function CompanyRadarCard({
 
 export function RadarPage() {
   const [status, setStatus] = useState<StatusFilter>('new');
-  const [watchlistId, setWatchlistId] = useState('');
   const [search, setSearch] = useState('');
-  const [view, setView] = useState<DiscoveryView>('fresh_direct');
+  const [view, setView] = useState<DiscoveryView>('job_boards');
   const [savingCompanyName, setSavingCompanyName] = useState<string | null>(null);
   const [titleTerms, setTitleTerms] = useState('');
   const [fieldTerms, setFieldTerms] = useState('');
@@ -390,13 +400,13 @@ export function RadarPage() {
 
   const queryParams = useMemo<RadarPostingsParams>(() => ({
     ...(status && { status }),
-    ...(watchlistId && { watchlist_id: watchlistId }),
     ...(search.trim() && { search: search.trim() }),
     ...radarViewParams(view),
-  }), [search, status, view, watchlistId]);
+  }), [search, status, view]);
 
   const { data: postings = [], isLoading, error } = useRadarPostings(queryParams);
   const { data: criteria } = useRadarCriteria();
+  const { data: searchSources = [] } = useRadarSearchSources();
   const { data: watchlist = [] } = useWatchlist();
   const savePostingCompany = useSaveRadarPostingCompany();
   const updatePostingStatus = useUpdateRadarPostingStatus();
@@ -420,18 +430,26 @@ export function RadarPage() {
   );
 
   const companyGroups = useMemo(() => groupByCompany(postings as RadarPostingView[], watchlist), [postings, watchlist]);
+  const canSearchTrustedSources = hasFormSearchAnchor(titleTerms, locationTerms, locationRules);
+  const searchableSourceCount = searchSources.filter((source) => source.is_searchable).length;
+  const canRunJobBoardSearch = canSearchTrustedSources && searchableSourceCount > 0;
+  const hasSearchableJobBoards = searchableSourceCount > 0;
+  const listedUnsearchableSources = searchSources
+    .filter((source) => !source.is_searchable)
+    .map((source) => source.source_name)
+    .join(', ');
 
   const metrics = useMemo(() => {
     const viewPostings = postings as RadarPostingView[];
     const newToday = viewPostings.filter((posting) => posting.status === 'new').length;
-    const directAts = viewPostings.filter((posting) => sourceTier(posting) === 'direct_ats').length;
+    const jobBoards = viewPostings.filter((posting) => sourceTier(posting) === 'curated_board').length;
     const live = viewPostings.filter((posting) => validityStatus(posting) === 'live').length;
     const closed = viewPostings.filter((posting) => {
       const postingValidity = validityStatus(posting);
       return postingValidity === 'closed' || postingValidity === 'not_found';
     }).length;
 
-    return { newToday, directAts, live, closed };
+    return { newToday, jobBoards, live, closed };
   }, [postings]);
 
   async function handleSaveCompany(posting: RadarPostingView) {
@@ -459,17 +477,21 @@ export function RadarPage() {
     }
   }
 
+  function criteriaPayload() {
+    return {
+      title_terms: parseTerms(titleTerms),
+      field_terms: parseTerms(fieldTerms),
+      include_keywords: [],
+      exclude_keywords: parseTerms(excludeTerms),
+      seniority_terms: [],
+      location_terms: parseTerms(locationTerms),
+      location_rules: locationRules,
+    };
+  }
+
   async function handleSaveCriteria() {
     try {
-      await updateCriteria.mutateAsync({
-        title_terms: parseTerms(titleTerms),
-        field_terms: parseTerms(fieldTerms),
-        include_keywords: [],
-        exclude_keywords: parseTerms(excludeTerms),
-        seniority_terms: [],
-        location_terms: parseTerms(locationTerms),
-        location_rules: locationRules,
-      });
+      await updateCriteria.mutateAsync(criteriaPayload());
       toast.success('Radar criteria saved');
     } catch (err) {
       toast.error(apiErrorMessage(err, 'Could not save Radar criteria'));
@@ -477,25 +499,44 @@ export function RadarPage() {
   }
 
   async function handleSearchTrustedSources() {
+    if (searchableSourceCount === 0) {
+      toast.error('No connected job boards are available to search');
+      return;
+    }
+
+    if (!canSearchTrustedSources) {
+      toast.error('Add a target title or location before searching');
+      return;
+    }
+
     try {
+      await updateCriteria.mutateAsync(criteriaPayload());
       const result = await trustedSourceSearch.mutateAsync();
-      toast.message(result.message);
+      const sourceError = trustedSourceErrorMessage(result.sources);
+      if (result.sources_searched === 0) {
+        toast.warning(result.message);
+        return;
+      }
+      if (sourceError) {
+        toast.warning(result.message, { description: sourceError });
+        return;
+      }
+      toast.success(result.message);
     } catch (err) {
-      toast.error(apiErrorMessage(err, 'Could not search trusted sources'));
+      toast.error(apiErrorMessage(err, 'Could not search job boards'));
     }
   }
 
   function toggleLocationRule(rule: LocationRule) {
     setLocationRules((current) => {
       if (current.includes(rule)) {
-        const next = current.filter((item) => item !== rule);
-        return next.length > 0 ? next : current;
+        return current.filter((item) => item !== rule);
       }
       return [...current, rule];
     });
   }
 
-  const hasFilters = status !== 'new' || watchlistId || search.trim() || view !== 'fresh_direct';
+  const hasFilters = status !== 'new' || search.trim() || view !== 'job_boards';
 
   return (
     <div className="flex h-screen flex-col overflow-hidden" style={{ background: 'var(--bg)' }}>
@@ -503,10 +544,10 @@ export function RadarPage() {
       <main className="mobile-safe-bottom flex flex-1 flex-col gap-3 overflow-x-hidden overflow-y-auto p-3 sm:p-4 md:pb-6">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <h1 className="text-2xl font-bold" style={{ color: 'var(--ink)' }}>
-            Trusted job search
+            Job Search
           </h1>
           <span className="text-sm" style={{ color: 'var(--ink-3)' }}>
-            Search trusted sources, open original postings, save companies.
+            Search connected job boards by role, location, and filters.
           </span>
         </div>
 
@@ -514,7 +555,7 @@ export function RadarPage() {
           <div className="flex items-center gap-2">
             <Building2 size={18} style={{ color: 'var(--ink-3)' }} />
             <h2 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>
-              Radar results
+              Job-board results
             </h2>
           </div>
           <select
@@ -530,6 +571,14 @@ export function RadarPage() {
         </div>
 
         <section className="rounded-lg border bg-white p-3 shadow-sm" style={{ borderColor: 'var(--line)' }}>
+          <div className="mb-3">
+            <h2 className="text-sm font-bold" style={{ color: 'var(--ink)' }}>
+              Job-board search criteria
+            </h2>
+            <p className="mt-1 text-xs" style={{ color: 'var(--ink-3)' }}>
+              Save criteria any time. Searching runs only against connected job-board sources.
+            </p>
+          </div>
           <div className="grid gap-3 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] lg:items-end">
             <label>
               <span className="field-label">Target titles</span>
@@ -574,21 +623,32 @@ export function RadarPage() {
             <div className="flex gap-2">
               <button
                 type="button"
-                className="btn-outline min-h-11 px-3 text-sm"
+                className={hasSearchableJobBoards ? 'btn-outline min-h-11 px-3 text-sm' : 'btn-primary min-h-11 px-3 text-sm'}
                 onClick={handleSaveCriteria}
                 disabled={updateCriteria.isPending}
               >
                 Save criteria
               </button>
-              <button
-                type="button"
-                className="btn-primary inline-flex min-h-11 items-center gap-2 px-3 text-sm"
-                onClick={handleSearchTrustedSources}
-                disabled={trustedSourceSearch.isPending}
-              >
-                {trustedSourceSearch.isPending ? <Spinner size="sm" color="white" /> : <Search size={16} />}
-                Search trusted sources
-              </button>
+              {hasSearchableJobBoards ? (
+                <button
+                  type="button"
+                  className="btn-primary inline-flex min-h-11 items-center gap-2 px-3 text-sm"
+                  onClick={handleSearchTrustedSources}
+                  disabled={trustedSourceSearch.isPending || updateCriteria.isPending || !canRunJobBoardSearch}
+                  title={canSearchTrustedSources ? undefined : 'Add a target title or location before searching'}
+                >
+                  {trustedSourceSearch.isPending ? <Spinner size="sm" color="white" /> : <Search size={16} />}
+                  Search job boards
+                </button>
+              ) : (
+                <span
+                  className="inline-flex min-h-11 items-center gap-2 rounded-md border px-3 text-sm font-medium"
+                  style={{ borderColor: 'var(--line)', background: 'var(--soft)', color: 'var(--ink-3)' }}
+                >
+                  <Search size={16} />
+                  No job boards connected
+                </span>
+              )}
             </div>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -606,14 +666,58 @@ export function RadarPage() {
           </div>
         </section>
 
+        <section className="rounded-lg border bg-white p-3 shadow-sm" style={{ borderColor: 'var(--line)' }}>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-sm font-bold" style={{ color: 'var(--ink)' }}>
+                Job-board source status
+              </h2>
+              <p className="text-xs" style={{ color: 'var(--ink-3)' }}>
+                {searchableSourceCount} searchable / {searchSources.length} listed
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {hasSearchableJobBoards ? searchSources.map((source) => (
+                <span
+                  key={source.id}
+                  className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold"
+                  style={{
+                    borderColor: source.is_searchable ? 'var(--sage)' : 'var(--line)',
+                    color: source.is_searchable ? 'var(--sage)' : 'var(--ink-3)',
+                    background: source.is_searchable ? 'var(--sage-tint)' : 'white',
+                  }}
+                  title={`${source.source_name}: ${searchSourceStatus(source)}`}
+                >
+                  {source.source_name}
+                  <span className="font-medium">{searchSourceStatus(source)}</span>
+                </span>
+              )) : (
+                <span className="text-sm font-medium" style={{ color: 'var(--ink-3)' }}>
+                  No connected job-board sources
+                </span>
+              )}
+            </div>
+          </div>
+          {searchableSourceCount === 0 && (
+            <div className="mt-3 rounded-lg border p-3 text-sm" style={{ background: 'var(--soft)', borderColor: 'var(--line)', color: 'var(--ink-3)' }}>
+              There is no external job board connected right now, so targeted job-board search cannot run yet.
+              {listedUnsearchableSources && (
+                <span className="mt-2 block text-xs">
+                  Listed but not connected: {listedUnsearchableSources}.
+                </span>
+              )}
+            </div>
+          )}
+        </section>
+
         <section className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-lg border bg-white p-3" style={{ borderColor: 'var(--line)' }}>
             <p className="text-xs" style={{ color: 'var(--ink-3)' }}>New</p>
             <p className="mt-1 text-2xl font-bold" style={{ color: 'var(--ink)' }}>{metrics.newToday}</p>
           </div>
           <div className="rounded-lg border bg-white p-3" style={{ borderColor: 'var(--line)' }}>
-            <p className="text-xs" style={{ color: 'var(--ink-3)' }}>Direct ATS</p>
-            <p className="mt-1 text-2xl font-bold" style={{ color: 'var(--ink)' }}>{metrics.directAts}</p>
+            <p className="text-xs" style={{ color: 'var(--ink-3)' }}>Job boards</p>
+            <p className="mt-1 text-2xl font-bold" style={{ color: 'var(--ink)' }}>{metrics.jobBoards}</p>
           </div>
           <div className="rounded-lg border bg-white p-3" style={{ borderColor: 'var(--line)' }}>
             <p className="text-xs" style={{ color: 'var(--ink-3)' }}>Live</p>
@@ -626,7 +730,7 @@ export function RadarPage() {
         </section>
 
         <section className="rounded-lg border bg-white p-3 shadow-sm" style={{ borderColor: 'var(--line)' }}>
-          <div className="mobile-filter-scroll md:grid md:grid-cols-[180px_minmax(180px,240px)_1fr_auto] md:items-center md:overflow-visible md:pb-0">
+          <div className="mobile-filter-scroll md:grid md:grid-cols-[180px_1fr_auto] md:items-center md:overflow-visible md:pb-0">
             <label className="min-w-36 md:min-w-0">
               <span className="field-label">Status</span>
               <select
@@ -636,20 +740,6 @@ export function RadarPage() {
               >
                 {STATUS_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </label>
-
-            <label className="min-w-48 md:min-w-0">
-              <span className="field-label">Company</span>
-              <select
-                value={watchlistId}
-                onChange={(event) => setWatchlistId(event.target.value)}
-                className="field-select"
-              >
-                <option value="">All companies</option>
-                {watchlist.map((entry) => (
-                  <option key={entry.id} value={entry.id}>{entry.company_name}</option>
                 ))}
               </select>
             </label>
@@ -674,9 +764,8 @@ export function RadarPage() {
                 className="btn-outline mt-5 inline-flex min-h-11 items-center gap-1 px-3 text-sm"
                 onClick={() => {
                   setStatus('new');
-                  setWatchlistId('');
                   setSearch('');
-                  setView('fresh_direct');
+                  setView('job_boards');
                 }}
               >
                 Reset
@@ -723,21 +812,14 @@ export function RadarPage() {
                   {hasFilters ? 'No postings match these filters' : 'No matched postings yet'}
                 </h2>
                 <p className="mt-1 text-sm" style={{ color: 'var(--ink-3)' }}>
-                  Add a watched company, connect its careers source, then refresh that source to surface matching roles.
+                  {view === 'job_boards' && searchableSourceCount === 0
+                    ? 'No connected job board can be searched yet.'
+                    : 'No saved results match the current view.'}
                 </p>
               </div>
             </div>
           </section>
         )}
-
-        <section className="rounded-lg border bg-white p-3 shadow-sm" style={{ borderColor: 'var(--line)' }}>
-          <div className="mb-3">
-            <h2 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>
-              Companies to watch
-            </h2>
-          </div>
-          <WatchlistWorkspace embedded />
-        </section>
       </main>
     </div>
   );

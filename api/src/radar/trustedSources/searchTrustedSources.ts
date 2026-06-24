@@ -1,7 +1,6 @@
 import type { RadarCriteria } from '@internship-tracker/shared';
 import { ingestRadarPostings, type RadarIngestionDb } from '../refreshRadarSource';
 import { criteriaFromRow } from '../match';
-import { RADAR_SOURCE_REGISTRY } from '../sources/registry';
 import { getTrustedSourceAdapter } from './registry';
 import type { TrustedSourceDefinition, TrustedSourceSearchResult } from './types';
 
@@ -14,6 +13,8 @@ type RadarSourceSearchRow = {
   is_active?: boolean;
   metadata?: unknown;
 };
+
+const REMOVED_RADAR_SOURCE_IDS = new Set(['we_work_remotely']);
 
 function toQuery<T>(value: unknown): T {
   return value as T;
@@ -34,6 +35,7 @@ function stringArray(value: unknown): string[] {
 }
 
 function sourceFromDbRow(row: RadarSourceSearchRow): TrustedSourceDefinition | null {
+  if (REMOVED_RADAR_SOURCE_IDS.has(row.id)) return null;
   if (row.source_tier !== 'curated_board' && row.source_tier !== 'aggregator') return null;
 
   const metadata = rawObject(row.metadata);
@@ -54,23 +56,6 @@ function sourceFromDbRow(row: RadarSourceSearchRow): TrustedSourceDefinition | n
   };
 }
 
-function fallbackSources(): TrustedSourceDefinition[] {
-  return Object.values(RADAR_SOURCE_REGISTRY)
-    .filter((source) =>
-      source.trustedDiscoveryEnabled
-      && source.trustedSourceAdapter
-      && (source.tier === 'curated_board' || source.tier === 'aggregator'),
-    )
-    .map((source) => ({
-      id: source.id,
-      name: source.name,
-      tier: source.tier as 'curated_board' | 'aggregator',
-      adapterType: source.trustedSourceAdapter as string,
-      feedUrls: source.feedUrls,
-      attributionText: source.attributionText,
-    }));
-}
-
 async function getTrustedSources(db: RadarIngestionDb): Promise<TrustedSourceDefinition[]> {
   const query = toQuery<{
     select(columns?: string): unknown;
@@ -84,12 +69,11 @@ async function getTrustedSources(db: RadarIngestionDb): Promise<TrustedSourceDef
   );
 
   if (result.error) {
-    if (isMissingRadarSourcesTable(result.error)) return fallbackSources();
+    if (isMissingRadarSourcesTable(result.error)) return [];
     throw new Error(result.error.message);
   }
 
-  const sources = (result.data ?? []).map(sourceFromDbRow).filter((source): source is TrustedSourceDefinition => source !== null);
-  return sources.length > 0 ? sources : fallbackSources();
+  return (result.data ?? []).map(sourceFromDbRow).filter((source): source is TrustedSourceDefinition => source !== null);
 }
 
 export async function searchTrustedSources(

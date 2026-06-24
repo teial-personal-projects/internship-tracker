@@ -8,6 +8,7 @@ export const radarKeys = {
   all: ['radar'] as const,
   postings: (params: RadarPostingsParams) => ['radar', 'postings', params] as const,
   criteria: () => ['radar', 'criteria'] as const,
+  searchSources: () => ['radar', 'search-sources'] as const,
 };
 
 export function useRadarPostings(params: RadarPostingsParams = {}) {
@@ -23,6 +24,14 @@ export function useRadarCriteria() {
   return useQuery({
     queryKey: radarKeys.criteria(),
     queryFn: radarApi.getRadarCriteria,
+    staleTime: 60_000,
+  });
+}
+
+export function useRadarSearchSources() {
+  return useQuery({
+    queryKey: radarKeys.searchSources(),
+    queryFn: radarApi.getRadarSearchSources,
     staleTime: 60_000,
   });
 }

@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DiscoveredPosting } from '@shared/schemas';
-import { RadarPage, radarViewParams, splitPostingsByClosedState } from './RadarPage';
+import { RadarPage, hasFormSearchAnchor, radarViewParams, splitPostingsByClosedState } from './RadarPage';
 
 const mockRadarPostings = vi.hoisted(() => ({
   value: [] as DiscoveredPosting[],
@@ -13,10 +13,6 @@ const mockWatchlist = vi.hoisted(() => ({
 
 vi.mock('@/components/AppHeader', () => ({
   AppHeader: () => <header>Header</header>,
-}));
-
-vi.mock('@/pages/WatchlistPage', () => ({
-  WatchlistWorkspace: () => <section>Watchlist Workspace</section>,
 }));
 
 vi.mock('@/hooks/useWatchlist', () => ({
@@ -37,6 +33,24 @@ vi.mock('@/hooks/useRadar', () => ({
       created_at: '2026-06-01T00:00:00.000Z',
       updated_at: '2026-06-01T00:00:00.000Z',
     },
+  }),
+  useRadarSearchSources: () => ({
+    data: [
+      {
+        id: 'linkedin',
+        source_name: 'LinkedIn',
+        source_tier: 'curated_board',
+        is_active: true,
+        is_searchable: false,
+      },
+      {
+        id: 'idealist',
+        source_name: 'Idealist',
+        source_tier: 'curated_board',
+        is_active: false,
+        is_searchable: false,
+      },
+    ],
   }),
   useRadarPostings: () => ({ data: mockRadarPostings.value, isLoading: false, error: null }),
   useSaveRadarPostingCompany: () => ({ mutateAsync: vi.fn() }),
@@ -80,12 +94,17 @@ describe('RadarPage helpers', () => {
   });
 
   it('maps triage views to API filter params', () => {
-    expect(radarViewParams('fresh_direct')).toEqual({ source_tier: 'direct_ats', sort: 'quality' });
-    expect(radarViewParams('curated')).toEqual({ source_tier: 'curated_board', sort: 'quality' });
-    expect(radarViewParams('aggregator')).toEqual({ source_tier: 'aggregator', sort: 'quality' });
-    expect(radarViewParams('live_only')).toEqual({ validity_status: 'live', sort: 'quality' });
-    expect(radarViewParams('closed')).toEqual({ validity_status: 'closed', sort: 'first_seen' });
-    expect(radarViewParams('all')).toEqual({ sort: 'quality', include_closed: true });
+    expect(radarViewParams('job_boards')).toEqual({ source_tier: 'curated_board', sort: 'quality' });
+    expect(radarViewParams('live_only')).toEqual({ source_tier: 'curated_board', validity_status: 'live', sort: 'quality' });
+    expect(radarViewParams('closed')).toEqual({ source_tier: 'curated_board', validity_status: 'closed', sort: 'first_seen' });
+    expect(radarViewParams('all')).toEqual({ source_tier: 'curated_board', sort: 'quality', include_closed: true });
+  });
+
+  it('enables trusted source search from current form title or location criteria', () => {
+    expect(hasFormSearchAnchor('', '', [])).toBe(false);
+    expect(hasFormSearchAnchor('software engineer', '', [])).toBe(true);
+    expect(hasFormSearchAnchor('', 'Los Angeles, CA', [])).toBe(true);
+    expect(hasFormSearchAnchor('', '', ['remote_us'])).toBe(true);
   });
 
   it('splits closed postings from active postings', () => {
@@ -99,11 +118,13 @@ describe('RadarPage helpers', () => {
     expect(split.closedPostings.map((item) => item.id)).toEqual(['closed-posting', 'missing-posting']);
   });
 
-  it('renders the watchlist workspace below Radar results', () => {
+  it('keeps job search separate from the companies-to-watch workspace', () => {
     const markup = renderToStaticMarkup(<RadarPage />);
 
-    expect(markup.indexOf('Radar results')).toBeLessThan(markup.indexOf('Companies to watch'));
-    expect(markup.indexOf('No matched postings yet')).toBeLessThan(markup.indexOf('Watchlist Workspace'));
+    expect(markup).toContain('Job Search');
+    expect(markup).toContain('Job-board results');
+    expect(markup).not.toContain('Companies to watch');
+    expect(markup).not.toContain('Watchlist Workspace');
   });
 
   it('renders trusted discovery criteria controls before results', () => {
@@ -111,8 +132,15 @@ describe('RadarPage helpers', () => {
 
     expect(markup).toContain('Target titles');
     expect(markup).toContain('Fields or industries');
-    expect(markup).toContain('Search trusted sources');
-    expect(markup.indexOf('Search trusted sources')).toBeLessThan(markup.indexOf('New</p>'));
+    expect(markup).toContain('Job-board search criteria');
+    expect(markup).toContain('No job boards connected');
+    expect(markup).toContain('Job-board source status');
+    expect(markup).toContain('LinkedIn');
+    expect(markup).toContain('No connected job-board sources');
+    expect(markup).toContain('Listed but not connected');
+    expect(markup).toContain('targeted job-board search cannot run yet');
+    expect(markup).not.toContain('Search job boards');
+    expect(markup).not.toContain('All companies');
   });
 
   it('renders source tier, validity, original posting link, save company, and provenance on Radar cards', () => {
@@ -120,9 +148,9 @@ describe('RadarPage helpers', () => {
       id: 'curated-posting',
       company_name: 'Mission School',
       title: 'Backend Engineer',
-      url: 'https://weworkremotely.com/remote-jobs/mission-school-backend-engineer',
+      url: 'https://example.com/jobs/mission-school-backend-engineer',
       source_tier: 'curated_board',
-      first_seen_source: 'We Work Remotely',
+      first_seen_source: 'Example Trusted Board',
       validity_status: 'live',
       also_seen_on: [{
         source_name: 'Greenhouse',
@@ -131,7 +159,7 @@ describe('RadarPage helpers', () => {
         url: 'https://boards.greenhouse.io/mission/jobs/1',
       }],
       raw_payload: {
-        match_reasons: ['title "backend engineer"', 'source We Work Remotely', 'location remote_us'],
+        match_reasons: ['title "backend engineer"', 'source Example Trusted Board'],
       },
     })];
 
@@ -139,7 +167,7 @@ describe('RadarPage helpers', () => {
 
     expect(markup).toContain('Curated');
     expect(markup).toContain('Live');
-    expect(markup).toContain('href="https://weworkremotely.com/remote-jobs/mission-school-backend-engineer"');
+    expect(markup).toContain('href="https://example.com/jobs/mission-school-backend-engineer"');
     expect(markup).toContain('Save company');
     expect(markup).not.toContain('Add to tracker');
     expect(markup).toContain('Also seen on Greenhouse');

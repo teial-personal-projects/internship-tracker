@@ -6,6 +6,7 @@ import { createUserClient } from '../lib/supabase';
 import { refreshRadarSource, type RadarRefreshDb } from '../radar/refreshRadarSource';
 import { validatePostingFromSource, type RadarValidationDb } from '../radar/validatePosting';
 import { qualityScore } from '../radar/qualityScore';
+import { RADAR_SOURCE_REGISTRY } from '../radar/sources/registry';
 import { searchTrustedSources as runTrustedSourceSearch } from '../radar/trustedSources/searchTrustedSources';
 import { UpdateRadarCriteriaSchema, type AtsType, type RadarCriteria, type UpdateRadarCriteriaSchemaType } from '@internship-tracker/shared';
 import type { Request, Response } from 'express';
@@ -35,16 +36,25 @@ type SearchableWatchlistEntry = {
   company_name?: string | null;
   industry?: string | null;
 };
+type RadarSearchSourceRow = {
+  id: string;
+  source_name: string;
+  source_tier: SourceTier;
+  is_active?: boolean | null;
+  metadata?: unknown;
+};
+
+const REMOVED_RADAR_SOURCE_IDS = new Set(['we_work_remotely']);
 
 const UpdatePostingStatusSchema = z.object({
   status: z.enum(['seen', 'dismissed']),
 });
 
 const DEFAULT_RADAR_CRITERIA = {
-  title_terms: ['software engineer', 'backend engineer', 'full-stack engineer', 'full stack engineer'],
-  field_terms: ['edtech', 'education technology', 'mission-driven', 'civic tech', 'nonprofit tech'],
+  title_terms: [],
+  field_terms: [],
   include_keywords: [],
-  exclude_keywords: ['junior', 'intern', 'internship'],
+  exclude_keywords: [],
   seniority_terms: [],
   location_terms: [],
   location_rules: [],
@@ -100,10 +110,10 @@ function criteriaFromRow(row: Partial<RadarCriteria> | null | undefined, userId:
     ...defaults,
     ...row,
     user_id: userId,
-    title_terms: normalizeTerms(row.title_terms).length > 0 ? normalizeTerms(row.title_terms) : defaults.title_terms,
-    field_terms: normalizeTerms(row.field_terms).length > 0 ? normalizeTerms(row.field_terms) : defaults.field_terms,
+    title_terms: normalizeTerms(row.title_terms),
+    field_terms: normalizeTerms(row.field_terms),
     include_keywords: normalizeTerms(row.include_keywords),
-    exclude_keywords: normalizeTerms(row.exclude_keywords).length > 0 ? normalizeTerms(row.exclude_keywords) : defaults.exclude_keywords,
+    exclude_keywords: normalizeTerms(row.exclude_keywords),
     seniority_terms: normalizeTerms(row.seniority_terms),
     location_terms: normalizeTerms(row.location_terms),
     location_rules: normalizeLocationRules(row.location_rules),
@@ -194,8 +204,46 @@ function queryBoolean(value: unknown): boolean {
   return value === 'true';
 }
 
+function rawObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function isMissingRadarSourcesTable(error: { message: string } | null): boolean {
+  if (!error) return false;
+  const message = error.message.toLowerCase();
+  return message.includes('radar_sources') && (message.includes('schema') || message.includes('does not exist'));
+}
+
 function containsSearchValue(value: string | null | undefined, search: string): boolean {
   return typeof value === 'string' && value.toLowerCase().includes(search);
+}
+
+function searchSourcePayload(row: RadarSearchSourceRow) {
+  const metadata = rawObject(row.metadata);
+  const hasAdapter = typeof metadata.trusted_source_adapter === 'string' && metadata.trusted_source_adapter.trim().length > 0;
+  const trustedDiscoveryEnabled = metadata.trusted_discovery_enabled === true;
+  return {
+    id: row.id,
+    source_name: row.source_name,
+    source_tier: row.source_tier,
+    is_active: row.is_active ?? false,
+    is_searchable: Boolean(row.is_active && trustedDiscoveryEnabled && hasAdapter),
+  };
+}
+
+function fallbackSearchSources() {
+  return Object.values(RADAR_SOURCE_REGISTRY)
+    .filter((source) =>
+      (source.tier === 'curated_board' || source.tier === 'aggregator')
+      && !REMOVED_RADAR_SOURCE_IDS.has(source.id),
+    )
+    .map((source) => ({
+      id: source.id,
+      source_name: source.name,
+      source_tier: source.tier,
+      is_active: false,
+      is_searchable: false,
+    }));
 }
 
 function postingMatchesSearch(
@@ -333,6 +381,41 @@ router.put('/criteria', requireAuth, validateBody(UpdateRadarCriteriaSchema), as
   }
 });
 
+// GET /api/radar/search-sources
+router.get('/search-sources', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const { data, error } = await db
+      .from('radar_sources')
+      .select('id, source_name, source_tier, is_active, metadata');
+
+    if (error) {
+      if (isMissingRadarSourcesTable(error)) {
+        res.json({ data: fallbackSearchSources() });
+        return;
+      }
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    const sources = ((data ?? []) as RadarSearchSourceRow[])
+      .filter((source) =>
+        (source.source_tier === 'curated_board' || source.source_tier === 'aggregator')
+        && !REMOVED_RADAR_SOURCE_IDS.has(source.id),
+      )
+      .map(searchSourcePayload)
+      .sort((left, right) =>
+        Number(right.is_searchable) - Number(left.is_searchable)
+        || left.source_tier.localeCompare(right.source_tier)
+        || left.source_name.localeCompare(right.source_name),
+      );
+
+    res.json({ data: sources });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // POST /api/radar/search
 router.post('/search', requireAuth, async (req: Request, res, next) => {
   try {
@@ -358,7 +441,9 @@ router.post('/search', requireAuth, async (req: Request, res, next) => {
         ...totals,
         criteria,
         sources: sourceResults,
-        message: failedSources.length > 0
+        message: totals.sources_searched === 0
+          ? 'No trusted sources are configured yet.'
+          : failedSources.length > 0
           ? `Trusted source search completed with ${failedSources.length} source error(s).`
           : `Trusted source search found ${totals.matched} matching posting(s).`,
       },

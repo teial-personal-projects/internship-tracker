@@ -19,7 +19,7 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 | Tier | Source class | Examples | Product behavior |
 | --- | --- | --- | --- |
 | 1 | Direct ATS | Greenhouse, Lever, Ashby, Workday, SmartRecruiters | Highest-confidence original source, usually from watchlist or discovered company careers pages |
-| 2 | Trusted curated boards | Wellfound-style niche boards, mission-driven boards, We Work Remotely, Working Nomads, Remote.co, Idealist if a safe integration exists | Primary discovery channels when they expose reliable feeds or APIs |
+| 2 | Trusted curated boards | Wellfound-style niche boards, mission-driven boards, Working Nomads, Remote.co, Idealist if a safe integration exists | Primary discovery channels when they expose reliable feeds or APIs |
 | 3 | Aggregators | Indeed, ZipRecruiter-style syndication | Append as `also_seen_on` instead of creating noise |
 
 ## Step 1 — Data Model
@@ -166,7 +166,7 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 10.6 [x] Build the first trusted source adapter only after evaluating whether the source meaningfully helps the user's target roles.
 10.7 [x] Prefer sources with official RSS feeds, documented APIs, or explicit export formats.
 10.8 [x] Avoid sources that require broad scraping, anti-bot bypassing, paid access, or produce mostly LinkedIn-style duplicate noise.
-10.9 [x] Treat We Work Remotely as an optional pilot candidate, not a commitment; use it only if remote-first coverage is useful enough for the user's search.
+10.9 [x] Do not ship a trusted-source adapter until the source is explicitly selected for the user's target search.
 10.10 [x] Keep Idealist as a high-value follow-up only if a safe, non-scraping integration path is chosen.
 
 ## Step 11 — Optional Metrics
@@ -231,4 +231,4 @@ Manual UI verification note: the local app opened successfully at `http://127.0.
 4. [x] Do not add manual validity override UI in this pass.
 5. [x] Keep closed discovered postings and demote or filter them at query time instead of hard-deleting them.
 6. [x] Treat the company watchlist as a secondary Radar input, not the core discovery workflow.
-7. [x] Treat We Work Remotely as an optional trusted-source pilot candidate, not a committed adapter.
+7. [x] Remove the We Work Remotely pilot adapter and do not search bundled fallback sources.
