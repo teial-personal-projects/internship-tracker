@@ -135,6 +135,11 @@ describe('refreshRadarSource', () => {
       watchlist_id: 'watchlist-1',
       company_name: 'Acme',
       external_job_id: 'job-1',
+      source_tier: 'direct_ats',
+      first_seen_source: 'Greenhouse',
+      source_first_seen_at: {
+        Greenhouse: expect.any(String),
+      },
       status: 'new',
     });
     expect(db.rowsByTable.company_watchlist[0].last_refreshed_at).toEqual(expect.any(String));
@@ -253,6 +258,130 @@ describe('refreshRadarSource', () => {
     expect(db.rowsByTable.discovered_postings[0]).toMatchObject({
       external_job_id: 'job-2',
       remote_status: 'onsite',
+    });
+  });
+
+  it('appends provenance instead of inserting when a canonical fingerprint already exists', async () => {
+    vi.mocked(getAtsAdapter).mockReturnValue({
+      fetch: vi.fn().mockResolvedValue([{
+        ...matchedPosting,
+        canonicalUrl: 'https://boards.greenhouse.io/acme/jobs/123',
+        companyDomain: 'acme.com',
+      }]),
+    });
+    const db = createMockDb({
+      discovered_postings: [{
+        id: 'existing-posting',
+        user_id: source.user_id,
+        watchlist_id: source.id,
+        company_name: 'Acme, Inc.',
+        external_job_id: 'linkedin-123',
+        title: 'Software Engineer',
+        location: 'Remote',
+        remote_status: 'remote_us',
+        url: 'https://linkedin.com/jobs/view/linkedin-123',
+        posted_at: null,
+        first_seen_at: '2026-06-01T00:00:00.000Z',
+        status: 'new',
+        source_tier: 'curated_board',
+        first_seen_source: 'LinkedIn',
+        also_seen_on: [],
+        source_first_seen_at: {
+          LinkedIn: '2026-06-01T00:00:00.000Z',
+        },
+        raw_payload: {
+          canonicalUrl: 'https://boards.greenhouse.io/acme/jobs/123',
+          companyDomain: 'acme.com',
+        },
+      }],
+      radar_criteria: [],
+      company_watchlist: [{ id: source.id, last_refreshed_at: null }],
+    });
+
+    const result = await refreshRadarSource(db, source);
+
+    expect(result).toMatchObject({ inserted: 0, matched: 1, fetched: 1, error: null });
+    expect(db.rowsByTable.discovered_postings).toHaveLength(1);
+    expect(db.rowsByTable.discovered_postings[0]).toMatchObject({
+      id: 'existing-posting',
+      external_job_id: 'job-1',
+      url: 'https://example.com/job-1',
+      source_tier: 'direct_ats',
+      first_seen_source: 'LinkedIn',
+      first_seen_at: '2026-06-01T00:00:00.000Z',
+      also_seen_on: [{
+        source_name: 'Greenhouse',
+        source_tier: 'direct_ats',
+        external_job_id: 'job-1',
+        url: 'https://example.com/job-1',
+      }],
+      source_first_seen_at: {
+        LinkedIn: '2026-06-01T00:00:00.000Z',
+        Greenhouse: expect.any(String),
+      },
+    });
+  });
+
+  it('keeps a direct ATS posting canonical after a later lower-tier fingerprint match', async () => {
+    vi.mocked(getAtsAdapter).mockReturnValue({
+      fetch: vi.fn().mockResolvedValue([{
+        ...matchedPosting,
+        sourceName: 'LinkedIn',
+        sourceTier: 'curated_board',
+        externalId: 'linkedin-123',
+        url: 'https://linkedin.com/jobs/view/linkedin-123',
+        canonicalUrl: 'https://boards.greenhouse.io/acme/jobs/123',
+        companyDomain: 'acme.com',
+      }]),
+    });
+    const db = createMockDb({
+      discovered_postings: [{
+        id: 'existing-posting',
+        user_id: source.user_id,
+        watchlist_id: source.id,
+        company_name: 'Acme',
+        external_job_id: 'job-1',
+        title: 'Senior Software Engineer',
+        location: 'Remote',
+        remote_status: 'remote_us',
+        url: 'https://boards.greenhouse.io/acme/jobs/123',
+        posted_at: null,
+        first_seen_at: '2026-06-01T00:00:00.000Z',
+        status: 'new',
+        source_tier: 'direct_ats',
+        first_seen_source: 'Greenhouse',
+        also_seen_on: [],
+        source_first_seen_at: {
+          Greenhouse: '2026-06-01T00:00:00.000Z',
+        },
+        raw_payload: {
+          canonicalUrl: 'https://boards.greenhouse.io/acme/jobs/123',
+          companyDomain: 'acme.com',
+        },
+      }],
+      radar_criteria: [],
+      company_watchlist: [{ id: source.id, last_refreshed_at: null }],
+    });
+
+    const result = await refreshRadarSource(db, source);
+
+    expect(result).toMatchObject({ inserted: 0, matched: 1, fetched: 1, error: null });
+    expect(db.rowsByTable.discovered_postings).toHaveLength(1);
+    expect(db.rowsByTable.discovered_postings[0]).toMatchObject({
+      external_job_id: 'job-1',
+      url: 'https://boards.greenhouse.io/acme/jobs/123',
+      source_tier: 'direct_ats',
+      first_seen_source: 'Greenhouse',
+      also_seen_on: [{
+        source_name: 'LinkedIn',
+        source_tier: 'curated_board',
+        external_job_id: 'linkedin-123',
+        url: 'https://linkedin.com/jobs/view/linkedin-123',
+      }],
+      source_first_seen_at: {
+        Greenhouse: '2026-06-01T00:00:00.000Z',
+        LinkedIn: expect.any(String),
+      },
     });
   });
 });

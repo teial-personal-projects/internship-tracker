@@ -69,21 +69,21 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 
 ## Step 5 — Provenance-Aware Ingestion
 
-5.1 [ ] Extend `NormalizedPosting` in `api/src/radar/adapters/types.ts` with `sourceName`, `sourceTier`, optional `canonicalUrl`, and optional `companyDomain`.
-5.2 [ ] Create `api/src/radar/fingerprint.ts`.
-5.3 [ ] Normalize title by lowercasing, stripping seniority punctuation noise, and trimming whitespace.
-5.4 [ ] Normalize company name and URL host.
-5.5 [ ] Produce a deterministic fingerprint from company, normalized title, and canonical URL or external ID.
-5.6 [ ] Keep exact `(watchlist_id, external_job_id)` dedupe in `refreshRadarSource`.
-5.7 [ ] Before insert, look for an existing posting with the same canonical fingerprint for the same user and company.
-5.8 [ ] If a fingerprint match exists, append the new source to `also_seen_on` instead of inserting a duplicate card.
-5.9 [ ] Preserve the original `first_seen_at` and `first_seen_source`.
-5.10 [ ] Add or update `source_first_seen_at[sourceName]`.
-5.11 [ ] Resolve source metadata from `radar_sources`, falling back to `api/src/radar/sources/registry.ts` when the catalog query is unavailable.
-5.12 [ ] Store `discovered_postings.source_tier` as a denormalized copy of the authoritative `radar_sources.source_tier` value for filters and quality sorting.
-5.13 [ ] Preserve the highest-authority canonical source tier, using `direct_ats` over `curated_board` over `aggregator`.
-5.14 [ ] If a higher-authority source later matches an existing fingerprint, update the posting's denormalized `source_tier` and primary source fields without changing `first_seen_at`.
-5.15 [ ] Do not model curated boards or aggregators as company-specific watchlist source rows unless a future adapter truly needs company-specific configuration.
+5.1 [x] Extend `NormalizedPosting` in `api/src/radar/adapters/types.ts` with `sourceName`, `sourceTier`, optional `canonicalUrl`, and optional `companyDomain`.
+5.2 [x] Create `api/src/radar/fingerprint.ts`.
+5.3 [x] Normalize title by lowercasing, stripping seniority punctuation noise, and trimming whitespace.
+5.4 [x] Normalize company name and URL host.
+5.5 [x] Produce a deterministic fingerprint from company, normalized title, and canonical URL or external ID.
+5.6 [x] Keep exact `(watchlist_id, external_job_id)` dedupe in `refreshRadarSource`.
+5.7 [x] Before insert, look for an existing posting with the same canonical fingerprint for the same user and company.
+5.8 [x] If a fingerprint match exists, append the new source to `also_seen_on` instead of inserting a duplicate card.
+5.9 [x] Preserve the original `first_seen_at` and `first_seen_source`.
+5.10 [x] Add or update `source_first_seen_at[sourceName]`.
+5.11 [x] Resolve source metadata from `radar_sources`, falling back to `api/src/radar/sources/registry.ts` when the catalog query is unavailable.
+5.12 [x] Store `discovered_postings.source_tier` as a denormalized copy of the authoritative `radar_sources.source_tier` value for filters and quality sorting.
+5.13 [x] Preserve the highest-authority canonical source tier, using `direct_ats` over `curated_board` over `aggregator`.
+5.14 [x] If a higher-authority source later matches an existing fingerprint, update the posting's denormalized `source_tier` and primary source fields without changing `first_seen_at`.
+5.15 [x] Do not model curated boards or aggregators as company-specific watchlist source rows unless a future adapter truly needs company-specific configuration.
 
 ## Step 6 — Validity Checks
 
@@ -113,6 +113,7 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 7.11 [ ] Exclude `closed` and `not_found` postings from the default fresh direct matches query.
 7.12 [ ] Keep closed postings available through `All` and `Closed` filters.
 7.13 [ ] Hide closed postings from the default view when `last_validated_at` is older than about two weeks, without deleting the row.
+7.14 [x] Support Radar search across posting title, company name, location, and watched-company industry.
 
 ## Step 8 — Discover and Watchlist UI
 
@@ -130,6 +131,7 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 8.12 [ ] Use the spatial three-column tier view only if curated and aggregator sources become substantial enough to compare side by side.
 8.13 [ ] Collapse closed postings under their company group instead of rendering them as equally prominent fresh cards.
 8.14 [ ] Do not add a general manual validity toggle to Radar cards in this pass.
+8.15 [x] Label Radar search so it is clear that title, company, and industry terms are searchable.
 
 ## Step 9 — Optional Metrics
 

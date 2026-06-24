@@ -464,7 +464,7 @@ export function RadarPage() {
                   type="search"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search titles..."
+                  placeholder="Search title, company, industry..."
                   className="field-input pl-9"
                 />
               </span>

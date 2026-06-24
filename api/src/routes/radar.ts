@@ -11,6 +11,17 @@ const router = Router();
 
 type Ownership = 'ok' | 'not_found' | 'forbidden';
 type SourceTier = 'direct_ats' | 'curated_board' | 'aggregator';
+type SearchablePosting = {
+  title?: string | null;
+  company_name?: string | null;
+  location?: string | null;
+  watchlist_id?: string | null;
+};
+type SearchableWatchlistEntry = {
+  id: string;
+  company_name?: string | null;
+  industry?: string | null;
+};
 
 const UpdatePostingStatusSchema = z.object({
   status: z.enum(['seen', 'dismissed']),
@@ -42,6 +53,47 @@ function sendOwnershipError(res: Response, ownership: Exclude<Ownership, 'ok'>):
   res.status(404).json({ error: 'Posting not found' });
 }
 
+function queryString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
+}
+
+function containsSearchValue(value: string | null | undefined, search: string): boolean {
+  return typeof value === 'string' && value.toLowerCase().includes(search);
+}
+
+function postingMatchesSearch(
+  posting: SearchablePosting,
+  search: string,
+  matchingWatchlistIds: Set<string>,
+): boolean {
+  return containsSearchValue(posting.title, search)
+    || containsSearchValue(posting.company_name, search)
+    || containsSearchValue(posting.location, search)
+    || Boolean(posting.watchlist_id && matchingWatchlistIds.has(posting.watchlist_id));
+}
+
+async function getSearchMatchingWatchlistIds(
+  db: ReturnType<typeof createUserClient>,
+  userId: string,
+  search: string,
+): Promise<Set<string>> {
+  const { data, error } = await db
+    .from('company_watchlist')
+    .select('id, company_name, industry')
+    .eq('user_id', userId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return new Set((data as SearchableWatchlistEntry[] | null ?? [])
+    .filter((entry) =>
+      containsSearchValue(entry.company_name, search)
+      || containsSearchValue(entry.industry, search),
+    )
+    .map((entry) => entry.id));
+}
+
 // GET /api/radar/postings
 router.get('/postings', requireAuth, async (req: Request, res, next) => {
   try {
@@ -54,14 +106,15 @@ router.get('/postings', requireAuth, async (req: Request, res, next) => {
       .eq('user_id', user.id)
       .order('first_seen_at', { ascending: false });
 
-    if (req.query.status) {
-      query = query.eq('status', req.query.status as string);
+    const status = queryString(req.query.status);
+    const watchlistId = queryString(req.query.watchlist_id);
+    const search = queryString(req.query.search)?.toLowerCase();
+
+    if (status) {
+      query = query.eq('status', status);
     }
-    if (req.query.watchlist_id) {
-      query = query.eq('watchlist_id', req.query.watchlist_id as string);
-    }
-    if (req.query.search) {
-      query = query.ilike('title', `%${req.query.search as string}%`);
+    if (watchlistId) {
+      query = query.eq('watchlist_id', watchlistId);
     }
 
     const { data, error } = await query;
@@ -71,7 +124,16 @@ router.get('/postings', requireAuth, async (req: Request, res, next) => {
       return;
     }
 
-    res.json({ data: data ?? [] });
+    if (!search) {
+      res.json({ data: data ?? [] });
+      return;
+    }
+
+    const matchingWatchlistIds = await getSearchMatchingWatchlistIds(db, user.id, search);
+    const filteredData = (data as SearchablePosting[] | null ?? [])
+      .filter((posting) => postingMatchesSearch(posting, search, matchingWatchlistIds));
+
+    res.json({ data: filteredData });
   } catch (err) {
     next(err);
   }

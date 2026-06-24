@@ -107,7 +107,7 @@ class Query {
       this.filters.every(([column, value]) => row[column] === value)
       && this.ilikeFilters.every(([column, value]) => (
         typeof row[column] === 'string'
-        && (row[column] as string).toLowerCase() === value.toLowerCase()
+        && (row[column] as string).toLowerCase().includes(value.replaceAll('%', '').toLowerCase())
       )),
     );
   }
@@ -134,6 +134,95 @@ describe('radar routes', () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('GET /api/radar/postings searches posting titles', async () => {
+    const db = createMockDb({
+      discovered_postings: [
+        {
+          id: 'posting-1',
+          user_id: USER_ID,
+          company_name: 'Acme',
+          title: 'Senior Software Engineer',
+          location: 'Remote',
+          status: 'new',
+          watchlist_id: WATCHLIST_ID,
+        },
+        {
+          id: 'posting-2',
+          user_id: USER_ID,
+          company_name: 'Beta',
+          title: 'Product Manager',
+          location: 'Remote',
+          status: 'new',
+          watchlist_id: '33333333-3333-4333-8333-333333333333',
+        },
+      ],
+      company_watchlist: [],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .get('/api/radar/postings?search=software')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0]).toMatchObject({
+      id: 'posting-1',
+      title: 'Senior Software Engineer',
+    });
+  });
+
+  it('GET /api/radar/postings searches watchlist industries', async () => {
+    const db = createMockDb({
+      discovered_postings: [
+        {
+          id: 'posting-1',
+          user_id: USER_ID,
+          company_name: 'Acme',
+          title: 'Backend Engineer',
+          location: 'Remote',
+          status: 'new',
+          watchlist_id: WATCHLIST_ID,
+        },
+        {
+          id: 'posting-2',
+          user_id: USER_ID,
+          company_name: 'Beta',
+          title: 'Backend Engineer',
+          location: 'Remote',
+          status: 'new',
+          watchlist_id: '33333333-3333-4333-8333-333333333333',
+        },
+      ],
+      company_watchlist: [
+        {
+          id: WATCHLIST_ID,
+          user_id: USER_ID,
+          company_name: 'Acme',
+          industry: 'Education Technology',
+        },
+        {
+          id: '33333333-3333-4333-8333-333333333333',
+          user_id: USER_ID,
+          company_name: 'Beta',
+          industry: 'Fintech',
+        },
+      ],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .get('/api/radar/postings?search=education')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0]).toMatchObject({
+      id: 'posting-1',
+      company_name: 'Acme',
+    });
   });
 
   it('POST /api/radar/postings/:id/save-company creates a watchlist entry without creating an application', async () => {
