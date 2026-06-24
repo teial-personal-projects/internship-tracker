@@ -35,6 +35,20 @@ ON CONFLICT (id) DO UPDATE SET
   is_active = true,
   updated_at = now();
 
+UPDATE radar_sources
+SET
+  metadata = metadata || jsonb_build_object(
+    'trusted_discovery_enabled', true,
+    'trusted_source_adapter', 'we_work_remotely',
+    'feed_urls', jsonb_build_array(
+      'https://weworkremotely.com/categories/remote-back-end-programming-jobs.rss',
+      'https://weworkremotely.com/categories/remote-programming-jobs.rss'
+    ),
+    'attribution_text', 'Jobs from We Work Remotely link back to the original WWR posting.'
+  ),
+  updated_at = now()
+WHERE id = 'we_work_remotely';
+
 -- ============================================================
 -- DOWN
 -- ============================================================

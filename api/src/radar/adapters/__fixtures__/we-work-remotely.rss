@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>We Work Remotely</title>
+    <item>
+      <title><![CDATA[Mission School: Backend Engineer]]></title>
+      <link>https://weworkremotely.com/remote-jobs/mission-school-backend-engineer</link>
+      <guid>wwr-backend-1</guid>
+      <pubDate>Mon, 01 Jun 2026 12:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title><![CDATA[Sales Tools Inc: Account Executive]]></title>
+      <link>https://weworkremotely.com/remote-jobs/sales-tools-account-executive</link>
+      <guid>wwr-sales-1</guid>
+      <pubDate>Tue, 02 Jun 2026 12:00:00 +0000</pubDate>
+    </item>
+  </channel>
+</rss>

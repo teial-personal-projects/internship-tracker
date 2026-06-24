@@ -65,9 +65,9 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 3.6 [x] Define known source metadata in database seed data: source name, tier, adapter type, and whether the source supports direct validity checks.
 3.7 [x] Map current ATS adapters to `direct_ats`.
 3.8 [x] Reserve curated-board entries for future adapters without wiring broad scraping into the first release.
-3.9 [ ] Treat `radar_sources` as the catalog of trusted job-search sources, not merely metadata for watchlist refreshes.
-3.10 [ ] Add source metadata fields needed for manual search, such as supported query fields, feed URL template, attribution text, and whether the source is enabled for trusted discovery.
-3.11 [ ] Keep company watchlist source settings only for company-specific direct ATS refreshes.
+3.9 [x] Treat `radar_sources` as the catalog of trusted job-search sources, not merely metadata for watchlist refreshes.
+3.10 [x] Add source metadata fields needed for manual search, such as supported query fields, feed URL template, attribution text, and whether the source is enabled for trusted discovery.
+3.11 [x] Keep company watchlist source settings only for company-specific direct ATS refreshes.
 
 ## Step 4 — Save Company From Radar
 
@@ -158,16 +158,16 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 
 ## Step 10 — Trusted Source Search
 
-10.1 [ ] Define a `TrustedSourceAdapter` contract for source searches that accepts criteria and returns `NormalizedPosting[]`.
-10.2 [ ] Support source-discovered postings that are not associated with a watchlist row.
-10.3 [ ] Insert source-discovered postings with `radar_source_id`, `sourceName`, `sourceTier`, provenance fields, and nullable `watchlist_id`.
-10.4 [ ] Reuse fingerprint dedupe so source-discovered roles merge with direct ATS or watchlist-discovered roles.
-10.5 [ ] Save the discovered company to `company_watchlist` only when the user clicks `Save company`.
-10.6 [ ] Build the first trusted source adapter only after evaluating whether the source meaningfully helps the user's target roles.
-10.7 [ ] Prefer sources with official RSS feeds, documented APIs, or explicit export formats.
-10.8 [ ] Avoid sources that require broad scraping, anti-bot bypassing, paid access, or produce mostly LinkedIn-style duplicate noise.
-10.9 [ ] Treat We Work Remotely as an optional pilot candidate, not a commitment; use it only if remote-first coverage is useful enough for the user's search.
-10.10 [ ] Keep Idealist as a high-value follow-up only if a safe, non-scraping integration path is chosen.
+10.1 [x] Define a `TrustedSourceAdapter` contract for source searches that accepts criteria and returns `NormalizedPosting[]`.
+10.2 [x] Support source-discovered postings that are not associated with a watchlist row.
+10.3 [x] Insert source-discovered postings with `radar_source_id`, `sourceName`, `sourceTier`, provenance fields, and nullable `watchlist_id`.
+10.4 [x] Reuse fingerprint dedupe so source-discovered roles merge with direct ATS or watchlist-discovered roles.
+10.5 [x] Save the discovered company to `company_watchlist` only when the user clicks `Save company`.
+10.6 [x] Build the first trusted source adapter only after evaluating whether the source meaningfully helps the user's target roles.
+10.7 [x] Prefer sources with official RSS feeds, documented APIs, or explicit export formats.
+10.8 [x] Avoid sources that require broad scraping, anti-bot bypassing, paid access, or produce mostly LinkedIn-style duplicate noise.
+10.9 [x] Treat We Work Remotely as an optional pilot candidate, not a commitment; use it only if remote-first coverage is useful enough for the user's search.
+10.10 [x] Keep Idealist as a high-value follow-up only if a safe, non-scraping integration path is chosen.
 
 ## Step 11 — Optional Metrics
 
@@ -186,9 +186,9 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 12.6 [ ] Add route tests proving saving a company from a posting does not create duplicate watchlist rows.
 12.7 [ ] Add route tests proving quality sort returns direct live postings before aggregator unchecked postings.
 12.8 [ ] Add route tests proving old closed postings are hidden from the default view but returned by `All` or `Closed` filters.
-12.9 [ ] Add trusted source adapter tests with source-specific fixture data after the first source is selected.
-12.10 [ ] Add route tests proving source-discovered postings can exist without a watchlist row.
-12.11 [ ] Add route tests proving `Search trusted sources` stores source-discovered postings with `radar_source_id`.
+12.9 [x] Add trusted source adapter tests with source-specific fixture data after the first source is selected.
+12.10 [x] Add route tests proving source-discovered postings can exist without a watchlist row.
+12.11 [x] Add route tests proving `Search trusted sources` stores source-discovered postings with `radar_source_id`.
 12.12 [ ] Add frontend tests proving Radar cards render source tier badges and validity status.
 12.13 [ ] Add frontend tests proving Radar cards open the original posting from the title or primary action.
 12.14 [ ] Add frontend tests proving Radar cards save a company instead of creating an Application.

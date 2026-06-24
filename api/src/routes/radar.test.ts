@@ -6,6 +6,7 @@ const mockGetUser = vi.hoisted(() => vi.fn());
 const mockCreateUserClient = vi.hoisted(() => vi.fn());
 const mockRefreshRadarSource = vi.hoisted(() => vi.fn());
 const mockValidatePostingFromSource = vi.hoisted(() => vi.fn());
+const mockSearchTrustedSources = vi.hoisted(() => vi.fn());
 
 vi.mock('../lib/supabase', () => ({
   supabaseAdmin: {
@@ -22,6 +23,10 @@ vi.mock('../radar/refreshRadarSource', () => ({
 
 vi.mock('../radar/validatePosting', () => ({
   validatePostingFromSource: mockValidatePostingFromSource,
+}));
+
+vi.mock('../radar/trustedSources/searchTrustedSources', () => ({
+  searchTrustedSources: mockSearchTrustedSources,
 }));
 
 const USER_ID = '00000000-0000-4000-8000-000000000001';
@@ -140,6 +145,7 @@ describe('radar routes', () => {
       status: null,
       error: null,
     });
+    mockSearchTrustedSources.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -500,7 +506,7 @@ describe('radar routes', () => {
     }));
   });
 
-  it('POST /api/radar/search is a manual action and does not refresh watchlist sources', async () => {
+  it('POST /api/radar/search is a manual trusted source action and does not refresh watchlist sources', async () => {
     const db = createMockDb({
       radar_criteria: [{
         user_id: USER_ID,
@@ -515,6 +521,14 @@ describe('radar routes', () => {
       }],
     });
     mockCreateUserClient.mockReturnValue(db.client);
+    mockSearchTrustedSources.mockResolvedValue([{
+      sourceId: 'we_work_remotely',
+      sourceName: 'We Work Remotely',
+      fetched: 2,
+      matched: 1,
+      inserted: 1,
+      error: null,
+    }]);
 
     const response = await request(app)
       .post('/api/radar/search')
@@ -522,15 +536,22 @@ describe('radar routes', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.data).toMatchObject({
-      sources_searched: 0,
-      fetched: 0,
-      matched: 0,
-      inserted: 0,
+      sources_searched: 1,
+      fetched: 2,
+      matched: 1,
+      inserted: 1,
       criteria: {
         title_terms: ['software engineer'],
         field_terms: ['edtech'],
       },
+      sources: [{
+        sourceId: 'we_work_remotely',
+        sourceName: 'We Work Remotely',
+      }],
     });
+    expect(mockSearchTrustedSources).toHaveBeenCalledWith(expect.anything(), USER_ID, expect.objectContaining({
+      title_terms: ['software engineer'],
+    }));
     expect(mockRefreshRadarSource).not.toHaveBeenCalled();
   });
 

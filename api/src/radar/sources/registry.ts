@@ -3,6 +3,7 @@ import sourceRows from './radarSources.backup.json';
 
 type SourceTier = 'direct_ats' | 'curated_board' | 'aggregator';
 type SourceAdapterType = AtsType | null;
+type TrustedSourceAdapterType = 'we_work_remotely' | null;
 
 interface BackupRadarSourceRow {
   id: string;
@@ -10,6 +11,12 @@ interface BackupRadarSourceRow {
   source_tier: SourceTier;
   adapter_type: SourceAdapterType;
   supports_direct_validity_checks: boolean;
+  metadata?: {
+    trusted_discovery_enabled?: boolean;
+    trusted_source_adapter?: TrustedSourceAdapterType;
+    feed_urls?: string[];
+    attribution_text?: string;
+  };
 }
 
 export interface RadarSourceMetadata {
@@ -18,6 +25,10 @@ export interface RadarSourceMetadata {
   tier: SourceTier;
   adapterType: SourceAdapterType;
   supportsDirectValidityChecks: boolean;
+  trustedDiscoveryEnabled: boolean;
+  trustedSourceAdapter: TrustedSourceAdapterType;
+  feedUrls: string[];
+  attributionText: string | null;
 }
 
 function toSourceMetadata(row: BackupRadarSourceRow): RadarSourceMetadata {
@@ -27,6 +38,10 @@ function toSourceMetadata(row: BackupRadarSourceRow): RadarSourceMetadata {
     tier: row.source_tier,
     adapterType: row.adapter_type,
     supportsDirectValidityChecks: row.supports_direct_validity_checks,
+    trustedDiscoveryEnabled: row.metadata?.trusted_discovery_enabled ?? false,
+    trustedSourceAdapter: row.metadata?.trusted_source_adapter ?? null,
+    feedUrls: row.metadata?.feed_urls ?? [],
+    attributionText: row.metadata?.attribution_text ?? null,
   };
 }
 

@@ -11,12 +11,13 @@ type SourceTier = 'direct_ats' | 'curated_board' | 'aggregator';
 type RadarSourceRow = {
   id: string;
   user_id: string;
-  company_name: string;
+  company_name?: string;
   ats_type: AtsType | null;
   ats_board_token: string | null;
   radar_enabled: boolean;
   source_tier?: SourceTier;
   source_name?: string | null;
+  radar_source_id?: string | null;
 };
 
 type DbResult<T> = Promise<{ data: T; error: { message: string } | null }>;
@@ -62,6 +63,8 @@ interface RefreshResult {
   fetched: number;
   error: string | null;
 }
+
+export type RadarIngestionDb = RadarRefreshDb;
 
 function toQuery<T>(value: unknown): T {
   return value as T;
@@ -148,7 +151,7 @@ async function getSourceMetadata(
   const fallback = fallbackSourceMetadata(source, posting);
   const sourceId = posting.sourceName
     ? normalizeSourceId(posting.sourceName)
-    : source.ats_type ?? (source.source_name ? normalizeSourceId(source.source_name) : null);
+    : source.radar_source_id ?? source.ats_type ?? (source.source_name ? normalizeSourceId(source.source_name) : null);
 
   if (!sourceId) return fallback;
 
@@ -172,7 +175,7 @@ async function getSourceMetadata(
   return row ? { name: row.source_name, tier: row.source_tier } : fallback;
 }
 
-async function getExistingPostingIds(
+async function getExistingWatchlistPostingIds(
   db: RadarRefreshDb,
   watchlistId: string,
 ): Promise<Set<string>> {
@@ -192,6 +195,41 @@ async function getExistingPostingIds(
   }
 
   return new Set((result.data ?? []).map((row) => row.external_job_id));
+}
+
+async function getExistingRadarSourcePostingIds(
+  db: RadarRefreshDb,
+  userId: string,
+  radarSourceId: string,
+): Promise<Set<string>> {
+  const query = toQuery<{
+    select(columns?: string): unknown;
+    eq(column: string, value: string): unknown;
+  }>(db.from('discovered_postings'));
+
+  const result = await toQuery<Promise<{ data: Array<{ external_job_id: string }> | null; error: { message: string } | null }>>(
+    toQuery<{ eq(column: string, value: string): unknown }>(
+      toQuery<{ eq(column: string, value: string): unknown }>(
+        query.select('external_job_id'),
+      ).eq('user_id', userId),
+    ).eq('radar_source_id', radarSourceId),
+  );
+
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
+
+  return new Set((result.data ?? []).map((row) => row.external_job_id));
+}
+
+async function getExistingPostingIds(
+  db: RadarRefreshDb,
+  source: RadarSourceRow,
+): Promise<Set<string>> {
+  if (source.radar_source_id) {
+    return getExistingRadarSourcePostingIds(db, source.user_id, source.radar_source_id);
+  }
+  return getExistingWatchlistPostingIds(db, source.id);
 }
 
 async function getExistingPostingsForUser(
@@ -252,12 +290,17 @@ async function insertPosting(
   }>(db.from('discovered_postings'));
 
   const now = new Date().toISOString();
+  const companyName = posting.companyName ?? source.company_name;
+  if (!companyName) {
+    throw new Error('Source-discovered posting is missing company name');
+  }
 
   const result = await toQuery<Promise<{ data: unknown; error: { message: string } | null }>>(
     query.insert({
       user_id: source.user_id,
-      watchlist_id: source.id,
-      company_name: source.company_name,
+      watchlist_id: source.radar_source_id ? null : source.id,
+      radar_source_id: source.radar_source_id ?? null,
+      company_name: companyName,
       external_job_id: posting.externalId,
       title: posting.title,
       location: posting.location,
@@ -313,7 +356,10 @@ function findFingerprintMatch(
   posting: NormalizedPosting,
   existingPostings: ExistingPostingRow[],
 ): ExistingPostingRow | null {
-  const postingFingerprint = createPostingFingerprint(source.company_name, posting);
+  const companyName = posting.companyName ?? source.company_name;
+  if (!companyName) return null;
+
+  const postingFingerprint = createPostingFingerprint(companyName, posting);
   return existingPostings.find((existing) =>
     createPostingFingerprint(existing.company_name, buildFingerprintInput(existing)) === postingFingerprint,
   ) ?? null;
@@ -395,6 +441,58 @@ async function updateLastRefreshedAt(
   }
 }
 
+export async function ingestRadarPostings(
+  db: RadarIngestionDb,
+  source: RadarSourceRow,
+  postings: NormalizedPosting[],
+  criteria?: ReturnType<typeof criteriaFromRow>,
+): Promise<RefreshResult> {
+  let inserted = 0;
+  const activeCriteria = criteria ?? await getRadarCriteria(db, source.user_id);
+  const matchedPostings = postings.filter((posting) => matches(posting, activeCriteria));
+  const existingIds = await getExistingPostingIds(db, source);
+  const existingPostings = await getExistingPostingsForUser(db, source.user_id);
+
+  for (const posting of matchedPostings) {
+    if (existingIds.has(posting.externalId)) continue;
+
+    const sourceMetadata = await getSourceMetadata(db, source, posting);
+    const existingFingerprintMatch = findFingerprintMatch(source, posting, existingPostings);
+    if (existingFingerprintMatch) {
+      await appendPostingProvenance(db, existingFingerprintMatch, posting, sourceMetadata);
+      existingIds.add(posting.externalId);
+      continue;
+    }
+
+    await insertPosting(db, source, posting, sourceMetadata);
+    existingIds.add(posting.externalId);
+    existingPostings.push({
+      id: '',
+      company_name: posting.companyName ?? source.company_name ?? '',
+      external_job_id: posting.externalId,
+      title: posting.title,
+      url: posting.url,
+      source_tier: sourceMetadata.tier,
+      first_seen_source: sourceMetadata.name,
+      also_seen_on: [],
+      source_first_seen_at: { [sourceMetadata.name]: new Date().toISOString() },
+      raw_payload: {
+        ...rawObject(posting.raw),
+        canonicalUrl: posting.canonicalUrl ?? null,
+        companyDomain: posting.companyDomain ?? null,
+      },
+    });
+    inserted += 1;
+  }
+
+  return {
+    inserted,
+    matched: matchedPostings.length,
+    fetched: postings.length,
+    error: null,
+  };
+}
+
 export async function refreshRadarSource(
   db: RadarRefreshDb,
   source: RadarSourceRow,
@@ -423,60 +521,22 @@ export async function refreshRadarSource(
     };
   }
 
-  let inserted = 0;
-  let matchedPostings: NormalizedPosting[] = [];
+  let result: RefreshResult = { inserted: 0, matched: 0, fetched: postings.length, error: null };
+  let matchedCount = 0;
 
   try {
     const criteria = await getRadarCriteria(db, source.user_id);
-    matchedPostings = postings.filter((posting) => matches(posting, criteria));
-    const existingIds = await getExistingPostingIds(db, source.id);
-    const existingPostings = await getExistingPostingsForUser(db, source.user_id);
-
-    for (const posting of matchedPostings) {
-      if (existingIds.has(posting.externalId)) continue;
-      const sourceMetadata = await getSourceMetadata(db, source, posting);
-      const existingFingerprintMatch = findFingerprintMatch(source, posting, existingPostings);
-      if (existingFingerprintMatch) {
-        await appendPostingProvenance(db, existingFingerprintMatch, posting, sourceMetadata);
-        existingIds.add(posting.externalId);
-        continue;
-      }
-
-      await insertPosting(db, source, posting, sourceMetadata);
-      existingIds.add(posting.externalId);
-      existingPostings.push({
-        id: '',
-        company_name: source.company_name,
-        external_job_id: posting.externalId,
-        title: posting.title,
-        url: posting.url,
-        source_tier: sourceMetadata.tier,
-        first_seen_source: sourceMetadata.name,
-        also_seen_on: [],
-        source_first_seen_at: { [sourceMetadata.name]: new Date().toISOString() },
-        raw_payload: {
-          ...rawObject(posting.raw),
-          canonicalUrl: posting.canonicalUrl ?? null,
-          companyDomain: posting.companyDomain ?? null,
-        },
-      });
-      inserted += 1;
-    }
-
+    matchedCount = postings.filter((posting) => matches(posting, criteria)).length;
+    result = await ingestRadarPostings(db, source, postings, criteria);
     await updateLastRefreshedAt(db, source.id);
   } catch (error) {
     return {
-      inserted,
-      matched: matchedPostings.length,
+      inserted: result.inserted,
+      matched: result.matched || matchedCount,
       fetched: postings.length,
       error: error instanceof Error ? error.message : 'Failed to refresh radar source',
     };
   }
 
-  return {
-    inserted,
-    matched: matchedPostings.length,
-    fetched: postings.length,
-    error: null,
-  };
+  return result;
 }

@@ -6,6 +6,7 @@ import { createUserClient } from '../lib/supabase';
 import { refreshRadarSource, type RadarRefreshDb } from '../radar/refreshRadarSource';
 import { validatePostingFromSource, type RadarValidationDb } from '../radar/validatePosting';
 import { qualityScore } from '../radar/qualityScore';
+import { searchTrustedSources as runTrustedSourceSearch } from '../radar/trustedSources/searchTrustedSources';
 import { UpdateRadarCriteriaSchema, type AtsType, type RadarCriteria, type UpdateRadarCriteriaSchemaType } from '@internship-tracker/shared';
 import type { Request, Response } from 'express';
 
@@ -335,15 +336,28 @@ router.post('/search', requireAuth, async (req: Request, res, next) => {
     const db = createUserClient(req);
     const user = (req as AuthRequest).user;
     const criteria = await getRadarCriteriaRow(db, user.id);
+    const sourceResults = await runTrustedSourceSearch(db as unknown as Parameters<typeof runTrustedSourceSearch>[0], user.id, criteria);
+    const totals = sourceResults.reduce((sum, result) => ({
+      sources_searched: sum.sources_searched + 1,
+      fetched: sum.fetched + result.fetched,
+      matched: sum.matched + result.matched,
+      inserted: sum.inserted + result.inserted,
+    }), {
+      sources_searched: 0,
+      fetched: 0,
+      matched: 0,
+      inserted: 0,
+    });
+    const failedSources = sourceResults.filter((result) => result.error);
 
     res.json({
       data: {
-        sources_searched: 0,
-        fetched: 0,
-        matched: 0,
-        inserted: 0,
+        ...totals,
         criteria,
-        message: 'Trusted source search is ready for manual use; source adapters are added in Step 10.',
+        sources: sourceResults,
+        message: failedSources.length > 0
+          ? `Trusted source search completed with ${failedSources.length} source error(s).`
+          : `Trusted source search found ${totals.matched} matching posting(s).`,
       },
     });
   } catch (err) {

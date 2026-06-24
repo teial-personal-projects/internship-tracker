@@ -2,6 +2,7 @@ export type RemoteStatus = 'remote_us' | 'la' | 'onsite' | 'unknown';
 
 export interface NormalizedPosting {
   externalId: string;
+  companyName?: string;
   title: string;
   location: string | null;
   remoteStatus: RemoteStatus;

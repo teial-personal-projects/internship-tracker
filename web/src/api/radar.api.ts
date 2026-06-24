@@ -40,6 +40,14 @@ export interface TrustedSourceSearchResult {
   matched: number;
   inserted: number;
   criteria: RadarCriteria;
+  sources: Array<{
+    sourceId: string;
+    sourceName: string;
+    fetched: number;
+    matched: number;
+    inserted: number;
+    error: string | null;
+  }>;
   message: string;
 }
 

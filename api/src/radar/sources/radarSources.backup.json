@@ -60,7 +60,16 @@
     "source_name": "We Work Remotely",
     "source_tier": "curated_board",
     "adapter_type": null,
-    "supports_direct_validity_checks": false
+    "supports_direct_validity_checks": false,
+    "metadata": {
+      "trusted_discovery_enabled": true,
+      "trusted_source_adapter": "we_work_remotely",
+      "feed_urls": [
+        "https://weworkremotely.com/categories/remote-back-end-programming-jobs.rss",
+        "https://weworkremotely.com/categories/remote-programming-jobs.rss"
+      ],
+      "attribution_text": "Jobs from We Work Remotely link back to the original WWR posting."
+    }
   },
   {
     "id": "working_nomads",
