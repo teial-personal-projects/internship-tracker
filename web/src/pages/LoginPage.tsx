@@ -379,55 +379,51 @@ function AuthFeature({ icon, title, text }: { icon: ReactNode; title: string; te
   );
 }
 
+function AuthBenefits() {
+  return (
+    <div className="border-t px-5 py-5 sm:px-7" style={{ borderColor: 'var(--line-soft)', background: 'var(--soft)' }}>
+      <h2 className="text-sm font-bold" style={{ color: 'var(--ink)' }}>
+        Why use Track My Application?
+      </h2>
+      <div className="mt-4 space-y-4">
+        <AuthFeature
+          icon={<CalendarCheck2 size={18} />}
+          title="Know what needs attention"
+          text="See upcoming interviews, follow-ups, and stale applications before they slip."
+        />
+        <AuthFeature
+          icon={<BriefcaseBusiness size={18} />}
+          title="Separate leads from applications"
+          text="Use Companies To Watch without cluttering your active application list."
+        />
+        <AuthFeature
+          icon={<CheckCircle2 size={18} />}
+          title="Keep the workflow tight"
+          text="Track the company, contacts, and next steps only when something is worth pursuing."
+        />
+      </div>
+    </div>
+  );
+}
+
 export function LoginPage() {
   const [tab, setTab] = useState<'login' | 'signup'>('login');
 
   return (
     <div className="min-h-screen overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8" style={{ background: 'var(--bg)', maxWidth: '100vw' }}>
-      <main className="mx-auto grid min-h-[calc(100vh-3rem)] w-full max-w-full items-center gap-6 lg:max-w-6xl lg:grid-cols-[minmax(0,0.95fr)_minmax(420px,0.85fr)]">
-        <section className="hidden lg:block">
-          <div className="max-w-xl">
-            <div className="flex items-center gap-3">
+      <main className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-[34rem] items-center">
+        <section className="w-full min-w-0">
+          <div className="w-full max-w-full overflow-hidden rounded-lg border bg-white shadow-sm" style={{ borderColor: 'var(--line)' }}>
+            <div className="flex items-center gap-3 border-b px-5 py-5 sm:px-7" style={{ borderColor: 'var(--line)', background: 'var(--soft)' }}>
               <BrandMark />
-              <div>
+              <div className="min-w-0">
                 <p className="text-kicker" style={{ color: 'var(--accent)' }}>Track My Application</p>
+                <h1 className="mt-1 truncate text-lg font-bold" style={{ color: 'var(--ink)' }}>
+                  Application workspace
+                </h1>
               </div>
             </div>
 
-            <p className="mt-5 max-w-lg text-base leading-7" style={{ color: 'var(--ink-2)' }}>
-              Keep applications, companies, contacts, and follow-ups in one focused workspace.
-            </p>
-
-            <div className="mt-8 space-y-5">
-              <AuthFeature
-                icon={<CalendarCheck2 size={18} />}
-                title="Know what needs attention"
-                text="See upcoming interviews, follow-ups, and stale applications before they slip."
-              />
-              <AuthFeature
-                icon={<BriefcaseBusiness size={18} />}
-                title="Separate leads from applications"
-                text="Use Companies To Watch without cluttering your active application list."
-              />
-              <AuthFeature
-                icon={<CheckCircle2 size={18} />}
-                title="Keep the workflow tight"
-                text="Track the company, contacts, and next steps only when something is worth pursuing."
-              />
-            </div>
-          </div>
-        </section>
-
-        <section className="w-full min-w-0 max-w-[22rem] sm:mx-auto sm:max-w-[30rem] lg:max-w-none">
-          <div className="mb-6 flex items-center gap-3 lg:hidden">
-            <BrandMark />
-            <div>
-              <p className="text-kicker" style={{ color: 'var(--accent)' }}>Track My Application</p>
-              <h1 className="text-xl font-bold" style={{ color: 'var(--ink)' }}>Application workspace</h1>
-            </div>
-          </div>
-
-          <div className="w-full max-w-full overflow-hidden rounded-lg border bg-white shadow-sm" style={{ borderColor: 'var(--line)' }}>
             <div className="grid grid-cols-2 border-b" style={{ borderColor: 'var(--line)' }}>
               {(['login', 'signup'] as const).map((item) => (
                 <button
@@ -452,6 +448,8 @@ export function LoginPage() {
                 : <SignupForm onSwitch={() => setTab('login')} />
               }
             </div>
+
+            <AuthBenefits />
           </div>
 
           <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs" style={{ color: 'var(--ink-3)' }}>
