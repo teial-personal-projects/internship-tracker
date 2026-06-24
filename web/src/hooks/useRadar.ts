@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as radarApi from '@/api/radar.api';
 import type { RadarPostingsParams } from '@/api/radar.api';
-import { watchlistKeys } from '@/hooks/useWatchlist';
 import type { PostingStatus } from '@shared/schemas';
 
 export const radarKeys = {
@@ -66,18 +65,6 @@ export function useUpdateRadarPostingStatus() {
       radarApi.updateRadarPostingStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: radarKeys.all });
-    },
-  });
-}
-
-export function useSaveRadarPostingCompany() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => radarApi.saveRadarPostingCompany(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: radarKeys.all });
-      queryClient.invalidateQueries({ queryKey: watchlistKeys.all });
     },
   });
 }

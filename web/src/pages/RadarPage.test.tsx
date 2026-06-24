@@ -7,16 +7,8 @@ const mockRadarPostings = vi.hoisted(() => ({
   value: [] as DiscoveredPosting[],
 }));
 
-const mockWatchlist = vi.hoisted(() => ({
-  value: [] as Array<{ id: string; company_name: string; industry?: string | null; ats_type?: string | null }>,
-}));
-
 vi.mock('@/components/AppHeader', () => ({
   AppHeader: () => <header>Header</header>,
-}));
-
-vi.mock('@/hooks/useWatchlist', () => ({
-  useWatchlist: () => ({ data: mockWatchlist.value }),
 }));
 
 vi.mock('@/hooks/useRadar', () => ({
@@ -53,7 +45,6 @@ vi.mock('@/hooks/useRadar', () => ({
     ],
   }),
   useRadarPostings: () => ({ data: mockRadarPostings.value, isLoading: false, error: null }),
-  useSaveRadarPostingCompany: () => ({ mutateAsync: vi.fn() }),
   useSearchTrustedSources: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useUpdateRadarCriteria: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useUpdateRadarPostingStatus: () => ({ mutateAsync: vi.fn() }),
@@ -90,7 +81,6 @@ function posting(overrides: Partial<DiscoveredPosting>): DiscoveredPosting {
 describe('RadarPage helpers', () => {
   beforeEach(() => {
     mockRadarPostings.value = [];
-    mockWatchlist.value = [];
   });
 
   it('maps triage views to API filter params', () => {
@@ -143,7 +133,7 @@ describe('RadarPage helpers', () => {
     expect(markup).not.toContain('All companies');
   });
 
-  it('renders source tier, validity, original posting link, save company, and provenance on Radar cards', () => {
+  it('renders source tier, validity, original posting link, and provenance on Radar cards', () => {
     mockRadarPostings.value = [posting({
       id: 'curated-posting',
       company_name: 'Mission School',
@@ -168,7 +158,9 @@ describe('RadarPage helpers', () => {
     expect(markup).toContain('Curated');
     expect(markup).toContain('Live');
     expect(markup).toContain('href="https://example.com/jobs/mission-school-backend-engineer"');
-    expect(markup).toContain('Save company');
+    expect(markup).toContain('Open posting');
+    expect(markup).not.toContain('Save company');
+    expect(markup).not.toContain('Saved company');
     expect(markup).not.toContain('Add to tracker');
     expect(markup).toContain('Also seen on Greenhouse');
     expect(markup).toContain('Matched title &quot;backend engineer&quot;');

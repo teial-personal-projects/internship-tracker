@@ -2,13 +2,13 @@
 
 **Status:** Proposed
 **Last updated:** June 24, 2026
-**Scope:** Turn Job Radar into a trusted job-board discovery surface for high-signal software engineering roles, while keeping company watchlist refresh as a secondary input.
+**Scope:** Turn Job Radar into a trusted job-board discovery surface for high-signal software engineering roles, fully separated from Companies To Watch.
 
 ## Product Direction
 
-Radar is a trusted job discovery surface, not an application tracker and not primarily a company watcher. Its job is to search curated, high-signal job sources for credible software engineering openings that match the user's title, field, location, and exclusion criteria. It should let the user click through to the original posting and optionally save the company to the Companies To Watch list. It should not create Applications records or require the user to track a role.
+Radar is a trusted job discovery surface, not an application tracker and not a company watcher. Its job is to search curated, high-signal job sources for credible software engineering openings that match the user's title, field, location, and exclusion criteria. It should let the user click through to the original posting. It should not create Applications records, save Companies To Watch records, or require the user to track a role.
 
-The Companies To Watch list is a separate support tool: it stores companies the user already knows they want to keep checking. Watchlist ATS refreshes can feed Radar, but they should not define the whole Radar experience.
+The Companies To Watch list is a separate support tool: it stores companies the user already knows they want to keep checking. Job-board search must not read from, write to, dedupe against, or otherwise depend on Companies To Watch.
 
 Trusted job-board sources should be curated deliberately. Prefer niche boards, official feeds, APIs, and sources with consistently real postings. Broad aggregators and LinkedIn-style repeat feeds are mostly confirmation signals and should not be allowed to clutter the workflow.
 
@@ -18,7 +18,7 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 
 | Tier | Source class | Examples | Product behavior |
 | --- | --- | --- | --- |
-| 1 | Direct ATS | Greenhouse, Lever, Ashby, Workday, SmartRecruiters | Highest-confidence original source, usually from watchlist or discovered company careers pages |
+| 1 | Direct ATS | Greenhouse, Lever, Ashby, Workday, SmartRecruiters | Highest-confidence original source for company-specific careers refreshes |
 | 2 | Trusted curated boards | Wellfound-style niche boards, mission-driven boards, Working Nomads, Remote.co, Idealist if a safe integration exists | Primary discovery channels when they expose reliable feeds or APIs |
 | 3 | Aggregators | Indeed, ZipRecruiter-style syndication | Append as `also_seen_on` instead of creating noise |
 
@@ -39,9 +39,9 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 1.13 [x] Add indexes on `discovered_postings(user_id, source_tier, first_seen_at DESC)` and `discovered_postings(user_id, validity_status)`.
 1.14 [x] Update `migrations/prod_full_v2_schema.sql` with the complete schema changes so a fresh database does not require replaying the migration chain.
 1.15 [x] Update any schema audit scripts that check Radar columns, enums, tables, or indexes.
-1.16 [x] Make `discovered_postings.watchlist_id` nullable so trusted source searches can discover jobs before the company is saved to the watchlist.
+1.16 [x] Make `discovered_postings.watchlist_id` nullable so trusted source searches can discover jobs without a watchlist row.
 1.17 [x] Add `radar_source_id TEXT REFERENCES radar_sources(id)` to `discovered_postings` for source-discovered postings.
-1.18 [x] Add indexes on `discovered_postings(user_id, radar_source_id, first_seen_at DESC)` and keep the existing watchlist index for company-watchlist refreshes.
+1.18 [x] Add indexes on `discovered_postings(user_id, radar_source_id, first_seen_at DESC)` and keep the existing watchlist index for separate company-specific refreshes.
 1.19 [x] Add a partial unique index on `(user_id, radar_source_id, external_job_id)` for source-discovered postings.
 1.20 [x] Update the consolidated `migrations/feature_migration.sql` with the nullable watchlist and `radar_source_id` changes.
 
@@ -57,26 +57,26 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 
 ## Step 3 — Source Configuration
 
-3.1 [x] Add a source tier selector to the watchlist Radar configuration.
-3.2 [x] Default existing ATS-backed watchlist rows to `direct_ats`.
+3.1 [x] Add a source tier selector to company-specific source configuration.
+3.2 [x] Default existing ATS-backed company-specific rows to `direct_ats`.
 3.3 [x] Keep ATS adapter fields visible only when `source_tier = direct_ats`.
 3.4 [x] Add source setup copy that explains direct ATS, curated board, and aggregator behavior in operational terms.
 3.5 [x] Create `radar_sources` table with a JSON-backed `api/src/radar/sources/registry.ts` fallback.
 3.6 [x] Define known source metadata in database seed data: source name, tier, adapter type, and whether the source supports direct validity checks.
 3.7 [x] Map current ATS adapters to `direct_ats`.
 3.8 [x] Reserve curated-board entries for future adapters without wiring broad scraping into the first release.
-3.9 [x] Treat `radar_sources` as the catalog of trusted job-search sources, not merely metadata for watchlist refreshes.
+3.9 [x] Treat `radar_sources` as the catalog of trusted job-search sources.
 3.10 [x] Add source metadata fields needed for manual search, such as supported query fields, feed URL template, attribution text, and whether the source is enabled for trusted discovery.
-3.11 [x] Keep company watchlist source settings only for company-specific direct ATS refreshes.
+3.11 [x] Keep company source settings only for company-specific direct ATS refreshes.
 
-## Step 4 — Save Company From Radar
+## Step 4 — Watchlist Separation
 
-4.1 [x] Add or update the backend flow for saving a Radar posting company to `company_watchlist`.
-4.2 [x] Reuse the existing watchlist create/update behavior instead of creating an Application.
-4.3 [x] Prevent duplicate watchlist rows for the same user and company.
-4.4 [x] Preserve source context when useful, such as company name, source tier, source name, ATS type, and board token when available.
-4.5 [x] Show `Save company` on unsaved Radar companies.
-4.6 [x] Show `Saved company` when the company already exists in Companies To Watch.
+4.1 [x] Remove the backend flow for saving a Radar posting company to `company_watchlist`.
+4.2 [x] Do not reuse watchlist create/update behavior from job-board postings.
+4.3 [x] Do not check Companies To Watch for duplicate job-board companies.
+4.4 [x] Do not preserve job-board source context into watchlist rows.
+4.5 [x] Do not show `Save company` on Radar job-board postings.
+4.6 [x] Do not show watchlist saved state on Radar job-board postings.
 4.7 [x] Do not create Applications records from Radar postings.
 
 ## Step 5 — Provenance-Aware Ingestion
@@ -94,8 +94,8 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 5.11 [x] Resolve source metadata from `radar_sources`, falling back to `api/src/radar/sources/registry.ts` when the catalog query is unavailable.
 5.12 [x] Store `discovered_postings.source_tier` as a denormalized copy of the authoritative `radar_sources.source_tier` value for filters and quality sorting.
 5.13 [x] Preserve the highest-authority canonical source tier, using `direct_ats` over `curated_board` over `aggregator`.
-5.14 [x] If a higher-authority source later matches an existing fingerprint, update the posting's denormalized `source_tier` and primary source fields without changing `first_seen_at`.
-5.15 [x] Do not model curated boards or aggregators as company-specific watchlist source rows unless a future adapter truly needs company-specific configuration.
+5.14 [x] If a higher-authority job-board source later matches an existing job-board fingerprint, update the posting's denormalized `source_tier` and primary source fields without changing `first_seen_at`.
+5.15 [x] Do not model curated boards or aggregators as company-specific watchlist source rows.
 
 ## Step 6 — Validity Checks
 
@@ -125,7 +125,7 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 7.11 [x] Exclude `closed` and `not_found` postings from the default fresh direct matches query.
 7.12 [x] Keep closed postings available through `All` and `Closed` filters.
 7.13 [x] Hide closed postings from the default view when `last_validated_at` is older than about two weeks, without deleting the row.
-7.14 [x] Support Radar search across posting title, company name, location, and watched-company industry.
+7.14 [x] Support Radar search across posting title, company name, and location.
 
 ## Step 8 — Discover and Watchlist UI
 
@@ -136,7 +136,7 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 8.5 [x] Show validity state: `Live`, `Unchecked`, `Closed`, `Validation failed`, or `Stale`.
 8.6 [x] Show `First seen from Greenhouse` or the relevant source name.
 8.7 [x] Show `Also seen on LinkedIn` only as supporting context, not as a separate card.
-8.8 [x] Replace `Add to tracker` with `Save company`.
+8.8 [x] Remove application-tracking and company-saving actions from Radar cards.
 8.9 [x] Keep closed postings visible with a closed state, but do not present them as fresh matches.
 8.10 [x] Remove application-tracking actions from the Discover and Watchlist UI.
 8.11 [x] Avoid bulky explanatory hero cards or tutorial panels that push job content down the page.
@@ -154,15 +154,15 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 9.5 [x] Add a manual `Search trusted sources` action.
 9.6 [x] Do not run source searches automatically or on a timer.
 9.7 [x] Show why a posting matched, such as title term, field term, source, and location rule.
-9.8 [x] Keep watchlist refresh available as a secondary input, visually below trusted source search.
+9.8 [x] Keep job-board search visually and behaviorally separate from Companies To Watch.
 
 ## Step 10 — Trusted Source Search
 
 10.1 [x] Define a `TrustedSourceAdapter` contract for source searches that accepts criteria and returns `NormalizedPosting[]`.
 10.2 [x] Support source-discovered postings that are not associated with a watchlist row.
 10.3 [x] Insert source-discovered postings with `radar_source_id`, `sourceName`, `sourceTier`, provenance fields, and nullable `watchlist_id`.
-10.4 [x] Reuse fingerprint dedupe so source-discovered roles merge with direct ATS or watchlist-discovered roles.
-10.5 [x] Save the discovered company to `company_watchlist` only when the user clicks `Save company`.
+10.4 [x] Reuse fingerprint dedupe only among job-board source-discovered roles, not against watchlist-discovered roles.
+10.5 [x] Do not save discovered job-board companies to `company_watchlist`.
 10.6 [x] Build the first trusted source adapter only after evaluating whether the source meaningfully helps the user's target roles.
 10.7 [x] Prefer sources with official RSS feeds, documented APIs, or explicit export formats.
 10.8 [x] Avoid sources that require broad scraping, anti-bot bypassing, paid access, or produce mostly LinkedIn-style duplicate noise.
@@ -183,7 +183,7 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 12.3 [x] Add `refreshRadarSource.test.ts` coverage proving the highest-authority source tier remains canonical after an aggregator sighting.
 12.4 [x] Add `refreshRadarSource.test.ts` coverage proving a later direct ATS match can promote a curated or aggregator posting without changing `first_seen_at`.
 12.5 [x] Add adapter tests proving validation marks missing jobs as closed after a successful board response.
-12.6 [x] Add route tests proving saving a company from a posting does not create duplicate watchlist rows.
+12.6 [x] Add route tests proving Radar job-board postings cannot save companies to the watchlist.
 12.7 [x] Add route tests proving quality sort returns direct live postings before aggregator unchecked postings.
 12.8 [x] Add route tests proving old closed postings are hidden from the default view but returned by `All` or `Closed` filters.
 12.9 [x] Add trusted source adapter tests with source-specific fixture data after the first source is selected.
@@ -191,12 +191,12 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 12.11 [x] Add route tests proving `Search trusted sources` stores source-discovered postings with `radar_source_id`.
 12.12 [x] Add frontend tests proving Radar cards render source tier badges and validity status.
 12.13 [x] Add frontend tests proving Radar cards open the original posting from the title or primary action.
-12.14 [x] Add frontend tests proving Radar cards save a company instead of creating an Application.
+12.14 [x] Add frontend tests proving Radar cards do not expose company-saving or application-tracking actions.
 12.15 [x] Add frontend tests proving closed postings are excluded from fresh-match presentation.
 12.16 [x] Add frontend tests proving source tier and validity filters update API params.
 12.17 [x] Add frontend tests proving `also_seen_on` displays as supporting provenance without rendering duplicate cards.
 12.18 [x] Add frontend tests proving there is no general manual validity override control.
-12.19 [x] Add frontend tests proving the watchlist workspace renders below trusted source search results.
+12.19 [x] Add frontend tests proving the job-board workspace does not render watchlist controls.
 
 ## Step 13 — Verification
 
@@ -217,11 +217,24 @@ Manual UI verification note: the local app opened successfully at `http://127.0.
 3. [ ] Do not try to solve every Workday tenant.
 4. [ ] Do not introduce paid board integrations.
 5. [ ] Do not create Applications records from Radar postings.
-6. [ ] Do not create duplicate company watchlist rows from the same posting source.
+6. [ ] Do not create company watchlist rows from job-board postings.
 7. [ ] Do not scrape Idealist or other curated boards that lack an official feed in this pass.
 8. [ ] Do not add manual validity override UI until real closed-but-live false positives justify it.
-9. [ ] Do not make the watchlist the primary Radar workflow.
+9. [ ] Do not connect the job-board workflow to Companies To Watch.
 10. [ ] Do not prioritize a job source simply because it is easy to integrate if it does not help the user's target roles.
+
+## Future Implementation
+
+Future enhancements are intentionally out of scope for the current pass. They should not be implemented until the Job Search page is stable as a standalone external job-board search surface.
+
+### Add To Company Watch List From Job Search Page
+
+1.1 [ ] Add an optional `Add to company watch list` action on Job Search result cards.
+1.2 [ ] Keep the action user-initiated only; job-board search must not automatically create Companies To Watch rows.
+1.3 [ ] Treat the action as a one-way save from a selected posting to Companies To Watch, not as a signal that Job Search should read from the watchlist.
+1.4 [ ] Preserve the current Job Search search behavior: do not search watched-company names, watched-company industries, or watched-company ATS sources.
+1.5 [ ] Do not dedupe job-board search results against Companies To Watch entries unless a future design explicitly reopens that decision.
+1.6 [ ] If this enhancement is built, add backend and frontend tests proving that the save action does not make Companies To Watch part of Job Search ranking, search, or source selection.
 
 ## Resolved Decisions
 
@@ -230,5 +243,5 @@ Manual UI verification note: the local app opened successfully at `http://127.0.
 3. [x] Keep `discovered_postings.source_tier` as a denormalized query-time copy used by filters and quality sort.
 4. [x] Do not add manual validity override UI in this pass.
 5. [x] Keep closed discovered postings and demote or filter them at query time instead of hard-deleting them.
-6. [x] Treat the company watchlist as a secondary Radar input, not the core discovery workflow.
+6. [x] Treat Companies To Watch as separate from the job-board discovery workflow.
 7. [x] Remove the We Work Remotely pilot adapter and do not search bundled fallback sources.

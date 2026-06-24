@@ -7,11 +7,9 @@ import type {
   SourceTier,
   UpdateRadarCriteriaSchemaType,
 } from '@shared/schemas';
-import type { WatchlistEntry } from './watchlist.api';
 
 export interface RadarPostingsParams {
   status?: PostingStatus;
-  watchlist_id?: string;
   search?: string;
   source_tier?: SourceTier;
   validity_status?: PostingValidityStatus;
@@ -74,15 +72,5 @@ export async function updateRadarPostingStatus(
   status: Extract<PostingStatus, 'seen' | 'dismissed'>,
 ): Promise<DiscoveredPosting> {
   const { data } = await apiClient.patch<{ data: DiscoveredPosting }>(`/radar/postings/${id}`, { status });
-  return data.data;
-}
-
-export interface SaveRadarCompanyResult {
-  watchlist_entry: WatchlistEntry;
-  created: boolean;
-}
-
-export async function saveRadarPostingCompany(id: string): Promise<SaveRadarCompanyResult> {
-  const { data } = await apiClient.post<{ data: SaveRadarCompanyResult }>(`/radar/postings/${id}/save-company`);
   return data.data;
 }

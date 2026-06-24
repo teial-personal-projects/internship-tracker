@@ -4,19 +4,16 @@ import { Building2, CheckCircle2, ExternalLink, Eye, RefreshCw, Search, SlidersH
 import { toast } from 'sonner';
 import { AppHeader } from '@/components/AppHeader';
 import { Spinner } from '@/components/Spinner';
-import { useWatchlist } from '@/hooks/useWatchlist';
 import {
   useRadarCriteria,
   useRadarPostings,
   useRadarSearchSources,
-  useSaveRadarPostingCompany,
   useSearchTrustedSources,
   useUpdateRadarCriteria,
   useUpdateRadarPostingStatus,
 } from '@/hooks/useRadar';
 import type { RadarPostingsParams } from '@/api/radar.api';
 import type { RadarSearchSource } from '@/api/radar.api';
-import type { WatchlistEntry } from '@/api/watchlist.api';
 import type {
   DiscoveredPosting,
   RadarCriteria,
@@ -33,7 +30,6 @@ type ProvenanceSource = { sourceName?: string; source_name?: string; name?: stri
 
 interface CompanyGroup {
   company: string;
-  watchlistEntry: WatchlistEntry | undefined;
   postings: RadarPostingView[];
 }
 
@@ -92,16 +88,9 @@ function searchSourceStatus(source: RadarSearchSource): string {
   return 'Not connected';
 }
 
-function sourceName(posting: RadarPostingView, entry: WatchlistEntry | undefined): string {
+function sourceName(posting: RadarPostingView): string {
   if (posting.first_seen_source && posting.first_seen_source !== 'radar') {
     return posting.first_seen_source;
-  }
-
-  if (entry?.ats_type) {
-    return entry.ats_type
-      .split(/[_-]/)
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(' ');
   }
 
   return 'Radar';
@@ -192,11 +181,7 @@ export function radarViewParams(view: DiscoveryView): Pick<RadarPostingsParams, 
   return { source_tier: 'curated_board', sort: 'quality', include_closed: true };
 }
 
-function groupByCompany(
-  postings: RadarPostingView[],
-  watchlist: WatchlistEntry[],
-): CompanyGroup[] {
-  const watchlistById = new Map(watchlist.map((entry) => [entry.id, entry]));
+function groupByCompany(postings: RadarPostingView[]): CompanyGroup[] {
   const groups = new Map<string, RadarPostingView[]>();
 
   for (const posting of postings) {
@@ -211,7 +196,6 @@ function groupByCompany(
       return {
         company,
         postings: sortedPostings,
-        watchlistEntry: watchlistById.get(sortedPostings[0]?.watchlist_id ?? ''),
       };
     })
     .sort((left, right) => right.postings[0].first_seen_at.localeCompare(left.postings[0].first_seen_at));
@@ -234,19 +218,11 @@ function companyInitials(company: string): string {
 
 interface PostingRowProps {
   posting: RadarPostingView;
-  watchlistEntry: WatchlistEntry | undefined;
-  isSaved: boolean;
-  isSaving: boolean;
-  onSaveCompany: (posting: RadarPostingView) => void;
   onMarkSeen: (posting: RadarPostingView) => void;
 }
 
 function PostingRow({
   posting,
-  watchlistEntry,
-  isSaved,
-  isSaving,
-  onSaveCompany,
   onMarkSeen,
 }: PostingRowProps) {
   const status = validityStatus(posting);
@@ -254,9 +230,8 @@ function PostingRow({
   const isClosed = isClosedPosting(posting);
   const seenSources = alsoSeenOn(posting);
   const reasons = matchReasons(posting);
-  const source = sourceName(posting, watchlistEntry);
+  const source = sourceName(posting);
   const relativeFirstSeen = formatRelativeTime(posting.first_seen_at);
-  const canSave = !isSaved && !isSaving;
 
   return (
     <div className={`flex flex-col gap-3 border-t px-4 py-3 first:border-t-0 sm:flex-row sm:items-center sm:justify-between ${isClosed ? 'bg-[color:var(--soft)] opacity-80' : ''}`} style={{ borderColor: 'var(--line)' }}>
@@ -294,38 +269,34 @@ function PostingRow({
         </div>
       </div>
 
-      <button
-        type="button"
-        className={isSaved ? 'btn-outline min-h-9 px-3 text-sm' : 'btn-primary min-h-9 px-3 text-sm'}
-        onClick={() => onSaveCompany(posting)}
-        disabled={!canSave || isClosed}
+      <a
+        href={posting.url}
+        target="_blank"
+        rel="noreferrer"
+        onClick={() => { if (posting.status === 'new') onMarkSeen(posting); }}
+        className={`btn-primary inline-flex min-h-9 items-center gap-2 px-3 text-sm ${isClosed ? 'pointer-events-none opacity-60' : ''}`}
+        aria-disabled={isClosed}
       >
-        {isSaving ? <Spinner size="sm" color="white" /> : isSaved ? 'Saved company' : 'Save company'}
-      </button>
+        Open posting
+        <ExternalLink size={14} />
+      </a>
     </div>
   );
 }
 
 interface CompanyRadarCardProps {
   group: CompanyGroup;
-  savedCompanyNames: Set<string>;
-  savingCompanyName: string | null;
-  onSaveCompany: (posting: RadarPostingView) => void;
   onMarkSeen: (posting: RadarPostingView) => void;
 }
 
 function CompanyRadarCard({
   group,
-  savedCompanyNames,
-  savingCompanyName,
-  onSaveCompany,
   onMarkSeen,
 }: CompanyRadarCardProps) {
   const { activePostings, closedPostings } = splitPostingsByClosedState(group.postings);
   const visiblePostings = activePostings.length > 0 ? activePostings : closedPostings;
   const collapsedClosedPostings = activePostings.length > 0 ? closedPostings : [];
-  const primarySource = sourceName(group.postings[0], group.watchlistEntry);
-  const subtitleParts = [primarySource, group.watchlistEntry?.industry].filter(Boolean);
+  const primarySource = sourceName(group.postings[0]);
 
   return (
     <section className="overflow-hidden rounded-lg border bg-white shadow-sm" style={{ borderColor: 'var(--line)' }}>
@@ -339,7 +310,7 @@ function CompanyRadarCard({
               {group.company}
             </h2>
             <p className="truncate text-xs" style={{ color: 'var(--ink-3)' }}>
-              {subtitleParts.join(' · ') || 'Company source'}
+              {primarySource}
             </p>
           </div>
         </div>
@@ -357,10 +328,6 @@ function CompanyRadarCard({
           <PostingRow
             key={posting.id}
             posting={posting}
-            watchlistEntry={group.watchlistEntry}
-            isSaved={savedCompanyNames.has(posting.company_name.toLowerCase())}
-            isSaving={savingCompanyName === posting.company_name.toLowerCase()}
-            onSaveCompany={onSaveCompany}
             onMarkSeen={onMarkSeen}
           />
         ))}
@@ -373,10 +340,6 @@ function CompanyRadarCard({
               <PostingRow
                 key={posting.id}
                 posting={posting}
-                watchlistEntry={group.watchlistEntry}
-                isSaved={savedCompanyNames.has(posting.company_name.toLowerCase())}
-                isSaving={savingCompanyName === posting.company_name.toLowerCase()}
-                onSaveCompany={onSaveCompany}
                 onMarkSeen={onMarkSeen}
               />
             ))}
@@ -391,7 +354,6 @@ export function RadarPage() {
   const [status, setStatus] = useState<StatusFilter>('new');
   const [search, setSearch] = useState('');
   const [view, setView] = useState<DiscoveryView>('job_boards');
-  const [savingCompanyName, setSavingCompanyName] = useState<string | null>(null);
   const [titleTerms, setTitleTerms] = useState('');
   const [fieldTerms, setFieldTerms] = useState('');
   const [locationTerms, setLocationTerms] = useState('');
@@ -407,8 +369,6 @@ export function RadarPage() {
   const { data: postings = [], isLoading, error } = useRadarPostings(queryParams);
   const { data: criteria } = useRadarCriteria();
   const { data: searchSources = [] } = useRadarSearchSources();
-  const { data: watchlist = [] } = useWatchlist();
-  const savePostingCompany = useSaveRadarPostingCompany();
   const updatePostingStatus = useUpdateRadarPostingStatus();
   const updateCriteria = useUpdateRadarCriteria();
   const trustedSourceSearch = useSearchTrustedSources();
@@ -424,12 +384,7 @@ export function RadarPage() {
     setLocationRules(supportedLocationRules);
   }, [criteria]);
 
-  const savedCompanyNames = useMemo(
-    () => new Set(watchlist.map((entry) => entry.company_name.toLowerCase())),
-    [watchlist],
-  );
-
-  const companyGroups = useMemo(() => groupByCompany(postings as RadarPostingView[], watchlist), [postings, watchlist]);
+  const companyGroups = useMemo(() => groupByCompany(postings as RadarPostingView[]), [postings]);
   const canSearchTrustedSources = hasFormSearchAnchor(titleTerms, locationTerms, locationRules);
   const searchableSourceCount = searchSources.filter((source) => source.is_searchable).length;
   const canRunJobBoardSearch = canSearchTrustedSources && searchableSourceCount > 0;
@@ -451,21 +406,6 @@ export function RadarPage() {
 
     return { newToday, jobBoards, live, closed };
   }, [postings]);
-
-  async function handleSaveCompany(posting: RadarPostingView) {
-    const normalizedCompanyName = posting.company_name.toLowerCase();
-    if (savedCompanyNames.has(normalizedCompanyName)) return;
-
-    setSavingCompanyName(normalizedCompanyName);
-    try {
-      await savePostingCompany.mutateAsync(posting.id);
-      toast.success('Company saved');
-    } catch (err) {
-      toast.error(apiErrorMessage(err, 'Could not save company'));
-    } finally {
-      setSavingCompanyName(null);
-    }
-  }
 
   async function handleMarkSeen(posting: RadarPostingView) {
     if (posting.status !== 'new') return;
@@ -752,7 +692,7 @@ export function RadarPage() {
                   type="search"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search title, company, industry..."
+                  placeholder="Search title, company, location..."
                   className="field-input pl-9"
                 />
               </span>
@@ -790,9 +730,6 @@ export function RadarPage() {
               <CompanyRadarCard
                 key={group.company}
                 group={group}
-                savedCompanyNames={savedCompanyNames}
-                savingCompanyName={savingCompanyName}
-                onSaveCompany={handleSaveCompany}
                 onMarkSeen={handleMarkSeen}
               />
             ))}

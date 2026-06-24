@@ -24,6 +24,8 @@ type DbResult<T> = Promise<{ data: T; error: { message: string } | null }>;
 
 type ExistingPostingRow = {
   id: string;
+  watchlist_id?: string | null;
+  radar_source_id?: string | null;
   company_name: string;
   external_job_id: string;
   title: string;
@@ -232,9 +234,9 @@ async function getExistingPostingIds(
   return getExistingWatchlistPostingIds(db, source.id);
 }
 
-async function getExistingPostingsForUser(
+async function getExistingPostingsForSourceKind(
   db: RadarRefreshDb,
-  userId: string,
+  source: RadarSourceRow,
 ): Promise<ExistingPostingRow[]> {
   const query = toQuery<{
     select(columns?: string): unknown;
@@ -243,15 +245,20 @@ async function getExistingPostingsForUser(
 
   const result = await toQuery<Promise<{ data: ExistingPostingRow[] | null; error: { message: string } | null }>>(
     toQuery<{ eq(column: string, value: string): unknown }>(
-      query.select('id, company_name, external_job_id, title, url, source_tier, first_seen_source, also_seen_on, source_first_seen_at, raw_payload'),
-    ).eq('user_id', userId),
+      query.select('id, watchlist_id, radar_source_id, company_name, external_job_id, title, url, source_tier, first_seen_source, also_seen_on, source_first_seen_at, raw_payload'),
+    ).eq('user_id', source.user_id),
   );
 
   if (result.error) {
     throw new Error(result.error.message);
   }
 
-  return result.data ?? [];
+  const rows = result.data ?? [];
+  if (source.radar_source_id) {
+    return rows.filter((row) => row.radar_source_id);
+  }
+
+  return rows.filter((row) => !row.radar_source_id);
 }
 
 async function getRadarCriteria(
@@ -451,7 +458,7 @@ export async function ingestRadarPostings(
   const activeCriteria = criteria ?? await getRadarCriteria(db, source.user_id);
   const matchedPostings = postings.filter((posting) => matches(posting, activeCriteria));
   const existingIds = await getExistingPostingIds(db, source);
-  const existingPostings = await getExistingPostingsForUser(db, source.user_id);
+  const existingPostings = await getExistingPostingsForSourceKind(db, source);
 
   for (const posting of matchedPostings) {
     if (existingIds.has(posting.externalId)) continue;

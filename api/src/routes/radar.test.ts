@@ -257,7 +257,7 @@ describe('radar routes', () => {
     });
   });
 
-  it('GET /api/radar/postings searches watchlist industries', async () => {
+  it('GET /api/radar/postings does not search watchlist industries', async () => {
     const db = createMockDb({
       discovered_postings: [
         {
@@ -301,11 +301,7 @@ describe('radar routes', () => {
       .set('Authorization', 'Bearer test-token');
 
     expect(response.status).toBe(200);
-    expect(response.body.data).toHaveLength(1);
-    expect(response.body.data[0]).toMatchObject({
-      id: 'posting-1',
-      company_name: 'Acme',
-    });
+    expect(response.body.data).toHaveLength(0);
   });
 
   it('GET /api/radar/postings filters by source tier and validity status', async () => {
@@ -726,105 +722,11 @@ describe('radar routes', () => {
     }));
   });
 
-  it('POST /api/radar/postings/:id/save-company creates a watchlist entry without creating an application', async () => {
+  it('POST /api/radar/postings/:id/save-company is not available', async () => {
     const db = createMockDb({
       discovered_postings: [{
         id: POSTING_ID,
         user_id: USER_ID,
-        company_name: 'Acme',
-        title: 'Senior Software Engineer',
-        url: 'https://example.com/job',
-        status: 'new',
-        watchlist_id: WATCHLIST_ID,
-        source_tier: 'direct_ats',
-        first_seen_source: 'greenhouse',
-      }],
-      company_watchlist: [{
-        id: WATCHLIST_ID,
-        user_id: USER_ID,
-        company_name: 'Source Company',
-        ats_type: 'greenhouse',
-        ats_board_token: 'source-company',
-      }],
-      applications: [],
-    });
-    mockCreateUserClient.mockReturnValue(db.client);
-
-    const response = await request(app)
-      .post(`/api/radar/postings/${POSTING_ID}/save-company`)
-      .set('Authorization', 'Bearer test-token');
-
-    expect(response.status).toBe(201);
-    expect(response.body.data).toMatchObject({
-      created: true,
-      watchlist_entry: {
-        id: 'company_watchlist-new',
-        company_name: 'Acme',
-        source_tier: 'direct_ats',
-        source_name: 'greenhouse',
-      },
-    });
-    expect(db.rowsByTable.company_watchlist).toContainEqual(expect.objectContaining({
-      id: 'company_watchlist-new',
-      user_id: USER_ID,
-      company_name: 'Acme',
-      radar_enabled: false,
-      source_tier: 'direct_ats',
-      source_name: 'greenhouse',
-      ats_type: 'greenhouse',
-      ats_board_token: 'source-company',
-    }));
-    expect(db.rowsByTable.company_watchlist).toHaveLength(2);
-    expect(db.rowsByTable.applications).toHaveLength(0);
-    expect(db.rowsByTable.discovered_postings[0].status).toBe('new');
-    expect(mockValidatePostingFromSource).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
-      id: POSTING_ID,
-      title: 'Senior Software Engineer',
-    }));
-  });
-
-  it('POST /api/radar/postings/:id/save-company returns the existing watchlist row for duplicate companies', async () => {
-    const db = createMockDb({
-      discovered_postings: [{
-        id: POSTING_ID,
-        user_id: USER_ID,
-        company_name: 'Acme',
-        title: 'Senior Software Engineer',
-        url: 'https://example.com/job',
-        status: 'new',
-        source_tier: 'direct_ats',
-        first_seen_source: 'greenhouse',
-      }],
-      company_watchlist: [{
-        id: WATCHLIST_ID,
-        user_id: USER_ID,
-        company_name: 'acme',
-      }],
-      applications: [],
-    });
-    mockCreateUserClient.mockReturnValue(db.client);
-
-    const response = await request(app)
-      .post(`/api/radar/postings/${POSTING_ID}/save-company`)
-      .set('Authorization', 'Bearer test-token');
-
-    expect(response.status).toBe(200);
-    expect(response.body.data).toMatchObject({
-      created: false,
-      watchlist_entry: {
-        id: WATCHLIST_ID,
-        company_name: 'acme',
-      },
-    });
-    expect(db.rowsByTable.company_watchlist).toHaveLength(1);
-    expect(db.rowsByTable.applications).toHaveLength(0);
-  });
-
-  it("POST /api/radar/postings/:id/save-company returns 403 for another user's posting", async () => {
-    const db = createMockDb({
-      discovered_postings: [{
-        id: POSTING_ID,
-        user_id: OTHER_USER_ID,
         company_name: 'Acme',
         title: 'Senior Software Engineer',
         url: 'https://example.com/job',
@@ -839,7 +741,7 @@ describe('radar routes', () => {
       .post(`/api/radar/postings/${POSTING_ID}/save-company`)
       .set('Authorization', 'Bearer test-token');
 
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(404);
     expect(db.rowsByTable.company_watchlist).toHaveLength(0);
     expect(db.rowsByTable.applications).toHaveLength(0);
     expect(db.rowsByTable.discovered_postings[0].status).toBe('new');

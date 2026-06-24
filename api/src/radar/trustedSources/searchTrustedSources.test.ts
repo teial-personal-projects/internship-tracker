@@ -148,7 +148,7 @@ describe('searchTrustedSources', () => {
     }));
   });
 
-  it('dedupes source-discovered postings against existing fingerprint matches', async () => {
+  it('does not dedupe source-discovered postings against watchlist fingerprint matches', async () => {
     const db = createMockDb({
       radar_sources: [{
         id: 'trusted_board_fixture',
@@ -195,16 +195,18 @@ describe('searchTrustedSources', () => {
       updated_at: '2026-06-01T00:00:00.000Z',
     });
 
-    expect(results[0]).toMatchObject({ inserted: 0, matched: 1, error: null });
-    expect(db.rowsByTable.discovered_postings).toHaveLength(1);
+    expect(results[0]).toMatchObject({ inserted: 1, matched: 1, error: null });
+    expect(db.rowsByTable.discovered_postings).toHaveLength(2);
     expect(db.rowsByTable.discovered_postings[0]).toMatchObject({
       id: 'existing-posting',
       first_seen_source: 'Greenhouse',
-      also_seen_on: [expect.objectContaining({
-        source_name: 'Example Trusted Board',
-        source_tier: 'curated_board',
-        external_job_id: 'trusted-board-backend-1',
-      })],
+      also_seen_on: [],
+    });
+    expect(db.rowsByTable.discovered_postings[1]).toMatchObject({
+      watchlist_id: null,
+      radar_source_id: 'trusted_board_fixture',
+      first_seen_source: 'Example Trusted Board',
+      external_job_id: 'trusted-board-backend-1',
     });
   });
 });
