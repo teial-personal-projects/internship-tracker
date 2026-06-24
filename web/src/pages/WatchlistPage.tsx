@@ -1,28 +1,25 @@
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import * as Dialog from '@radix-ui/react-dialog';
-import { ArrowRight, ArrowUpDown, Building2, Pencil, Plus, RefreshCw, Search, Trash2, X } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowUpDown, Building2, Pencil, Plus, RefreshCw, Search, Trash2, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { isAxiosError } from 'axios';
 import { AppHeader } from '@/components/AppHeader';
 import { Spinner } from '@/components/Spinner';
+import { isJobSearchEnabled } from '@/lib/features';
 import {
   useCreateWatchlistEntry,
   useDeleteWatchlistEntry,
-  usePromoteWatchlistEntry,
   useRefreshWatchlistRadar,
   useUpdateWatchlistEntry,
   useWatchlist,
 } from '@/hooks/useWatchlist';
 import { formatDate, todayStr } from '@/lib/dateUtils';
 import type { WatchlistEntry, WatchlistRadarRefreshResult } from '@/api/watchlist.api';
-import type { AtsType, CreateCompanyWatchlistEntrySchemaType, TaskPriority } from '@shared/schemas';
+import type { AtsType, CreateCompanyWatchlistEntrySchemaType, SourceTier, TaskPriority } from '@shared/schemas';
 
 type SortKey = 'added' | 'company_name' | 'priority' | 'target_apply_date';
-
-const AUTO_REFRESH_STALE_MS = 30 * 60 * 1000;
 
 const PRIORITY_OPTIONS: Array<{ value: TaskPriority; label: string; color: string; rank: number }> = [
   { value: 'high', label: 'High', color: 'var(--accent)', rank: 0 },
@@ -45,6 +42,24 @@ const ATS_OPTIONS: Array<{ value: AtsType; label: string }> = [
   { value: 'pinpoint', label: 'Pinpoint' },
   { value: 'welcomekit', label: 'Welcome Kit' },
   { value: 'custom', label: 'Custom careers page' },
+];
+
+const SOURCE_TIER_OPTIONS: Array<{ value: SourceTier; label: string; description: string }> = [
+  {
+    value: 'direct_ats',
+    label: 'Direct ATS',
+    description: 'Refreshes from the company career system and ranks as the freshest source.',
+  },
+  {
+    value: 'curated_board',
+    label: 'Curated board',
+    description: 'Stores a board source such as LinkedIn or Idealist for future discovery adapters.',
+  },
+  {
+    value: 'aggregator',
+    label: 'Aggregator',
+    description: 'Stores syndication context only; aggregator rows will support corroboration later.',
+  },
 ];
 
 interface CareersSource {
@@ -100,6 +115,14 @@ function inferCareersSource(input: string): CareersSource | null {
   }
 
   return { atsType: 'custom', value: url.href };
+}
+
+function sourceTier(entry: WatchlistEntry): SourceTier {
+  return entry.source_tier ?? 'direct_ats';
+}
+
+function sourceTierLabel(tier: SourceTier): string {
+  return SOURCE_TIER_OPTIONS.find((option) => option.value === tier)?.label ?? 'Direct ATS';
 }
 
 function sourceUrlFromEntry(entry: WatchlistEntry | null): string {
@@ -175,25 +198,15 @@ function formatDateTime(value: string | null | undefined): string {
 }
 
 function canRefreshSource(entry: WatchlistEntry): boolean {
-  return Boolean(entry.radar_enabled && entry.ats_type && entry.ats_board_token);
-}
-
-function shouldAutoRefreshSource(entry: WatchlistEntry, now = Date.now()): boolean {
-  if (!canRefreshSource(entry)) return false;
-  if (!entry.last_refreshed_at) return true;
-
-  const refreshedAt = new Date(entry.last_refreshed_at).getTime();
-  return Number.isNaN(refreshedAt) || now - refreshedAt >= AUTO_REFRESH_STALE_MS;
+  return Boolean(isJobSearchEnabled && entry.radar_enabled && sourceTier(entry) === 'direct_ats' && entry.ats_type && entry.ats_board_token);
 }
 
 interface WatchlistRowProps {
   entry: WatchlistEntry;
   onEdit: (entry: WatchlistEntry) => void;
   onDelete: (entry: WatchlistEntry) => void;
-  onPromote: (entry: WatchlistEntry) => void;
   onRefresh: (entry: WatchlistEntry) => void;
   isDeleting: boolean;
-  isPromoting: boolean;
   isRefreshing: boolean;
   refreshResult: WatchlistRadarRefreshResult | undefined;
   refreshError: string | undefined;
@@ -210,10 +223,20 @@ function RefreshStatus({
   refreshResult: WatchlistRadarRefreshResult | undefined;
   refreshError: string | undefined;
 }) {
+  if (!isJobSearchEnabled) return null;
+
   if (!entry.radar_enabled) {
     return (
       <p className="mt-1 truncate text-xs" style={{ color: 'var(--ink-3)' }}>
         Idle
+      </p>
+    );
+  }
+
+  if (sourceTier(entry) !== 'direct_ats') {
+    return (
+      <p className="mt-1 truncate text-xs" style={{ color: 'var(--ink-3)' }}>
+        Saved for provenance
       </p>
     );
   }
@@ -261,15 +284,14 @@ function WatchlistRow({
   entry,
   onEdit,
   onDelete,
-  onPromote,
   onRefresh,
   isDeleting,
-  isPromoting,
   isRefreshing,
   refreshResult,
   refreshError,
 }: WatchlistRowProps) {
   const priority = priorityMeta(entry.priority);
+  const sourceEnabled = isJobSearchEnabled && entry.radar_enabled;
 
   return (
     <div className="grid min-w-[1380px] grid-cols-[minmax(220px,1.4fr)_140px_120px_140px_210px_minmax(220px,1.2fr)_250px] items-center gap-3 border-b px-3 py-3 last:border-b-0" style={{ borderColor: 'var(--line)' }}>
@@ -308,11 +330,16 @@ function WatchlistRow({
 
       <div className="min-w-0 text-sm">
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full" style={{ background: entry.radar_enabled ? 'var(--sage)' : 'var(--line)' }} />
+          <span className="h-2 w-2 rounded-full" style={{ background: sourceEnabled ? 'var(--sage)' : 'var(--line)' }} />
           <span className="font-medium" style={{ color: 'var(--ink-2)' }}>
-            {entry.radar_enabled ? 'Source on' : 'Source off'}
+            {sourceEnabled ? sourceTierLabel(sourceTier(entry)) : 'Manual list'}
           </span>
         </div>
+        {sourceEnabled && entry.source_name && (
+          <p className="mt-1 truncate text-xs" style={{ color: 'var(--ink-3)' }}>
+            {entry.source_name}
+          </p>
+        )}
         <RefreshStatus entry={entry} isRefreshing={isRefreshing} refreshResult={refreshResult} refreshError={refreshError} />
       </div>
 
@@ -321,7 +348,7 @@ function WatchlistRow({
       </p>
 
       <div className="flex items-center justify-end gap-1">
-        {entry.radar_enabled && (
+        {sourceEnabled && (
           <button
             type="button"
             onClick={() => onRefresh(entry)}
@@ -332,15 +359,6 @@ function WatchlistRow({
             Refresh
           </button>
         )}
-        <button
-          type="button"
-          onClick={() => onPromote(entry)}
-          disabled={isPromoting}
-          className="btn-primary inline-flex h-8 items-center gap-1 px-2 text-xs disabled:opacity-60"
-        >
-          {isPromoting ? <Spinner size="sm" color="white" /> : <ArrowRight size={14} />}
-          Start Application
-        </button>
         <button
           type="button"
           onClick={() => onEdit(entry)}
@@ -367,15 +385,14 @@ function WatchlistCard({
   entry,
   onEdit,
   onDelete,
-  onPromote,
   onRefresh,
   isDeleting,
-  isPromoting,
   isRefreshing,
   refreshResult,
   refreshError,
 }: WatchlistRowProps) {
   const priority = priorityMeta(entry.priority);
+  const sourceEnabled = isJobSearchEnabled && entry.radar_enabled;
 
   return (
     <article className="rounded-lg border bg-white p-4" style={{ borderColor: 'var(--line)' }}>
@@ -412,8 +429,13 @@ function WatchlistCard({
             Source
           </p>
           <p className="mt-1" style={{ color: 'var(--ink-2)' }}>
-            {entry.radar_enabled ? 'Enabled' : 'Not enabled'}
+            {sourceEnabled ? sourceTierLabel(sourceTier(entry)) : 'Manual list'}
           </p>
+          {sourceEnabled && entry.source_name && (
+            <p className="mt-1 text-xs" style={{ color: 'var(--ink-3)' }}>
+              {entry.source_name}
+            </p>
+          )}
           <RefreshStatus entry={entry} isRefreshing={isRefreshing} refreshResult={refreshResult} refreshError={refreshError} />
         </div>
       </div>
@@ -423,7 +445,7 @@ function WatchlistCard({
       </p>
 
       <div className="mt-4 flex justify-end gap-2">
-        {entry.radar_enabled && (
+        {sourceEnabled && (
           <button
             type="button"
             className="btn-outline inline-flex items-center gap-1 text-sm"
@@ -434,15 +456,6 @@ function WatchlistCard({
             Refresh
           </button>
         )}
-        <button
-          type="button"
-          className="btn-primary inline-flex items-center gap-1 text-sm"
-          onClick={() => onPromote(entry)}
-          disabled={isPromoting}
-        >
-          {isPromoting ? <Spinner size="sm" color="white" /> : <ArrowRight size={14} />}
-          Start Application
-        </button>
         <button type="button" className="btn-outline text-sm" onClick={() => onEdit(entry)}>
           Edit
         </button>
@@ -478,10 +491,13 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
   const [careersUrl, setCareersUrl] = useState('');
   const [atsType, setAtsType] = useState<AtsType | ''>('');
   const [atsBoardToken, setAtsBoardToken] = useState('');
+  const [selectedSourceTier, setSelectedSourceTier] = useState<SourceTier>('direct_ats');
+  const [sourceName, setSourceName] = useState('');
   const [useManualSource, setUseManualSource] = useState(false);
   const [radarEnabled, setRadarEnabled] = useState(false);
 
-  const inferredSource = useMemo(() => inferCareersSource(careersUrl), [careersUrl]);
+  const isDirectAts = selectedSourceTier === 'direct_ats';
+  const inferredSource = useMemo(() => (isDirectAts ? inferCareersSource(careersUrl) : null), [careersUrl, isDirectAts]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -495,20 +511,25 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
     setCareersUrl(sourceUrlFromEntry(entry));
     setAtsType(entry?.ats_type ?? '');
     setAtsBoardToken(entry?.ats_board_token ?? '');
+    setSelectedSourceTier(entry?.source_tier ?? 'direct_ats');
+    setSourceName(entry?.source_name ?? '');
     setUseManualSource(false);
     setRadarEnabled(entry?.radar_enabled ?? false);
   }, [entry, isOpen]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const source = useManualSource
+    const source = isJobSearchEnabled && isDirectAts && useManualSource
       ? {
           atsType: atsType || null,
           value: atsBoardToken.trim() || null,
         }
-      : {
+      : isJobSearchEnabled && isDirectAts ? {
           atsType: inferredSource?.atsType ?? null,
           value: inferredSource?.value ?? null,
+        } : {
+          atsType: null,
+          value: null,
         };
 
     onSubmit({
@@ -521,7 +542,9 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
       notes: notes.trim() || null,
       ats_type: source.atsType,
       ats_board_token: source.value,
-      radar_enabled: radarEnabled,
+      radar_enabled: isJobSearchEnabled && radarEnabled,
+      source_tier: isJobSearchEnabled ? selectedSourceTier : 'direct_ats',
+      source_name: isJobSearchEnabled ? sourceName.trim() || null : null,
     });
   }
 
@@ -576,6 +599,7 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
                 <span className="field-label">Notes</span>
                 <textarea className="field-textarea" rows={4} value={notes} onChange={(event) => setNotes(event.target.value)} />
               </label>
+              {isJobSearchEnabled && (
               <div className="sm:col-span-2 rounded-lg border p-4" style={{ borderColor: 'var(--line)', background: 'var(--softer)' }}>
                 <label className="flex items-center justify-between gap-4">
                   <span>
@@ -596,63 +620,95 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
                 </label>
 
                 <label className="mt-4 block">
-                  <span className="field-label">Careers URL</span>
-                  <input
-                    className="field-input"
-                    type="url"
-                    placeholder="https://company.example.com/careers"
-                    value={careersUrl}
-                    onChange={(event) => setCareersUrl(event.target.value)}
-                  />
+                  <span className="field-label">Source Tier</span>
+                  <select
+                    className="field-select"
+                    value={selectedSourceTier}
+                    onChange={(event) => setSelectedSourceTier(event.target.value as SourceTier)}
+                  >
+                    {SOURCE_TIER_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
                 </label>
 
                 <div className="mt-3 rounded-lg border bg-white px-3 py-2 text-xs" style={{ borderColor: 'var(--line)', color: 'var(--ink-3)' }}>
-                  {inferredSource
-                    ? `Detected ${ATS_OPTIONS.find((option) => option.value === inferredSource.atsType)?.label ?? inferredSource.atsType} source.`
-                    : 'Paste a careers URL to detect the source automatically.'}
+                  {SOURCE_TIER_OPTIONS.find((option) => option.value === selectedSourceTier)?.description}
                 </div>
 
-                <details className="mt-4 rounded-lg border bg-white p-3" style={{ borderColor: 'var(--line)' }}>
-                  <summary className="cursor-pointer text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-                    Advanced source settings
-                  </summary>
-                  <label className="mt-3 flex items-center gap-2 text-sm" style={{ color: 'var(--ink-2)' }}>
-                    <input
-                      type="checkbox"
-                      checked={useManualSource}
-                      onChange={(event) => setUseManualSource(event.target.checked)}
-                      style={{ accentColor: 'var(--accent)' }}
-                    />
-                    Use manual source settings
-                  </label>
-                  <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                    <label>
-                      <span className="field-label">Careers Source Type</span>
-                      <select
-                        className="field-select"
-                        value={useManualSource ? atsType : inferredSource?.atsType ?? ''}
-                        onChange={(event) => setAtsType(event.target.value as AtsType | '')}
-                        disabled={!useManualSource}
-                      >
-                        <option value="">Not set</option>
-                        {ATS_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>{option.label}</option>
-                        ))}
-                      </select>
-                    </label>
-                    <label>
-                      <span className="field-label">Careers Source</span>
+                {isDirectAts ? (
+                  <>
+                    <label className="mt-4 block">
+                      <span className="field-label">Careers URL</span>
                       <input
                         className="field-input"
-                        value={useManualSource ? atsBoardToken : inferredSource?.value ?? ''}
-                        onChange={(event) => setAtsBoardToken(event.target.value)}
-                        placeholder="company careers source"
-                        disabled={!useManualSource}
+                        type="url"
+                        placeholder="https://company.example.com/careers"
+                        value={careersUrl}
+                        onChange={(event) => setCareersUrl(event.target.value)}
                       />
                     </label>
-                  </div>
-                </details>
+
+                    <div className="mt-3 rounded-lg border bg-white px-3 py-2 text-xs" style={{ borderColor: 'var(--line)', color: 'var(--ink-3)' }}>
+                      {inferredSource
+                        ? `Detected ${ATS_OPTIONS.find((option) => option.value === inferredSource.atsType)?.label ?? inferredSource.atsType} source.`
+                        : 'Paste a careers URL to detect the source automatically.'}
+                    </div>
+
+                    <details className="mt-4 rounded-lg border bg-white p-3" style={{ borderColor: 'var(--line)' }}>
+                      <summary className="cursor-pointer text-sm font-semibold" style={{ color: 'var(--ink)' }}>
+                        Advanced source settings
+                      </summary>
+                      <label className="mt-3 flex items-center gap-2 text-sm" style={{ color: 'var(--ink-2)' }}>
+                        <input
+                          type="checkbox"
+                          checked={useManualSource}
+                          onChange={(event) => setUseManualSource(event.target.checked)}
+                          style={{ accentColor: 'var(--accent)' }}
+                        />
+                        Use manual source settings
+                      </label>
+                      <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                        <label>
+                          <span className="field-label">Careers Source Type</span>
+                          <select
+                            className="field-select"
+                            value={useManualSource ? atsType : inferredSource?.atsType ?? ''}
+                            onChange={(event) => setAtsType(event.target.value as AtsType | '')}
+                            disabled={!useManualSource}
+                          >
+                            <option value="">Not set</option>
+                            {ATS_OPTIONS.map((option) => (
+                              <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <label>
+                          <span className="field-label">Careers Source</span>
+                          <input
+                            className="field-input"
+                            value={useManualSource ? atsBoardToken : inferredSource?.value ?? ''}
+                            onChange={(event) => setAtsBoardToken(event.target.value)}
+                            placeholder="company careers source"
+                            disabled={!useManualSource}
+                          />
+                        </label>
+                      </div>
+                    </details>
+                  </>
+                ) : (
+                  <label className="mt-4 block">
+                    <span className="field-label">Source Name</span>
+                    <input
+                      className="field-input"
+                      placeholder={selectedSourceTier === 'curated_board' ? 'LinkedIn, Idealist, Remote.co' : 'Indeed, Talent.com, ZipRecruiter'}
+                      value={sourceName}
+                      onChange={(event) => setSourceName(event.target.value)}
+                    />
+                  </label>
+                )}
               </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-2 border-t bg-gray-50 px-6 py-4" style={{ borderColor: 'var(--line)' }}>
@@ -670,12 +726,9 @@ function WatchlistModal({ entry, isOpen, isLoading, onClose, onSubmit }: Watchli
 
 interface WatchlistWorkspaceProps {
   embedded?: boolean;
-  autoRefreshStaleSources?: boolean;
 }
 
-export function WatchlistWorkspace({ embedded = false, autoRefreshStaleSources = false }: WatchlistWorkspaceProps) {
-  const navigate = useNavigate();
-  const autoRefreshedIds = useRef(new Set<string>());
+export function WatchlistWorkspace({ embedded = false }: WatchlistWorkspaceProps) {
   const [search, setSearch] = useState('');
   const [priority, setPriority] = useState('');
   const [targetFrom, setTargetFrom] = useState('');
@@ -685,7 +738,6 @@ export function WatchlistWorkspace({ embedded = false, autoRefreshStaleSources =
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [confirmDeleteEntry, setConfirmDeleteEntry] = useState<WatchlistEntry | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [promotingId, setPromotingId] = useState<string | null>(null);
   const [refreshingIds, setRefreshingIds] = useState<Set<string>>(() => new Set());
   const [refreshResults, setRefreshResults] = useState<Record<string, WatchlistRadarRefreshResult>>({});
   const [refreshErrors, setRefreshErrors] = useState<Record<string, string>>({});
@@ -697,12 +749,11 @@ export function WatchlistWorkspace({ embedded = false, autoRefreshStaleSources =
     ...(targetTo && { target_apply_date_to: targetTo }),
   }), [priority, search, targetFrom, targetTo]);
 
-  const { data: entries = [], isLoading, isSuccess, error } = useWatchlist(params);
+  const { data: entries = [], isLoading, error } = useWatchlist(params);
   const sortedEntries = useMemo(() => sortEntries(entries, sortKey), [entries, sortKey]);
   const createEntry = useCreateWatchlistEntry();
   const updateEntry = useUpdateWatchlistEntry();
   const deleteEntry = useDeleteWatchlistEntry();
-  const promoteEntry = usePromoteWatchlistEntry();
   const refreshRadar = useRefreshWatchlistRadar();
 
   function openAddModal() {
@@ -745,20 +796,7 @@ export function WatchlistWorkspace({ embedded = false, autoRefreshStaleSources =
     }
   }
 
-  async function handlePromote(entry: WatchlistEntry) {
-    setPromotingId(entry.id);
-    try {
-      await promoteEntry.mutateAsync(entry.id);
-      toast.success('Application started');
-      navigate('/applications');
-    } catch (error) {
-      toast.error(apiErrorMessage(error, 'Could not start application'));
-    } finally {
-      setPromotingId(null);
-    }
-  }
-
-  const refreshEntry = useCallback(async (entry: WatchlistEntry, showToast: boolean) => {
+  async function refreshEntry(entry: WatchlistEntry, showToast: boolean) {
     setRefreshingIds((current) => new Set(current).add(entry.id));
     setRefreshErrors((current) => {
       const next = { ...current };
@@ -793,25 +831,11 @@ export function WatchlistWorkspace({ embedded = false, autoRefreshStaleSources =
         return next;
       });
     }
-  }, [refreshRadar]);
+  }
 
   async function handleRefresh(entry: WatchlistEntry) {
     await refreshEntry(entry, true);
   }
-
-  useEffect(() => {
-    if (!autoRefreshStaleSources || !isSuccess) return;
-
-    const now = Date.now();
-    const entriesToRefresh = entries.filter((entry) => (
-      shouldAutoRefreshSource(entry, now) && !autoRefreshedIds.current.has(entry.id)
-    ));
-
-    for (const entry of entriesToRefresh) {
-      autoRefreshedIds.current.add(entry.id);
-      void refreshEntry(entry, false);
-    }
-  }, [autoRefreshStaleSources, entries, isSuccess, refreshEntry]);
 
   return (
     <>
@@ -827,7 +851,7 @@ export function WatchlistWorkspace({ embedded = false, autoRefreshStaleSources =
               </h1>
             )}
             <p className="mt-1 text-sm" style={{ color: 'var(--ink-3)' }}>
-              Track target companies, configure careers sources, and refresh matched postings.
+              Keep track of companies you want to revisit.
             </p>
           </div>
           <span className="text-sm font-semibold" style={{ color: 'var(--ink-3)' }}>
@@ -913,7 +937,7 @@ export function WatchlistWorkspace({ embedded = false, autoRefreshStaleSources =
               No companies found
             </h2>
             <p className="mx-auto mt-1 max-w-md text-sm" style={{ color: 'var(--ink-3)' }}>
-              Add a company you want to watch, configure its careers source, then refresh it to discover matching postings.
+              Add a company you want to keep separate from your active applications.
             </p>
             <button type="button" onClick={openAddModal} className="btn-primary mt-5 inline-flex items-center gap-2 text-sm">
               <Plus size={16} />
@@ -938,10 +962,8 @@ export function WatchlistWorkspace({ embedded = false, autoRefreshStaleSources =
                   entry={entry}
                   onEdit={openEditModal}
                   onDelete={setConfirmDeleteEntry}
-                  onPromote={handlePromote}
                   onRefresh={handleRefresh}
                   isDeleting={deletingId === entry.id}
-                  isPromoting={promotingId === entry.id}
                   isRefreshing={refreshingIds.has(entry.id)}
                   refreshResult={refreshResults[entry.id]}
                   refreshError={refreshErrors[entry.id]}
@@ -956,10 +978,8 @@ export function WatchlistWorkspace({ embedded = false, autoRefreshStaleSources =
                   entry={entry}
                   onEdit={openEditModal}
                   onDelete={setConfirmDeleteEntry}
-                  onPromote={handlePromote}
                   onRefresh={handleRefresh}
                   isDeleting={deletingId === entry.id}
-                  isPromoting={promotingId === entry.id}
                   isRefreshing={refreshingIds.has(entry.id)}
                   refreshResult={refreshResults[entry.id]}
                   refreshError={refreshErrors[entry.id]}

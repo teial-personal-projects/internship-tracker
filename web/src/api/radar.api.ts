@@ -1,14 +1,69 @@
 import { apiClient } from './client';
-import type { DiscoveredPosting, PostingStatus } from '@shared/schemas';
+import type {
+  DiscoveredPosting,
+  PostingStatus,
+  PostingValidityStatus,
+  RadarCriteria,
+  SourceTier,
+  UpdateRadarCriteriaSchemaType,
+} from '@shared/schemas';
 
 export interface RadarPostingsParams {
   status?: PostingStatus;
-  watchlist_id?: string;
   search?: string;
+  source_tier?: SourceTier;
+  validity_status?: PostingValidityStatus;
+  sort?: 'quality' | 'first_seen' | 'posted_at';
+  include_closed?: boolean;
 }
 
 export async function getRadarPostings(params: RadarPostingsParams = {}): Promise<DiscoveredPosting[]> {
   const { data } = await apiClient.get<{ data: DiscoveredPosting[] }>('/radar/postings', { params });
+  return data.data;
+}
+
+export async function getRadarCriteria(): Promise<RadarCriteria> {
+  const { data } = await apiClient.get<{ data: RadarCriteria }>('/radar/criteria');
+  return data.data;
+}
+
+export async function updateRadarCriteria(payload: UpdateRadarCriteriaSchemaType): Promise<RadarCriteria> {
+  const { data } = await apiClient.put<{ data: RadarCriteria }>('/radar/criteria', payload);
+  return data.data;
+}
+
+export interface TrustedSourceSearchResult {
+  sources_searched: number;
+  fetched: number;
+  matched: number;
+  inserted: number;
+  criteria: RadarCriteria;
+  sources: Array<{
+    sourceId: string;
+    sourceName: string;
+    fetched: number;
+    matched: number;
+    inserted: number;
+    error: string | null;
+  }>;
+  message: string;
+}
+
+export interface RadarSearchSource {
+  id: string;
+  source_name: string;
+  source_tier: SourceTier;
+  is_active: boolean;
+  is_searchable: boolean;
+}
+
+export async function searchTrustedSources(): Promise<TrustedSourceSearchResult> {
+  const { data } = await apiClient.post<{ data: TrustedSourceSearchResult }>('/radar/search');
+  return data.data;
+}
+
+export async function getRadarSearchSources(): Promise<RadarSearchSource[]> {
+  const { data } = await apiClient.get<{ data: RadarSearchSource[] }>('/radar/search-sources');
   return data.data;
 }
 
@@ -17,10 +72,5 @@ export async function updateRadarPostingStatus(
   status: Extract<PostingStatus, 'seen' | 'dismissed'>,
 ): Promise<DiscoveredPosting> {
   const { data } = await apiClient.patch<{ data: DiscoveredPosting }>(`/radar/postings/${id}`, { status });
-  return data.data;
-}
-
-export async function promoteRadarPosting(id: string): Promise<{ application_id: string }> {
-  const { data } = await apiClient.post<{ data: { application_id: string } }>(`/radar/postings/${id}/promote`);
   return data.data;
 }

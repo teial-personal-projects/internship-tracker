@@ -1,0 +1,93 @@
+[
+  {
+    "id": "greenhouse",
+    "source_name": "Greenhouse",
+    "source_tier": "direct_ats",
+    "adapter_type": "greenhouse",
+    "supports_direct_validity_checks": true
+  },
+  {
+    "id": "lever",
+    "source_name": "Lever",
+    "source_tier": "direct_ats",
+    "adapter_type": "lever",
+    "supports_direct_validity_checks": true
+  },
+  {
+    "id": "ashby",
+    "source_name": "Ashby",
+    "source_tier": "direct_ats",
+    "adapter_type": "ashby",
+    "supports_direct_validity_checks": true
+  },
+  {
+    "id": "smartrecruiters",
+    "source_name": "SmartRecruiters",
+    "source_tier": "direct_ats",
+    "adapter_type": "smartrecruiters",
+    "supports_direct_validity_checks": true
+  },
+  {
+    "id": "pinpoint",
+    "source_name": "Pinpoint",
+    "source_tier": "direct_ats",
+    "adapter_type": "pinpoint",
+    "supports_direct_validity_checks": false
+  },
+  {
+    "id": "welcomekit",
+    "source_name": "Welcome Kit",
+    "source_tier": "direct_ats",
+    "adapter_type": "welcomekit",
+    "supports_direct_validity_checks": false
+  },
+  {
+    "id": "custom",
+    "source_name": "Custom careers page",
+    "source_tier": "direct_ats",
+    "adapter_type": "custom",
+    "supports_direct_validity_checks": false
+  },
+  {
+    "id": "linkedin",
+    "source_name": "LinkedIn",
+    "source_tier": "curated_board",
+    "adapter_type": null,
+    "supports_direct_validity_checks": false
+  },
+  {
+    "id": "working_nomads",
+    "source_name": "Working Nomads",
+    "source_tier": "curated_board",
+    "adapter_type": null,
+    "supports_direct_validity_checks": false
+  },
+  {
+    "id": "remote_co",
+    "source_name": "Remote.co",
+    "source_tier": "curated_board",
+    "adapter_type": null,
+    "supports_direct_validity_checks": false
+  },
+  {
+    "id": "idealist",
+    "source_name": "Idealist",
+    "source_tier": "curated_board",
+    "adapter_type": null,
+    "supports_direct_validity_checks": false
+  },
+  {
+    "id": "indeed",
+    "source_name": "Indeed",
+    "source_tier": "aggregator",
+    "adapter_type": null,
+    "supports_direct_validity_checks": false
+  },
+  {
+    "id": "ziprecruiter",
+    "source_name": "ZipRecruiter",
+    "source_tier": "aggregator",
+    "adapter_type": null,
+    "supports_direct_validity_checks": false
+  }
+]

@@ -1,5 +1,6 @@
-import type { AtsAdapter, NormalizedPosting } from './types';
+import type { AtsAdapter, NormalizedPosting, PostingValidationInput, PostingValidationResult } from './types';
 import { getString, normalizePosting, requireJobsArray } from './helpers';
+import { validateByBoardFetch } from './validation';
 
 const ASHBY_BASE_URL = 'https://api.ashbyhq.com/posting-api/job-board';
 
@@ -36,6 +37,10 @@ export class AshbyAdapter implements AtsAdapter {
       postedAt: job.publishedAt ?? job.updatedAt ?? null,
       raw: job,
     }));
+  }
+
+  async validate(posting: PostingValidationInput): Promise<PostingValidationResult> {
+    return validateByBoardFetch(posting, (boardToken) => this.fetch(boardToken));
   }
 }
 

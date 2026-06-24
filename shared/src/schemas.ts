@@ -184,6 +184,14 @@ export const PostingStatusSchema = z.enum([
   'new', 'seen', 'dismissed', 'promoted',
 ]);
 
+export const SourceTierSchema = z.enum([
+  'direct_ats', 'curated_board', 'aggregator',
+]);
+
+export const PostingValidityStatusSchema = z.enum([
+  'unchecked', 'live', 'closed', 'not_found', 'stale', 'error',
+]);
+
 // ============================================================
 // V2 Entity Schemas
 // ============================================================
@@ -329,6 +337,8 @@ export const CreateCompanyWatchlistEntrySchema = z.object({
   ats_type: AtsTypeSchema.nullable().optional(),
   ats_board_token: z.string().nullable().optional(),
   radar_enabled: z.boolean().optional(),
+  source_tier: SourceTierSchema.default('direct_ats'),
+  source_name: z.string().nullable().optional(),
 });
 
 export const UpdateCompanyWatchlistEntrySchema = CreateCompanyWatchlistEntrySchema
@@ -337,6 +347,8 @@ export const UpdateCompanyWatchlistEntrySchema = CreateCompanyWatchlistEntrySche
     ats_type: AtsTypeSchema.nullable().optional(),
     ats_board_token: z.string().nullable().optional(),
     radar_enabled: z.boolean().optional(),
+    source_tier: SourceTierSchema.optional(),
+    source_name: z.string().nullable().optional(),
   });
 
 export const CreateApplicationEventSchema = z.object({
@@ -353,13 +365,16 @@ export const RadarSourceSchema = z.object({
   ats_type: AtsTypeSchema.nullable(),
   ats_board_token: z.string().nullable(),
   radar_enabled: z.boolean(),
+  source_tier: SourceTierSchema,
+  source_name: z.string().nullable(),
   last_refreshed_at: z.string().datetime().nullable(),
 });
 
 export const DiscoveredPostingSchema = z.object({
   id: z.string().uuid(),
   user_id: z.string().uuid(),
-  watchlist_id: z.string().uuid(),
+  watchlist_id: z.string().uuid().nullable(),
+  radar_source_id: z.string().nullable().optional(),
   company_name: z.string().min(1).max(MAX_COMPANY_LENGTH),
   external_job_id: z.string().min(1),
   title: z.string().min(1).max(MAX_TITLE_LENGTH),
@@ -372,6 +387,13 @@ export const DiscoveredPostingSchema = z.object({
   posted_at: z.string().datetime().nullable(),
   first_seen_at: z.string().datetime(),
   status: PostingStatusSchema,
+  source_tier: SourceTierSchema,
+  first_seen_source: z.string().min(1),
+  also_seen_on: z.array(z.unknown()),
+  source_first_seen_at: z.record(z.unknown()),
+  validity_status: PostingValidityStatusSchema,
+  last_validated_at: z.string().datetime().nullable(),
+  validation_error: z.string().nullable(),
   raw_payload: z.record(z.unknown()),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
@@ -379,10 +401,13 @@ export const DiscoveredPostingSchema = z.object({
 
 export const RadarCriteriaSchema = z.object({
   user_id: z.string().uuid(),
+  title_terms: z.array(z.string().max(100)).default([]),
+  field_terms: z.array(z.string().max(100)).default([]),
   include_keywords: z.array(z.string().max(100)),
   exclude_keywords: z.array(z.string().max(100)),
   seniority_terms: z.array(z.string().max(100)),
-  location_rules: z.array(z.enum(['remote_us', 'la', 'onsite', 'unknown'])),
+  location_terms: z.array(z.string().max(100)).default([]),
+  location_rules: z.array(z.enum(['remote_us', 'onsite'])),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
 });
@@ -548,6 +573,8 @@ export type NotificationType = z.infer<typeof NotificationTypeSchema>;
 export type ApplicationEventType = z.infer<typeof ApplicationEventTypeSchema>;
 export type AtsType = z.infer<typeof AtsTypeSchema>;
 export type PostingStatus = z.infer<typeof PostingStatusSchema>;
+export type SourceTier = z.infer<typeof SourceTierSchema>;
+export type PostingValidityStatus = z.infer<typeof PostingValidityStatusSchema>;
 
 export type CreateApplicationSchemaType = z.infer<typeof CreateApplicationSchema>;
 export type UpdateApplicationSchemaType = z.infer<typeof UpdateApplicationSchema>;

@@ -225,19 +225,22 @@ File: `migrations/v3_001_email_preferences.sql`
 
 ---
 
-## Phase 14. Scheduled Job Radar Polling and Alerts
+## Phase 14. Job Discovery and Radar Alerts
 
-*Builds on the manual Job Radar refresh flow (Phases 6 through 12 of `IMPLEMENTATION-PLAN-v2.md`) and the In-App Notifications in Phase 6 of this plan, and feeds the digest from Phase 10. Build after all three are in place.*
+*Owns the Job Discovery work moved out of V2. Build manual discovery before scheduled polling. Avoid paid provider APIs and broad scraping in the initial implementation. Alerts build on the In-App Notifications in Phase 6 and feed the digest from Phase 10.*
 
 - [ ] 14.1 Add `new_matching_role` to `notification_type_enum` (additive migration)
-- [ ] 14.2 Create `api/src/jobs/pollRadarSources.ts` using the V2 radar refresh service
-- [ ] 14.3 Query `company_watchlist` rows where `radar_enabled = true`
-- [ ] 14.4 Refresh each source, isolate errors per source, and update `last_refreshed_at`
-- [ ] 14.5 Schedule via `node-cron` every 30 minutes, with a staggered start to stay polite to boards
-- [ ] 14.6 Guard startup with `ENABLE_BACKGROUND_JOBS`; jobs do not run in tests unless explicitly invoked
-- [ ] 14.7 After inserting a new matching posting, call `createNotification(userId, 'new_matching_role', postingId, message)`
-- [ ] 14.8 Include new matching roles in the v3 email digest qualifying events
-- [ ] 14.9 Confirm a new matching role produces exactly one notification and respects the dedupe rule
+- [ ] 14.2 Create the V3 Discover route and UI for job discovery
+- [ ] 14.3 Keep Companies To Watch separate from provider-backed discovery, but allow user-selected companies to opt into direct ATS refreshes
+- [ ] 14.4 Implement manual source search before scheduled polling
+- [ ] 14.5 Start with free, documented, non-scraping source paths only; do not require paid provider credentials
+- [ ] 14.6 Store normalized matches in `discovered_postings` with dedupe by source and external job id
+- [ ] 14.7 Add source error isolation so one failed source does not delete or hide existing postings
+- [ ] 14.8 Create `api/src/jobs/pollRadarSources.ts` only after manual discovery is stable
+- [ ] 14.9 Schedule polling via `node-cron` only when explicitly enabled with `ENABLE_BACKGROUND_JOBS`
+- [ ] 14.10 After inserting a new matching posting, call `createNotification(userId, 'new_matching_role', postingId, message)`
+- [ ] 14.11 Include new matching roles in the v3 email digest qualifying events
+- [ ] 14.12 Confirm a new matching role produces exactly one notification and respects the dedupe rule
 
 ---
 

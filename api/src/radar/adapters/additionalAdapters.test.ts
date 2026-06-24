@@ -45,6 +45,24 @@ describe('additional ATS adapters', () => {
     }]);
   });
 
+  it('validates missing Lever jobs as closed after a successful board response', async () => {
+    mockJsonFetch(leverFixture);
+
+    await expect(new LeverAdapter().validate?.({
+      boardToken: 'age-of-learning',
+      externalId: 'missing-lever-job',
+      title: 'Senior Backend Engineer',
+      location: 'Remote - US',
+      remoteStatus: 'remote_us',
+      url: 'https://jobs.lever.co/example/missing-lever-job',
+      postedAt: null,
+      raw: {},
+    })).resolves.toEqual({
+      status: 'closed',
+      error: null,
+    });
+  });
+
   it('normalizes Ashby postings', async () => {
     const fetchMock = mockJsonFetch(ashbyFixture);
     const postings = await new AshbyAdapter().fetch('instructure');
@@ -61,6 +79,24 @@ describe('additional ATS adapters', () => {
     }]);
   });
 
+  it('validates missing Ashby jobs as closed after a successful board response', async () => {
+    mockJsonFetch(ashbyFixture);
+
+    await expect(new AshbyAdapter().validate?.({
+      boardToken: 'instructure',
+      externalId: 'missing-ashby-job',
+      title: 'Staff Product Engineer',
+      location: 'Los Angeles, CA',
+      remoteStatus: 'la',
+      url: 'https://jobs.ashbyhq.com/example/missing-ashby-job',
+      postedAt: null,
+      raw: {},
+    })).resolves.toEqual({
+      status: 'closed',
+      error: null,
+    });
+  });
+
   it('normalizes SmartRecruiters postings', async () => {
     const fetchMock = mockJsonFetch(smartRecruitersFixture);
     const postings = await new SmartRecruitersAdapter().fetch('turnitin');
@@ -75,6 +111,24 @@ describe('additional ATS adapters', () => {
       postedAt: '2026-06-03T10:00:00.000Z',
       raw: smartRecruitersFixture.content[0],
     }]);
+  });
+
+  it('validates missing SmartRecruiters jobs as closed after a successful board response', async () => {
+    mockJsonFetch(smartRecruitersFixture);
+
+    await expect(new SmartRecruitersAdapter().validate?.({
+      boardToken: 'turnitin',
+      externalId: 'missing-smart-job',
+      title: 'Senior Full Stack Engineer',
+      location: 'Remote, US, United States',
+      remoteStatus: 'remote_us',
+      url: 'https://jobs.smartrecruiters.com/example/missing-smart-job',
+      postedAt: null,
+      raw: {},
+    })).resolves.toEqual({
+      status: 'closed',
+      error: null,
+    });
   });
 
   it('normalizes Pinpoint HTML fallback postings', async () => {

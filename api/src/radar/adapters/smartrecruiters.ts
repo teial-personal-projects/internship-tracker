@@ -1,5 +1,6 @@
-import type { AtsAdapter, NormalizedPosting } from './types';
+import type { AtsAdapter, NormalizedPosting, PostingValidationInput, PostingValidationResult } from './types';
 import { getString, normalizePosting, requireJobsArray } from './helpers';
+import { validateByBoardFetch } from './validation';
 
 const SMARTRECRUITERS_BASE_URL = 'https://api.smartrecruiters.com/v1/companies';
 
@@ -47,6 +48,10 @@ export class SmartRecruitersAdapter implements AtsAdapter {
       postedAt: job.releasedDate ?? null,
       raw: job,
     }));
+  }
+
+  async validate(posting: PostingValidationInput): Promise<PostingValidationResult> {
+    return validateByBoardFetch(posting, (boardToken) => this.fetch(boardToken));
   }
 }
 

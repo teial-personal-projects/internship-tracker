@@ -1,5 +1,6 @@
-import type { AtsAdapter, NormalizedPosting } from './types';
+import type { AtsAdapter, NormalizedPosting, PostingValidationInput, PostingValidationResult } from './types';
 import { detectRemoteStatus, normalizeLocation } from '../normalize';
+import { validateByBoardFetch } from './validation';
 
 const GREENHOUSE_BASE_URL = 'https://boards-api.greenhouse.io/v1/boards';
 
@@ -45,6 +46,10 @@ export class GreenhouseAdapter implements AtsAdapter {
         raw: job,
       };
     });
+  }
+
+  async validate(posting: PostingValidationInput): Promise<PostingValidationResult> {
+    return validateByBoardFetch(posting, (boardToken) => this.fetch(boardToken));
   }
 }
 

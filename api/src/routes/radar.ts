@@ -3,18 +3,138 @@ import { z } from 'zod';
 import { requireAuth, type AuthRequest } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
 import { createUserClient } from '../lib/supabase';
-import { sendApplicationSourceMigrationError } from '../lib/schemaCache';
 import { refreshRadarSource, type RadarRefreshDb } from '../radar/refreshRadarSource';
-import type { AtsType } from '@internship-tracker/shared';
+import { validatePostingFromSource, type RadarValidationDb } from '../radar/validatePosting';
+import { qualityScore } from '../radar/qualityScore';
+import { RADAR_SOURCE_REGISTRY } from '../radar/sources/registry';
+import { searchTrustedSources as runTrustedSourceSearch } from '../radar/trustedSources/searchTrustedSources';
+import { UpdateRadarCriteriaSchema, type AtsType, type RadarCriteria, type UpdateRadarCriteriaSchemaType } from '@internship-tracker/shared';
 import type { Request, Response } from 'express';
 
 const router = Router();
 
 type Ownership = 'ok' | 'not_found' | 'forbidden';
+type SourceTier = 'direct_ats' | 'curated_board' | 'aggregator';
+type ValidityStatus = 'unchecked' | 'live' | 'closed' | 'not_found' | 'stale' | 'error';
+type RadarSort = 'quality' | 'first_seen' | 'posted_at';
+type SearchablePosting = {
+  title?: string | null;
+  company_name?: string | null;
+  location?: string | null;
+};
+type RadarPostingRow = SearchablePosting & {
+  source_tier?: SourceTier | null;
+  validity_status?: ValidityStatus | null;
+  first_seen_at?: string | null;
+  posted_at?: string | null;
+  last_validated_at?: string | null;
+  also_seen_on?: unknown;
+};
+type RadarSearchSourceRow = {
+  id: string;
+  source_name: string;
+  source_tier: SourceTier;
+  is_active?: boolean | null;
+  metadata?: unknown;
+};
+
+const REMOVED_RADAR_SOURCE_IDS = new Set(['we_work_remotely']);
 
 const UpdatePostingStatusSchema = z.object({
   status: z.enum(['seen', 'dismissed']),
 });
+
+const DEFAULT_RADAR_CRITERIA = {
+  title_terms: [],
+  field_terms: [],
+  include_keywords: [],
+  exclude_keywords: [],
+  seniority_terms: [],
+  location_terms: [],
+  location_rules: [],
+} satisfies UpdateRadarCriteriaSchemaType;
+
+function normalizeTerms(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+
+  return [...new Set(value
+    .filter((term): term is string => typeof term === 'string')
+    .map((term) => term.trim())
+    .filter(Boolean))]
+    .slice(0, 25);
+}
+
+function normalizeLocationRules(value: unknown): RadarCriteria['location_rules'] {
+  if (!Array.isArray(value)) return DEFAULT_RADAR_CRITERIA.location_rules;
+
+  const allowed = new Set(['remote_us', 'onsite']);
+  const rules = value.filter((rule): rule is RadarCriteria['location_rules'][number] =>
+    typeof rule === 'string' && allowed.has(rule),
+  );
+  return rules;
+}
+
+function criteriaPayloadFromBody(body: UpdateRadarCriteriaSchemaType): UpdateRadarCriteriaSchemaType {
+  return {
+    title_terms: normalizeTerms(body.title_terms),
+    field_terms: normalizeTerms(body.field_terms),
+    include_keywords: normalizeTerms(body.include_keywords),
+    exclude_keywords: normalizeTerms(body.exclude_keywords),
+    seniority_terms: normalizeTerms(body.seniority_terms),
+    location_terms: normalizeTerms(body.location_terms),
+    location_rules: normalizeLocationRules(body.location_rules),
+  };
+}
+
+function defaultCriteria(userId: string): RadarCriteria {
+  const now = new Date().toISOString();
+  return {
+    user_id: userId,
+    ...DEFAULT_RADAR_CRITERIA,
+    created_at: now,
+    updated_at: now,
+  };
+}
+
+function criteriaFromRow(row: Partial<RadarCriteria> | null | undefined, userId: string): RadarCriteria {
+  const defaults = defaultCriteria(userId);
+  if (!row) return defaults;
+
+  return {
+    ...defaults,
+    ...row,
+    user_id: userId,
+    title_terms: normalizeTerms(row.title_terms),
+    field_terms: normalizeTerms(row.field_terms),
+    include_keywords: normalizeTerms(row.include_keywords),
+    exclude_keywords: normalizeTerms(row.exclude_keywords),
+    seniority_terms: normalizeTerms(row.seniority_terms),
+    location_terms: normalizeTerms(row.location_terms),
+    location_rules: normalizeLocationRules(row.location_rules),
+    created_at: row.created_at ?? defaults.created_at,
+    updated_at: row.updated_at ?? defaults.updated_at,
+  };
+}
+
+async function getRadarCriteriaRow(
+  db: ReturnType<typeof createUserClient>,
+  userId: string,
+): Promise<RadarCriteria> {
+  const { data, error } = await db
+    .from('radar_criteria')
+    .select('user_id, title_terms, field_terms, include_keywords, exclude_keywords, seniority_terms, location_terms, location_rules, created_at, updated_at')
+    .eq('user_id', userId)
+    .limit(1);
+
+  if (error) {
+    const message = error.message.toLowerCase();
+    if (message.includes('radar_criteria') && (message.includes('schema') || message.includes('does not exist'))) {
+      return defaultCriteria(userId);
+    }
+    throw new Error(error.message);
+  }
+  return criteriaFromRow((data as Partial<RadarCriteria>[] | null)?.[0] ?? null, userId);
+}
 
 async function getOwnedPosting(
   db: ReturnType<typeof createUserClient>,
@@ -42,6 +162,266 @@ function sendOwnershipError(res: Response, ownership: Exclude<Ownership, 'ok'>):
   res.status(404).json({ error: 'Posting not found' });
 }
 
+async function validatePostingForExplicitAction(
+  db: ReturnType<typeof createUserClient>,
+  posting: Record<string, unknown>,
+): Promise<void> {
+  await validatePostingFromSource(db as unknown as RadarValidationDb, posting as unknown as Parameters<typeof validatePostingFromSource>[1]);
+}
+
+function queryString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
+}
+
+function parseSourceTier(value: unknown): SourceTier | undefined {
+  const raw = queryString(value);
+  return raw === 'direct_ats' || raw === 'curated_board' || raw === 'aggregator' ? raw : undefined;
+}
+
+function parseValidityStatus(value: unknown): ValidityStatus | undefined {
+  const raw = queryString(value);
+  return raw === 'unchecked'
+    || raw === 'live'
+    || raw === 'closed'
+    || raw === 'not_found'
+    || raw === 'stale'
+    || raw === 'error' ? raw : undefined;
+}
+
+function parseSort(value: unknown, status: string | undefined): RadarSort {
+  const raw = queryString(value);
+  if (raw === 'quality' || raw === 'first_seen' || raw === 'posted_at') return raw;
+  return status === 'new' ? 'quality' : 'first_seen';
+}
+
+function queryBoolean(value: unknown): boolean {
+  return value === 'true';
+}
+
+function rawObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function isMissingRadarSourcesTable(error: { message: string } | null): boolean {
+  if (!error) return false;
+  const message = error.message.toLowerCase();
+  return message.includes('radar_sources') && (message.includes('schema') || message.includes('does not exist'));
+}
+
+function containsSearchValue(value: string | null | undefined, search: string): boolean {
+  return typeof value === 'string' && value.toLowerCase().includes(search);
+}
+
+function searchSourcePayload(row: RadarSearchSourceRow) {
+  const metadata = rawObject(row.metadata);
+  const hasAdapter = typeof metadata.trusted_source_adapter === 'string' && metadata.trusted_source_adapter.trim().length > 0;
+  const trustedDiscoveryEnabled = metadata.trusted_discovery_enabled === true;
+  return {
+    id: row.id,
+    source_name: row.source_name,
+    source_tier: row.source_tier,
+    is_active: row.is_active ?? false,
+    is_searchable: Boolean(row.is_active && trustedDiscoveryEnabled && hasAdapter),
+  };
+}
+
+function fallbackSearchSources() {
+  return Object.values(RADAR_SOURCE_REGISTRY)
+    .filter((source) =>
+      (source.tier === 'curated_board' || source.tier === 'aggregator')
+      && !REMOVED_RADAR_SOURCE_IDS.has(source.id),
+    )
+    .map((source) => ({
+      id: source.id,
+      source_name: source.name,
+      source_tier: source.tier,
+      is_active: false,
+      is_searchable: false,
+    }));
+}
+
+function postingMatchesSearch(
+  posting: SearchablePosting,
+  search: string,
+): boolean {
+  return containsSearchValue(posting.title, search)
+    || containsSearchValue(posting.company_name, search)
+    || containsSearchValue(posting.location, search);
+}
+
+function timestampValue(value: string | null | undefined): number {
+  if (!value) return 0;
+  const timestamp = new Date(value).getTime();
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
+function isClosedPosting(posting: RadarPostingRow): boolean {
+  return posting.validity_status === 'closed' || posting.validity_status === 'not_found';
+}
+
+function isOldClosedPosting(posting: RadarPostingRow): boolean {
+  if (!isClosedPosting(posting)) return false;
+  const lastValidatedAt = timestampValue(posting.last_validated_at);
+  if (lastValidatedAt === 0) return false;
+  return Date.now() - lastValidatedAt > 14 * 86_400_000;
+}
+
+function filterRadarPostings(
+  postings: RadarPostingRow[],
+  filters: {
+    sourceTier?: SourceTier;
+    validityStatus?: ValidityStatus;
+    includeClosed: boolean;
+    search?: string;
+  },
+): RadarPostingRow[] {
+  return postings.filter((posting) => {
+    if (filters.sourceTier && (posting.source_tier ?? 'direct_ats') !== filters.sourceTier) return false;
+    if (filters.validityStatus && (posting.validity_status ?? 'unchecked') !== filters.validityStatus) return false;
+    if (!filters.validityStatus && filters.sourceTier === 'direct_ats' && isClosedPosting(posting)) return false;
+    if (!filters.validityStatus && !filters.includeClosed && isOldClosedPosting(posting)) return false;
+    if (filters.search && !postingMatchesSearch(posting, filters.search)) return false;
+    return true;
+  });
+}
+
+function sortRadarPostings(postings: RadarPostingRow[], sort: RadarSort): RadarPostingRow[] {
+  return [...postings].sort((left, right) => {
+    if (sort === 'quality') {
+      const qualityDiff = qualityScore(right) - qualityScore(left);
+      if (qualityDiff !== 0) return qualityDiff;
+    }
+
+    const dateField = sort === 'posted_at' ? 'posted_at' : 'first_seen_at';
+    const dateDiff = timestampValue(right[dateField]) - timestampValue(left[dateField]);
+    if (dateDiff !== 0) return dateDiff;
+
+    return timestampValue(right.first_seen_at) - timestampValue(left.first_seen_at);
+  });
+}
+
+// GET /api/radar/criteria
+router.get('/criteria', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const criteria = await getRadarCriteriaRow(db, user.id);
+
+    res.json({ data: criteria });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /api/radar/criteria
+router.put('/criteria', requireAuth, validateBody(UpdateRadarCriteriaSchema), async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const payload = criteriaPayloadFromBody(req.body as UpdateRadarCriteriaSchemaType);
+
+    const { data: existingCriteria, error: existingError } = await db
+      .from('radar_criteria')
+      .select('user_id')
+      .eq('user_id', user.id)
+      .limit(1);
+
+    if (existingError) {
+      res.status(500).json({ error: existingError.message });
+      return;
+    }
+
+    const query = existingCriteria?.[0]
+      ? db.from('radar_criteria').update(payload).eq('user_id', user.id)
+      : db.from('radar_criteria').insert({ user_id: user.id, ...payload });
+
+    const { data, error } = await query
+      .select('user_id, title_terms, field_terms, include_keywords, exclude_keywords, seniority_terms, location_terms, location_rules, created_at, updated_at')
+      .single();
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.json({ data: criteriaFromRow(data as Partial<RadarCriteria> | null, user.id) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/radar/search-sources
+router.get('/search-sources', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const { data, error } = await db
+      .from('radar_sources')
+      .select('id, source_name, source_tier, is_active, metadata');
+
+    if (error) {
+      if (isMissingRadarSourcesTable(error)) {
+        res.json({ data: fallbackSearchSources() });
+        return;
+      }
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    const sources = ((data ?? []) as RadarSearchSourceRow[])
+      .filter((source) =>
+        (source.source_tier === 'curated_board' || source.source_tier === 'aggregator')
+        && !REMOVED_RADAR_SOURCE_IDS.has(source.id),
+      )
+      .map(searchSourcePayload)
+      .sort((left, right) =>
+        Number(right.is_searchable) - Number(left.is_searchable)
+        || left.source_tier.localeCompare(right.source_tier)
+        || left.source_name.localeCompare(right.source_name),
+      );
+
+    res.json({ data: sources });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/radar/search
+router.post('/search', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const criteria = await getRadarCriteriaRow(db, user.id);
+    const sourceResults = await runTrustedSourceSearch(db as unknown as Parameters<typeof runTrustedSourceSearch>[0], user.id, criteria);
+    const totals = sourceResults.reduce((sum, result) => ({
+      sources_searched: sum.sources_searched + 1,
+      fetched: sum.fetched + result.fetched,
+      matched: sum.matched + result.matched,
+      inserted: sum.inserted + result.inserted,
+    }), {
+      sources_searched: 0,
+      fetched: 0,
+      matched: 0,
+      inserted: 0,
+    });
+    const failedSources = sourceResults.filter((result) => result.error);
+
+    res.json({
+      data: {
+        ...totals,
+        criteria,
+        sources: sourceResults,
+        message: totals.sources_searched === 0
+          ? 'No trusted sources are configured yet.'
+          : failedSources.length > 0
+          ? `Trusted source search completed with ${failedSources.length} source error(s).`
+          : `Trusted source search found ${totals.matched} matching posting(s).`,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/radar/postings
 router.get('/postings', requireAuth, async (req: Request, res, next) => {
   try {
@@ -54,16 +434,16 @@ router.get('/postings', requireAuth, async (req: Request, res, next) => {
       .eq('user_id', user.id)
       .order('first_seen_at', { ascending: false });
 
-    if (req.query.status) {
-      query = query.eq('status', req.query.status as string);
-    }
-    if (req.query.watchlist_id) {
-      query = query.eq('watchlist_id', req.query.watchlist_id as string);
-    }
-    if (req.query.search) {
-      query = query.ilike('title', `%${req.query.search as string}%`);
-    }
+    const status = queryString(req.query.status);
+    const search = queryString(req.query.search)?.toLowerCase();
+    const sourceTier = parseSourceTier(req.query.source_tier);
+    const validityStatus = parseValidityStatus(req.query.validity_status);
+    const sort = parseSort(req.query.sort, status);
+    const includeClosed = queryBoolean(req.query.include_closed);
 
+    if (status) {
+      query = query.eq('status', status);
+    }
     const { data, error } = await query;
 
     if (error) {
@@ -71,7 +451,14 @@ router.get('/postings', requireAuth, async (req: Request, res, next) => {
       return;
     }
 
-    res.json({ data: data ?? [] });
+    const filteredData = filterRadarPostings(data as RadarPostingRow[] | null ?? [], {
+      sourceTier,
+      validityStatus,
+      includeClosed,
+      search,
+    });
+
+    res.json({ data: sortRadarPostings(filteredData, sort) });
   } catch (err) {
     next(err);
   }
@@ -97,6 +484,8 @@ router.patch('/postings/:id', requireAuth, validateBody(UpdatePostingStatusSchem
       return;
     }
 
+    await validatePostingForExplicitAction(db, posting as Record<string, unknown>);
+
     const { data, error } = await db
       .from('discovered_postings')
       .update({ status: req.body.status })
@@ -115,71 +504,6 @@ router.patch('/postings/:id', requireAuth, validateBody(UpdatePostingStatusSchem
   }
 });
 
-// POST /api/radar/postings/:id/promote
-router.post('/postings/:id/promote', requireAuth, async (req: Request, res, next) => {
-  try {
-    const db = createUserClient(req);
-    const user = (req as AuthRequest).user;
-    const { id } = req.params;
-
-    const { posting, ownership } = await getOwnedPosting(db, id, user.id);
-
-    if (ownership !== 'ok') {
-      sendOwnershipError(res, ownership);
-      return;
-    }
-
-    const p = posting as {
-      company_name: string;
-      title: string;
-      url: string;
-      status: string;
-    };
-
-    if (p.status === 'promoted') {
-      res.status(409).json({ error: 'Posting has already been promoted' });
-      return;
-    }
-
-    const { data: application, error: applicationError } = await db
-      .from('applications')
-      .insert({
-        user_id: user.id,
-        company: p.company_name,
-        title: p.title,
-        job_link: p.url,
-        status: 'not_started',
-        applied_date: null,
-        source: 'radar',
-        source_metadata: { discovered_posting_id: id },
-      })
-      .select('id')
-      .single();
-
-    if (sendApplicationSourceMigrationError(res, applicationError)) {
-      return;
-    }
-    if (applicationError || !application) {
-      res.status(500).json({ error: applicationError?.message ?? 'Failed to create application' });
-      return;
-    }
-
-    const { error: updateError } = await db
-      .from('discovered_postings')
-      .update({ status: 'promoted' })
-      .eq('id', id);
-
-    if (updateError) {
-      res.status(500).json({ error: updateError.message });
-      return;
-    }
-
-    res.status(201).json({ data: { application_id: (application as { id: string }).id } });
-  } catch (err) {
-    next(err);
-  }
-});
-
 // POST /api/radar/sources/:watchlistId/refresh
 router.post('/sources/:watchlistId/refresh', requireAuth, async (req: Request, res, next) => {
   try {
@@ -189,7 +513,7 @@ router.post('/sources/:watchlistId/refresh', requireAuth, async (req: Request, r
 
     const { data: entry, error: entryError } = await db
       .from('company_watchlist')
-      .select('id, user_id, company_name, ats_type, ats_board_token, radar_enabled')
+      .select('id, user_id, company_name, ats_type, ats_board_token, radar_enabled, source_tier, source_name')
       .eq('id', watchlistId)
       .single();
 
@@ -210,6 +534,8 @@ router.post('/sources/:watchlistId/refresh', requireAuth, async (req: Request, r
       ats_type: AtsType | null;
       ats_board_token: string | null;
       radar_enabled: boolean;
+      source_tier: SourceTier;
+      source_name: string | null;
     };
 
     const result = await refreshRadarSource(db as unknown as RadarRefreshDb, source);

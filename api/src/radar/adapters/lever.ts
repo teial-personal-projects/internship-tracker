@@ -1,5 +1,6 @@
-import type { AtsAdapter, NormalizedPosting } from './types';
+import type { AtsAdapter, NormalizedPosting, PostingValidationInput, PostingValidationResult } from './types';
 import { normalizePosting, requireJobsArray } from './helpers';
+import { validateByBoardFetch } from './validation';
 
 const LEVER_BASE_URL = 'https://api.lever.co/v0/postings';
 
@@ -31,6 +32,10 @@ export class LeverAdapter implements AtsAdapter {
       postedAt: job.createdAt ? new Date(job.createdAt).toISOString() : null,
       raw: job,
     }));
+  }
+
+  async validate(posting: PostingValidationInput): Promise<PostingValidationResult> {
+    return validateByBoardFetch(posting, (boardToken) => this.fetch(boardToken));
   }
 }
 
