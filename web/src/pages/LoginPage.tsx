@@ -391,9 +391,6 @@ export function LoginPage() {
               <BrandMark />
               <div>
                 <p className="text-kicker" style={{ color: 'var(--accent)' }}>Track My Application</p>
-                <h1 className="text-4xl font-bold tracking-tight" style={{ color: 'var(--ink)' }}>
-                  A calmer command center for your job search.
-                </h1>
               </div>
             </div>
 
