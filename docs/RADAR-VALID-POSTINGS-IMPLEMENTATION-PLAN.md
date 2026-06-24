@@ -178,25 +178,25 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 
 ## Step 12 — Tests
 
-12.1 [ ] Add `fingerprint.test.ts` coverage proving the same role from ATS and aggregator URLs produces the same canonical fingerprint.
-12.2 [ ] Add `refreshRadarSource.test.ts` coverage proving an existing posting appends `also_seen_on` instead of inserting a duplicate.
-12.3 [ ] Add `refreshRadarSource.test.ts` coverage proving the highest-authority source tier remains canonical after an aggregator sighting.
-12.4 [ ] Add `refreshRadarSource.test.ts` coverage proving a later direct ATS match can promote a curated or aggregator posting without changing `first_seen_at`.
-12.5 [ ] Add adapter tests proving validation marks missing jobs as closed after a successful board response.
-12.6 [ ] Add route tests proving saving a company from a posting does not create duplicate watchlist rows.
-12.7 [ ] Add route tests proving quality sort returns direct live postings before aggregator unchecked postings.
-12.8 [ ] Add route tests proving old closed postings are hidden from the default view but returned by `All` or `Closed` filters.
+12.1 [x] Add `fingerprint.test.ts` coverage proving the same role from ATS and aggregator URLs produces the same canonical fingerprint.
+12.2 [x] Add `refreshRadarSource.test.ts` coverage proving an existing posting appends `also_seen_on` instead of inserting a duplicate.
+12.3 [x] Add `refreshRadarSource.test.ts` coverage proving the highest-authority source tier remains canonical after an aggregator sighting.
+12.4 [x] Add `refreshRadarSource.test.ts` coverage proving a later direct ATS match can promote a curated or aggregator posting without changing `first_seen_at`.
+12.5 [x] Add adapter tests proving validation marks missing jobs as closed after a successful board response.
+12.6 [x] Add route tests proving saving a company from a posting does not create duplicate watchlist rows.
+12.7 [x] Add route tests proving quality sort returns direct live postings before aggregator unchecked postings.
+12.8 [x] Add route tests proving old closed postings are hidden from the default view but returned by `All` or `Closed` filters.
 12.9 [x] Add trusted source adapter tests with source-specific fixture data after the first source is selected.
 12.10 [x] Add route tests proving source-discovered postings can exist without a watchlist row.
 12.11 [x] Add route tests proving `Search trusted sources` stores source-discovered postings with `radar_source_id`.
-12.12 [ ] Add frontend tests proving Radar cards render source tier badges and validity status.
-12.13 [ ] Add frontend tests proving Radar cards open the original posting from the title or primary action.
-12.14 [ ] Add frontend tests proving Radar cards save a company instead of creating an Application.
-12.15 [ ] Add frontend tests proving closed postings are excluded from fresh-match presentation.
-12.16 [ ] Add frontend tests proving source tier and validity filters update API params.
-12.17 [ ] Add frontend tests proving `also_seen_on` displays as supporting provenance without rendering duplicate cards.
-12.18 [ ] Add frontend tests proving there is no general manual validity override control.
-12.19 [ ] Add frontend tests proving the watchlist workspace renders below trusted source search results.
+12.12 [x] Add frontend tests proving Radar cards render source tier badges and validity status.
+12.13 [x] Add frontend tests proving Radar cards open the original posting from the title or primary action.
+12.14 [x] Add frontend tests proving Radar cards save a company instead of creating an Application.
+12.15 [x] Add frontend tests proving closed postings are excluded from fresh-match presentation.
+12.16 [x] Add frontend tests proving source tier and validity filters update API params.
+12.17 [x] Add frontend tests proving `also_seen_on` displays as supporting provenance without rendering duplicate cards.
+12.18 [x] Add frontend tests proving there is no general manual validity override control.
+12.19 [x] Add frontend tests proving the watchlist workspace renders below trusted source search results.
 
 ## Step 13 — Verification
 

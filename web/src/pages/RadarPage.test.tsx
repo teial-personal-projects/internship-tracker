@@ -1,7 +1,15 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DiscoveredPosting } from '@shared/schemas';
 import { RadarPage, radarViewParams, splitPostingsByClosedState } from './RadarPage';
+
+const mockRadarPostings = vi.hoisted(() => ({
+  value: [] as DiscoveredPosting[],
+}));
+
+const mockWatchlist = vi.hoisted(() => ({
+  value: [] as Array<{ id: string; company_name: string; industry?: string | null; ats_type?: string | null }>,
+}));
 
 vi.mock('@/components/AppHeader', () => ({
   AppHeader: () => <header>Header</header>,
@@ -12,7 +20,7 @@ vi.mock('@/pages/WatchlistPage', () => ({
 }));
 
 vi.mock('@/hooks/useWatchlist', () => ({
-  useWatchlist: () => ({ data: [] }),
+  useWatchlist: () => ({ data: mockWatchlist.value }),
 }));
 
 vi.mock('@/hooks/useRadar', () => ({
@@ -29,7 +37,7 @@ vi.mock('@/hooks/useRadar', () => ({
       updated_at: '2026-06-01T00:00:00.000Z',
     },
   }),
-  useRadarPostings: () => ({ data: [], isLoading: false, error: null }),
+  useRadarPostings: () => ({ data: mockRadarPostings.value, isLoading: false, error: null }),
   useSaveRadarPostingCompany: () => ({ mutateAsync: vi.fn() }),
   useSearchTrustedSources: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useUpdateRadarCriteria: () => ({ mutateAsync: vi.fn(), isPending: false }),
@@ -65,6 +73,11 @@ function posting(overrides: Partial<DiscoveredPosting>): DiscoveredPosting {
 }
 
 describe('RadarPage helpers', () => {
+  beforeEach(() => {
+    mockRadarPostings.value = [];
+    mockWatchlist.value = [];
+  });
+
   it('maps triage views to API filter params', () => {
     expect(radarViewParams('fresh_direct')).toEqual({ source_tier: 'direct_ats', sort: 'quality' });
     expect(radarViewParams('curated')).toEqual({ source_tier: 'curated_board', sort: 'quality' });
@@ -99,5 +112,50 @@ describe('RadarPage helpers', () => {
     expect(markup).toContain('Fields or industries');
     expect(markup).toContain('Search trusted sources');
     expect(markup.indexOf('Search trusted sources')).toBeLessThan(markup.indexOf('New</p>'));
+  });
+
+  it('renders source tier, validity, original posting link, save company, and provenance on Radar cards', () => {
+    mockRadarPostings.value = [posting({
+      id: 'curated-posting',
+      company_name: 'Mission School',
+      title: 'Backend Engineer',
+      url: 'https://weworkremotely.com/remote-jobs/mission-school-backend-engineer',
+      source_tier: 'curated_board',
+      first_seen_source: 'We Work Remotely',
+      validity_status: 'live',
+      also_seen_on: [{
+        source_name: 'Greenhouse',
+        source_tier: 'direct_ats',
+        external_job_id: 'greenhouse-1',
+        url: 'https://boards.greenhouse.io/mission/jobs/1',
+      }],
+      raw_payload: {
+        match_reasons: ['title "backend engineer"', 'source We Work Remotely', 'location remote_us'],
+      },
+    })];
+
+    const markup = renderToStaticMarkup(<RadarPage />);
+
+    expect(markup).toContain('Curated');
+    expect(markup).toContain('Live');
+    expect(markup).toContain('href="https://weworkremotely.com/remote-jobs/mission-school-backend-engineer"');
+    expect(markup).toContain('Save company');
+    expect(markup).not.toContain('Add to tracker');
+    expect(markup).toContain('Also seen on Greenhouse');
+    expect(markup).toContain('Matched title &quot;backend engineer&quot;');
+  });
+
+  it('keeps closed postings out of active presentation and does not render manual validity override controls', () => {
+    const split = splitPostingsByClosedState([
+      posting({ id: 'active-posting', validity_status: 'live' }),
+      posting({ id: 'closed-posting', validity_status: 'closed' }),
+    ]);
+    const markup = renderToStaticMarkup(<RadarPage />);
+
+    expect(split.activePostings.map((item) => item.id)).toEqual(['active-posting']);
+    expect(split.closedPostings.map((item) => item.id)).toEqual(['closed-posting']);
+    expect(markup).not.toContain('Mark as still open');
+    expect(markup).not.toContain('Still open');
+    expect(markup).not.toContain('Override');
   });
 });
