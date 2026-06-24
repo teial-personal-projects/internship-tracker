@@ -28,7 +28,7 @@ export function AppHeader() {
               className="text-base font-bold tracking-tight leading-tight flex items-center gap-2"
               style={{ color: 'var(--ink)' }}
             >
-              Track My Application
+              Track My Job Application
               <span
                 className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
                 style={{ background: 'var(--soft)', color: 'var(--ink-2)' }}
