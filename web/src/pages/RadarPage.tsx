@@ -1,16 +1,24 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { isAxiosError } from 'axios';
 import { Building2, CheckCircle2, ExternalLink, Eye, RefreshCw, Search, SlidersHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 import { AppHeader } from '@/components/AppHeader';
 import { Spinner } from '@/components/Spinner';
 import { useWatchlist } from '@/hooks/useWatchlist';
-import { useRadarPostings, useSaveRadarPostingCompany, useUpdateRadarPostingStatus } from '@/hooks/useRadar';
+import {
+  useRadarCriteria,
+  useRadarPostings,
+  useSaveRadarPostingCompany,
+  useSearchTrustedSources,
+  useUpdateRadarCriteria,
+  useUpdateRadarPostingStatus,
+} from '@/hooks/useRadar';
 import { WatchlistWorkspace } from '@/pages/WatchlistPage';
 import type { RadarPostingsParams } from '@/api/radar.api';
 import type { WatchlistEntry } from '@/api/watchlist.api';
 import type {
   DiscoveredPosting,
+  RadarCriteria,
   PostingStatus,
   PostingValidityStatus,
   SourceTier,
@@ -18,6 +26,7 @@ import type {
 
 type StatusFilter = Extract<PostingStatus, 'new' | 'seen' | 'dismissed'>;
 type DiscoveryView = 'fresh_direct' | 'curated' | 'aggregator' | 'live_only' | 'closed' | 'all';
+type LocationRule = RadarCriteria['location_rules'][number];
 type RadarPostingView = DiscoveredPosting;
 type ProvenanceSource = { sourceName?: string; source_name?: string; name?: string };
 
@@ -40,6 +49,13 @@ const VIEW_OPTIONS: Array<{ value: DiscoveryView; label: string }> = [
   { value: 'live_only', label: 'Live only' },
   { value: 'closed', label: 'Closed' },
   { value: 'all', label: 'All' },
+];
+
+const LOCATION_OPTIONS: Array<{ value: LocationRule; label: string }> = [
+  { value: 'remote_us', label: 'Remote US' },
+  { value: 'la', label: 'Los Angeles' },
+  { value: 'onsite', label: 'Onsite' },
+  { value: 'unknown', label: 'Unknown' },
 ];
 
 function apiErrorMessage(error: unknown, fallback: string): string {
@@ -124,6 +140,29 @@ function alsoSeenOn(posting: RadarPostingView): string[] {
     .filter(Boolean);
 }
 
+function parseTerms(value: string): string[] {
+  return [...new Set(value
+    .split(',')
+    .map((term) => term.trim())
+    .filter(Boolean))]
+    .slice(0, 25);
+}
+
+function formatTerms(terms: string[] | undefined): string {
+  return (terms ?? []).join(', ');
+}
+
+function matchReasons(posting: RadarPostingView): string[] {
+  const payload = posting.raw_payload;
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return [];
+  const reasons = (payload as { match_reasons?: unknown }).match_reasons;
+  if (!Array.isArray(reasons)) return [];
+
+  return reasons
+    .filter((reason): reason is string => typeof reason === 'string' && reason.trim().length > 0)
+    .slice(0, 4);
+}
+
 function isFreshMatch(posting: RadarPostingView): boolean {
   const status = validityStatus(posting);
   return sourceTier(posting) === 'direct_ats' && status !== 'closed' && status !== 'not_found';
@@ -199,6 +238,7 @@ function PostingRow({
   const tier = sourceTier(posting);
   const isClosed = isClosedPosting(posting);
   const seenSources = alsoSeenOn(posting);
+  const reasons = matchReasons(posting);
   const source = sourceName(posting, watchlistEntry);
   const relativeFirstSeen = formatRelativeTime(posting.first_seen_at);
   const canSave = !isSaved && !isSaving;
@@ -232,6 +272,9 @@ function PostingRow({
               <Eye size={12} />
               Also seen on {seenSource}
             </span>
+          ))}
+          {reasons.map((reason) => (
+            <span key={reason}>Matched {reason}</span>
           ))}
         </div>
       </div>
@@ -341,6 +384,10 @@ export function RadarPage() {
   const [search, setSearch] = useState('');
   const [view, setView] = useState<DiscoveryView>('fresh_direct');
   const [savingCompanyName, setSavingCompanyName] = useState<string | null>(null);
+  const [titleTerms, setTitleTerms] = useState('');
+  const [fieldTerms, setFieldTerms] = useState('');
+  const [excludeTerms, setExcludeTerms] = useState('');
+  const [locationRules, setLocationRules] = useState<LocationRule[]>(['remote_us', 'la']);
 
   const queryParams = useMemo<RadarPostingsParams>(() => ({
     ...(status && { status }),
@@ -350,9 +397,21 @@ export function RadarPage() {
   }), [search, status, view, watchlistId]);
 
   const { data: postings = [], isLoading, error } = useRadarPostings(queryParams);
+  const { data: criteria } = useRadarCriteria();
   const { data: watchlist = [] } = useWatchlist();
   const savePostingCompany = useSaveRadarPostingCompany();
   const updatePostingStatus = useUpdateRadarPostingStatus();
+  const updateCriteria = useUpdateRadarCriteria();
+  const trustedSourceSearch = useSearchTrustedSources();
+
+  useEffect(() => {
+    if (!criteria) return;
+
+    setTitleTerms(formatTerms(criteria.title_terms));
+    setFieldTerms(formatTerms(criteria.field_terms));
+    setExcludeTerms(formatTerms(criteria.exclude_keywords));
+    setLocationRules(criteria.location_rules.length > 0 ? criteria.location_rules : ['remote_us', 'la']);
+  }, [criteria]);
 
   const savedCompanyNames = useMemo(
     () => new Set(watchlist.map((entry) => entry.company_name.toLowerCase())),
@@ -399,6 +458,41 @@ export function RadarPage() {
     }
   }
 
+  async function handleSaveCriteria() {
+    try {
+      await updateCriteria.mutateAsync({
+        title_terms: parseTerms(titleTerms),
+        field_terms: parseTerms(fieldTerms),
+        include_keywords: [],
+        exclude_keywords: parseTerms(excludeTerms),
+        seniority_terms: [],
+        location_rules: locationRules,
+      });
+      toast.success('Radar criteria saved');
+    } catch (err) {
+      toast.error(apiErrorMessage(err, 'Could not save Radar criteria'));
+    }
+  }
+
+  async function handleSearchTrustedSources() {
+    try {
+      const result = await trustedSourceSearch.mutateAsync();
+      toast.message(result.message);
+    } catch (err) {
+      toast.error(apiErrorMessage(err, 'Could not search trusted sources'));
+    }
+  }
+
+  function toggleLocationRule(rule: LocationRule) {
+    setLocationRules((current) => {
+      if (current.includes(rule)) {
+        const next = current.filter((item) => item !== rule);
+        return next.length > 0 ? next : current;
+      }
+      return [...current, rule];
+    });
+  }
+
   const hasFilters = status !== 'new' || watchlistId || search.trim() || view !== 'fresh_direct';
 
   return (
@@ -432,6 +526,73 @@ export function RadarPage() {
             ))}
           </select>
         </div>
+
+        <section className="rounded-lg border bg-white p-3 shadow-sm" style={{ borderColor: 'var(--line)' }}>
+          <div className="grid gap-3 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-end">
+            <label>
+              <span className="field-label">Target titles</span>
+              <input
+                type="text"
+                value={titleTerms}
+                onChange={(event) => setTitleTerms(event.target.value)}
+                className="field-input"
+                placeholder="software engineer, backend engineer"
+              />
+            </label>
+            <label>
+              <span className="field-label">Fields or industries</span>
+              <input
+                type="text"
+                value={fieldTerms}
+                onChange={(event) => setFieldTerms(event.target.value)}
+                className="field-input"
+                placeholder="edtech, civic tech, nonprofit tech"
+              />
+            </label>
+            <label>
+              <span className="field-label">Exclude terms</span>
+              <input
+                type="text"
+                value={excludeTerms}
+                onChange={(event) => setExcludeTerms(event.target.value)}
+                className="field-input"
+                placeholder="junior, intern, internship"
+              />
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="btn-outline min-h-11 px-3 text-sm"
+                onClick={handleSaveCriteria}
+                disabled={updateCriteria.isPending}
+              >
+                Save criteria
+              </button>
+              <button
+                type="button"
+                className="btn-primary inline-flex min-h-11 items-center gap-2 px-3 text-sm"
+                onClick={handleSearchTrustedSources}
+                disabled={trustedSourceSearch.isPending}
+              >
+                {trustedSourceSearch.isPending ? <Spinner size="sm" color="white" /> : <Search size={16} />}
+                Search trusted sources
+              </button>
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {LOCATION_OPTIONS.map((option) => (
+              <label key={option.value} className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm" style={{ borderColor: 'var(--line)', color: 'var(--ink)' }}>
+                <input
+                  type="checkbox"
+                  checked={locationRules.includes(option.value)}
+                  onChange={() => toggleLocationRule(option.value)}
+                  className="h-4 w-4"
+                />
+                {option.label}
+              </label>
+            ))}
+          </div>
+        </section>
 
         <section className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-lg border bg-white p-3" style={{ borderColor: 'var(--line)' }}>

@@ -16,8 +16,23 @@ vi.mock('@/hooks/useWatchlist', () => ({
 }));
 
 vi.mock('@/hooks/useRadar', () => ({
+  useRadarCriteria: () => ({
+    data: {
+      user_id: '22222222-2222-4222-8222-222222222222',
+      title_terms: ['software engineer', 'backend engineer'],
+      field_terms: ['edtech', 'civic tech'],
+      include_keywords: [],
+      exclude_keywords: ['junior', 'intern'],
+      seniority_terms: [],
+      location_rules: ['remote_us', 'la'],
+      created_at: '2026-06-01T00:00:00.000Z',
+      updated_at: '2026-06-01T00:00:00.000Z',
+    },
+  }),
   useRadarPostings: () => ({ data: [], isLoading: false, error: null }),
   useSaveRadarPostingCompany: () => ({ mutateAsync: vi.fn() }),
+  useSearchTrustedSources: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useUpdateRadarCriteria: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useUpdateRadarPostingStatus: () => ({ mutateAsync: vi.fn() }),
 }));
 
@@ -75,5 +90,14 @@ describe('RadarPage helpers', () => {
 
     expect(markup.indexOf('Radar results')).toBeLessThan(markup.indexOf('Companies to watch'));
     expect(markup.indexOf('No matched postings yet')).toBeLessThan(markup.indexOf('Watchlist Workspace'));
+  });
+
+  it('renders trusted discovery criteria controls before results', () => {
+    const markup = renderToStaticMarkup(<RadarPage />);
+
+    expect(markup).toContain('Target titles');
+    expect(markup).toContain('Fields or industries');
+    expect(markup).toContain('Search trusted sources');
+    expect(markup.indexOf('Search trusted sources')).toBeLessThan(markup.indexOf('New</p>'));
   });
 });

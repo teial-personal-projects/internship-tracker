@@ -1,7 +1,7 @@
 # Job Radar Valid Posting Implementation Plan
 
 **Status:** Proposed
-**Last updated:** June 23, 2026
+**Last updated:** June 24, 2026
 **Scope:** Turn Job Radar into a trusted job-board discovery surface for high-signal software engineering roles, while keeping company watchlist refresh as a secondary input.
 
 ## Product Direction
@@ -147,14 +147,14 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 
 ## Step 9 — Trusted Discovery Criteria
 
-9.1 [ ] Add editable Radar search criteria for target titles, fields or industries, locations, and exclusion terms.
-9.2 [ ] Seed sensible default title terms such as `software engineer`, `backend engineer`, and `full-stack engineer`.
-9.3 [ ] Seed field or industry terms oriented around the user's targets, such as `edtech`, `education technology`, `mission-driven`, `civic tech`, and `nonprofit tech`.
-9.4 [ ] Keep criteria user-editable and persist them in `radar_criteria` or a follow-on criteria table.
-9.5 [ ] Add a manual `Search trusted sources` action.
-9.6 [ ] Do not run source searches automatically or on a timer.
-9.7 [ ] Show why a posting matched, such as title term, field term, source, and location rule.
-9.8 [ ] Keep watchlist refresh available as a secondary input, visually below trusted source search.
+9.1 [x] Add editable Radar search criteria for target titles, fields or industries, locations, and exclusion terms.
+9.2 [x] Seed sensible default title terms such as `software engineer`, `backend engineer`, and `full-stack engineer`.
+9.3 [x] Seed field or industry terms oriented around the user's targets, such as `edtech`, `education technology`, `mission-driven`, `civic tech`, and `nonprofit tech`.
+9.4 [x] Keep criteria user-editable and persist them in `radar_criteria` or a follow-on criteria table.
+9.5 [x] Add a manual `Search trusted sources` action.
+9.6 [x] Do not run source searches automatically or on a timer.
+9.7 [x] Show why a posting matched, such as title term, field term, source, and location rule.
+9.8 [x] Keep watchlist refresh available as a secondary input, visually below trusted source search.
 
 ## Step 10 — Trusted Source Search
 

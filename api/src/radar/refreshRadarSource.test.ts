@@ -242,9 +242,11 @@ describe('refreshRadarSource', () => {
       discovered_postings: [],
       radar_criteria: [{
         user_id: source.user_id,
+        title_terms: ['platform engineer'],
+        field_terms: ['edtech'],
         include_keywords: ['platform'],
         exclude_keywords: [],
-        seniority_terms: ['lead'],
+        seniority_terms: [],
         location_rules: ['onsite'],
         created_at: '2026-06-01T00:00:00.000Z',
         updated_at: '2026-06-01T00:00:00.000Z',

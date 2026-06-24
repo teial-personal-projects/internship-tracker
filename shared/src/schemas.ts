@@ -401,6 +401,8 @@ export const DiscoveredPostingSchema = z.object({
 
 export const RadarCriteriaSchema = z.object({
   user_id: z.string().uuid(),
+  title_terms: z.array(z.string().max(100)).default([]),
+  field_terms: z.array(z.string().max(100)).default([]),
   include_keywords: z.array(z.string().max(100)),
   exclude_keywords: z.array(z.string().max(100)),
   seniority_terms: z.array(z.string().max(100)),

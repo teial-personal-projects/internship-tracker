@@ -1102,6 +1102,8 @@ CREATE POLICY "discovered_postings_delete" ON discovered_postings
 
 CREATE TABLE IF NOT EXISTS radar_criteria (
   user_id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  title_terms      TEXT[] NOT NULL DEFAULT '{}',
+  field_terms      TEXT[] NOT NULL DEFAULT '{}',
   include_keywords TEXT[] NOT NULL DEFAULT '{}',
   exclude_keywords TEXT[] NOT NULL DEFAULT '{}',
   seniority_terms  TEXT[] NOT NULL DEFAULT '{}',

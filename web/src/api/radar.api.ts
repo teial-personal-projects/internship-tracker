@@ -1,5 +1,12 @@
 import { apiClient } from './client';
-import type { DiscoveredPosting, PostingStatus, PostingValidityStatus, SourceTier } from '@shared/schemas';
+import type {
+  DiscoveredPosting,
+  PostingStatus,
+  PostingValidityStatus,
+  RadarCriteria,
+  SourceTier,
+  UpdateRadarCriteriaSchemaType,
+} from '@shared/schemas';
 import type { WatchlistEntry } from './watchlist.api';
 
 export interface RadarPostingsParams {
@@ -14,6 +21,30 @@ export interface RadarPostingsParams {
 
 export async function getRadarPostings(params: RadarPostingsParams = {}): Promise<DiscoveredPosting[]> {
   const { data } = await apiClient.get<{ data: DiscoveredPosting[] }>('/radar/postings', { params });
+  return data.data;
+}
+
+export async function getRadarCriteria(): Promise<RadarCriteria> {
+  const { data } = await apiClient.get<{ data: RadarCriteria }>('/radar/criteria');
+  return data.data;
+}
+
+export async function updateRadarCriteria(payload: UpdateRadarCriteriaSchemaType): Promise<RadarCriteria> {
+  const { data } = await apiClient.put<{ data: RadarCriteria }>('/radar/criteria', payload);
+  return data.data;
+}
+
+export interface TrustedSourceSearchResult {
+  sources_searched: number;
+  fetched: number;
+  matched: number;
+  inserted: number;
+  criteria: RadarCriteria;
+  message: string;
+}
+
+export async function searchTrustedSources(): Promise<TrustedSourceSearchResult> {
+  const { data } = await apiClient.post<{ data: TrustedSourceSearchResult }>('/radar/search');
   return data.data;
 }
 

@@ -446,6 +446,94 @@ describe('radar routes', () => {
     expect(ids).toContain('live-role');
   });
 
+  it('GET /api/radar/criteria returns default trusted discovery criteria when none are saved', async () => {
+    const db = createMockDb({
+      radar_criteria: [],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .get('/api/radar/criteria')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toMatchObject({
+      user_id: USER_ID,
+      title_terms: ['software engineer', 'backend engineer', 'full-stack engineer', 'full stack engineer'],
+      field_terms: ['edtech', 'education technology', 'mission-driven', 'civic tech', 'nonprofit tech'],
+      exclude_keywords: ['junior', 'intern', 'internship'],
+      location_rules: ['remote_us', 'la'],
+    });
+  });
+
+  it('PUT /api/radar/criteria persists editable trusted discovery criteria', async () => {
+    const db = createMockDb({
+      radar_criteria: [],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .put('/api/radar/criteria')
+      .send({
+        title_terms: ['backend engineer', 'software engineer'],
+        field_terms: ['edtech', 'civic tech'],
+        exclude_keywords: ['intern'],
+        location_rules: ['remote_us'],
+      })
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toMatchObject({
+      user_id: USER_ID,
+      title_terms: ['backend engineer', 'software engineer'],
+      field_terms: ['edtech', 'civic tech'],
+      include_keywords: [],
+      exclude_keywords: ['intern'],
+      seniority_terms: [],
+      location_rules: ['remote_us'],
+    });
+    expect(db.rowsByTable.radar_criteria).toContainEqual(expect.objectContaining({
+      id: 'radar_criteria-new',
+      user_id: USER_ID,
+      title_terms: ['backend engineer', 'software engineer'],
+      field_terms: ['edtech', 'civic tech'],
+    }));
+  });
+
+  it('POST /api/radar/search is a manual action and does not refresh watchlist sources', async () => {
+    const db = createMockDb({
+      radar_criteria: [{
+        user_id: USER_ID,
+        title_terms: ['software engineer'],
+        field_terms: ['edtech'],
+        include_keywords: [],
+        exclude_keywords: ['intern'],
+        seniority_terms: [],
+        location_rules: ['remote_us'],
+        created_at: '2026-06-01T00:00:00.000Z',
+        updated_at: '2026-06-01T00:00:00.000Z',
+      }],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .post('/api/radar/search')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toMatchObject({
+      sources_searched: 0,
+      fetched: 0,
+      matched: 0,
+      inserted: 0,
+      criteria: {
+        title_terms: ['software engineer'],
+        field_terms: ['edtech'],
+      },
+    });
+    expect(mockRefreshRadarSource).not.toHaveBeenCalled();
+  });
+
   it('PATCH /api/radar/postings/:id validates the posting before marking it seen', async () => {
     const db = createMockDb({
       discovered_postings: [{

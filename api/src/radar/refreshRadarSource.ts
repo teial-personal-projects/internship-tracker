@@ -227,7 +227,7 @@ async function getRadarCriteria(
 
   const result = await toQuery<Promise<{ data: RadarCriteria[] | null; error: { message: string } | null }>>(
     toQuery<{ eq(column: string, value: string): unknown }>(
-      query.select('user_id, include_keywords, exclude_keywords, seniority_terms, location_rules, created_at, updated_at'),
+      query.select('user_id, title_terms, field_terms, include_keywords, exclude_keywords, seniority_terms, location_rules, created_at, updated_at'),
     ).eq('user_id', userId),
   );
 

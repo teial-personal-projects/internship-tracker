@@ -7,6 +7,7 @@ import type { PostingStatus } from '@shared/schemas';
 export const radarKeys = {
   all: ['radar'] as const,
   postings: (params: RadarPostingsParams) => ['radar', 'postings', params] as const,
+  criteria: () => ['radar', 'criteria'] as const,
 };
 
 export function useRadarPostings(params: RadarPostingsParams = {}) {
@@ -15,6 +16,36 @@ export function useRadarPostings(params: RadarPostingsParams = {}) {
     queryFn: () => radarApi.getRadarPostings(params),
     staleTime: 30_000,
     placeholderData: (previous) => previous,
+  });
+}
+
+export function useRadarCriteria() {
+  return useQuery({
+    queryKey: radarKeys.criteria(),
+    queryFn: radarApi.getRadarCriteria,
+    staleTime: 60_000,
+  });
+}
+
+export function useUpdateRadarCriteria() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: radarApi.updateRadarCriteria,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: radarKeys.criteria() });
+    },
+  });
+}
+
+export function useSearchTrustedSources() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: radarApi.searchTrustedSources,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: radarKeys.all });
+    },
   });
 }
 

@@ -6,7 +6,7 @@ import { createUserClient } from '../lib/supabase';
 import { refreshRadarSource, type RadarRefreshDb } from '../radar/refreshRadarSource';
 import { validatePostingFromSource, type RadarValidationDb } from '../radar/validatePosting';
 import { qualityScore } from '../radar/qualityScore';
-import type { AtsType } from '@internship-tracker/shared';
+import { UpdateRadarCriteriaSchema, type AtsType, type RadarCriteria, type UpdateRadarCriteriaSchemaType } from '@internship-tracker/shared';
 import type { Request, Response } from 'express';
 
 const router = Router();
@@ -38,6 +38,95 @@ type SearchableWatchlistEntry = {
 const UpdatePostingStatusSchema = z.object({
   status: z.enum(['seen', 'dismissed']),
 });
+
+const DEFAULT_RADAR_CRITERIA = {
+  title_terms: ['software engineer', 'backend engineer', 'full-stack engineer', 'full stack engineer'],
+  field_terms: ['edtech', 'education technology', 'mission-driven', 'civic tech', 'nonprofit tech'],
+  include_keywords: [],
+  exclude_keywords: ['junior', 'intern', 'internship'],
+  seniority_terms: [],
+  location_rules: ['remote_us', 'la'],
+} satisfies UpdateRadarCriteriaSchemaType;
+
+function normalizeTerms(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+
+  return [...new Set(value
+    .filter((term): term is string => typeof term === 'string')
+    .map((term) => term.trim())
+    .filter(Boolean))]
+    .slice(0, 25);
+}
+
+function normalizeLocationRules(value: unknown): RadarCriteria['location_rules'] {
+  if (!Array.isArray(value)) return DEFAULT_RADAR_CRITERIA.location_rules;
+
+  const allowed = new Set(['remote_us', 'la', 'onsite', 'unknown']);
+  const rules = value.filter((rule): rule is RadarCriteria['location_rules'][number] =>
+    typeof rule === 'string' && allowed.has(rule),
+  );
+  return rules.length > 0 ? rules : DEFAULT_RADAR_CRITERIA.location_rules;
+}
+
+function criteriaPayloadFromBody(body: UpdateRadarCriteriaSchemaType): UpdateRadarCriteriaSchemaType {
+  return {
+    title_terms: normalizeTerms(body.title_terms),
+    field_terms: normalizeTerms(body.field_terms),
+    include_keywords: normalizeTerms(body.include_keywords),
+    exclude_keywords: normalizeTerms(body.exclude_keywords),
+    seniority_terms: normalizeTerms(body.seniority_terms),
+    location_rules: normalizeLocationRules(body.location_rules),
+  };
+}
+
+function defaultCriteria(userId: string): RadarCriteria {
+  const now = new Date().toISOString();
+  return {
+    user_id: userId,
+    ...DEFAULT_RADAR_CRITERIA,
+    created_at: now,
+    updated_at: now,
+  };
+}
+
+function criteriaFromRow(row: Partial<RadarCriteria> | null | undefined, userId: string): RadarCriteria {
+  const defaults = defaultCriteria(userId);
+  if (!row) return defaults;
+
+  return {
+    ...defaults,
+    ...row,
+    user_id: userId,
+    title_terms: normalizeTerms(row.title_terms).length > 0 ? normalizeTerms(row.title_terms) : defaults.title_terms,
+    field_terms: normalizeTerms(row.field_terms).length > 0 ? normalizeTerms(row.field_terms) : defaults.field_terms,
+    include_keywords: normalizeTerms(row.include_keywords),
+    exclude_keywords: normalizeTerms(row.exclude_keywords).length > 0 ? normalizeTerms(row.exclude_keywords) : defaults.exclude_keywords,
+    seniority_terms: normalizeTerms(row.seniority_terms),
+    location_rules: normalizeLocationRules(row.location_rules),
+    created_at: row.created_at ?? defaults.created_at,
+    updated_at: row.updated_at ?? defaults.updated_at,
+  };
+}
+
+async function getRadarCriteriaRow(
+  db: ReturnType<typeof createUserClient>,
+  userId: string,
+): Promise<RadarCriteria> {
+  const { data, error } = await db
+    .from('radar_criteria')
+    .select('user_id, title_terms, field_terms, include_keywords, exclude_keywords, seniority_terms, location_rules, created_at, updated_at')
+    .eq('user_id', userId)
+    .limit(1);
+
+  if (error) {
+    const message = error.message.toLowerCase();
+    if (message.includes('radar_criteria') && (message.includes('schema') || message.includes('does not exist'))) {
+      return defaultCriteria(userId);
+    }
+    throw new Error(error.message);
+  }
+  return criteriaFromRow((data as Partial<RadarCriteria>[] | null)?.[0] ?? null, userId);
+}
 
 async function getOwnedPosting(
   db: ReturnType<typeof createUserClient>,
@@ -189,6 +278,78 @@ async function getSearchMatchingWatchlistIds(
     )
     .map((entry) => entry.id));
 }
+
+// GET /api/radar/criteria
+router.get('/criteria', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const criteria = await getRadarCriteriaRow(db, user.id);
+
+    res.json({ data: criteria });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /api/radar/criteria
+router.put('/criteria', requireAuth, validateBody(UpdateRadarCriteriaSchema), async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const payload = criteriaPayloadFromBody(req.body as UpdateRadarCriteriaSchemaType);
+
+    const { data: existingCriteria, error: existingError } = await db
+      .from('radar_criteria')
+      .select('user_id')
+      .eq('user_id', user.id)
+      .limit(1);
+
+    if (existingError) {
+      res.status(500).json({ error: existingError.message });
+      return;
+    }
+
+    const query = existingCriteria?.[0]
+      ? db.from('radar_criteria').update(payload).eq('user_id', user.id)
+      : db.from('radar_criteria').insert({ user_id: user.id, ...payload });
+
+    const { data, error } = await query
+      .select('user_id, title_terms, field_terms, include_keywords, exclude_keywords, seniority_terms, location_rules, created_at, updated_at')
+      .single();
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.json({ data: criteriaFromRow(data as Partial<RadarCriteria> | null, user.id) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/radar/search
+router.post('/search', requireAuth, async (req: Request, res, next) => {
+  try {
+    const db = createUserClient(req);
+    const user = (req as AuthRequest).user;
+    const criteria = await getRadarCriteriaRow(db, user.id);
+
+    res.json({
+      data: {
+        sources_searched: 0,
+        fetched: 0,
+        matched: 0,
+        inserted: 0,
+        criteria,
+        message: 'Trusted source search is ready for manual use; source adapters are added in Step 10.',
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // GET /api/radar/postings
 router.get('/postings', requireAuth, async (req: Request, res, next) => {
