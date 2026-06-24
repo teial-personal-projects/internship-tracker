@@ -5,6 +5,7 @@ import { createApp } from '../app';
 const mockGetUser = vi.hoisted(() => vi.fn());
 const mockCreateUserClient = vi.hoisted(() => vi.fn());
 const mockRefreshRadarSource = vi.hoisted(() => vi.fn());
+const mockValidatePostingFromSource = vi.hoisted(() => vi.fn());
 
 vi.mock('../lib/supabase', () => ({
   supabaseAdmin: {
@@ -17,6 +18,10 @@ vi.mock('../lib/supabase', () => ({
 
 vi.mock('../radar/refreshRadarSource', () => ({
   refreshRadarSource: mockRefreshRadarSource,
+}));
+
+vi.mock('../radar/validatePosting', () => ({
+  validatePostingFromSource: mockValidatePostingFromSource,
 }));
 
 const USER_ID = '00000000-0000-4000-8000-000000000001';
@@ -130,6 +135,11 @@ describe('radar routes', () => {
       data: { user: { id: USER_ID, email: 'test@example.com' } },
       error: null,
     });
+    mockValidatePostingFromSource.mockResolvedValue({
+      attempted: false,
+      status: null,
+      error: null,
+    });
   });
 
   afterEach(() => {
@@ -225,6 +235,38 @@ describe('radar routes', () => {
     });
   });
 
+  it('PATCH /api/radar/postings/:id validates the posting before marking it seen', async () => {
+    const db = createMockDb({
+      discovered_postings: [{
+        id: POSTING_ID,
+        user_id: USER_ID,
+        company_name: 'Acme',
+        title: 'Senior Software Engineer',
+        url: 'https://example.com/job',
+        status: 'new',
+        watchlist_id: WATCHLIST_ID,
+        source_tier: 'direct_ats',
+      }],
+      company_watchlist: [],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .patch(`/api/radar/postings/${POSTING_ID}`)
+      .send({ status: 'seen' })
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toMatchObject({
+      id: POSTING_ID,
+      status: 'seen',
+    });
+    expect(mockValidatePostingFromSource).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      id: POSTING_ID,
+      source_tier: 'direct_ats',
+    }));
+  });
+
   it('POST /api/radar/postings/:id/save-company creates a watchlist entry without creating an application', async () => {
     const db = createMockDb({
       discovered_postings: [{
@@ -276,6 +318,10 @@ describe('radar routes', () => {
     expect(db.rowsByTable.company_watchlist).toHaveLength(2);
     expect(db.rowsByTable.applications).toHaveLength(0);
     expect(db.rowsByTable.discovered_postings[0].status).toBe('new');
+    expect(mockValidatePostingFromSource).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      id: POSTING_ID,
+      title: 'Senior Software Engineer',
+    }));
   });
 
   it('POST /api/radar/postings/:id/save-company returns the existing watchlist row for duplicate companies', async () => {

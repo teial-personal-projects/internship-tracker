@@ -4,6 +4,7 @@ import { requireAuth, type AuthRequest } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
 import { createUserClient } from '../lib/supabase';
 import { refreshRadarSource, type RadarRefreshDb } from '../radar/refreshRadarSource';
+import { validatePostingFromSource, type RadarValidationDb } from '../radar/validatePosting';
 import type { AtsType } from '@internship-tracker/shared';
 import type { Request, Response } from 'express';
 
@@ -51,6 +52,13 @@ function sendOwnershipError(res: Response, ownership: Exclude<Ownership, 'ok'>):
     return;
   }
   res.status(404).json({ error: 'Posting not found' });
+}
+
+async function validatePostingForExplicitAction(
+  db: ReturnType<typeof createUserClient>,
+  posting: Record<string, unknown>,
+): Promise<void> {
+  await validatePostingFromSource(db as unknown as RadarValidationDb, posting as unknown as Parameters<typeof validatePostingFromSource>[1]);
 }
 
 function queryString(value: unknown): string | undefined {
@@ -159,6 +167,8 @@ router.patch('/postings/:id', requireAuth, validateBody(UpdatePostingStatusSchem
       return;
     }
 
+    await validatePostingForExplicitAction(db, posting as Record<string, unknown>);
+
     const { data, error } = await db
       .from('discovered_postings')
       .update({ status: req.body.status })
@@ -197,6 +207,8 @@ router.post('/postings/:id/save-company', requireAuth, async (req: Request, res,
       source_tier?: SourceTier;
       first_seen_source?: string | null;
     };
+
+    await validatePostingForExplicitAction(db, posting as Record<string, unknown>);
 
     const { data: existingEntries, error: existingError } = await db
       .from('company_watchlist')

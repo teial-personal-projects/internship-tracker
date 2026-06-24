@@ -17,8 +17,8 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 | Tier | Source class | Examples | Product behavior |
 | --- | --- | --- | --- |
 | 1 | Direct ATS | Greenhouse, Lever, Ashby, Workday, SmartRecruiters | Rank highest, treat as freshest source |
-| 2 | Curated boards | LinkedIn, We Work Remotely, Working Nomads, Remote.co, Idealist, FlexJobs | Useful as discovery or corroboration |
-| 3 | Aggregators | Indeed, Talent.com, Monster, Jooble, Jora, Lensa, ZipRecruiter-style syndication | Append as `also_seen_on` instead of creating noise |
+| 2 | Curated boards | LinkedIn, We Work Remotely, Working Nomads, Remote.co, Idealist | Useful as discovery or corroboration |
+| 3 | Aggregators | Indeed, ZipRecruiter-style syndication | Append as `also_seen_on` instead of creating noise |
 
 ## Step 1 — Data Model
 
@@ -87,16 +87,16 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 
 ## Step 6 — Validity Checks
 
-6.1 [ ] Extend `AtsAdapter` in `api/src/radar/adapters/types.ts` with optional `validate?(posting: NormalizedPosting): Promise<PostingValidationResult>`.
-6.2 [ ] Implement validation for Greenhouse, Lever, Ashby, and SmartRecruiters by checking whether the external job ID still appears in the current board response.
-6.3 [ ] Treat network errors as `error`, not `closed`.
-6.4 [ ] Treat missing jobs from a successful board response as `closed`.
-6.5 [ ] Recheck validity only from explicit user actions, such as opening or saving a posting, when the current validity state is stale enough to be useful.
-6.6 [ ] If validation returns `closed` or `not_found`, update the posting row and show the closed state on the card.
-6.7 [ ] If validation errors, keep the posting visible and allow the user to open the source posting.
-6.8 [ ] Store `last_validated_at`, `validity_status`, and `validation_error`.
-6.9 [ ] Defer manual validity overrides for this pass.
-6.10 [ ] If overrides are added later, scope them to system-closed states only and record a user assertion separately from system validation.
+6.1 [x] Extend `AtsAdapter` in `api/src/radar/adapters/types.ts` with optional `validate?(posting: NormalizedPosting): Promise<PostingValidationResult>`.
+6.2 [x] Implement validation for Greenhouse, Lever, Ashby, and SmartRecruiters by checking whether the external job ID still appears in the current board response.
+6.3 [x] Treat network errors as `error`, not `closed`.
+6.4 [x] Treat missing jobs from a successful board response as `closed`.
+6.5 [x] Recheck validity only from explicit user actions, such as opening or saving a posting, when the current validity state is stale enough to be useful.
+6.6 [x] If validation returns `closed` or `not_found`, update the posting row and show the closed state on the card.
+6.7 [x] If validation errors, keep the posting visible and allow the user to open the source posting.
+6.8 [x] Store `last_validated_at`, `validity_status`, and `validation_error`.
+6.9 [x] Defer manual validity overrides for this pass.
+6.10 [x] If overrides are added later, scope them to system-closed states only and record a user assertion separately from system validation.
 
 ## Step 7 — Ranking and API Filters
 

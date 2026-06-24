@@ -25,13 +25,7 @@ INSERT INTO radar_sources (
   ('working_nomads', 'Working Nomads', 'curated_board', null, false),
   ('remote_co', 'Remote.co', 'curated_board', null, false),
   ('idealist', 'Idealist', 'curated_board', null, false),
-  ('flexjobs', 'FlexJobs', 'curated_board', null, false),
   ('indeed', 'Indeed', 'aggregator', null, false),
-  ('talent', 'Talent.com', 'aggregator', null, false),
-  ('monster', 'Monster', 'aggregator', null, false),
-  ('jooble', 'Jooble', 'aggregator', null, false),
-  ('jora', 'Jora', 'aggregator', null, false),
-  ('lensa', 'Lensa', 'aggregator', null, false),
   ('ziprecruiter', 'ZipRecruiter', 'aggregator', null, false)
 ON CONFLICT (id) DO UPDATE SET
   source_name = EXCLUDED.source_name,
@@ -59,12 +53,6 @@ WHERE id IN (
   'working_nomads',
   'remote_co',
   'idealist',
-  'flexjobs',
   'indeed',
-  'talent',
-  'monster',
-  'jooble',
-  'jora',
-  'lensa',
   'ziprecruiter'
 );

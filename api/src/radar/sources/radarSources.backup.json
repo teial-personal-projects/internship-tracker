@@ -84,50 +84,8 @@
     "supports_direct_validity_checks": false
   },
   {
-    "id": "flexjobs",
-    "source_name": "FlexJobs",
-    "source_tier": "curated_board",
-    "adapter_type": null,
-    "supports_direct_validity_checks": false
-  },
-  {
     "id": "indeed",
     "source_name": "Indeed",
-    "source_tier": "aggregator",
-    "adapter_type": null,
-    "supports_direct_validity_checks": false
-  },
-  {
-    "id": "talent",
-    "source_name": "Talent.com",
-    "source_tier": "aggregator",
-    "adapter_type": null,
-    "supports_direct_validity_checks": false
-  },
-  {
-    "id": "monster",
-    "source_name": "Monster",
-    "source_tier": "aggregator",
-    "adapter_type": null,
-    "supports_direct_validity_checks": false
-  },
-  {
-    "id": "jooble",
-    "source_name": "Jooble",
-    "source_tier": "aggregator",
-    "adapter_type": null,
-    "supports_direct_validity_checks": false
-  },
-  {
-    "id": "jora",
-    "source_name": "Jora",
-    "source_tier": "aggregator",
-    "adapter_type": null,
-    "supports_direct_validity_checks": false
-  },
-  {
-    "id": "lensa",
-    "source_name": "Lensa",
     "source_tier": "aggregator",
     "adapter_type": null,
     "supports_direct_validity_checks": false

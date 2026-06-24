@@ -14,6 +14,16 @@ export interface NormalizedPosting {
   raw: unknown;
 }
 
+export interface PostingValidationInput extends NormalizedPosting {
+  boardToken: string;
+}
+
+export interface PostingValidationResult {
+  status: 'live' | 'closed' | 'not_found' | 'error';
+  error?: string | null;
+}
+
 export interface AtsAdapter {
   fetch(boardToken: string): Promise<NormalizedPosting[]>;
+  validate?(posting: PostingValidationInput): Promise<PostingValidationResult>;
 }
