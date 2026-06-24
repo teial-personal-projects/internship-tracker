@@ -200,13 +200,15 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 
 ## Step 13 — Verification
 
-13.1 [ ] Run backend tests relevant to Radar ingestion, routes, and adapters.
-13.2 [ ] Run frontend tests relevant to Discover and Watchlist.
-13.3 [ ] Run shared, API, and web type checks.
-13.4 [ ] Run the web build.
-13.5 [ ] Run markdownlint on changed markdown files.
+13.1 [x] Run backend tests relevant to Radar ingestion, routes, and adapters.
+13.2 [x] Run frontend tests relevant to Discover and Watchlist.
+13.3 [x] Run shared, API, and web type checks.
+13.4 [x] Run the web build.
+13.5 [x] Run markdownlint on changed markdown files.
 13.6 [ ] Manually verify the Discover route after signing in.
 13.7 [ ] Manually verify the Watchlist section after signing in.
+
+Manual UI verification note: the local app opened successfully at `http://127.0.0.1:5175/radar`, but the available browser profile was not signed in and redirected to the login screen. Complete 13.6 and 13.7 after signing in locally.
 
 ## Non-Goals For This Pass
 

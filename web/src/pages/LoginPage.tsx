@@ -1,9 +1,19 @@
-import { useState } from 'react';
+import { useState, type FormEvent, type ReactNode } from 'react';
+import {
+  ArrowRight,
+  AtSign,
+  BriefcaseBusiness,
+  CalendarCheck2,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  GraduationCap,
+  Lock,
+  User,
+} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { MIN_YEAR_OPTIONS } from '@shared/types';
 import type { MinYear } from '@shared/types';
-
-// ── Password strength ──────────────────────────────────────────────────────
 
 function validatePassword(pwd: string): string | null {
   if (pwd.length < 8) return 'At least 8 characters';
@@ -20,21 +30,99 @@ function getStrength(pwd: string): 'weak' | 'medium' | 'strong' | null {
   return 'medium';
 }
 
-const STRENGTH_COLOR = {
-  weak: 'text-red-400',
-  medium: 'text-orange-400',
-  strong: 'text-green-500',
+const STRENGTH_LABEL = {
+  weak: 'Weak',
+  medium: 'Good',
+  strong: 'Strong',
 } as const;
 
-const STRENGTH_BAR_COLOR = {
-  weak: 'bg-red-400',
-  medium: 'bg-orange-400',
-  strong: 'bg-green-500',
+const STRENGTH_COLOR = {
+  weak: 'var(--rose)',
+  medium: 'var(--sun)',
+  strong: 'var(--sage)',
 } as const;
 
 const STRENGTH_VALUE = { weak: 33, medium: 66, strong: 100 } as const;
 
-// ── Login form ─────────────────────────────────────────────────────────────
+function BrandMark() {
+  return (
+    <div
+      className="flex h-11 w-11 shrink-0 items-center justify-center"
+      style={{ background: 'var(--accent)', borderRadius: 11 }}
+    >
+      <svg width="27" height="27" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M13 4 L3 20 M13 4 L23 20" stroke="#FBF5EC" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M7 15 L19 15" stroke="#FBF5EC" strokeWidth="2.8" strokeLinecap="round" />
+        <circle cx="13" cy="21.5" r="2" fill="#D9A441" />
+      </svg>
+    </div>
+  );
+}
+
+function Alert({ tone, children }: { tone: 'error' | 'success'; children: ReactNode }) {
+  const color = tone === 'error' ? 'var(--rose)' : 'var(--sage)';
+  const background = tone === 'error' ? '#FDF1F3' : 'var(--sage-tint)';
+  const border = tone === 'error' ? 'var(--rose-soft)' : 'var(--sage-soft)';
+
+  return (
+    <div className="mb-4 rounded-md border px-3 py-2 text-sm" style={{ background, borderColor: border, color }}>
+      {children}
+    </div>
+  );
+}
+
+function TextInput({
+  label,
+  icon,
+  right,
+  ...props
+}: React.InputHTMLAttributes<HTMLInputElement> & {
+  label: string;
+  icon?: ReactNode;
+  right?: ReactNode;
+}) {
+  return (
+    <label className="block">
+      <span className="field-label">{label}</span>
+      <span className="relative block min-w-0">
+        {icon && (
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ink-3)' }}>
+            {icon}
+          </span>
+        )}
+        <input
+          {...props}
+          className={`field-input min-w-0 ${icon ? 'pl-9' : ''} ${right ? 'pr-14' : ''} ${props.className ?? ''}`}
+        />
+        {right}
+      </span>
+    </label>
+  );
+}
+
+function PasswordToggle({ visible, onToggle }: { visible: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      tabIndex={-1}
+      onClick={onToggle}
+      className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md transition-colors hover:bg-[color:var(--softer)]"
+      style={{ color: 'var(--ink-3)' }}
+      aria-label={visible ? 'Hide password' : 'Show password'}
+    >
+      {visible ? <EyeOff size={16} /> : <Eye size={16} />}
+    </button>
+  );
+}
+
+function AuthSubmitButton({ loading, children }: { loading: boolean; children: ReactNode }) {
+  return (
+    <button type="submit" disabled={loading} className="btn-primary min-h-11 w-full gap-2">
+      {children}
+      {!loading && <ArrowRight size={16} />}
+    </button>
+  );
+}
 
 function LoginForm({ onSwitch }: { onSwitch: () => void }) {
   const { signIn } = useAuth();
@@ -44,7 +132,7 @@ function LoginForm({ onSwitch }: { onSwitch: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -60,98 +148,57 @@ function LoginForm({ onSwitch }: { onSwitch: () => void }) {
   return (
     <>
       <div className="mb-6">
-        <h2
-          className="text-2xl font-bold text-[#1e3a5f]"
-          style={{ fontFamily: "'Fraunces', serif" }}
-        >
-          Welcome back
+        <p className="text-kicker" style={{ color: 'var(--accent)' }}>Welcome back</p>
+        <h2 className="mt-2 text-2xl font-bold tracking-tight" style={{ color: 'var(--ink)' }}>
+          Sign in to your workspace
         </h2>
-        <p className="text-sm text-gray-500 mt-1">
-          Sign in to continue tracking job applications
+        <p className="mt-1 text-sm" style={{ color: 'var(--ink-2)' }}>
+          Continue from your active applications, companies, and Radar searches.
         </p>
       </div>
 
-      {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-600">{error}</p>
-        </div>
-      )}
+      {error && <Alert tone="error">{error}</Alert>}
 
-      <form onSubmit={handleSubmit}>
-        <div className="flex flex-col gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-              Email Address
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base pointer-events-none">✉️</span>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                disabled={loading}
-                className="field-input pl-10"
-              />
-            </div>
-          </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <TextInput
+          label="Email address"
+          icon={<AtSign size={16} />}
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          disabled={loading}
+        />
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-              Password
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base pointer-events-none">🔒</span>
-              <input
-                type={showPwd ? 'text' : 'password'}
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••"
-                disabled={loading}
-                className="field-input pl-10 pr-16"
-              />
-              <button
-                type="button"
-                tabIndex={-1}
-                onClick={() => setShowPwd((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-600 font-medium hover:text-blue-700"
-              >
-                {showPwd ? 'Hide' : 'Show'}
-              </button>
-            </div>
-          </div>
+        <TextInput
+          label="Password"
+          icon={<Lock size={16} />}
+          right={<PasswordToggle visible={showPwd} onToggle={() => setShowPwd((v) => !v)} />}
+          type={showPwd ? 'text' : 'password'}
+          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Enter your password"
+          disabled={loading}
+        />
 
-          <div className="pt-1">
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gray-800 text-white font-semibold text-sm rounded-lg py-3 hover:bg-gray-900 disabled:opacity-60 transition-colors"
-            >
-              {loading ? 'Signing in…' : 'Sign In →'}
-            </button>
-          </div>
-        </div>
+        <AuthSubmitButton loading={loading}>
+          {loading ? 'Signing in...' : 'Sign in'}
+        </AuthSubmitButton>
       </form>
 
-      <div className="mt-6 pt-5 border-t border-gray-100 text-center">
-        <p className="text-sm text-gray-500">
-          Don't have an account?{' '}
-          <button
-            type="button"
-            onClick={onSwitch}
-            className="text-blue-600 font-semibold hover:text-blue-700 transition-colors"
-          >
-            Sign up free
+      <div className="mt-6 border-t pt-5 text-center" style={{ borderColor: 'var(--line-soft)' }}>
+        <p className="text-sm" style={{ color: 'var(--ink-2)' }}>
+          New here?{' '}
+          <button type="button" onClick={onSwitch} className="font-semibold hover:underline" style={{ color: 'var(--accent)' }}>
+            Create an account
           </button>
         </p>
       </div>
     </>
   );
 }
-
-// ── Signup form ────────────────────────────────────────────────────────────
 
 function SignupForm({ onSwitch }: { onSwitch: () => void }) {
   const { signUp } = useAuth();
@@ -169,9 +216,10 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
 
   const strength = getStrength(password);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    setMessage(null);
     const pwdErr = validatePassword(password);
     if (!firstName.trim() || !lastName.trim()) { setError('First and last name are required'); return; }
     if (pwdErr) { setError(pwdErr); return; }
@@ -190,184 +238,122 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
   return (
     <>
       <div className="mb-6">
-        <h2
-          className="text-2xl font-bold text-gray-900"
-          style={{ fontFamily: "'Fraunces', serif" }}
-        >
-          Create account
+        <p className="text-kicker" style={{ color: 'var(--accent)' }}>Get organized</p>
+        <h2 className="mt-2 text-2xl font-bold tracking-tight" style={{ color: 'var(--ink)' }}>
+          Create your workspace
         </h2>
-        <p className="text-sm text-gray-500 mt-1">
-          Start tracking your job applications
+        <p className="mt-1 text-sm" style={{ color: 'var(--ink-2)' }}>
+          Set up a focused place for applications, follow-ups, and trusted job discovery.
         </p>
       </div>
 
-      {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-600">{error}</p>
-        </div>
-      )}
-      {message && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-sm text-green-700">{message}</p>
-        </div>
-      )}
+      {error && <Alert tone="error">{error}</Alert>}
+      {message && <Alert tone="success">{message}</Alert>}
 
-      <form onSubmit={handleSubmit}>
-        <div className="flex flex-col gap-4">
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                First Name
-              </label>
-              <input
-                required
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="Jane"
-                disabled={loading}
-                className="field-input"
-              />
-            </div>
-            <div className="flex-1">
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                Last Name
-              </label>
-              <input
-                required
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="Smith"
-                disabled={loading}
-                className="field-input"
-              />
-            </div>
-          </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <TextInput
+            label="First name"
+            icon={<User size={16} />}
+            required
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            placeholder="Jane"
+            disabled={loading}
+          />
+          <TextInput
+            label="Last name"
+            icon={<User size={16} />}
+            required
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            placeholder="Smith"
+            disabled={loading}
+          />
+        </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-              Current Class
-            </label>
+        <label className="block">
+          <span className="field-label">Current class</span>
+          <span className="relative block min-w-0">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ink-3)' }}>
+              <GraduationCap size={16} />
+            </span>
             <select
               value={currentClass}
               onChange={(e) => setCurrentClass(e.target.value as MinYear | '')}
               disabled={loading}
-              className="field-input"
+              className="field-select min-w-0 pl-9"
             >
-              <option value="">— Select your year —</option>
+              <option value="">Select your year</option>
               {MIN_YEAR_OPTIONS.map((opt) => (
                 <option key={opt} value={opt}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</option>
               ))}
             </select>
-          </div>
+          </span>
+        </label>
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-              Email Address
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base pointer-events-none">✉️</span>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                disabled={loading}
-                className="field-input pl-10"
-              />
-            </div>
-          </div>
+        <TextInput
+          label="Email address"
+          icon={<AtSign size={16} />}
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          disabled={loading}
+        />
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-              Password
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base pointer-events-none">🔒</span>
-              <input
-                type={showPwd ? 'text' : 'password'}
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••"
-                disabled={loading}
-                className="field-input pl-10 pr-16"
-              />
-              <button
-                type="button"
-                tabIndex={-1}
-                onClick={() => setShowPwd((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-600 font-medium hover:text-blue-700"
-              >
-                {showPwd ? 'Hide' : 'Show'}
-              </button>
-            </div>
-            {strength && (
-              <div className="mt-2">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all ${STRENGTH_BAR_COLOR[strength]}`}
-                      style={{ width: `${STRENGTH_VALUE[strength]}%` }}
-                    />
-                  </div>
-                  <span className={`text-xs font-medium ${STRENGTH_COLOR[strength]}`}>
-                    {strength.charAt(0).toUpperCase() + strength.slice(1)}
-                  </span>
-                </div>
+        <div>
+          <TextInput
+            label="Password"
+            icon={<Lock size={16} />}
+            right={<PasswordToggle visible={showPwd} onToggle={() => setShowPwd((v) => !v)} />}
+            type={showPwd ? 'text' : 'password'}
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Create a password"
+            disabled={loading}
+          />
+          {strength && (
+            <div className="mt-2 flex items-center gap-2">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full" style={{ background: 'var(--line-soft)' }}>
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{ width: `${STRENGTH_VALUE[strength]}%`, background: STRENGTH_COLOR[strength] }}
+                />
               </div>
-            )}
-            <p className="text-xs text-gray-400 mt-1">
-              8+ characters with uppercase, lowercase, and numbers
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-              Confirm Password
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base pointer-events-none">🔒</span>
-              <input
-                type={showConfirm ? 'text' : 'password'}
-                required
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                placeholder="••••••••••"
-                disabled={loading}
-                className="field-input pl-10 pr-16"
-              />
-              <button
-                type="button"
-                tabIndex={-1}
-                onClick={() => setShowConfirm((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-600 font-medium hover:text-blue-700"
-              >
-                {showConfirm ? 'Hide' : 'Show'}
-              </button>
+              <span className="text-xs font-semibold" style={{ color: STRENGTH_COLOR[strength] }}>
+                {STRENGTH_LABEL[strength]}
+              </span>
             </div>
-          </div>
-
-          <div className="pt-1">
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gray-800 text-white font-semibold text-sm rounded-lg py-3 hover:bg-gray-900 disabled:opacity-60 transition-colors"
-            >
-              {loading ? 'Creating account…' : 'Create Account →'}
-            </button>
-          </div>
+          )}
+          <p className="mt-1 text-xs" style={{ color: 'var(--ink-3)' }}>
+            Use 8+ characters with uppercase, lowercase, and numbers.
+          </p>
         </div>
+
+        <TextInput
+          label="Confirm password"
+          icon={<Lock size={16} />}
+          right={<PasswordToggle visible={showConfirm} onToggle={() => setShowConfirm((v) => !v)} />}
+          type={showConfirm ? 'text' : 'password'}
+          required
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          placeholder="Repeat your password"
+          disabled={loading}
+        />
+
+        <AuthSubmitButton loading={loading}>
+          {loading ? 'Creating account...' : 'Create account'}
+        </AuthSubmitButton>
       </form>
 
-      <div className="mt-6 pt-5 border-t border-gray-100 text-center">
-        <p className="text-sm text-gray-500">
+      <div className="mt-6 border-t pt-5 text-center" style={{ borderColor: 'var(--line-soft)' }}>
+        <p className="text-sm" style={{ color: 'var(--ink-2)' }}>
           Already have an account?{' '}
-          <button
-            type="button"
-            onClick={onSwitch}
-            className="text-blue-600 font-semibold hover:text-blue-700 transition-colors"
-          >
+          <button type="button" onClick={onSwitch} className="font-semibold hover:underline" style={{ color: 'var(--accent)' }}>
             Sign in
           </button>
         </p>
@@ -376,75 +362,110 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
   );
 }
 
-// ── Page shell ─────────────────────────────────────────────────────────────
+function AuthFeature({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
+  return (
+    <div className="flex gap-3">
+      <div
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+        style={{ background: 'var(--accent-tint)', color: 'var(--accent)' }}
+      >
+        {icon}
+      </div>
+      <div>
+        <h3 className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>{title}</h3>
+        <p className="mt-0.5 text-sm" style={{ color: 'var(--ink-2)' }}>{text}</p>
+      </div>
+    </div>
+  );
+}
 
 export function LoginPage() {
   const [tab, setTab] = useState<'login' | 'signup'>('login');
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center px-4 py-10"
-      style={{ background: 'linear-gradient(160deg, #3a7a5c 0%, #5a9e7e 40%, #d0e8dc 70%, #f0f7f3 100%)' }}
-    >
-      {/* Logo + tagline */}
-      <div className="text-center mb-8">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <div className="w-12 h-12 rounded-xl bg-accent-400 flex items-center justify-center">
-            <svg width="32" height="32" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="18" y="40" width="60" height="38" rx="7" fill="#EAF3DE"/>
-              <path d="M36 40 L36 33 Q36 26 43 26 L53 26 Q60 26 60 33 L60 40" stroke="#EAF3DE" stroke-width="4.5" fill="none" stroke-linecap="round"/>
-              <rect x="18" y="53" width="60" height="5" fill="#1A3C2E" opacity="0.15"/>
-              <rect x="43" y="50" width="10" height="8" rx="2.5" fill="#6B7FD4"/>
-            </svg>
+    <div className="min-h-screen overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8" style={{ background: 'var(--bg)', maxWidth: '100vw' }}>
+      <main className="mx-auto grid min-h-[calc(100vh-3rem)] w-full max-w-full items-center gap-6 lg:max-w-6xl lg:grid-cols-[minmax(0,0.95fr)_minmax(420px,0.85fr)]">
+        <section className="hidden lg:block">
+          <div className="max-w-xl">
+            <div className="flex items-center gap-3">
+              <BrandMark />
+              <div>
+                <p className="text-kicker" style={{ color: 'var(--accent)' }}>Track My Application</p>
+                <h1 className="text-4xl font-bold tracking-tight" style={{ color: 'var(--ink)' }}>
+                  A calmer command center for your job search.
+                </h1>
+              </div>
+            </div>
+
+            <p className="mt-5 max-w-lg text-base leading-7" style={{ color: 'var(--ink-2)' }}>
+              Keep applications, companies, contacts, follow-ups, and trusted job discovery in one place without turning every lead into an application record.
+            </p>
+
+            <div className="mt-8 space-y-5">
+              <AuthFeature
+                icon={<CalendarCheck2 size={18} />}
+                title="Know what needs attention"
+                text="See upcoming interviews, follow-ups, and stale applications before they slip."
+              />
+              <AuthFeature
+                icon={<BriefcaseBusiness size={18} />}
+                title="Separate leads from applications"
+                text="Use Radar and Companies To Watch without cluttering your active application list."
+              />
+              <AuthFeature
+                icon={<CheckCircle2 size={18} />}
+                title="Keep the workflow tight"
+                text="Save the company, open the original posting, and decide when something is worth tracking."
+              />
+            </div>
           </div>
-          <span
-            className="text-3xl font-bold text-white"
-            style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
-          >
-            Track My App
-          </span>
-        </div>
-        <p className="text-sm text-green-200">
-          Track every application, never miss a deadline
-        </p>
-      </div>
+        </section>
 
-      {/* Card */}
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
-        {/* Tabs */}
-        <div className="flex border-b border-gray-200">
-          {(['login', 'signup'] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setTab(t)}
-              className={[
-                'flex-1 py-4 text-sm font-semibold transition-colors',
-                tab === t
-                  ? 'text-gray-900 border-b-2 border-gray-800'
-                  : 'text-gray-400 hover:text-gray-600',
-              ].join(' ')}
-            >
-              {t === 'login' ? 'Sign In' : 'Sign Up'}
-            </button>
-          ))}
-        </div>
+        <section className="w-full min-w-0 max-w-[22rem] sm:mx-auto sm:max-w-[30rem] lg:max-w-none">
+          <div className="mb-6 flex items-center gap-3 lg:hidden">
+            <BrandMark />
+            <div>
+              <p className="text-kicker" style={{ color: 'var(--accent)' }}>Track My Application</p>
+              <h1 className="text-xl font-bold" style={{ color: 'var(--ink)' }}>Job search workspace</h1>
+            </div>
+          </div>
 
-        {/* Form body */}
-        <div className="p-8">
-          {tab === 'login'
-            ? <LoginForm onSwitch={() => setTab('signup')} />
-            : <SignupForm onSwitch={() => setTab('login')} />
-          }
-        </div>
+          <div className="w-full max-w-full overflow-hidden rounded-lg border bg-white shadow-sm" style={{ borderColor: 'var(--line)' }}>
+            <div className="grid grid-cols-2 border-b" style={{ borderColor: 'var(--line)' }}>
+              {(['login', 'signup'] as const).map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setTab(item)}
+                  className="min-h-12 min-w-0 truncate px-2 text-sm font-semibold transition-colors"
+                  style={{
+                    background: tab === item ? 'var(--card)' : 'var(--softer)',
+                    color: tab === item ? 'var(--ink)' : 'var(--ink-3)',
+                    boxShadow: tab === item ? 'inset 0 -2px 0 var(--accent)' : 'none',
+                  }}
+                >
+                  {item === 'login' ? 'Sign in' : 'Create account'}
+                </button>
+              ))}
+            </div>
 
-        {/* Trust footer */}
-        <div className="flex items-center justify-center gap-4 px-8 pb-6 text-xs text-gray-400">
-          <span>🔒 Secure</span>
-          <span>· Free to use ·</span>
-          <span>💼 Career focused</span>
-        </div>
-      </div>
+            <div className="p-5 sm:p-7">
+              {tab === 'login'
+                ? <LoginForm onSwitch={() => setTab('signup')} />
+                : <SignupForm onSwitch={() => setTab('login')} />
+              }
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs" style={{ color: 'var(--ink-3)' }}>
+            <span>Secure auth</span>
+            <span aria-hidden="true">/</span>
+            <span>Free to use</span>
+            <span aria-hidden="true">/</span>
+            <span>Career focused</span>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }
