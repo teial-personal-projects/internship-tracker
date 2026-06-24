@@ -468,7 +468,8 @@ describe('radar routes', () => {
       title_terms: ['software engineer', 'backend engineer', 'full-stack engineer', 'full stack engineer'],
       field_terms: ['edtech', 'education technology', 'mission-driven', 'civic tech', 'nonprofit tech'],
       exclude_keywords: ['junior', 'intern', 'internship'],
-      location_rules: ['remote_us', 'la'],
+      location_terms: [],
+      location_rules: [],
     });
   });
 
@@ -483,8 +484,9 @@ describe('radar routes', () => {
       .send({
         title_terms: ['backend engineer', 'software engineer'],
         field_terms: ['edtech', 'civic tech'],
+        location_terms: ['New York', 'Chicago'],
         exclude_keywords: ['intern'],
-        location_rules: ['remote_us'],
+        location_rules: [],
       })
       .set('Authorization', 'Bearer test-token');
 
@@ -496,13 +498,15 @@ describe('radar routes', () => {
       include_keywords: [],
       exclude_keywords: ['intern'],
       seniority_terms: [],
-      location_rules: ['remote_us'],
+      location_terms: ['New York', 'Chicago'],
+      location_rules: [],
     });
     expect(db.rowsByTable.radar_criteria).toContainEqual(expect.objectContaining({
       id: 'radar_criteria-new',
       user_id: USER_ID,
       title_terms: ['backend engineer', 'software engineer'],
       field_terms: ['edtech', 'civic tech'],
+      location_terms: ['New York', 'Chicago'],
     }));
   });
 
@@ -515,6 +519,7 @@ describe('radar routes', () => {
         include_keywords: [],
         exclude_keywords: ['intern'],
         seniority_terms: [],
+        location_terms: [],
         location_rules: ['remote_us'],
         created_at: '2026-06-01T00:00:00.000Z',
         updated_at: '2026-06-01T00:00:00.000Z',

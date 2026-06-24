@@ -247,6 +247,7 @@ describe('refreshRadarSource', () => {
         include_keywords: ['platform'],
         exclude_keywords: [],
         seniority_terms: [],
+        location_terms: [],
         location_rules: ['onsite'],
         created_at: '2026-06-01T00:00:00.000Z',
         updated_at: '2026-06-01T00:00:00.000Z',

@@ -126,16 +126,30 @@ CREATE TABLE IF NOT EXISTS radar_criteria (
   include_keywords TEXT[] NOT NULL DEFAULT '{}',
   exclude_keywords TEXT[] NOT NULL DEFAULT '{}',
   seniority_terms  TEXT[] NOT NULL DEFAULT '{}',
+  location_terms   TEXT[] NOT NULL DEFAULT '{}',
   location_rules   TEXT[] NOT NULL DEFAULT '{}',
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   CONSTRAINT radar_criteria_location_rules_valid
-    CHECK (location_rules <@ ARRAY['remote_us', 'la', 'onsite', 'unknown']::TEXT[])
+    CHECK (location_rules <@ ARRAY['remote_us', 'onsite']::TEXT[])
 );
 
 ALTER TABLE radar_criteria
   ADD COLUMN IF NOT EXISTS title_terms TEXT[] NOT NULL DEFAULT '{}',
-  ADD COLUMN IF NOT EXISTS field_terms TEXT[] NOT NULL DEFAULT '{}';
+  ADD COLUMN IF NOT EXISTS field_terms TEXT[] NOT NULL DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS location_terms TEXT[] NOT NULL DEFAULT '{}';
+
+UPDATE radar_criteria
+SET location_rules = array_remove(array_remove(location_rules, 'la'), 'unknown')
+WHERE 'la' = ANY(location_rules)
+   OR 'unknown' = ANY(location_rules);
+
+ALTER TABLE radar_criteria
+  DROP CONSTRAINT IF EXISTS radar_criteria_location_rules_valid;
+
+ALTER TABLE radar_criteria
+  ADD CONSTRAINT radar_criteria_location_rules_valid
+    CHECK (location_rules <@ ARRAY['remote_us', 'onsite']::TEXT[]);
 
 DROP TRIGGER IF EXISTS radar_criteria_updated_at ON radar_criteria;
 CREATE TRIGGER radar_criteria_updated_at

@@ -46,7 +46,8 @@ const DEFAULT_RADAR_CRITERIA = {
   include_keywords: [],
   exclude_keywords: ['junior', 'intern', 'internship'],
   seniority_terms: [],
-  location_rules: ['remote_us', 'la'],
+  location_terms: [],
+  location_rules: [],
 } satisfies UpdateRadarCriteriaSchemaType;
 
 function normalizeTerms(value: unknown): string[] {
@@ -62,11 +63,11 @@ function normalizeTerms(value: unknown): string[] {
 function normalizeLocationRules(value: unknown): RadarCriteria['location_rules'] {
   if (!Array.isArray(value)) return DEFAULT_RADAR_CRITERIA.location_rules;
 
-  const allowed = new Set(['remote_us', 'la', 'onsite', 'unknown']);
+  const allowed = new Set(['remote_us', 'onsite']);
   const rules = value.filter((rule): rule is RadarCriteria['location_rules'][number] =>
     typeof rule === 'string' && allowed.has(rule),
   );
-  return rules.length > 0 ? rules : DEFAULT_RADAR_CRITERIA.location_rules;
+  return rules;
 }
 
 function criteriaPayloadFromBody(body: UpdateRadarCriteriaSchemaType): UpdateRadarCriteriaSchemaType {
@@ -76,6 +77,7 @@ function criteriaPayloadFromBody(body: UpdateRadarCriteriaSchemaType): UpdateRad
     include_keywords: normalizeTerms(body.include_keywords),
     exclude_keywords: normalizeTerms(body.exclude_keywords),
     seniority_terms: normalizeTerms(body.seniority_terms),
+    location_terms: normalizeTerms(body.location_terms),
     location_rules: normalizeLocationRules(body.location_rules),
   };
 }
@@ -103,6 +105,7 @@ function criteriaFromRow(row: Partial<RadarCriteria> | null | undefined, userId:
     include_keywords: normalizeTerms(row.include_keywords),
     exclude_keywords: normalizeTerms(row.exclude_keywords).length > 0 ? normalizeTerms(row.exclude_keywords) : defaults.exclude_keywords,
     seniority_terms: normalizeTerms(row.seniority_terms),
+    location_terms: normalizeTerms(row.location_terms),
     location_rules: normalizeLocationRules(row.location_rules),
     created_at: row.created_at ?? defaults.created_at,
     updated_at: row.updated_at ?? defaults.updated_at,
@@ -115,7 +118,7 @@ async function getRadarCriteriaRow(
 ): Promise<RadarCriteria> {
   const { data, error } = await db
     .from('radar_criteria')
-    .select('user_id, title_terms, field_terms, include_keywords, exclude_keywords, seniority_terms, location_rules, created_at, updated_at')
+    .select('user_id, title_terms, field_terms, include_keywords, exclude_keywords, seniority_terms, location_terms, location_rules, created_at, updated_at')
     .eq('user_id', userId)
     .limit(1);
 
@@ -316,7 +319,7 @@ router.put('/criteria', requireAuth, validateBody(UpdateRadarCriteriaSchema), as
       : db.from('radar_criteria').insert({ user_id: user.id, ...payload });
 
     const { data, error } = await query
-      .select('user_id, title_terms, field_terms, include_keywords, exclude_keywords, seniority_terms, location_rules, created_at, updated_at')
+      .select('user_id, title_terms, field_terms, include_keywords, exclude_keywords, seniority_terms, location_terms, location_rules, created_at, updated_at')
       .single();
 
     if (error) {

@@ -13,11 +13,12 @@ CREATE TABLE IF NOT EXISTS radar_criteria (
   include_keywords TEXT[] NOT NULL DEFAULT '{}',
   exclude_keywords TEXT[] NOT NULL DEFAULT '{}',
   seniority_terms  TEXT[] NOT NULL DEFAULT '{}',
+  location_terms   TEXT[] NOT NULL DEFAULT '{}',
   location_rules   TEXT[] NOT NULL DEFAULT '{}',
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   CONSTRAINT radar_criteria_location_rules_valid
-    CHECK (location_rules <@ ARRAY['remote_us', 'la', 'onsite', 'unknown']::TEXT[])
+    CHECK (location_rules <@ ARRAY['remote_us', 'onsite']::TEXT[])
 );
 
 CREATE TRIGGER radar_criteria_updated_at

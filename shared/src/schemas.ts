@@ -406,7 +406,8 @@ export const RadarCriteriaSchema = z.object({
   include_keywords: z.array(z.string().max(100)),
   exclude_keywords: z.array(z.string().max(100)),
   seniority_terms: z.array(z.string().max(100)),
-  location_rules: z.array(z.enum(['remote_us', 'la', 'onsite', 'unknown'])),
+  location_terms: z.array(z.string().max(100)).default([]),
+  location_rules: z.array(z.enum(['remote_us', 'onsite'])),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
 });

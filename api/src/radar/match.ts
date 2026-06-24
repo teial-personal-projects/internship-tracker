@@ -6,6 +6,7 @@ export interface MatchCriteria {
   fieldTerms: string[];
   includeKeywords: string[];
   excludedTerms: string[];
+  locationTerms: string[];
   allowedRemoteStatuses: Array<NormalizedPosting['remoteStatus']>;
 }
 
@@ -14,7 +15,8 @@ export const MVP_MATCH_CRITERIA: MatchCriteria = {
   fieldTerms: ['edtech', 'education technology', 'mission-driven', 'civic tech', 'nonprofit tech'],
   includeKeywords: [],
   excludedTerms: ['junior', 'intern', 'internship'],
-  allowedRemoteStatuses: ['remote_us', 'la'],
+  locationTerms: [],
+  allowedRemoteStatuses: [],
 };
 
 function normalizeTerms(terms: string[]): string[] {
@@ -34,8 +36,9 @@ export function criteriaFromRow(row: RadarCriteria | null | undefined): MatchCri
   const seniorityTerms = Array.isArray(row.seniority_terms) ? row.seniority_terms : [];
   const includeKeywords = Array.isArray(row.include_keywords) ? row.include_keywords : [];
   const excludeKeywords = Array.isArray(row.exclude_keywords) ? row.exclude_keywords : [];
+  const locationTerms = Array.isArray(row.location_terms) ? row.location_terms : [];
   const locationRules = (Array.isArray(row.location_rules) ? row.location_rules : []).filter((rule) =>
-    ['remote_us', 'la', 'onsite', 'unknown'].includes(rule),
+    ['remote_us', 'onsite'].includes(rule),
   ) as MatchCriteria['allowedRemoteStatuses'];
   const legacyTitleTerms = seniorityTerms.length > 0
     ? seniorityTerms.map((term) => `${term} engineer`)
@@ -46,9 +49,8 @@ export function criteriaFromRow(row: RadarCriteria | null | undefined): MatchCri
     fieldTerms: mergeTerms(fieldTerms, MVP_MATCH_CRITERIA.fieldTerms),
     includeKeywords: normalizeTerms(includeKeywords),
     excludedTerms: mergeTerms(excludeKeywords, MVP_MATCH_CRITERIA.excludedTerms),
-    allowedRemoteStatuses: locationRules.length > 0
-      ? locationRules
-      : MVP_MATCH_CRITERIA.allowedRemoteStatuses,
+    locationTerms: normalizeTerms(locationTerms),
+    allowedRemoteStatuses: locationRules,
   };
 }
 
@@ -61,7 +63,11 @@ export function matches(
   const hasIncludeKeywords = criteria.includeKeywords.length === 0
     || criteria.includeKeywords.some((term) => title.includes(term));
   const isExcluded = criteria.excludedTerms.some((term) => title.includes(term));
-  const isAllowedLocation = criteria.allowedRemoteStatuses.includes(posting.remoteStatus);
+  const location = (posting.location ?? '').toLowerCase();
+  const hasLocationCriteria = criteria.allowedRemoteStatuses.length > 0 || criteria.locationTerms.length > 0;
+  const isAllowedLocation = !hasLocationCriteria
+    || criteria.allowedRemoteStatuses.includes(posting.remoteStatus)
+    || criteria.locationTerms.some((term) => location.includes(term));
 
   return hasTargetTitle && hasIncludeKeywords && !isExcluded && isAllowedLocation;
 }

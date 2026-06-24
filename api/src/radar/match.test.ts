@@ -20,12 +20,33 @@ describe('radar match filter', () => {
     expect(matches(posting({ title: 'Software Engineer', remoteStatus: 'remote_us' }))).toBe(true);
   });
 
-  it('allows target Los Angeles roles', () => {
+  it('does not require a hard-coded default location', () => {
     expect(matches(posting({
       title: 'Backend Engineer',
       remoteStatus: 'la',
       location: 'Los Angeles, CA',
     }))).toBe(true);
+  });
+
+  it('allows custom location terms when configured', () => {
+    const criteria = criteriaFromRow({
+      user_id: '00000000-0000-4000-8000-000000000001',
+      title_terms: ['backend engineer'],
+      field_terms: [],
+      include_keywords: [],
+      exclude_keywords: [],
+      seniority_terms: [],
+      location_terms: ['Los Angeles'],
+      location_rules: ['remote_us'],
+      created_at: '2026-06-01T00:00:00.000Z',
+      updated_at: '2026-06-01T00:00:00.000Z',
+    });
+
+    expect(matches(posting({
+      title: 'Backend Engineer',
+      remoteStatus: 'la',
+      location: 'Los Angeles, CA',
+    }), criteria)).toBe(true);
   });
 
   it('rejects junior or intern roles even when remote', () => {
@@ -34,7 +55,20 @@ describe('radar match filter', () => {
   });
 
   it('rejects onsite roles outside allowed locations', () => {
-    expect(matches(posting({ title: 'Software Engineer', remoteStatus: 'onsite', location: 'New York, NY' }))).toBe(false);
+    const criteria = criteriaFromRow({
+      user_id: '00000000-0000-4000-8000-000000000001',
+      title_terms: ['software engineer'],
+      field_terms: [],
+      include_keywords: [],
+      exclude_keywords: [],
+      seniority_terms: [],
+      location_terms: [],
+      location_rules: ['remote_us'],
+      created_at: '2026-06-01T00:00:00.000Z',
+      updated_at: '2026-06-01T00:00:00.000Z',
+    });
+
+    expect(matches(posting({ title: 'Software Engineer', remoteStatus: 'onsite', location: 'New York, NY' }), criteria)).toBe(false);
   });
 
   it('applies per-user title terms, include keywords, and location rules', () => {
@@ -45,6 +79,7 @@ describe('radar match filter', () => {
       include_keywords: ['platform'],
       exclude_keywords: ['manager'],
       seniority_terms: [],
+      location_terms: [],
       location_rules: ['onsite'],
       created_at: '2026-06-01T00:00:00.000Z',
       updated_at: '2026-06-01T00:00:00.000Z',

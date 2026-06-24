@@ -39,7 +39,7 @@ describe('WeWorkRemotelyAdapter', () => {
       postedAt: '2026-06-01T12:00:00.000Z',
     })]);
     expect(postings[0].raw).toMatchObject({
-      match_reasons: ['title "backend engineer"', 'source We Work Remotely', 'location remote_us'],
+      match_reasons: ['title "backend engineer"', 'source We Work Remotely'],
     });
   });
 });

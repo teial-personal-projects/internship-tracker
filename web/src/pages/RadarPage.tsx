@@ -52,10 +52,8 @@ const VIEW_OPTIONS: Array<{ value: DiscoveryView; label: string }> = [
 ];
 
 const LOCATION_OPTIONS: Array<{ value: LocationRule; label: string }> = [
-  { value: 'remote_us', label: 'Remote US' },
-  { value: 'la', label: 'Los Angeles' },
+  { value: 'remote_us', label: 'Remote' },
   { value: 'onsite', label: 'Onsite' },
-  { value: 'unknown', label: 'Unknown' },
 ];
 
 function apiErrorMessage(error: unknown, fallback: string): string {
@@ -386,8 +384,9 @@ export function RadarPage() {
   const [savingCompanyName, setSavingCompanyName] = useState<string | null>(null);
   const [titleTerms, setTitleTerms] = useState('');
   const [fieldTerms, setFieldTerms] = useState('');
+  const [locationTerms, setLocationTerms] = useState('');
   const [excludeTerms, setExcludeTerms] = useState('');
-  const [locationRules, setLocationRules] = useState<LocationRule[]>(['remote_us', 'la']);
+  const [locationRules, setLocationRules] = useState<LocationRule[]>([]);
 
   const queryParams = useMemo<RadarPostingsParams>(() => ({
     ...(status && { status }),
@@ -409,8 +408,10 @@ export function RadarPage() {
 
     setTitleTerms(formatTerms(criteria.title_terms));
     setFieldTerms(formatTerms(criteria.field_terms));
+    setLocationTerms(formatTerms(criteria.location_terms));
     setExcludeTerms(formatTerms(criteria.exclude_keywords));
-    setLocationRules(criteria.location_rules.length > 0 ? criteria.location_rules : ['remote_us', 'la']);
+    const supportedLocationRules = criteria.location_rules.filter((rule) => rule === 'remote_us' || rule === 'onsite');
+    setLocationRules(supportedLocationRules);
   }, [criteria]);
 
   const savedCompanyNames = useMemo(
@@ -466,6 +467,7 @@ export function RadarPage() {
         include_keywords: [],
         exclude_keywords: parseTerms(excludeTerms),
         seniority_terms: [],
+        location_terms: parseTerms(locationTerms),
         location_rules: locationRules,
       });
       toast.success('Radar criteria saved');
@@ -528,7 +530,7 @@ export function RadarPage() {
         </div>
 
         <section className="rounded-lg border bg-white p-3 shadow-sm" style={{ borderColor: 'var(--line)' }}>
-          <div className="grid gap-3 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-end">
+          <div className="grid gap-3 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] lg:items-end">
             <label>
               <span className="field-label">Target titles</span>
               <input
@@ -547,6 +549,16 @@ export function RadarPage() {
                 onChange={(event) => setFieldTerms(event.target.value)}
                 className="field-input"
                 placeholder="edtech, civic tech, nonprofit tech"
+              />
+            </label>
+            <label>
+              <span className="field-label">Locations</span>
+              <input
+                type="text"
+                value={locationTerms}
+                onChange={(event) => setLocationTerms(event.target.value)}
+                className="field-input"
+                placeholder="New York, Chicago, Bay Area"
               />
             </label>
             <label>
