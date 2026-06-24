@@ -404,6 +404,48 @@ describe('radar routes', () => {
     expect(response.body.data.map((posting: Row) => posting.id)).toEqual(['live-direct']);
   });
 
+  it('GET /api/radar/postings includes old closed postings when requested', async () => {
+    const db = createMockDb({
+      discovered_postings: [
+        {
+          id: 'old-closed',
+          user_id: USER_ID,
+          company_name: 'Acme',
+          title: 'Closed Role',
+          location: 'Remote',
+          status: 'new',
+          source_tier: 'direct_ats',
+          validity_status: 'closed',
+          last_validated_at: '2024-01-01T00:00:00.000Z',
+          first_seen_at: '2024-01-01T00:00:00.000Z',
+        },
+        {
+          id: 'live-role',
+          user_id: USER_ID,
+          company_name: 'Acme',
+          title: 'Live Role',
+          location: 'Remote',
+          status: 'new',
+          source_tier: 'direct_ats',
+          validity_status: 'live',
+          last_validated_at: '2026-06-01T00:00:00.000Z',
+          first_seen_at: '2026-06-01T00:00:00.000Z',
+        },
+      ],
+      company_watchlist: [],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .get('/api/radar/postings?include_closed=true')
+      .set('Authorization', 'Bearer test-token');
+    const ids = response.body.data.map((posting: Row) => posting.id);
+
+    expect(response.status).toBe(200);
+    expect(ids).toContain('old-closed');
+    expect(ids).toContain('live-role');
+  });
+
   it('PATCH /api/radar/postings/:id validates the posting before marking it seen', async () => {
     const db = createMockDb({
       discovered_postings: [{

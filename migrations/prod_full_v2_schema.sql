@@ -1016,7 +1016,8 @@ ALTER TABLE company_watchlist
 CREATE TABLE IF NOT EXISTS discovered_postings (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id         UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  watchlist_id    UUID NOT NULL REFERENCES company_watchlist(id) ON DELETE CASCADE,
+  watchlist_id    UUID REFERENCES company_watchlist(id) ON DELETE CASCADE,
+  radar_source_id TEXT,
   company_name    TEXT NOT NULL CHECK (char_length(company_name) <= 200),
   external_job_id TEXT NOT NULL,
   title           TEXT NOT NULL CHECK (char_length(title) <= 200),
@@ -1061,6 +1062,13 @@ CREATE INDEX IF NOT EXISTS idx_discovered_postings_user_source_tier_first_seen
 
 CREATE INDEX IF NOT EXISTS idx_discovered_postings_user_validity_status
   ON discovered_postings(user_id, validity_status);
+
+CREATE INDEX IF NOT EXISTS idx_discovered_postings_user_radar_source_first_seen
+  ON discovered_postings(user_id, radar_source_id, first_seen_at DESC);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_discovered_postings_user_radar_source_external_unique
+  ON discovered_postings(user_id, radar_source_id, external_job_id)
+  WHERE radar_source_id IS NOT NULL;
 
 -- Data API grants
 REVOKE ALL PRIVILEGES ON TABLE public.discovered_postings FROM anon, authenticated;
@@ -1172,6 +1180,15 @@ ALTER TABLE radar_sources ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "radar_sources_select" ON radar_sources
   FOR SELECT TO authenticated USING (true);
+
+DO $$
+BEGIN
+  ALTER TABLE discovered_postings
+    ADD CONSTRAINT discovered_postings_radar_source_id_fkey
+    FOREIGN KEY (radar_source_id) REFERENCES radar_sources(id);
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- ============================================================
 

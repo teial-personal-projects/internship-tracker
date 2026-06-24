@@ -48,6 +48,9 @@ ALTER TABLE discovered_postings
   ADD COLUMN IF NOT EXISTS last_validated_at TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS validation_error TEXT;
 
+ALTER TABLE discovered_postings
+  ALTER COLUMN watchlist_id DROP NOT NULL;
+
 CREATE INDEX IF NOT EXISTS idx_discovered_postings_user_source_tier_first_seen
   ON discovered_postings(user_id, source_tier, first_seen_at DESC);
 
@@ -92,6 +95,25 @@ ALTER TABLE radar_sources ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "radar_sources_select" ON radar_sources;
 CREATE POLICY "radar_sources_select" ON radar_sources
   FOR SELECT TO authenticated USING (true);
+
+ALTER TABLE discovered_postings
+  ADD COLUMN IF NOT EXISTS radar_source_id TEXT;
+
+DO $$
+BEGIN
+  ALTER TABLE discovered_postings
+    ADD CONSTRAINT discovered_postings_radar_source_id_fkey
+    FOREIGN KEY (radar_source_id) REFERENCES radar_sources(id);
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_discovered_postings_user_radar_source_first_seen
+  ON discovered_postings(user_id, radar_source_id, first_seen_at DESC);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_discovered_postings_user_radar_source_external_unique
+  ON discovered_postings(user_id, radar_source_id, external_job_id)
+  WHERE radar_source_id IS NOT NULL;
 
 -- ============================================================
 -- Source seed data

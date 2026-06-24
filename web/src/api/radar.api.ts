@@ -9,6 +9,7 @@ export interface RadarPostingsParams {
   source_tier?: SourceTier;
   validity_status?: PostingValidityStatus;
   sort?: 'quality' | 'first_seen' | 'posted_at';
+  include_closed?: boolean;
 }
 
 export async function getRadarPostings(params: RadarPostingsParams = {}): Promise<DiscoveredPosting[]> {

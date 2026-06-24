@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { isAxiosError } from 'axios';
-import { Building2, CheckCircle2, ChevronDown, ExternalLink, Eye, RefreshCw, Search, SlidersHorizontal } from 'lucide-react';
+import { Building2, CheckCircle2, ExternalLink, Eye, RefreshCw, Search, SlidersHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 import { AppHeader } from '@/components/AppHeader';
 import { Spinner } from '@/components/Spinner';
 import { useWatchlist } from '@/hooks/useWatchlist';
 import { useRadarPostings, useSaveRadarPostingCompany, useUpdateRadarPostingStatus } from '@/hooks/useRadar';
 import { WatchlistWorkspace } from '@/pages/WatchlistPage';
+import type { RadarPostingsParams } from '@/api/radar.api';
 import type { WatchlistEntry } from '@/api/watchlist.api';
 import type {
   DiscoveredPosting,
@@ -16,7 +17,7 @@ import type {
 } from '@shared/schemas';
 
 type StatusFilter = Extract<PostingStatus, 'new' | 'seen' | 'dismissed'>;
-type DiscoveryView = 'fresh_direct' | 'curated' | 'aggregator' | 'live_only' | 'all';
+type DiscoveryView = 'fresh_direct' | 'curated' | 'aggregator' | 'live_only' | 'closed' | 'all';
 type RadarPostingView = DiscoveredPosting;
 type ProvenanceSource = { sourceName?: string; source_name?: string; name?: string };
 
@@ -37,6 +38,7 @@ const VIEW_OPTIONS: Array<{ value: DiscoveryView; label: string }> = [
   { value: 'curated', label: 'Curated' },
   { value: 'aggregator', label: 'Aggregator' },
   { value: 'live_only', label: 'Live only' },
+  { value: 'closed', label: 'Closed' },
   { value: 'all', label: 'All' },
 ];
 
@@ -103,6 +105,11 @@ function validityColor(status: PostingValidityStatus): string {
   return '#7C5E10';
 }
 
+function isClosedPosting(posting: RadarPostingView): boolean {
+  const status = validityStatus(posting);
+  return status === 'closed' || status === 'not_found';
+}
+
 function alsoSeenOn(posting: RadarPostingView): string[] {
   if (!Array.isArray(posting.also_seen_on)) return [];
 
@@ -122,15 +129,13 @@ function isFreshMatch(posting: RadarPostingView): boolean {
   return sourceTier(posting) === 'direct_ats' && status !== 'closed' && status !== 'not_found';
 }
 
-function postingMatchesView(posting: RadarPostingView, view: DiscoveryView): boolean {
-  const tier = sourceTier(posting);
-  const validity = validityStatus(posting);
-
-  if (view === 'fresh_direct') return isFreshMatch(posting);
-  if (view === 'curated') return tier === 'curated_board';
-  if (view === 'aggregator') return tier === 'aggregator';
-  if (view === 'live_only') return validity === 'live';
-  return true;
+export function radarViewParams(view: DiscoveryView): Pick<RadarPostingsParams, 'source_tier' | 'validity_status' | 'sort' | 'include_closed'> {
+  if (view === 'fresh_direct') return { source_tier: 'direct_ats', sort: 'quality' };
+  if (view === 'curated') return { source_tier: 'curated_board', sort: 'quality' };
+  if (view === 'aggregator') return { source_tier: 'aggregator', sort: 'quality' };
+  if (view === 'live_only') return { validity_status: 'live', sort: 'quality' };
+  if (view === 'closed') return { validity_status: 'closed', sort: 'first_seen' };
+  return { sort: 'quality', include_closed: true };
 }
 
 function groupByCompany(
@@ -158,6 +163,16 @@ function groupByCompany(
     .sort((left, right) => right.postings[0].first_seen_at.localeCompare(left.postings[0].first_seen_at));
 }
 
+export function splitPostingsByClosedState(postings: RadarPostingView[]): {
+  activePostings: RadarPostingView[];
+  closedPostings: RadarPostingView[];
+} {
+  return {
+    activePostings: postings.filter((posting) => !isClosedPosting(posting)),
+    closedPostings: postings.filter(isClosedPosting),
+  };
+}
+
 function companyInitials(company: string): string {
   const words = company.split(/\s+/).filter(Boolean);
   return words.slice(0, 2).map((word) => word[0]?.toUpperCase()).join('') || 'CO';
@@ -182,13 +197,14 @@ function PostingRow({
 }: PostingRowProps) {
   const status = validityStatus(posting);
   const tier = sourceTier(posting);
+  const isClosed = isClosedPosting(posting);
   const seenSources = alsoSeenOn(posting);
   const source = sourceName(posting, watchlistEntry);
   const relativeFirstSeen = formatRelativeTime(posting.first_seen_at);
   const canSave = !isSaved && !isSaving;
 
   return (
-    <div className="flex flex-col gap-3 border-t px-4 py-3 first:border-t-0 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: 'var(--line)' }}>
+    <div className={`flex flex-col gap-3 border-t px-4 py-3 first:border-t-0 sm:flex-row sm:items-center sm:justify-between ${isClosed ? 'bg-[color:var(--soft)] opacity-80' : ''}`} style={{ borderColor: 'var(--line)' }}>
       <div className="min-w-0">
         <a
           href={posting.url}
@@ -224,7 +240,7 @@ function PostingRow({
         type="button"
         className={isSaved ? 'btn-outline min-h-9 px-3 text-sm' : 'btn-primary min-h-9 px-3 text-sm'}
         onClick={() => onSaveCompany(posting)}
-        disabled={!canSave}
+        disabled={!canSave || isClosed}
       >
         {isSaving ? <Spinner size="sm" color="white" /> : isSaved ? 'Saved company' : 'Save company'}
       </button>
@@ -248,10 +264,9 @@ function CompanyRadarCard({
   onMarkSeen,
 }: CompanyRadarCardProps) {
   const freshDirectCount = group.postings.filter(isFreshMatch).length;
-  const closedCount = group.postings.filter((posting) => {
-    const status = validityStatus(posting);
-    return status === 'closed' || status === 'not_found';
-  }).length;
+  const { activePostings, closedPostings } = splitPostingsByClosedState(group.postings);
+  const visiblePostings = activePostings.length > 0 ? activePostings : closedPostings;
+  const collapsedClosedPostings = activePostings.length > 0 ? closedPostings : [];
   const primarySource = sourceName(group.postings[0], group.watchlistEntry);
   const subtitleParts = [primarySource, group.watchlistEntry?.industry].filter(Boolean);
 
@@ -277,17 +292,16 @@ function CompanyRadarCard({
               {freshDirectCount} fresh direct
             </span>
           )}
-          {closedCount > 0 && (
+          {closedPostings.length > 0 && (
             <span className="rounded-full px-2 py-1 text-xs font-semibold" style={{ background: '#FEF2F2', color: '#B91C1C' }}>
-              {closedCount} closed
+              {closedPostings.length} closed
             </span>
           )}
-          <ChevronDown size={16} style={{ color: 'var(--ink-3)' }} />
         </div>
       </div>
 
       <div>
-        {group.postings.map((posting) => (
+        {visiblePostings.map((posting) => (
           <PostingRow
             key={posting.id}
             posting={posting}
@@ -298,6 +312,24 @@ function CompanyRadarCard({
             onMarkSeen={onMarkSeen}
           />
         ))}
+        {collapsedClosedPostings.length > 0 && (
+          <details className="border-t" style={{ borderColor: 'var(--line)' }}>
+            <summary className="cursor-pointer px-4 py-2 text-xs font-semibold" style={{ color: 'var(--ink-3)' }}>
+              Closed postings ({collapsedClosedPostings.length})
+            </summary>
+            {collapsedClosedPostings.map((posting) => (
+              <PostingRow
+                key={posting.id}
+                posting={posting}
+                watchlistEntry={group.watchlistEntry}
+                isSaved={savedCompanyNames.has(posting.company_name.toLowerCase())}
+                isSaving={savingCompanyName === posting.company_name.toLowerCase()}
+                onSaveCompany={onSaveCompany}
+                onMarkSeen={onMarkSeen}
+              />
+            ))}
+          </details>
+        )}
       </div>
     </section>
   );
@@ -310,11 +342,12 @@ export function RadarPage() {
   const [view, setView] = useState<DiscoveryView>('fresh_direct');
   const [savingCompanyName, setSavingCompanyName] = useState<string | null>(null);
 
-  const queryParams = useMemo(() => ({
+  const queryParams = useMemo<RadarPostingsParams>(() => ({
     ...(status && { status }),
     ...(watchlistId && { watchlist_id: watchlistId }),
     ...(search.trim() && { search: search.trim() }),
-  }), [search, status, watchlistId]);
+    ...radarViewParams(view),
+  }), [search, status, view, watchlistId]);
 
   const { data: postings = [], isLoading, error } = useRadarPostings(queryParams);
   const { data: watchlist = [] } = useWatchlist();
@@ -326,11 +359,7 @@ export function RadarPage() {
     [watchlist],
   );
 
-  const filteredPostings = useMemo(() => (
-    (postings as RadarPostingView[]).filter((posting) => postingMatchesView(posting, view))
-  ), [postings, view]);
-
-  const companyGroups = useMemo(() => groupByCompany(filteredPostings, watchlist), [filteredPostings, watchlist]);
+  const companyGroups = useMemo(() => groupByCompany(postings as RadarPostingView[], watchlist), [postings, watchlist]);
 
   const metrics = useMemo(() => {
     const viewPostings = postings as RadarPostingView[];
@@ -378,22 +407,18 @@ export function RadarPage() {
       <main className="mobile-safe-bottom flex flex-1 flex-col gap-3 overflow-x-hidden overflow-y-auto p-3 sm:p-4 md:pb-6">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <h1 className="text-2xl font-bold" style={{ color: 'var(--ink)' }}>
-            Discover & Watchlist
+            Trusted job search
           </h1>
           <span className="text-sm" style={{ color: 'var(--ink-3)' }}>
-            Open roles, save companies.
+            Search trusted sources, open original postings, save companies.
           </span>
         </div>
-
-        <section className="rounded-lg border bg-white p-3 shadow-sm" style={{ borderColor: 'var(--line)' }}>
-          <WatchlistWorkspace embedded />
-        </section>
 
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-2">
             <Building2 size={18} style={{ color: 'var(--ink-3)' }} />
             <h2 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>
-              Radar by company
+              Radar results
             </h2>
           </div>
           <select
@@ -531,6 +556,15 @@ export function RadarPage() {
             </div>
           </section>
         )}
+
+        <section className="rounded-lg border bg-white p-3 shadow-sm" style={{ borderColor: 'var(--line)' }}>
+          <div className="mb-3">
+            <h2 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>
+              Companies to watch
+            </h2>
+          </div>
+          <WatchlistWorkspace embedded />
+        </section>
       </main>
     </div>
   );

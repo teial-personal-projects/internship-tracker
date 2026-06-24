@@ -97,6 +97,10 @@ function parseSort(value: unknown, status: string | undefined): RadarSort {
   return status === 'new' ? 'quality' : 'first_seen';
 }
 
+function queryBoolean(value: unknown): boolean {
+  return value === 'true';
+}
+
 function containsSearchValue(value: string | null | undefined, search: string): boolean {
   return typeof value === 'string' && value.toLowerCase().includes(search);
 }
@@ -134,6 +138,7 @@ function filterRadarPostings(
   filters: {
     sourceTier?: SourceTier;
     validityStatus?: ValidityStatus;
+    includeClosed: boolean;
     search?: string;
     matchingWatchlistIds: Set<string>;
   },
@@ -142,7 +147,7 @@ function filterRadarPostings(
     if (filters.sourceTier && (posting.source_tier ?? 'direct_ats') !== filters.sourceTier) return false;
     if (filters.validityStatus && (posting.validity_status ?? 'unchecked') !== filters.validityStatus) return false;
     if (!filters.validityStatus && filters.sourceTier === 'direct_ats' && isClosedPosting(posting)) return false;
-    if (!filters.validityStatus && isOldClosedPosting(posting)) return false;
+    if (!filters.validityStatus && !filters.includeClosed && isOldClosedPosting(posting)) return false;
     if (filters.search && !postingMatchesSearch(posting, filters.search, filters.matchingWatchlistIds)) return false;
     return true;
   });
@@ -203,6 +208,7 @@ router.get('/postings', requireAuth, async (req: Request, res, next) => {
     const sourceTier = parseSourceTier(req.query.source_tier);
     const validityStatus = parseValidityStatus(req.query.validity_status);
     const sort = parseSort(req.query.sort, status);
+    const includeClosed = queryBoolean(req.query.include_closed);
 
     if (status) {
       query = query.eq('status', status);
@@ -224,6 +230,7 @@ router.get('/postings', requireAuth, async (req: Request, res, next) => {
     const filteredData = filterRadarPostings(data as RadarPostingRow[] | null ?? [], {
       sourceTier,
       validityStatus,
+      includeClosed,
       search,
       matchingWatchlistIds,
     });

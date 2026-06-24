@@ -373,7 +373,8 @@ export const RadarSourceSchema = z.object({
 export const DiscoveredPostingSchema = z.object({
   id: z.string().uuid(),
   user_id: z.string().uuid(),
-  watchlist_id: z.string().uuid(),
+  watchlist_id: z.string().uuid().nullable(),
+  radar_source_id: z.string().nullable().optional(),
   company_name: z.string().min(1).max(MAX_COMPANY_LENGTH),
   external_job_id: z.string().min(1),
   title: z.string().min(1).max(MAX_TITLE_LENGTH),
