@@ -417,7 +417,7 @@ export function LoginPage() {
             <div className="flex items-center gap-3 border-b px-5 py-5 sm:px-7" style={{ borderColor: 'var(--line)', background: 'var(--soft)' }}>
               <BrandMark />
               <div className="min-w-0">
-                <p className="text-kicker" style={{ color: 'var(--accent)' }}>Track My Application</p>
+                <p className="text-kicker" style={{ color: 'var(--accent)' }}>Track My Job Application</p>
                 <h1 className="mt-1 truncate text-lg font-bold" style={{ color: 'var(--ink)' }}>
                   Application workspace
                 </h1>
