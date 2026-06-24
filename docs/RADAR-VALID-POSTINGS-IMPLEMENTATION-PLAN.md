@@ -100,19 +100,19 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 
 ## Step 7 — Ranking and API Filters
 
-7.1 [ ] Create `api/src/radar/qualityScore.ts`.
-7.2 [ ] Score direct ATS postings highest.
-7.3 [ ] Score recently first-seen postings higher.
-7.4 [ ] Score validated-live postings higher.
-7.5 [ ] Penalize aggregators unless they corroborate a direct ATS posting.
-7.6 [ ] Penalize stale or unchecked postings.
-7.7 [ ] Add `source_tier` filter to `GET /api/radar/postings`.
-7.8 [ ] Add `validity_status` filter to `GET /api/radar/postings`.
-7.9 [ ] Add `sort=quality|first_seen|posted_at` to `GET /api/radar/postings`.
-7.10 [ ] Default to quality sort for `status=new`.
-7.11 [ ] Exclude `closed` and `not_found` postings from the default fresh direct matches query.
-7.12 [ ] Keep closed postings available through `All` and `Closed` filters.
-7.13 [ ] Hide closed postings from the default view when `last_validated_at` is older than about two weeks, without deleting the row.
+7.1 [x] Create `api/src/radar/qualityScore.ts`.
+7.2 [x] Score direct ATS postings highest.
+7.3 [x] Score recently first-seen postings higher.
+7.4 [x] Score validated-live postings higher.
+7.5 [x] Penalize aggregators unless they corroborate a direct ATS posting.
+7.6 [x] Penalize stale or unchecked postings.
+7.7 [x] Add `source_tier` filter to `GET /api/radar/postings`.
+7.8 [x] Add `validity_status` filter to `GET /api/radar/postings`.
+7.9 [x] Add `sort=quality|first_seen|posted_at` to `GET /api/radar/postings`.
+7.10 [x] Default to quality sort for `status=new`.
+7.11 [x] Exclude `closed` and `not_found` postings from the default fresh direct matches query.
+7.12 [x] Keep closed postings available through `All` and `Closed` filters.
+7.13 [x] Hide closed postings from the default view when `last_validated_at` is older than about two weeks, without deleting the row.
 7.14 [x] Support Radar search across posting title, company name, location, and watched-company industry.
 
 ## Step 8 — Discover and Watchlist UI

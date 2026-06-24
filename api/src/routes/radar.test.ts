@@ -235,6 +235,175 @@ describe('radar routes', () => {
     });
   });
 
+  it('GET /api/radar/postings filters by source tier and validity status', async () => {
+    const db = createMockDb({
+      discovered_postings: [
+        {
+          id: 'posting-1',
+          user_id: USER_ID,
+          company_name: 'Acme',
+          title: 'Senior Software Engineer',
+          location: 'Remote',
+          status: 'new',
+          watchlist_id: WATCHLIST_ID,
+          source_tier: 'direct_ats',
+          validity_status: 'live',
+          first_seen_at: '2026-06-01T00:00:00.000Z',
+        },
+        {
+          id: 'posting-2',
+          user_id: USER_ID,
+          company_name: 'Beta',
+          title: 'Backend Engineer',
+          location: 'Remote',
+          status: 'new',
+          source_tier: 'curated_board',
+          validity_status: 'unchecked',
+          first_seen_at: '2026-06-02T00:00:00.000Z',
+        },
+      ],
+      company_watchlist: [],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .get('/api/radar/postings?source_tier=direct_ats&validity_status=live')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0]).toMatchObject({
+      id: 'posting-1',
+      source_tier: 'direct_ats',
+      validity_status: 'live',
+    });
+  });
+
+  it('GET /api/radar/postings defaults new postings to quality sort', async () => {
+    const db = createMockDb({
+      discovered_postings: [
+        {
+          id: 'aggregator-posting',
+          user_id: USER_ID,
+          company_name: 'Aggregator Co',
+          title: 'Backend Engineer',
+          location: 'Remote',
+          status: 'new',
+          source_tier: 'aggregator',
+          validity_status: 'unchecked',
+          first_seen_at: '2026-06-20T00:00:00.000Z',
+        },
+        {
+          id: 'direct-posting',
+          user_id: USER_ID,
+          company_name: 'Direct Co',
+          title: 'Backend Engineer',
+          location: 'Remote',
+          status: 'new',
+          source_tier: 'direct_ats',
+          validity_status: 'live',
+          first_seen_at: '2026-06-01T00:00:00.000Z',
+        },
+      ],
+      company_watchlist: [],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .get('/api/radar/postings?status=new')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.map((posting: Row) => posting.id)).toEqual([
+      'direct-posting',
+      'aggregator-posting',
+    ]);
+  });
+
+  it('GET /api/radar/postings hides old closed postings by default but returns them for closed filter', async () => {
+    const db = createMockDb({
+      discovered_postings: [
+        {
+          id: 'old-closed',
+          user_id: USER_ID,
+          company_name: 'Acme',
+          title: 'Closed Role',
+          location: 'Remote',
+          status: 'new',
+          source_tier: 'direct_ats',
+          validity_status: 'closed',
+          last_validated_at: '2024-01-01T00:00:00.000Z',
+          first_seen_at: '2024-01-01T00:00:00.000Z',
+        },
+        {
+          id: 'live-role',
+          user_id: USER_ID,
+          company_name: 'Acme',
+          title: 'Live Role',
+          location: 'Remote',
+          status: 'new',
+          source_tier: 'direct_ats',
+          validity_status: 'live',
+          last_validated_at: '2026-06-01T00:00:00.000Z',
+          first_seen_at: '2026-06-01T00:00:00.000Z',
+        },
+      ],
+      company_watchlist: [],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const defaultResponse = await request(app)
+      .get('/api/radar/postings')
+      .set('Authorization', 'Bearer test-token');
+    const closedResponse = await request(app)
+      .get('/api/radar/postings?validity_status=closed')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(defaultResponse.status).toBe(200);
+    expect(defaultResponse.body.data.map((posting: Row) => posting.id)).toEqual(['live-role']);
+    expect(closedResponse.status).toBe(200);
+    expect(closedResponse.body.data.map((posting: Row) => posting.id)).toEqual(['old-closed']);
+  });
+
+  it('GET /api/radar/postings excludes closed postings from direct ATS fresh queries', async () => {
+    const db = createMockDb({
+      discovered_postings: [
+        {
+          id: 'closed-direct',
+          user_id: USER_ID,
+          company_name: 'Acme',
+          title: 'Closed Role',
+          location: 'Remote',
+          status: 'new',
+          source_tier: 'direct_ats',
+          validity_status: 'closed',
+          last_validated_at: new Date().toISOString(),
+          first_seen_at: '2026-06-01T00:00:00.000Z',
+        },
+        {
+          id: 'live-direct',
+          user_id: USER_ID,
+          company_name: 'Acme',
+          title: 'Live Role',
+          location: 'Remote',
+          status: 'new',
+          source_tier: 'direct_ats',
+          validity_status: 'live',
+          first_seen_at: '2026-06-02T00:00:00.000Z',
+        },
+      ],
+      company_watchlist: [],
+    });
+    mockCreateUserClient.mockReturnValue(db.client);
+
+    const response = await request(app)
+      .get('/api/radar/postings?status=new&source_tier=direct_ats')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.map((posting: Row) => posting.id)).toEqual(['live-direct']);
+  });
+
   it('PATCH /api/radar/postings/:id validates the posting before marking it seen', async () => {
     const db = createMockDb({
       discovered_postings: [{

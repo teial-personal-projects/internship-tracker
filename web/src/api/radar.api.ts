@@ -1,11 +1,14 @@
 import { apiClient } from './client';
-import type { DiscoveredPosting, PostingStatus } from '@shared/schemas';
+import type { DiscoveredPosting, PostingStatus, PostingValidityStatus, SourceTier } from '@shared/schemas';
 import type { WatchlistEntry } from './watchlist.api';
 
 export interface RadarPostingsParams {
   status?: PostingStatus;
   watchlist_id?: string;
   search?: string;
+  source_tier?: SourceTier;
+  validity_status?: PostingValidityStatus;
+  sort?: 'quality' | 'first_seen' | 'posted_at';
 }
 
 export async function getRadarPostings(params: RadarPostingsParams = {}): Promise<DiscoveredPosting[]> {
