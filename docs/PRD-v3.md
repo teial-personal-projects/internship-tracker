@@ -11,7 +11,7 @@
 
 ## 1. Executive Summary
 
-Version 3.0 carries forward the three features deferred from the v2.0 draft, the Interview Tracker, In-App Notifications, and the Playbook, and adds the email delivery layer on top of in-app notifications (digests, quiet hours, and unsubscribe). It also adds Job Radar alerts, which turn a freshly discovered matching role into an in-app notification and a digest line. The Job Radar discovery engine itself ships in v2.0; this version layers alerting on top once the notification pipeline exists.
+Version 3.0 carries forward the features deferred from the v2.0 draft: the Interview Tracker, In-App Notifications, Playbook, and Job Discovery. It also adds the email delivery layer on top of in-app notifications (digests, quiet hours, and unsubscribe). Job Discovery includes the future Discover surface, provider or direct-source search, discovered postings, and optional alerts that turn a freshly discovered matching role into an in-app notification and a digest line.
 
 Feature numbers restart at one for this document. The Interview Tracker, In-App Notifications, and Playbook specs are reproduced from the v2.0 draft unchanged except for renumbering.
 
@@ -19,13 +19,13 @@ Feature numbers restart at one for this document. The Interview Tracker, In-App 
 
 ## 2. Scope & Dependencies
 
-This release depends on v2.0 being complete, since the email layer builds on the In-App Notifications schema and the radar alerts build on both the Job Radar (v2.0) and In-App Notifications. The v3.0 feature set is:
+This release depends on v2.0 being complete, since the email layer builds on the In-App Notifications schema and job discovery alerts build on In-App Notifications. The v3.0 feature set is:
 
 - Interview Tracker (carried from the v2.0 draft)
 - In-App Notifications (carried from the v2.0 draft)
 - Playbook (carried from the v2.0 draft)
 - Email Delivery and Digests (new)
-- Job Radar Alerts (new)
+- Job Discovery and Radar Alerts (carried from v2.0 and expanded)
 
 ---
 
@@ -244,7 +244,7 @@ Stored per user, extending `notification_preferences`.
 
 #### 4.3 Digest content
 
-Each digest gathers qualifying events since the last send: open high-priority tasks, interviews in the next 48 hours, follow-ups due today or overdue, and new matching roles from the Job Radar (Feature 5). A digest with no qualifying events is not sent. Every link deep-links to the relevant record.
+Each digest gathers qualifying events since the last send: open high-priority tasks, interviews in the next 48 hours, follow-ups due today or overdue, and new matching roles from Job Discovery (Feature 5). A digest with no qualifying events is not sent. Every link deep-links to the relevant record.
 
 #### 4.4 Unsubscribe
 
@@ -252,15 +252,15 @@ Every email carries a one-click unsubscribe link backed by a signed token. Follo
 
 ---
 
-### Feature 5: Job Radar Automation and Alerts
+### Feature 5: Job Discovery and Radar Alerts
 
 #### 5.1 Overview
 
-The Job Radar in v2.0 surfaces new matching roles in the Discover tab after an explicit trusted-source search. This feature adds scheduled polling and active alerting on top, so a new match also raises an in-app notification and, when email is enabled, appears in the next digest.
+Job Discovery is a V3 feature. It introduces the future Discover surface, source configuration, manual search, optional scheduled polling, and active alerting. New matches can raise an in-app notification and, when email is enabled, appear in the next digest.
 
 #### 5.2 Behavior
 
-The scheduled poller reads active `curated_board` entries from `radar_sources`, searches only sources with safe searchable APIs, feeds, documented exports, or equivalent explicit integration paths, and inserts newly matched postings. Direct ATS adapters may still refresh company-specific watchlist sources, but they are secondary to curated-board discovery. When the poller inserts a new matching posting, it creates a notification of type `new_matching_role` referencing the posting, subject to the user's notification preferences. The same match becomes a line item in the email digest from Feature 4. Each new match produces at most one notification and respects the existing dedupe rule.
+The initial implementation should avoid paid job-search APIs and broad scraping. It can start with user-configured direct ATS sources for known companies, then add free, documented, non-scraping public sources only when they are explicitly selected. Manual search should exist before scheduled polling. When a search or poll inserts a new matching posting, it creates a notification of type `new_matching_role` referencing the posting, subject to the user's notification preferences. The same match becomes a line item in the email digest from Feature 4. Each new match produces at most one notification and respects the existing dedupe rule.
 
 ---
 
@@ -362,7 +362,7 @@ CREATE TYPE notification_email_status_enum AS ENUM (
 );
 ```
 
-*Note: `notification_type_enum` adds `new_matching_role` to the four values from the v2.0 draft, for Job Radar alerts.*
+*Note: `notification_type_enum` adds `new_matching_role` to the four values from the v2.0 draft, for Job Discovery alerts.*
 
 ### 4.4 Indexes
 
@@ -398,7 +398,7 @@ CREATE INDEX idx_notification_log_source_id ON notification_log(source_id);
 | PUT | /api/notifications/preferences | requireAuth | Create or update notification preferences |
 | GET | /api/notifications/unsubscribe | none (signed token) | Disable email for the token's user and show a confirmation page |
 
-Job Radar alerts do not add a route; the poller calls the same notification-creation path used by the other triggers.
+Job Discovery alerts do not add a separate notification route; the poller calls the same notification-creation path used by the other triggers.
 
 ---
 
@@ -439,8 +439,11 @@ Job Radar alerts do not add a route; the poller calls the same notification-crea
 - [ ] The unsubscribe link disables email and shows a confirmation page without login
 - [ ] `notification_log` records sent and failed email attempts
 
-### Feature 5 — Job Radar Alerts
+### Feature 5 — Job Discovery and Radar Alerts
 
+- [ ] Job Discovery is exposed in V3 navigation, not V2 navigation
+- [ ] Manual search can discover matching postings without scheduled polling
+- [ ] No paid provider integration is required for the initial V3 implementation
 - [ ] A new matching posting raises exactly one `new_matching_role` notification, subject to preferences
 - [ ] New matching roles appear in the next email digest when email is enabled
 - [ ] The dedupe rule prevents duplicate alerts for the same posting
@@ -452,3 +455,4 @@ Job Radar alerts do not add a route; the poller calls the same notification-crea
 | Version | Date | Author | Notes |
 | --- | --- | --- | --- |
 | 3.0 | June 16, 2026 | Teial Dickens | Initial v3 PRD. Interview Tracker, In-App Notifications, and Playbook carried from the v2.0 draft; Email Delivery and Job Radar Alerts added. |
+| 3.1 | June 24, 2026 | Teial Dickens | Moved Job Discovery from V2 into V3 and made paid provider integration optional/out of initial scope. |

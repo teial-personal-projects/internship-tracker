@@ -9,11 +9,11 @@
 > - `[ ]` not started
 > - `[x]` complete
 
-**Scope (June 2026).** Interview Tracker, In-App Notifications, Playbook, email delivery, scheduled background jobs, overdue escalation, and scheduled Radar polling moved to `IMPLEMENTATION-PLAN-v3.md`. Discover is the fourth V2 primary tab, powered by a manual Job Radar refresh flow. The Job Radar is folded in here as Phases 6 through 12, directly after Companies To Watch (Phase 5), since it builds on the watchlist and the promote-to-application flow. Radar notification alerts and automated polling are specified in `IMPLEMENTATION-PLAN-v3.md` since they require V3 notification/background-job infrastructure.
+**Scope (June 2026).** Interview Tracker, In-App Notifications, Playbook, email delivery, scheduled background jobs, overdue escalation, and Job Discovery moved to `IMPLEMENTATION-PLAN-v3.md`. V2 keeps Companies To Watch as a manual research list and does not expose Discover, provider-backed search, direct ATS refreshes, or discovered postings as active product features.
 
-**Radar strategy correction (June 24, 2026).** The completed Phases 6 through 12 document the first ATS/watchlist-based implementation. The current Radar direction is superseded by `RADAR-VALID-POSTINGS-IMPLEMENTATION-PLAN.md`: discovery starts from public job boards with safe searchable APIs, RSS feeds, documented exports, or equivalent explicit integration paths, modeled as curated `radar_sources`. Direct ATS adapters remain available for company-specific refreshes, but they are not the primary discovery strategy.
+**Radar strategy correction (June 24, 2026).** The completed Phases 6 through 12 document the first ATS/watchlist-based implementation, but Job Discovery is no longer a V2 scope item. Treat those phases and `RADAR-VALID-POSTINGS-IMPLEMENTATION-PLAN.md` as V3 planning material, not V2 release requirements.
 
-**UX correction (June 18, 2026).** The initial V2 split between a hidden Companies To Watch page and a separate Discover page is confusing. Phase 16 supersedes that layout by combining watchlist setup and discovered postings into one primary workflow. The implementation should treat source setup, refresh status, and discovered jobs as one page.
+**UX correction (June 24, 2026).** V2 should not include a Discover page. Companies To Watch remains available as a manual list through the secondary menu. V3 owns the future job discovery surface.
 
 ---
 
@@ -238,7 +238,7 @@ File: `migrations/v2_016_company_watchlist_target_apply_date.sql`
 
 ### 1.1 Tab bar component
 
-- [x] 1.1.1 Update `web/src/components/NavBar.tsx` — four primary tabs: Applications (Apps on mobile), Contacts, Discover, Action Items
+- [x] 1.1.1 Update `web/src/components/NavBar.tsx` — primary tabs: Applications (Apps on mobile), Contacts, Action Items
 - [x] 1.1.2 On desktop (≥768px): horizontal tab bar at the top below the header
 - [x] 1.1.3 On mobile (<768px): fixed bottom navigation bar with icon + label per tab
 - [x] 1.1.4 Active tab state: underline on desktop, filled icon on mobile
@@ -481,7 +481,7 @@ File: `migrations/v2_016_company_watchlist_target_apply_date.sql`
 
 ---
 
-> **What this is.** The job radar supports Companies To Watch without adding a V2 background scheduler. Instead of adding a company and checking its careers page by hand, the user can manually refresh each enabled company's public ATS feed. The app normalizes the postings, filters them to your criteria (senior and remote or LA), and surfaces fresh matches you promote into an application with the promote flow that already exists. It reuses the `applications` table and the watchlist promote pattern. Scheduled polling and alerting are specified in `IMPLEMENTATION-PLAN-v3.md` since they depend on V3 notification/background-job infrastructure.
+> **Deferred scope note.** Phases 6 through 12 describe the first Job Radar implementation, but Job Discovery is no longer part of V2. Keep the schema and code only if needed for forward compatibility; do not expose refresh, discovered postings, or Discover UI as V2 release requirements. V3 owns the future discovery workflow.
 
 ---
 
@@ -587,7 +587,7 @@ File: `migrations/radar_001_job_radar.sql`
 
 ## [x] Phase 11. Discover UI
 
-> **Superseded layout note:** Phase 11 shipped the first split-page implementation. Phase 16 revises this into a combined Discover/Watchlist page so users can configure watched companies and review discovered jobs in one place.
+> **Deferred scope note:** Phase 11 shipped the first split-page Job Radar implementation. Job Discovery has moved to V3, so this phase is historical and should not be treated as a V2 release requirement.
 
 ### [x] 11.1 Discover page
 
@@ -672,7 +672,7 @@ File: `migrations/v2_011_import_jobs.sql`
 
 ## [x] Phase 16 — Unified Discover & Watchlist
 
-*Revision to the Phase 5/11 user experience. Keep the existing database model and Radar refresh service. The goal is to make job discovery understandable: watched companies, source setup, refresh state, and discovered postings all live together.*
+*Historical revision to the Phase 5/11 user experience. Job Discovery has moved to V3, so this phase is no longer a V2 release requirement. V2 should keep Companies To Watch as a manual list.*
 
 ### [x] 16.1 Combined Discover page
 

@@ -1,16 +1,16 @@
 # Job Radar Valid Posting Implementation Plan
 
-**Status:** Proposed
+**Status:** Deferred to V3
 **Last updated:** June 24, 2026
-**Scope:** Turn Job Radar into a trusted job-board discovery surface for high-signal software engineering roles, with broad provider-backed discovery first and user-initiated company saves feeding later watchlist enrichment.
+**Scope:** V3-only planning for Job Discovery. This feature is no longer part of the V2 release. The initial V3 implementation should avoid paid provider APIs and broad scraping; direct ATS refreshes for user-selected companies or free documented sources are preferred starting points.
 
 ## Product Direction
 
-Radar is a trusted job discovery surface, not an application tracker. Its discovery strategy starts with a provider abstraction for public job-search APIs, with Adzuna as the first broad discovery provider because it supports title and location search through a documented API. Provider results are normalized into a stable posting shape, searched directly from the Job Search page, and ranked as the primary discovery channel for credible software engineering openings that match the user's title, field, location, and exclusion criteria. Radar should let the user click through to the original posting and optionally save the company for later watchlist enrichment. It should not create Applications records or require the user to track a role.
+Radar is a V3 trusted job discovery surface, not an application tracker. It should normalize postings into a stable shape, rank credible software engineering openings that match the user's title, field, location, and exclusion criteria, and preserve links to original postings. It should not create Applications records or require the user to track a role.
 
 The Companies To Watch list is a separate support tool: it stores companies the user already knows they want to keep checking. Direct ATS adapters can remain there for company-specific careers refreshes, but they are not the primary Radar discovery strategy. Broad job search must not read from, dedupe against, or otherwise depend on Companies To Watch. A user-initiated Save company action may create or update a watchlist row from a Radar result, but that save is a one-way action from discovery into watchlist monitoring.
 
-Trusted job sources should be curated deliberately. Prefer documented APIs, official feeds, explicit export formats, and sources with consistently real postings. Broad providers such as Adzuna can be used for initial discovery when they expose a supported API and preserve links to original postings. LinkedIn-style repeat feeds and low-quality aggregators are mostly confirmation signals and should not be allowed to clutter the workflow.
+Trusted job sources should be curated deliberately. Prefer user-configured direct ATS sources, official feeds, explicit export formats, and sources with consistently real postings. Paid provider APIs should not be required for the initial V3 implementation. LinkedIn-style repeat feeds and low-quality aggregators are mostly confirmation signals and should not be allowed to clutter the workflow.
 
 No cron jobs, scheduled jobs, auto-refresh loops, or other automated background polling should be added for this pass. Search, refresh, and validation should happen only from explicit user actions.
 
@@ -18,8 +18,8 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 
 | Tier | Source class | Examples | Product behavior |
 | --- | --- | --- | --- |
-| 1 | Supported discovery providers | Adzuna first, then other documented job-search APIs or safe curated boards | Primary broad discovery channel when the provider supports query, location, original posting URL, and stable source job ID |
-| 2 | Direct ATS | Greenhouse, Lever, Ashby, Workday, SmartRecruiters | Highest-confidence original source for company-specific careers refreshes after a company is saved |
+| 1 | User-selected direct ATS | Greenhouse, Lever, Ashby, SmartRecruiters | Primary starting point when the user already knows the company and source configuration |
+| 2 | Free documented feeds | Official RSS, public exports, explicit no-scrape APIs | Optional broader discovery only when the source is free and stable |
 | 3 | Confirmation aggregators | Indeed, ZipRecruiter-style syndication, LinkedIn-style repeat feeds | Append as `also_seen_on` instead of creating noise |
 
 ## Step 1 — Data Model
@@ -39,7 +39,7 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 1.13 [x] Add indexes on `discovered_postings(user_id, source_tier, first_seen_at DESC)` and `discovered_postings(user_id, validity_status)`.
 1.14 [x] Update `migrations/prod_full_v2_schema.sql` with the complete schema changes so a fresh database does not require replaying the migration chain.
 1.15 [x] Update any schema audit scripts that check Radar columns, enums, tables, or indexes.
-1.16 [x] Make `discovered_postings.watchlist_id` nullable so provider-backed searches can discover jobs without a watchlist row.
+1.16 [x] Make `discovered_postings.watchlist_id` nullable so source-discovered jobs can exist without a watchlist row.
 1.17 [x] Add `radar_source_id TEXT REFERENCES radar_sources(id)` to `discovered_postings` for source-discovered postings.
 1.18 [x] Add indexes on `discovered_postings(user_id, radar_source_id, first_seen_at DESC)` and keep the existing watchlist index for separate company-specific refreshes.
 1.19 [x] Add a partial unique index on `(user_id, radar_source_id, external_job_id)` for source-discovered postings.
@@ -115,7 +115,7 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 ## Step 7 — Ranking and API Filters
 
 7.1 [x] Create `api/src/radar/qualityScore.ts`.
-7.2 [ ] Score enabled provider-backed postings highest for general discovery, starting with Adzuna.
+7.2 [ ] Score enabled direct-source and free documented-feed postings highest for general discovery.
 7.3 [x] Score recently first-seen postings higher.
 7.4 [x] Score validated-live postings higher.
 7.5 [ ] Penalize low-quality confirmation aggregators unless they corroborate a provider or direct ATS posting.
@@ -165,25 +165,25 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 10.3 [x] Insert source-discovered postings with `radar_source_id`, `sourceName`, `sourceTier`, provenance fields, and nullable `watchlist_id`.
 10.4 [x] Reuse fingerprint dedupe only among job-board source-discovered roles, not against watchlist-discovered roles.
 10.5 [ ] Allow discovered job-board companies to be saved to `company_watchlist` only from the explicit `Save company` action.
-10.6 [ ] Build the first provider adapter as an Adzuna adapter.
+10.6 [ ] Build the first source adapter from a free documented source or user-selected direct ATS source.
 10.7 [ ] Prefer sources with official RSS feeds, documented APIs, or explicit export formats.
 10.8 [x] Avoid sources that require broad scraping, anti-bot bypassing, paid access, or produce mostly LinkedIn-style duplicate noise.
 10.9 [ ] Do not ship an additional provider adapter until the source is explicitly selected for the user's target search.
 10.10 [x] Keep Idealist as a high-value follow-up only if a safe, non-scraping integration path is chosen.
 10.11 [ ] Treat direct ATS adapters as company-specific refresh tools after a company is saved, not as the starting point for broad discovery.
 
-## Step 11 — Adzuna Provider Abstraction
+## Step 11 — Initial Source Adapter
 
 11.1 [ ] Introduce a provider interface that accepts Radar criteria and returns normalized postings.
-11.2 [ ] Implement the Adzuna provider as the first broad discovery adapter.
+11.2 [ ] Implement the first source adapter without requiring paid provider credentials.
 11.3 [ ] Normalize provider results into `source`, `sourceJobId`, `title`, `company`, `location`, `postingUrl`, `description`, `postedAt`, `expiresAt`, and `rawPayload`.
-11.4 [ ] Keep source-specific response parsing inside the provider adapter instead of leaking Adzuna fields into routes or UI components.
+11.4 [ ] Keep source-specific response parsing inside the provider adapter instead of leaking source fields into routes or UI components.
 11.5 [ ] Store the normalized source fields on `discovered_postings` or map them to existing columns without losing `rawPayload`.
 11.6 [ ] Require a stable provider job ID for dedupe; fall back to canonical posting URL only when a provider cannot supply an ID.
 11.7 [ ] Keep the original posting URL as the primary outbound action.
 11.8 [ ] Add provider-level error handling that reports unavailable, rate-limited, or malformed provider responses without deleting existing postings.
-11.9 [ ] Add configuration for Adzuna credentials through server environment variables and document the required variables in `.env.example`.
-11.10 [ ] Do not add background polling; run Adzuna search only from explicit user actions.
+11.9 [ ] Document source configuration without requiring paid provider credentials.
+11.10 [ ] Do not add background polling before manual source search is stable.
 
 ## Step 12 — Watchlist ATS Enrichment
 
@@ -212,7 +212,7 @@ No cron jobs, scheduled jobs, auto-refresh loops, or other automated background 
 14.6 [ ] Add route tests proving Radar job-board postings can save companies to the watchlist only from an explicit user action.
 14.7 [ ] Add route tests proving quality sort returns enabled provider-backed live postings before low-quality aggregator unchecked postings.
 14.8 [x] Add route tests proving old closed postings are hidden from the default view but returned by `All` or `Closed` filters.
-14.9 [ ] Add Adzuna provider adapter tests with source-specific fixture data.
+14.9 [ ] Add source adapter tests with source-specific fixture data.
 14.10 [x] Add route tests proving source-discovered postings can exist without a watchlist row.
 14.11 [ ] Add route tests proving `Search providers` stores source-discovered postings with `radar_source_id`.
 14.12 [x] Add frontend tests proving Radar cards render source tier badges and validity status.
@@ -239,9 +239,9 @@ Manual UI verification note: the local app opened successfully at `http://127.0.
 
 ## Source Notes
 
-1. [ ] Use the [Adzuna API documentation](https://developer.adzuna.com/) as the initial provider reference.
-2. [ ] Use the [Greenhouse Job Board API documentation](https://developers.greenhouse.io/job-board.html) for saved-company enrichment.
-3. [ ] Use the [Lever developer documentation](https://hire.lever.co/developer/documentation) for saved-company enrichment.
+1. [ ] Use the [Greenhouse Job Board API documentation](https://developers.greenhouse.io/job-board.html) for saved-company enrichment.
+2. [ ] Use the [Lever developer documentation](https://hire.lever.co/developer/documentation) for saved-company enrichment.
+3. [ ] Add any broader source documentation only after confirming the source is free, documented, and useful for the user's target roles.
 
 ## Non-Goals For This Pass
 
@@ -258,12 +258,12 @@ Manual UI verification note: the local app opened successfully at `http://127.0.
 
 ## Future Implementation
 
-Future enhancements are intentionally out of scope for the current pass. They should not be implemented until the Adzuna-backed Job Search page and saved-company enrichment path are stable.
+Future enhancements are intentionally out of scope for the current pass. They should not be implemented until the V3 manual discovery and saved-company enrichment paths are stable.
 
 ### Additional Discovery Providers
 
-1.1 [ ] Evaluate TheirStack only after Adzuna proves the workflow and better company or job intelligence is worth paid access.
-1.2 [ ] Evaluate Coresignal only if the app needs enterprise-scale structured job or company data.
+1.1 [ ] Evaluate paid providers only if free and direct-source discovery proves insufficient.
+1.2 [ ] Add a paid provider only after a separate cost review and explicit approval.
 1.3 [ ] Add niche boards, RSS feeds, and documented exports when they improve match quality for the user's target roles.
 1.4 [ ] Keep each new provider behind the same normalized provider interface.
 1.5 [ ] Add source-specific tests and fixtures before enabling a new provider in the UI.
@@ -277,5 +277,5 @@ Future enhancements are intentionally out of scope for the current pass. They sh
 5. [x] Keep closed discovered postings and demote or filter them at query time instead of hard-deleting them.
 6. [x] Treat Companies To Watch as separate from broad provider search while allowing explicit company saves from Radar.
 7. [x] Remove the We Work Remotely pilot adapter and do not search bundled fallback sources.
-8. [x] Make Adzuna the first broad discovery provider through a normalized provider abstraction.
+8. [x] Do not require a paid provider for the initial discovery implementation.
 9. [x] Keep direct ATS adapters for saved-company refreshes instead of treating them as primary broad discovery sources.

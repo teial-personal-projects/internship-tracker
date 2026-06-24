@@ -15,7 +15,7 @@ v2.1 is a focused visual and information-architecture update:
 
 - Add a new **Today** tab and make it the post-login landing page.
 - Rebuild the **Applications** tab into a compact list plus right-rail layout.
-- Keep the existing **Discover & Watchlist** tab from Phase 16 intact.
+- Keep the existing **Companies To Watch** page intact as a manual list; Job Discovery stays deferred to V3.
 - Add only read-oriented API support and supporting indexes.
 
 The intended look is warmer, denser, and more executive-dashboard-like than v2.0: cream page background, compact top navigation, large greeting, flat stat cards, structured panels, and quiet right rails. The screenshot’s Recruitments and Interviews nav items are visual direction only. Playbook is pulled forward in Phase 7 as a read-only primary tab.

@@ -207,10 +207,9 @@ Tasks drive the Action Items tab and auto-generated workflow reminders.
 
 ### 5.5 Companies To Watch
 
-`company_watchlist` stores companies the user may apply to later. Direct ATS
-Radar settings live on each watchlist entry only for company-specific careers
-refreshes. General Radar discovery does not use the watchlist; it starts from
-curated public job-board sources in `radar_sources`.
+`company_watchlist` stores companies the user may apply to later. In V2 this is
+a manual research list. Job discovery, direct ATS refreshes, and provider-backed
+source searches are deferred to V3.
 
 | Column | Type | Notes |
 | --- | --- | --- |
@@ -232,12 +231,9 @@ curated public job-board sources in `radar_sources`.
 
 ### 5.6 Radar Sources
 
-`radar_sources` stores the curated source catalog for Radar discovery. The
-primary discovery tier is `curated_board`, and sources in that tier should be
-enabled only when they expose a safe searchable API, RSS feed, documented export
-format, or equivalent explicit non-scraping integration path. Direct ATS sources
-remain in the catalog so company-specific refreshes can share source metadata,
-but they are not the default broad discovery strategy.
+`radar_sources` is dormant V3-owned schema for future Job Discovery. V2 should
+not expose source configuration, provider-backed search, direct ATS refreshes,
+or source polling in the product.
 
 | Column | Type | Notes |
 | --- | --- | --- |
@@ -269,8 +265,9 @@ named contact interactions.
 
 ### 5.8 Discovered Postings
 
-`discovered_postings` stores normalized roles found by the Job Radar from
-curated job-board sources or company-specific direct ATS refreshes.
+`discovered_postings` is dormant V3-owned schema for future Job Discovery. V2
+does not create, refresh, or expose discovered postings as an active product
+surface.
 
 | Column | Type | Notes |
 | --- | --- | --- |
@@ -352,8 +349,6 @@ Route groups:
 | `/api/contacts` | Contact CRUD, interactions, templates |
 | `/api/tasks` | Task queue CRUD and quick-complete behavior |
 | `/api/watchlist` | Companies To Watch CRUD and promote flow |
-| `/api/radar/postings` | Discovered posting list, filters, status updates |
-| `/api/radar/sources` | Curated source metadata and trusted source search |
 | `/api/profile` | User profile settings |
 | `/api/job-boards` | Legacy curated job board list |
 
@@ -385,16 +380,11 @@ V2 task generation runs from API-side mutations only:
 - Past-due tasks are visually marked in V2; scheduled overdue escalation moves
   to V3.
 
-### 8.3 Job Radar
+### 8.3 Job Discovery
 
-V2 Job Radar is manually searched. The primary search flow reads active
-`radar_sources` with `source_tier = curated_board`, fetches postings only
-through safe searchable APIs, feeds, documented exports, or equivalent explicit
-integration paths, normalizes each posting, filters by match criteria, and
-upserts new matches into `discovered_postings`. Direct ATS adapters remain
-available for explicit company-specific refreshes from Companies To Watch, but
-they are not the default broad discovery strategy. Scheduled polling moves to
-V3.
+Job Discovery is deferred to V3. V2 does not search providers, poll sources,
+scrape boards, refresh direct ATS feeds, validate postings, or expose discovered
+postings. Companies To Watch remains a manual research list.
 
 Adapters return a common normalized shape:
 
@@ -409,7 +399,7 @@ Adapters return a common normalized shape:
 | `raw` | Original source payload |
 
 The matcher keeps roles that match the user's title, field or industry,
-location, and exclusion criteria.
+location, and exclusion criteria when V3 implements discovery.
 
 ---
 
@@ -421,7 +411,7 @@ be registered from `api/src/index.ts` only when guarded by `ENABLE_BACKGROUND_JO
 | Job | Cadence | Purpose |
 | --- | --- | --- |
 | `escalateOverdueTasks` | V3 daily | Escalate overdue open tasks and notify users |
-| `pollRadarSources` | V3 every 30 minutes | Poll active curated job-board sources, with direct ATS refreshes only for enabled company-specific sources |
+| `pollRadarSources` | V3 every 30 minutes | Poll V3-owned job discovery sources if that feature is enabled |
 
 Jobs should not run during tests unless explicitly invoked. If the API is scaled
 to multiple Railway instances, job execution should move to a single worker
@@ -437,7 +427,6 @@ Primary V2 routes:
 | --- | --- |
 | `/applications` | Applications tab |
 | `/contacts` | Contacts tab and per-application detail |
-| `/radar` | Discover tab |
 | `/action-items` | Action Items tab |
 | `/watchlist` | Companies To Watch |
 | `/profile` | Profile settings |
