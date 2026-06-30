@@ -16,11 +16,17 @@ export function createApp(version: string) {
   const app = express();
 
   app.use(helmet());
+  app.use((_req, res, next) => {
+    res.setHeader('X-App-Version', version);
+    next();
+  });
+
   const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
     : [];
   app.use(cors({
     origin: process.env.NODE_ENV === 'production' ? allowedOrigins : true,
+    exposedHeaders: ['X-App-Version'],
   }));
   app.use(express.json({ limit: '1mb' }));
 

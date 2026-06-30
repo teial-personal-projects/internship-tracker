@@ -9,6 +9,7 @@ import { RadarPage } from '@/pages/RadarPage';
 import { WatchlistPage } from '@/pages/WatchlistPage';
 import { PlaybookPage } from '@/pages/PlaybookPage';
 import { Spinner } from '@/components/Spinner';
+import { UpdateBanner } from '@/components/UpdateBanner';
 import { isJobSearchEnabled } from '@/lib/features';
 
 function AppRoutes() {
@@ -60,5 +61,10 @@ function AppRoutes() {
 }
 
 export default function App() {
-  return <AppRoutes />;
+  return (
+    <>
+      <UpdateBanner />
+      <AppRoutes />
+    </>
+  );
 }

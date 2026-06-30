@@ -5,7 +5,7 @@ import { HamburgerMenu } from './HamburgerMenu';
 export function AppHeader() {
   return (
     <header
-      className="sticky top-0 z-20"
+      className="sticky top-[var(--update-banner-height,0px)] z-20"
       style={{ background: 'var(--card)', borderBottom: '1px solid var(--line)' }}
     >
       {/* Top bar — brand + hamburger */}
