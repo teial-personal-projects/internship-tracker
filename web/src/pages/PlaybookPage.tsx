@@ -41,7 +41,7 @@ const steps: PlaybookStep[] = [
     tint: '#F6E7BE',
     items: [
       'Apply on company website or LinkedIn',
-      'Send message, 150 words or less. Do not just copy job-description',
+      'Send a personalized message (150 words or fewer). Avoid restating or copying the job description.',
       'Set follow-up reminder for 4-5 business days'
     ],
   },
