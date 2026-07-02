@@ -28,11 +28,9 @@ const steps: PlaybookStep[] = [
     accent: '#C85A3A',
     tint: '#F7D9CD',
     items: [
-      'Research engineering blog — find a post by a named engineer',
-      'Check eng lead’s LinkedIn for talks, posts, or prior background',
-      'Look up the tech stack with Wappalyzer, StackShare, or the job description',
-      'Draft a personalized “in” — not from the job description',
-      'Find double-down target name and email',
+      'Research to see if their is an engineering blog — find a post by a named engineer',
+      'Check eng lead’s LinkedIn for talks or posts',
+      'Draft a personalized letter specifically for the named engineer'
     ],
   },
   {
@@ -43,10 +41,8 @@ const steps: PlaybookStep[] = [
     tint: '#F6E7BE',
     items: [
       'Apply on company website or LinkedIn',
-      'Confirm message is under 150 words with no job-description mirroring',
-      'Send double-down email to named target same day',
-      'Set follow-up reminder for 4-5 business days',
-      'Log contact with status: Double-down sent',
+      'Send a personalized message (150 words or fewer). Avoid restating or copying the job description.',
+      'Set follow-up reminder for 4-5 business days'
     ],
   },
   {
@@ -56,8 +52,7 @@ const steps: PlaybookStep[] = [
     accent: '#6F5FB5',
     tint: '#DDD7F0',
     items: [
-      'Reply to double-down thread with a 1-2 sentence follow-up',
-      'Update contact status to: Follow-up sent',
+      'Reply to the message you sent with a 1-2 sentence follow-up',
       'Ask whether there is a better person to speak with',
       'Move on unless the company is unusually high priority',
     ],
@@ -71,18 +66,15 @@ const steps: PlaybookStep[] = [
     items: [
       'Send a thank-you note within 24 hours',
       'Reference one specific part of the conversation',
-      'Add interview notes to the application history',
-      'Create any prep tasks for the next interview round',
-      'Update the application status if the company moves you forward',
+      'If moving forward, prep for the next interview round',
     ],
   },
 ];
 
 const coverLetterRules = [
   'Keep the cover letter 120-150 words.',
-  'Use a personalized “in” — the cover letter differentiator.',
-  'Use a direct, casual close like “All best” or “Cheers”.',
-  'Avoid formal cover-letter language and dense punctuation.',
+  'Personalize cover letter to a specific person at the company',
+  'Use casual language and keep it short',
 ];
 
 const recipientRules = [
@@ -166,7 +158,7 @@ export function PlaybookPage() {
               Application loop
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6" style={{ color: 'var(--ink-2)' }}>
-              Repeat this loop for every target. Keep the checklist read-only here; use applications, contacts, and action items to track the actual work.
+              Repeat this loop for every target company.
             </p>
           </header>
 
@@ -188,7 +180,7 @@ export function PlaybookPage() {
               </ul>
             </ReferencePanel>
 
-            <ReferencePanel title="Double-down target" Icon={Users}>
+            <ReferencePanel title="Email target rules" Icon={Users}>
               <div className="divide-y rounded-lg border" style={{ borderColor: 'var(--line)' }}>
                 {recipientRules.map(([companySize, target]) => (
                   <div key={companySize} className="grid grid-cols-[120px_minmax(0,1fr)] gap-3 px-3 py-2.5">
