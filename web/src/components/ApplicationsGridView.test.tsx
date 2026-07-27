@@ -42,8 +42,8 @@ describe('Applications grid view preservation', () => {
 
     expect(markup).toContain('Application');
     expect(markup).toContain('Status');
-    expect(markup).toContain('Applied');
-    expect(markup).toContain('Added');
+    expect(markup).toContain('Applied Date');
+    expect(markup).toContain('Add Date');
     expect(markup).toContain('Location');
     expect(markup).toContain('Newest');
     expect(markup).toContain('aria-sort="descending"');
