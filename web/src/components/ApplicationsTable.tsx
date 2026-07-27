@@ -27,8 +27,8 @@ export type SortColumn = 'company' | 'status' | 'applied' | 'added' | 'location'
 const HEADERS = [
   { key: 'application', label: 'Application', sortColumn: 'company' },
   { key: 'status',      label: 'Status',      sortColumn: 'status' },
-  { key: 'applied',     label: 'Applied',     sortColumn: 'applied' },
-  { key: 'added',       label: 'Added',       sortColumn: 'added' },
+  { key: 'applied',     label: 'Applied Date', sortColumn: 'applied' },
+  { key: 'added',       label: 'Add Date',     sortColumn: 'added' },
   { key: 'location',    label: 'Location',    sortColumn: 'location' },
   { key: 'actions',     label: '' },
 ] satisfies Array<{ key: string; label: string; sortColumn?: SortColumn }>;

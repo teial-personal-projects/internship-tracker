@@ -36,8 +36,8 @@ import {
 } from '@/lib/applicationsView';
 import { useToday } from '@/hooks/useToday';
 import { todayStr } from '@/lib/dateUtils';
+import { getAppliedDateForStatusChange } from '@/lib/applicationAppliedDate';
 
-const TODAY = todayStr();
 type ApplicationSort =
   | 'added_desc'
   | 'added_asc'
@@ -153,14 +153,21 @@ export function ApplicationsPage() {
   }
 
   const modalDefaultValues = useMemo(
-    () => editingApp ?? { added: TODAY },
+    () => editingApp ?? { added: todayStr() },
     [editingApp],
   );
 
   async function handleSubmit(formData: ApplicationFormValues) {
     const appType = formData.application_type;
+    const appliedDate = getAppliedDateForStatusChange({
+      previousStatus: editingApp?.status ?? 'not_started',
+      nextStatus: formData.status,
+      currentAppliedDate: formData.applied_date,
+      today: todayStr(),
+    });
     const payload: CreateApplicationSchemaType = {
       ...formData,
+      applied_date: appliedDate,
       application_type: appType || 'cold_strategic',
       source: editingApp?.source ?? 'manual',
       source_metadata: editingApp?.source_metadata ?? {},
@@ -199,7 +206,12 @@ export function ApplicationsPage() {
     if (app.status === nextStatus) return;
 
     const draggedAt = new Date().toISOString();
-    const appliedDate = nextStatus === 'applied' ? TODAY : app.applied_date;
+    const appliedDate = getAppliedDateForStatusChange({
+      previousStatus: app.status,
+      nextStatus,
+      currentAppliedDate: app.applied_date,
+      today: todayStr(),
+    });
     const optimisticPatch = {
       status: nextStatus,
       applied_date: appliedDate,
@@ -207,7 +219,7 @@ export function ApplicationsPage() {
     };
     const updatePayload = {
       status: nextStatus,
-      ...(nextStatus === 'applied' && { applied_date: TODAY }),
+      applied_date: appliedDate,
     };
 
     setOptimisticStatuses((current) => applyOptimisticApplicationPatch(current, app.id, optimisticPatch));
