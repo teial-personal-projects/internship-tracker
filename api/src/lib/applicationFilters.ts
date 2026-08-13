@@ -12,10 +12,18 @@ export interface ApplicationListFilters {
 type FilterMethods<Q> = {
   eq(col: string, val: string): Q;
   neq(col: string, val: string): Q;
-  ilike(col: string, pattern: string): Q;
+  or(filters: string): Q;
   gte(col: string, val: string): Q;
   lte(col: string, val: string): Q;
 };
+
+function escapePostgrestSearch(value: string): string {
+  return value
+    .replaceAll('\\', '\\\\')
+    .replaceAll('"', '\\"')
+    .replaceAll('%', '\\%')
+    .replaceAll('_', '\\_');
+}
 
 export function applyApplicationFilters<Q extends FilterMethods<Q>>(
   query: Q,
@@ -23,7 +31,10 @@ export function applyApplicationFilters<Q extends FilterMethods<Q>>(
 ): Q {
   if (filters.status) query = query.eq('status', filters.status);
   if (filters.exclude_archive && !filters.status) query = query.neq('status', 'archive');
-  if (filters.search) query = query.ilike('company', `%${filters.search}%`);
+  if (filters.search) {
+    const pattern = `"%${escapePostgrestSearch(filters.search)}%"`;
+    query = query.or(`company.ilike.${pattern},title.ilike.${pattern},location.ilike.${pattern}`);
+  }
   if (filters.date_from) query = query.gte('applied_date', filters.date_from);
   if (filters.date_to) query = query.lte('applied_date', filters.date_to);
   return query;
