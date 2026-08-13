@@ -13,7 +13,7 @@ function createQuerySpy() {
     calls,
     eq(col: string, val: string)      { calls.push({ method: 'eq',    args: [col, val] }); return spy; },
     neq(col: string, val: string)     { calls.push({ method: 'neq',   args: [col, val] }); return spy; },
-    ilike(col: string, pat: string)   { calls.push({ method: 'ilike', args: [col, pat] }); return spy; },
+    or(filters: string)               { calls.push({ method: 'or',    args: [filters] }); return spy; },
     gte(col: string, val: string)     { calls.push({ method: 'gte',   args: [col, val] }); return spy; },
     lte(col: string, val: string)     { calls.push({ method: 'lte',   args: [col, val] }); return spy; },
   };
@@ -76,5 +76,29 @@ describe('applyApplicationFilters — no year constraint (2.5.3)', () => {
       c => (c.method === 'gte' || c.method === 'lte') && c.args[0] === 'applied_date',
     );
     expect(dateConstraints).toHaveLength(0);
+  });
+});
+
+describe('applyApplicationFilters — search', () => {
+  it('searches company, role title, and location together', () => {
+    const spy = createQuerySpy();
+
+    applyApplicationFilters(spy, { search: 'Acme' });
+
+    expect(spy.calls).toContainEqual({
+      method: 'or',
+      args: ['company.ilike."%Acme%",title.ilike."%Acme%",location.ilike."%Acme%"'],
+    });
+  });
+
+  it('escapes wildcard and quote characters in search text', () => {
+    const spy = createQuerySpy();
+
+    applyApplicationFilters(spy, { search: '50%_"' });
+
+    expect(spy.calls).toContainEqual({
+      method: 'or',
+      args: ['company.ilike."%50\\%\\_\\"%",title.ilike."%50\\%\\_\\"%",location.ilike."%50\\%\\_\\"%"'],
+    });
   });
 });
