@@ -97,7 +97,7 @@ export const ApplicationStatusSchema = z.enum([
 ]);
 
 export const ApplicationTypeSchema = z.enum([
-  'cold_strategic', 'recruiter_assisted', 'referral', 'other',
+  'cold_strategic', 'recruiter_assisted', 'referral', 'posse_portal', 'other',
 ]);
 
 export const ApplicationSourceSchema = z.enum([

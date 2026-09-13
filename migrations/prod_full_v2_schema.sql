@@ -55,7 +55,7 @@ END $$;
 
 DO $$ BEGIN
   CREATE TYPE application_type_enum AS ENUM (
-    'cold_strategic', 'recruiter_assisted', 'referral', 'other'
+    'cold_strategic', 'recruiter_assisted', 'referral', 'posse_portal', 'other'
   );
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;

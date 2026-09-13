@@ -47,6 +47,7 @@ Each file contains an `-- UP` block and a `-- DOWN` block.
 | `v2_017_today_indexes.sql` | Add supporting indexes for v2.1 Today and Applications reads |
 | `v2_017_today_indexes_PROD_ONLY.sql` | Production-only concurrent variant of `v2_017_today_indexes.sql` |
 | `v2_018_interview_type_expansion.sql` | Add specific interview type enum values |
+| `v2_019_posse_portal_application_type.sql` | Add Posse Portal application type |
 | `radar_001_job_radar.sql` | Add Job Radar source fields and discovered postings |
 | `radar_002_radar_criteria.sql` | Add per-user Job Radar match criteria |
 | `radar_003_source_tiers.sql` | Add Radar source tiers and posting validity metadata |
