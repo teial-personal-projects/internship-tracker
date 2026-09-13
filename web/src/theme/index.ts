@@ -47,6 +47,7 @@ export const APPLICATION_TYPE_COLORS: Record<string, { bg: string; color: string
   cold_strategic:     { bg: '#EFF6FF', color: '#1D4ED8' },
   recruiter_assisted: { bg: '#F5F3FF', color: '#6D28D9' },
   referral:           { bg: '#F0FDF4', color: '#15803D' },
+  posse_portal:       { bg: '#FFF7ED', color: '#C2410C' },
   other:              { bg: 'transparent', color: '#6B7280', border: '1px dashed #D1D5DB' },
 };
 
@@ -54,6 +55,7 @@ export const APPLICATION_TYPE_LABELS: Record<string, string> = {
   cold_strategic:     'Cold',
   recruiter_assisted: 'Recruiter',
   referral:           'Referral',
+  posse_portal:       'Posse Portal',
   other:              'Other',
 };
 

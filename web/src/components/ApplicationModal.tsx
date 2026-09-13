@@ -25,7 +25,7 @@ const APPLICATION_STATUSES: ApplicationStatus[] = [
 ];
 
 const APPLICATION_TYPES: ApplicationType[] = [
-  'cold_strategic', 'recruiter_assisted', 'referral', 'other',
+  'cold_strategic', 'recruiter_assisted', 'referral', 'posse_portal', 'other',
 ];
 
 export type ApplicationFormValues = {
